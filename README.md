@@ -16,6 +16,8 @@ the same files become a managed cloud DB — no rewrite.
 
 > Runs in production at **[glassdatabase.org](https://glassdatabase.org)**.
 
+![Architecture diagram](docs/architecture.svg)
+
 ---
 
 ## What's inside
@@ -52,6 +54,12 @@ condensed, public rendition to the registry:
 Contributions are **moderated** by default (an admin approves before anything is
 public) and can optionally be announced to **Bluesky** with the provenance image
 attached. Full detail: [`deploy/PROVENANCE-ARCHITECTURE.md`](deploy/PROVENANCE-ARCHITECTURE.md).
+
+![Contribution & moderation process (BPMN)](docs/contribution-process.svg)
+
+The contribution flow above is also provided as editable BPMN 2.0 —
+[`docs/contribution-process.bpmn`](docs/contribution-process.bpmn) — which opens
+in [bpmn.io](https://bpmn.io), Camunda, or SpiffWorkflow.
 
 ## Quickstart
 

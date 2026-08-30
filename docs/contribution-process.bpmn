@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_glassdb_contribution"
+                  targetNamespace="http://glassdatabase.org/bpmn">
+  <bpmn:collaboration id="Collaboration_1">
+    <bpmn:participant id="Participant_1" name="Object contribution" processRef="Process_contribution"/>
+  </bpmn:collaboration>
+  <bpmn:process id="Process_contribution" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_1">
+      <bpmn:lane id="Lane_Contributor" name="Contributor">
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Add</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Submit</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Glowtbook" name="Glowtbook">
+        <bpmn:flowNodeRef>Task_Condense</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Sign</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Publish</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_Bluesky</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Public</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_Admin" name="Admin">
+        <bpmn:flowNodeRef>Task_Review</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_Approve</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>EndEvent_Reject</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+
+    <bpmn:startEvent id="StartEvent_1" name="New object">
+      <bpmn:outgoing>Flow_1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="Task_Add" name="Add originals &amp; provenance">
+      <bpmn:incoming>Flow_1</bpmn:incoming>
+      <bpmn:outgoing>Flow_2</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="Task_Submit" name="Submit for review">
+      <bpmn:incoming>Flow_2</bpmn:incoming>
+      <bpmn:outgoing>Flow_3</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:serviceTask id="Task_Condense" name="Condense to DIP (transcode video)">
+      <bpmn:incoming>Flow_3</bpmn:incoming>
+      <bpmn:outgoing>Flow_4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Sign" name="Sign C2PA, bag AIP to MinIO">
+      <bpmn:incoming>Flow_4</bpmn:incoming>
+      <bpmn:outgoing>Flow_5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="Task_Review" name="Review submission">
+      <bpmn:incoming>Flow_5</bpmn:incoming>
+      <bpmn:outgoing>Flow_6</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_Approve" name="Approve?">
+      <bpmn:incoming>Flow_6</bpmn:incoming>
+      <bpmn:outgoing>Flow_yes</bpmn:outgoing>
+      <bpmn:outgoing>Flow_no</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="Task_Publish" name="Publish DIP to registry">
+      <bpmn:incoming>Flow_yes</bpmn:incoming>
+      <bpmn:outgoing>Flow_9</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="Task_Bluesky" name="Post to Bluesky (optional)">
+      <bpmn:incoming>Flow_9</bpmn:incoming>
+      <bpmn:outgoing>Flow_10</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:endEvent id="EndEvent_Public" name="Public">
+      <bpmn:incoming>Flow_10</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:endEvent id="EndEvent_Reject" name="Rejected">
+      <bpmn:incoming>Flow_no</bpmn:incoming>
+    </bpmn:endEvent>
+
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="Task_Add"/>
+    <bpmn:sequenceFlow id="Flow_2" sourceRef="Task_Add" targetRef="Task_Submit"/>
+    <bpmn:sequenceFlow id="Flow_3" sourceRef="Task_Submit" targetRef="Task_Condense"/>
+    <bpmn:sequenceFlow id="Flow_4" sourceRef="Task_Condense" targetRef="Task_Sign"/>
+    <bpmn:sequenceFlow id="Flow_5" sourceRef="Task_Sign" targetRef="Task_Review"/>
+    <bpmn:sequenceFlow id="Flow_6" sourceRef="Task_Review" targetRef="Gateway_Approve"/>
+    <bpmn:sequenceFlow id="Flow_yes" name="yes" sourceRef="Gateway_Approve" targetRef="Task_Publish"/>
+    <bpmn:sequenceFlow id="Flow_no" name="no" sourceRef="Gateway_Approve" targetRef="EndEvent_Reject"/>
+    <bpmn:sequenceFlow id="Flow_9" sourceRef="Task_Publish" targetRef="Task_Bluesky"/>
+    <bpmn:sequenceFlow id="Flow_10" sourceRef="Task_Bluesky" targetRef="EndEvent_Public"/>
+  </bpmn:process>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1">
+      <bpmndi:BPMNShape id="Participant_1_di" bpmnElement="Participant_1" isHorizontal="true">
+        <dc:Bounds x="160" y="80" width="1080" height="360"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Contributor_di" bpmnElement="Lane_Contributor" isHorizontal="true">
+        <dc:Bounds x="190" y="80" width="1050" height="120"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Glowtbook_di" bpmnElement="Lane_Glowtbook" isHorizontal="true">
+        <dc:Bounds x="190" y="200" width="1050" height="120"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Admin_di" bpmnElement="Lane_Admin" isHorizontal="true">
+        <dc:Bounds x="190" y="320" width="1050" height="120"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
+        <dc:Bounds x="222" y="122" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="216" y="162" width="48" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Add_di" bpmnElement="Task_Add">
+        <dc:Bounds x="300" y="100" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Submit_di" bpmnElement="Task_Submit">
+        <dc:Bounds x="440" y="100" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Condense_di" bpmnElement="Task_Condense">
+        <dc:Bounds x="440" y="240" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Sign_di" bpmnElement="Task_Sign">
+        <dc:Bounds x="580" y="240" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Review_di" bpmnElement="Task_Review">
+        <dc:Bounds x="680" y="340" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Approve_di" bpmnElement="Gateway_Approve" isMarkerVisible="true">
+        <dc:Bounds x="830" y="355" width="50" height="50"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="826" y="332" width="58" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Publish_di" bpmnElement="Task_Publish">
+        <dc:Bounds x="860" y="240" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_Bluesky_di" bpmnElement="Task_Bluesky">
+        <dc:Bounds x="1000" y="240" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Public_di" bpmnElement="EndEvent_Public">
+        <dc:Bounds x="1150" y="262" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="1152" y="302" width="34" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_Reject_di" bpmnElement="EndEvent_Reject">
+        <dc:Bounds x="940" y="362" width="36" height="36"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="934" y="402" width="48" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1">
+        <di:waypoint x="258" y="140"/><di:waypoint x="300" y="140"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_2_di" bpmnElement="Flow_2">
+        <di:waypoint x="400" y="140"/><di:waypoint x="440" y="140"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_3_di" bpmnElement="Flow_3">
+        <di:waypoint x="490" y="180"/><di:waypoint x="490" y="240"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_4_di" bpmnElement="Flow_4">
+        <di:waypoint x="540" y="280"/><di:waypoint x="580" y="280"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_5_di" bpmnElement="Flow_5">
+        <di:waypoint x="630" y="320"/><di:waypoint x="630" y="380"/><di:waypoint x="680" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_6_di" bpmnElement="Flow_6">
+        <di:waypoint x="780" y="380"/><di:waypoint x="830" y="380"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_yes_di" bpmnElement="Flow_yes">
+        <di:waypoint x="855" y="355"/><di:waypoint x="855" y="280"/><di:waypoint x="860" y="280"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="861" y="300" width="20" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_no_di" bpmnElement="Flow_no">
+        <di:waypoint x="880" y="380"/><di:waypoint x="940" y="380"/>
+        <bpmndi:BPMNLabel><dc:Bounds x="903" y="362" width="16" height="14"/></bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_9_di" bpmnElement="Flow_9">
+        <di:waypoint x="960" y="280"/><di:waypoint x="1000" y="280"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_10_di" bpmnElement="Flow_10">
+        <di:waypoint x="1100" y="280"/><di:waypoint x="1150" y="280"/>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
