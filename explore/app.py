@@ -35,8 +35,9 @@ def _conn():
     return c
 
 
-@st.cache_data(ttl=300)
 def registry() -> list[dict]:
+    # not cached: it's a tiny query, and caching it made newly-approved datasets
+    # appear only after the cache expired.
     rows = _conn().execute(
         "SELECT d.tbl, d.domain, d.description, "
         "  (SELECT COUNT(*) FROM _approvals a WHERE a.tbl=d.tbl AND a.status='approved') AS row_count "
@@ -69,6 +70,8 @@ from explore.dataclean import GEO_COLS, classify, clean_numeric, is_excluded  # 
 reg = registry()
 st.sidebar.title("📊 Explore")
 st.sidebar.caption("Public data from the Glass Database. Play with it, filter it, take it.")
+if st.sidebar.button("↻ Refresh data"):
+    st.cache_data.clear(); st.rerun()
 
 mode = st.sidebar.radio("View", ["Datasets", "Objects (provenance)"], label_visibility="collapsed")
 
@@ -190,6 +193,24 @@ if mode == "Objects (provenance)":
 # ===========================================================================
 # DATASETS (default)
 # ===========================================================================
+if not reg:
+    # nothing has been approved yet — explain, and show whether data exists but is pending
+    c = _conn()
+    pub = c.execute("SELECT COUNT(*) FROM _datasets WHERE visibility='public'").fetchone()[0]
+    try:
+        appr = c.execute("SELECT COUNT(*) FROM _approvals WHERE status='approved'").fetchone()[0]
+    except Exception:
+        appr = 0
+    st.title("Glass Database — explore the data")
+    st.info("No published datasets yet. Everything stays private until it's approved.")
+    st.markdown("**To publish:** open the admin console → **✅ Approvals** → "
+                "**“Approve ALL pending content”** (or approve per dataset), then hit "
+                "**↻ Refresh data** here.")
+    st.caption(f"{pub} public dataset(s) configured · {appr} row(s) approved in this database so far. "
+               "If that says 0 after you approved, the admin and this app may be pointing at "
+               "different database files (check GLASSDB_PATH).")
+    st.stop()
+
 by_domain: dict[str, list[dict]] = {}
 for d in reg:
     by_domain.setdefault(d["domain"], []).append(d)
