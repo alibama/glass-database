@@ -1,0 +1,1405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rdf:RDF
+  xmlns:dcterms="http://purl.org/dc/terms/"
+  xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+  xmlns:skos="http://www.w3.org/2004/02/skos/core#"
+  xmlns:gbo="http://example.org/glassblowing#"
+  xmlns:owl="http://www.w3.org/2002/07/owl#"
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+>
+  <owl:Class rdf:about="http://example.org/glassblowing#Furnace">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HeatingEquipment"/>
+    <rdfs:label xml:lang="en">furnace</rdfs:label>
+    <skos:definition xml:lang="en">Holds molten glass at working temperature (pot or tank/day-tank).</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/oven"/>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (furnaces); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Millefiori">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Murrine"/>
+    <rdfs:label xml:lang="en">millefiori</rdfs:label>
+    <skos:definition xml:lang="en">Floral murrine ('thousand flowers').</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#GlassTransition">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ThermalProperty"/>
+    <rdfs:label xml:lang="en">glass transition (Tg)</rdfs:label>
+    <skos:definition xml:lang="en">The amorphous-solid/liquid boundary region.</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/GlassTransitionTemperature"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#PuntyRod">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Iron"/>
+    <rdfs:label xml:lang="en">punty rod</rdfs:label>
+    <skos:altLabel xml:lang="en">pontil</skos:altLabel>
+    <skos:altLabel xml:lang="en">ponty</skos:altLabel>
+    <skos:altLabel xml:lang="en">puntee</skos:altLabel>
+    <skos:altLabel xml:lang="it">pontello</skos:altLabel>
+    <skos:definition xml:lang="en">A solid iron attached to a piece's base after transfer, so the opening can be finished.</skos:definition>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-punty-EN">
+        <rdfs:label xml:lang="en">punty / pontil</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-EN"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-punty-IT">
+        <rdfs:label xml:lang="it">pontello</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-IT"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-punty-FLAME">
+        <rdfs:label xml:lang="en">punty (temporary handle rod)</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-FLAME"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+  </owl:Class>
+  <gbo:Colorant rdf:about="http://example.org/glassblowing#SeleniumCadmium">
+    <rdfs:label xml:lang="en">selenium + cadmium</rdfs:label>
+    <gbo:imparts xml:lang="en">yellow to orange to red (selenium ruby); a striking colour</gbo:imparts>
+  </gbo:Colorant>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#consistsOf">
+    <rdfs:label xml:lang="en">consists of</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#CreationEvent"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Activity"/>
+    <skos:definition xml:lang="en">A creation event consists of ordered activities.</skos:definition>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#processes">
+    <rdfs:label xml:lang="en">processes</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Activity"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Material"/>
+  </owl:ObjectProperty>
+  <owl:Ontology rdf:about="http://example.org/glassblowing#">
+    <dcterms:title xml:lang="en">A Glassblowing Ontology (craft, process &amp; dialect layer)</dcterms:title>
+    <dcterms:description xml:lang="en">A craft-and-dialect ontology for hot glass: the material's life from batch
+through melting, gathering, hot forming, decoration, mould forming, kiln work,
+annealing and cold working, plus studio roles, defects, regional traditions and a
+queryable dialect concordance. It is the artisanal/technique layer that bridges two
+existing efforts: the GlasDigital materials-science ontology (physics, melting,
+measurement) which it aligns physical properties and equipment to, and the
+event-centric cultural-heritage modelling of De Boer et al. (CIDOC-CRM / AAT /
+Wikidata) which it mirrors for describing individual works and their creation.</dcterms:description>
+    <dcterms:creator xml:lang="en">Anson Parker</dcterms:creator>
+    <dcterms:contributor xml:lang="en">Drafted with Claude (Anthropic)</dcterms:contributor>
+    <dcterms:license rdf:resource="https://creativecommons.org/licenses/by/4.0/"/>
+    <dcterms:created rdf:datatype="http://www.w3.org/2001/XMLSchema#date">2026-08-28</dcterms:created>
+    <owl:versionInfo>0.1.0</owl:versionInfo>
+    <rdfs:seeAlso rdf:resource="https://w3id.org/pmd/glass-ontology/1.0.1"/>
+    <rdfs:seeAlso rdf:resource="https://materialdigital.github.io/glasdigital-ontology/index-en.html"/>
+    <rdfs:seeAlso rdf:resource="https://journal.dhbenelux.org/journal/issues/004/article-4-DeBoer.html"/>
+  </owl:Ontology>
+  <owl:Class rdf:about="http://example.org/glassblowing#Sculpture">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Artifact"/>
+    <rdfs:label xml:lang="en">sculpture</rdfs:label>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Confetti">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassStock"/>
+    <rdfs:label xml:lang="en">confetti</rdfs:label>
+    <skos:altLabel xml:lang="en">shards</skos:altLabel>
+    <skos:definition xml:lang="en">Thin blown-and-broken flakes for surface decoration.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Sommerso">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Casing"/>
+    <rdfs:label xml:lang="it">sommerso</rdfs:label>
+    <skos:definition xml:lang="en">'Submerged': thick clear layers over interior colour, a mid-century Muranese hallmark.</skos:definition>
+    <gbo:originatesIn rdf:resource="http://example.org/glassblowing#MuraneseTradition"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Cameo">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Engraving"/>
+    <rdfs:label xml:lang="en">cameo</rdfs:label>
+    <skos:definition xml:lang="en">A cased layer cut away to reveal the ground beneath.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#UraniumGlass">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassType"/>
+    <rdfs:label xml:lang="en">uranium glass</rdfs:label>
+    <skos:altLabel xml:lang="en">vaseline glass</skos:altLabel>
+    <skos:definition xml:lang="en">Glass coloured with uranium, fluorescing yellow-green under UV.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Latticino">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Filigrana"/>
+    <rdfs:label xml:lang="it">latticino</rdfs:label>
+    <skos:altLabel xml:lang="it">lattimo</skos:altLabel>
+    <skos:definition xml:lang="en">White (milk-glass) thread work used in filigree.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#RomanTradition">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Tradition"/>
+    <rdfs:label xml:lang="en">Roman / ancient</rdfs:label>
+    <skos:definition xml:lang="en">Core-forming and casting precede blowing; glassblowing invented ~mid-1st century BCE in the Syro-Palestinian (Levantine) region, industrialised under Rome.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#DipMolding">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#MoldFormingProcess"/>
+    <rdfs:label xml:lang="en">dip moulding</rdfs:label>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#TackFuse">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Fusing"/>
+    <rdfs:label xml:lang="en">tack fuse</rdfs:label>
+    <skos:definition xml:lang="en">Pieces stick but keep their shape.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#DiamondPointEngraving">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Engraving"/>
+    <rdfs:label xml:lang="en">diamond-point engraving</rdfs:label>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#originatesIn">
+    <rdfs:label xml:lang="en">originates in</rdfs:label>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Tradition"/>
+    <skos:definition xml:lang="en">A technique originates in a tradition (e.g. reticello originates in the Muranese tradition).</skos:definition>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#MezzaFiligrana">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Filigrana"/>
+    <rdfs:label xml:lang="it">mezza filigrana</rdfs:label>
+    <skos:definition xml:lang="en">Single-twist half-filigree.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Retortoli">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Filigrana"/>
+    <rdfs:label xml:lang="it">retortoli</rdfs:label>
+    <skos:altLabel xml:lang="it">ritorti</skos:altLabel>
+    <skos:definition xml:lang="en">Twisted-ribbon canes.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#FaconDeVenise">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Tradition"/>
+    <rdfs:label xml:lang="fr">façon de Venise</rdfs:label>
+    <skos:definition xml:lang="en">'In the Venetian manner'; émigré Venetian makers spreading the style across Renaissance Europe.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#RollingInColor">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#DecorationProcess"/>
+    <rdfs:label xml:lang="en">rolling in colour</rdfs:label>
+    <skos:definition xml:lang="en">Rolling a hot gather over frit or powder, then melting it in.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#performedBy">
+    <rdfs:label xml:lang="en">performed by</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Agent"/>
+    <rdfs:seeAlso rdf:resource="http://www.cidoc-crm.org/cidoc-crm/P14_carried_out_by"/>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#PuntyScar">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">punty scar</rdfs:label>
+    <skos:definition xml:lang="en">A rough spot on the base from punty break-off; avoided with a gadget.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#ContourFuse">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Fusing"/>
+    <rdfs:label xml:lang="en">contour fuse</rdfs:label>
+    <skos:definition xml:lang="en">Edges round over.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#WetNewspaper">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HandTool"/>
+    <rdfs:label xml:lang="en">wet newspaper</rdfs:label>
+    <skos:altLabel xml:lang="en">blocking pads</skos:altLabel>
+    <skos:definition xml:lang="en">Folded wet newspaper held in the palm to shape the gather directly; old, universal, still standard.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#RubyGoldGlass">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassType"/>
+    <rdfs:label xml:lang="en">gold ruby glass</rdfs:label>
+    <skos:altLabel xml:lang="en">cranberry glass</skos:altLabel>
+    <skos:definition xml:lang="en">Glass struck to a ruby colour by colloidal gold (Purple of Cassius); a striking colour developed on reheat.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#ThermalShockResistance">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ThermalProperty"/>
+    <rdfs:label xml:lang="en">thermal shock resistance</rdfs:label>
+    <skos:definition xml:lang="en">Ability to withstand a steep temperature gradient without fracturing.</skos:definition>
+    <skos:exactMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/ThermalShockResistance"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Jacks">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HandTool"/>
+    <rdfs:label xml:lang="en">jacks</rdfs:label>
+    <skos:altLabel xml:lang="it">pucellas</skos:altLabel>
+    <skos:definition xml:lang="en">Spring-steel tongs; the primary shaping tool for necking, opening and defining line.</skos:definition>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-jacks-EN">
+        <rdfs:label xml:lang="en">jacks</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-EN"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-jacks-IT">
+        <rdfs:label xml:lang="it">pucellas</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-IT"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+  </owl:Class>
+  <gbo:Dialect rdf:about="http://example.org/glassblowing#dialect-SE">
+    <rdfs:label xml:lang="en">Scandinavian / Swedish</rdfs:label>
+  </gbo:Dialect>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#produces">
+    <rdfs:label xml:lang="en">produces</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Artifact"/>
+    <skos:closeMatch rdf:resource="https://material-digital.de/pmdco/hasOutputObject"/>
+  </owl:ObjectProperty>
+  <gbo:Flux rdf:about="http://example.org/glassblowing#Potash">
+    <rdfs:label xml:lang="en">potash</rdfs:label>
+    <skos:definition xml:lang="en">Potassium carbonate; flux of Bohemian and lead glasses.</skos:definition>
+  </gbo:Flux>
+  <owl:Class rdf:about="http://example.org/glassblowing#Viscosity">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ThermalProperty"/>
+    <rdfs:label xml:lang="en">viscosity</rdfs:label>
+    <skos:definition xml:lang="en">Resistance to flow; the master variable of all hot forming. Glass thickens continuously as it cools rather than melting at a point.</skos:definition>
+    <skos:exactMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/Viscosity"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Soffietta">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HandTool"/>
+    <rdfs:label xml:lang="it">soffietta</rdfs:label>
+    <skos:altLabel xml:lang="en">puffer</skos:altLabel>
+    <skos:definition xml:lang="en">A cone-tipped blow tube that seals onto a transferred piece so it can still be inflated without a blowpipe.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#ChineseJapaneseTradition">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Tradition"/>
+    <rdfs:label xml:lang="en">Chinese &amp; Japanese</rdfs:label>
+    <skos:definition xml:lang="en">Distinct lineages: Chinese 'Peking glass' cased-and-carved; Japanese Edo-kiriko cut glass and contemporary flame/kiln work.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#createdBy">
+    <rdfs:label xml:lang="en">created by</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Artifact"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#CreationEvent"/>
+    <rdfs:seeAlso rdf:resource="http://www.cidoc-crm.org/cidoc-crm/P108i_was_produced_by"/>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#Gadget">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HandTool"/>
+    <rdfs:label xml:lang="en">gadget</rdfs:label>
+    <skos:definition xml:lang="en">A spring clamp that grips a finished foot in place of a hot punty, avoiding a punty scar.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Birefringence">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#OpticalProperty"/>
+    <rdfs:label xml:lang="en">birefringence</rdfs:label>
+    <skos:definition xml:lang="en">Stress-induced double refraction, made visible under crossed polarisers; the diagnostic for annealing quality.</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/StressOpticCoefficient"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Stone">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">stone</rdfs:label>
+    <skos:definition xml:lang="en">A solid inclusion of unmelted batch or refractory.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#AnnealingCrack">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">annealing crack</rdfs:label>
+    <skos:altLabel xml:lang="en">strain fracture</skos:altLabel>
+    <skos:definition xml:lang="en">A clean, sometimes delayed crack from inadequate annealing or COE mismatch.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Opening">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">opening the lip</rdfs:label>
+    <skos:definition xml:lang="en">Flaring the mouth with jacks while spinning; centrifugal force does the work.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#hasLexicalVariant">
+    <rdfs:label xml:lang="en">has lexical variant</rdfs:label>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#LexicalVariant"/>
+    <skos:definition xml:lang="en">Links a concept to a dialect-tagged word for it.</skos:definition>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#Seed">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">seed</rdfs:label>
+    <skos:definition xml:lang="en">A tiny bubble from incomplete fining.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#OpticMolding">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#MoldFormingProcess"/>
+    <rdfs:label xml:lang="en">optic moulding</rdfs:label>
+    <skos:definition xml:lang="en">Impressing an optic texture with a ribbed mould.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#CopperWheelEngraving">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Engraving"/>
+    <rdfs:label xml:lang="en">copper-wheel engraving</rdfs:label>
+    <skos:definition xml:lang="en">Fine intaglio cut with small copper wheels and abrasive slurry.</skos:definition>
+  </owl:Class>
+  <gbo:Dialect rdf:about="http://example.org/glassblowing#dialect-CZ">
+    <rdfs:label xml:lang="en">Bohemian / Czech</rdfs:label>
+  </gbo:Dialect>
+  <gbo:Colorant rdf:about="http://example.org/glassblowing#CopperColorant">
+    <rdfs:label xml:lang="en">copper</rdfs:label>
+    <gbo:imparts xml:lang="en">turquoise when oxidised; copper-ruby red when reduced</gbo:imparts>
+  </gbo:Colorant>
+  <gbo:Colorant rdf:about="http://example.org/glassblowing#SilverColorant">
+    <rdfs:label xml:lang="en">silver</rdfs:label>
+    <gbo:imparts xml:lang="en">yellow/amber stain; iridescent fuming hues</gbo:imparts>
+  </gbo:Colorant>
+  <owl:Class rdf:about="http://example.org/glassblowing#Footmaker">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Agent"/>
+    <rdfs:label xml:lang="en">footmaker / second gaffer</rdfs:label>
+    <skos:definition xml:lang="en">Makes and attaches feet and components.</skos:definition>
+  </owl:Class>
+  <owl:AnnotationProperty rdf:about="http://example.org/glassblowing#vocabularyTarget">
+    <rdfs:label xml:lang="en">vocabulary alignment target</rdfs:label>
+    <rdfs:comment xml:lang="en">Names an external controlled vocabulary (e.g. Getty AAT, Wikidata) to which this class should be aligned during an integration pass, following De Boer et al. Concrete IDs are intentionally omitted where not verified, to avoid false owl:sameAs/exactMatch assertions.</rdfs:comment>
+  </owl:AnnotationProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#RefractiveIndex">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#OpticalProperty"/>
+    <rdfs:label xml:lang="en">refractive index</rdfs:label>
+    <skos:definition xml:lang="en">How strongly glass bends light; raised by lead and barium.</skos:definition>
+    <skos:exactMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/RefractiveIndex"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#CastingMold">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Mold"/>
+    <rdfs:label xml:lang="en">casting mould</rdfs:label>
+    <skos:definition xml:lang="en">A refractory/investment mould for kiln casting, typically lost-wax in plaster-silica.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Place">
+    <rdfs:label xml:lang="en">place</rdfs:label>
+    <skos:closeMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/E53_Place"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Battuto">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ColdWorkingProcess"/>
+    <rdfs:label xml:lang="it">battuto</rdfs:label>
+    <skos:definition xml:lang="en">Dense shallow wheel-cutting leaving a hammered ('beaten') texture; finishes cane and sommerso pieces.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#composedOf">
+    <rdfs:label xml:lang="en">composed of</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#GlassType"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#RawMaterial"/>
+    <skos:definition xml:lang="en">Recipe membership: a glass type is composed of raw materials.</skos:definition>
+    <rdfs:seeAlso rdf:resource="https://glasdigi.cms.uni-jena.de/glass/hasGlassComponent"/>
+    <skos:closeMatch rdf:resource="https://material-digital.de/pmdco/composedBy"/>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#Cord">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">cord / striae</rdfs:label>
+    <skos:definition xml:lang="en">Ropy optical streaks from an inhomogeneous melt.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#AnnealSoak">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#AnnealingProcess"/>
+    <rdfs:label xml:lang="en">anneal soak</rdfs:label>
+    <skos:definition xml:lang="en">Holding at the annealing point long enough to relax stress uniformly through the wall.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Servitor">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Agent"/>
+    <rdfs:label xml:lang="en">servitor</rdfs:label>
+    <skos:altLabel xml:lang="it">servitore</skos:altLabel>
+    <skos:definition xml:lang="en">The first assistant; gathers bits, brings tools, makes feet and additions.</skos:definition>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-servitor-EN">
+        <rdfs:label xml:lang="en">servitor</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-EN"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-servitor-IT">
+        <rdfs:label xml:lang="it">servitore</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-IT"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#BitGatherer">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Agent"/>
+    <rdfs:label xml:lang="en">bit gatherer</rdfs:label>
+    <skos:definition xml:lang="en">Brings hot bits on demand for handles, prunts and additions.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Dispersion">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#OpticalProperty"/>
+    <rdfs:label xml:lang="en">dispersion</rdfs:label>
+    <skos:definition xml:lang="en">Wavelength-dependence of refraction; the 'fire' of cut crystal.</skos:definition>
+    <skos:exactMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/Dispersion"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Necking">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GatheringProcess"/>
+    <rdfs:label xml:lang="en">necking</rdfs:label>
+    <skos:definition xml:lang="en">Running a groove (the jack line) with jacks to define where the piece will later separate.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Marver">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HandTool"/>
+    <rdfs:label xml:lang="en">marver</rdfs:label>
+    <skos:definition xml:lang="en">A flat steel (historically marble) table for rolling, cooling, shaping and picking up colour.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#CompatibilityProperty">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Property"/>
+    <rdfs:label xml:lang="en">compatibility property</rdfs:label>
+    <skos:definition xml:lang="en">A tested property (COE and viscosity match) determining whether two glasses can be joined without cracking.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Transferring">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">transferring</rdfs:label>
+    <skos:definition xml:lang="en">Moving the piece from blowpipe to punty at the jack line so the opening can be finished.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#consumes">
+    <rdfs:label xml:lang="en">consumes</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Substance"/>
+    <skos:closeMatch rdf:resource="https://material-digital.de/pmdco/hasInputObject"/>
+    <rdfs:seeAlso rdf:resource="https://glasdigi.cms.uni-jena.de/glass/hasInputRawMaterial"/>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#AcidEtching">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Etching"/>
+    <rdfs:label xml:lang="en">acid etching</rdfs:label>
+    <skos:altLabel xml:lang="en">French embossing</skos:altLabel>
+    <skos:definition xml:lang="en">Etching or matte-finishing the surface with hydrofluoric acid.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#FiningAgent">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#RawMaterial"/>
+    <rdfs:label xml:lang="en">fining agent</rdfs:label>
+    <skos:altLabel xml:lang="en">refining agent</skos:altLabel>
+    <skos:definition xml:lang="en">An additive (antimony, arsenic, sulfate) that scavenges bubbles from the melt.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#OpalGlass">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassType"/>
+    <rdfs:label xml:lang="en">opal / opaque glass</rdfs:label>
+    <skos:definition xml:lang="en">Glass made translucent-to-opaque by an opacifier (fluorine, tin, phosphate) crystallising a fine second phase.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#ScandinavianTradition">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Tradition"/>
+    <rdfs:label xml:lang="en">Scandinavian / Swedish</rdfs:label>
+    <skos:definition xml:lang="en">Orrefors &amp; Kosta refinements of cased/engraved work: Graal (~1916), Ariel (~1937), Kraka, Ravenna; restrained modern design.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#MoldBlowing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">mould-blowing</rdfs:label>
+    <skos:definition xml:lang="en">Inflating the bubble into a mould for form or texture.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Blowing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">blowing</rdfs:label>
+    <skos:definition xml:lang="en">Inflating a bubble (parison) inside the gather.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Incalmo">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="it">incalmo</rdfs:label>
+    <skos:definition xml:lang="en">Fusing two or more separately blown, open-mouthed forms rim-to-rim while hot to make crisp colour bands; demands matched diameters.</skos:definition>
+    <gbo:originatesInHint xml:lang="en">Venetian / Muranese</gbo:originatesInHint>
+    <gbo:originatesIn rdf:resource="http://example.org/glassblowing#MuraneseTradition"/>
+  </owl:Class>
+  <gbo:Colorant rdf:about="http://example.org/glassblowing#CobaltOxide">
+    <rdfs:label xml:lang="en">cobalt oxide</rdfs:label>
+    <gbo:imparts xml:lang="en">deep blue (strong at tiny doses)</gbo:imparts>
+  </gbo:Colorant>
+  <owl:Class rdf:about="http://example.org/glassblowing#SofteningPoint">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ThermalProperty"/>
+    <rdfs:label xml:lang="en">softening point</rdfs:label>
+    <skos:altLabel xml:lang="en">Littleton point</skos:altLabel>
+    <skos:definition xml:lang="en">The temperature (~10^7.6 poise) at which glass sags under its own weight.</skos:definition>
+    <skos:exactMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/SofteningPoint"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Paddle">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HandTool"/>
+    <rdfs:label xml:lang="en">paddle</rdfs:label>
+    <skos:altLabel xml:lang="en">battledore</skos:altLabel>
+    <skos:definition xml:lang="en">A flat wood or graphite board to flatten a foot or base.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#FirePolishing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Polishing"/>
+    <rdfs:label xml:lang="en">fire polishing</rdfs:label>
+    <skos:definition xml:lang="en">A quick reheat to gloss the surface.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#AbbeNumber">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#OpticalProperty"/>
+    <rdfs:label xml:lang="en">Abbe number</rdfs:label>
+    <skos:definition xml:lang="en">A measure of dispersion (V-number).</skos:definition>
+    <skos:exactMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/AbbeNumber"/>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#enables">
+    <rdfs:label xml:lang="en">enables</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Equipment"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Process"/>
+    <skos:definition xml:lang="en">Equipment enables a process (e.g. the marver enables marvering).</skos:definition>
+  </owl:ObjectProperty>
+  <owl:AnnotationProperty rdf:about="http://example.org/glassblowing#imparts">
+    <rdfs:label xml:lang="en">imparts</rdfs:label>
+    <rdfs:comment xml:lang="en">Free-text colour/effect a colorant or process imparts to glass.</rdfs:comment>
+  </owl:AnnotationProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#Ream">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">ream</rdfs:label>
+    <skos:definition xml:lang="en">A glassy layer of differing composition from contamination or inhomogeneity.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#OpticMold">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#DipMold"/>
+    <rdfs:label xml:lang="en">optic mould</rdfs:label>
+    <skos:definition xml:lang="en">A ribbed dip mould that impresses an optic texture, then blown out and often twisted.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Sandblasting">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#AbrasiveBlasting"/>
+    <rdfs:label xml:lang="en">sandblasting</rdfs:label>
+    <skos:definition xml:lang="en">Frosting or carving the surface with abrasive under air pressure.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (sandblasting); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Gaffer">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Agent"/>
+    <rdfs:label xml:lang="en">gaffer</rdfs:label>
+    <skos:altLabel xml:lang="it">maestro</skos:altLabel>
+    <skos:definition xml:lang="en">The master who sits in the chair and forms the piece.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (glassblowers); Wikidata</gbo:vocabularyTarget>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-gaffer-EN">
+        <rdfs:label xml:lang="en">gaffer</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-EN"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-gaffer-IT">
+        <rdfs:label xml:lang="it">maestro</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-IT"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Stringer">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Cane"/>
+    <rdfs:label xml:lang="en">stringer</rdfs:label>
+    <skos:definition xml:lang="en">The thinnest form of cane.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#DecorativeCutting">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ColdWorkingProcess"/>
+    <rdfs:label xml:lang="en">decorative cutting</rdfs:label>
+    <skos:definition xml:lang="en">The lapidary tradition of mitre, panel and brilliant cuts on a cutting lathe; the Bohemian heartland.</skos:definition>
+    <gbo:originatesIn rdf:resource="http://example.org/glassblowing#BohemianTradition"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#LeadGlass">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassType"/>
+    <rdfs:label xml:lang="en">lead glass</rdfs:label>
+    <skos:altLabel xml:lang="en">lead crystal</skos:altLabel>
+    <skos:altLabel xml:lang="en">crystal</skos:altLabel>
+    <skos:definition xml:lang="en">Potash-lead-silica glass; lead oxide raises refractive index and density, giving weight, ring and brilliance. Soft, long working range, ideal for cutting.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#BatchCharging">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#MeltingProcess"/>
+    <rdfs:label xml:lang="en">batch charging</rdfs:label>
+    <skos:definition xml:lang="en">Loading raw batch into the furnace.</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/batchProcess"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#IslamicTradition">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Tradition"/>
+    <rdfs:label xml:lang="en">Islamic</rdfs:label>
+    <skos:definition xml:lang="en">Luster painting, enamelled and gilded lamps, wheel-cut relief; a bridge between antiquity and Venice.</skos:definition>
+  </owl:Class>
+  <gbo:Colorant rdf:about="http://example.org/glassblowing#GoldColloid">
+    <rdfs:label xml:lang="en">colloidal gold</rdfs:label>
+    <gbo:imparts xml:lang="en">ruby / cranberry; a striking colour</gbo:imparts>
+  </gbo:Colorant>
+  <owl:Class rdf:about="http://example.org/glassblowing#ShearMark">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">shear mark</rdfs:label>
+    <skos:definition xml:lang="en">A line or notch left by shears.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#TurnMold">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#BlowMold"/>
+    <rdfs:label xml:lang="en">turn / spun mould</rdfs:label>
+    <skos:definition xml:lang="en">A mould in which the piece is rotated to erase seams.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Blowpipe">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Iron"/>
+    <rdfs:label xml:lang="en">blowpipe</rdfs:label>
+    <skos:altLabel xml:lang="en">blow iron</skos:altLabel>
+    <skos:definition xml:lang="en">A hollow iron for gathering and inflating glass.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (blowpipes); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#ScientificGlassblowing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Flameworking"/>
+    <rdfs:label xml:lang="en">scientific glassblowing</rdfs:label>
+    <skos:definition xml:lang="en">Precision borosilicate/quartz fabrication: graded seals, T-seals, ring seals, vacuum manifolds; adjacent to neon tube bending and plasma-vessel work.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Tweezers">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HandTool"/>
+    <rdfs:label xml:lang="en">tweezers</rdfs:label>
+    <skos:definition xml:lang="en">For pulling, pinching and tooling small features.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#requiresUseOf">
+    <rdfs:label xml:lang="en">requires use of</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Activity"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Equipment"/>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#WorkingPoint">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ThermalProperty"/>
+    <rdfs:label xml:lang="en">working point</rdfs:label>
+    <skos:definition xml:lang="en">The viscosity (~10^4 poise) at which glass is readily shaped.</skos:definition>
+    <skos:exactMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/WorkingPoint"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Combing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#DecorationProcess"/>
+    <rdfs:label xml:lang="en">combing / feathering</rdfs:label>
+    <skos:altLabel xml:lang="en">festooning</skos:altLabel>
+    <skos:definition xml:lang="en">Dragging a hooked tool through trails or bands to create feathered, dragged or looped patterns; an ancient core-formed technique.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Polariscope">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Equipment"/>
+    <rdfs:label xml:lang="en">polariscope</rdfs:label>
+    <skos:definition xml:lang="en">Crossed polarisers that reveal frozen stress as coloured fringes; the annealing-quality inspection instrument.</skos:definition>
+  </owl:Class>
+  <gbo:Flux rdf:about="http://example.org/glassblowing#SodaAsh">
+    <rdfs:label xml:lang="en">soda ash</rdfs:label>
+    <skos:definition xml:lang="en">Sodium carbonate; the common flux.</skos:definition>
+  </gbo:Flux>
+  <owl:Class rdf:about="http://example.org/glassblowing#ChillMark">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">chill mark</rdfs:label>
+    <skos:definition xml:lang="en">Surface ripples where glass touched something too cold.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#appliesTechnique">
+    <rdfs:label xml:lang="en">applies technique</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Activity"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Process"/>
+    <skos:definition xml:lang="en">Links a concrete activity to the technique class it is an instance of applying.</skos:definition>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#BorosilicateGlass">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassType"/>
+    <rdfs:label xml:lang="en">borosilicate glass</rdfs:label>
+    <skos:altLabel xml:lang="en">boro</skos:altLabel>
+    <skos:altLabel xml:lang="en">hard glass</skos:altLabel>
+    <skos:definition xml:lang="en">Boron-oxide co-former; very low expansion and high thermal-shock resistance. Scientific labware and the dominant American flamework medium.</skos:definition>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-boro-FLAME">
+        <rdfs:label xml:lang="en">boro / hard glass</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-FLAME"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-boro-SCI">
+        <rdfs:label xml:lang="en">borosilicate</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-SCI"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#BariumCrystal">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassType"/>
+    <rdfs:label xml:lang="en">barium / lead-free crystal</rdfs:label>
+    <skos:definition xml:lang="en">High-index optical and eco-crystal formulations replacing lead oxide with barium, lanthanum or similar.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#FullFuse">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Fusing"/>
+    <rdfs:label xml:lang="en">full fuse</rdfs:label>
+    <skos:definition xml:lang="en">Pieces flow into a single flat sheet.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#AngloTradition">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Tradition"/>
+    <rdfs:label xml:lang="en">English / Anglo-American</rdfs:label>
+    <skos:definition xml:lang="en">Lead crystal (Ravenscroft, 1670s) prized for weight and brilliance; the gaffer/chair/servitor/gatherer/taker-in team lexicon; cut glass.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Fining">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#MeltingProcess"/>
+    <rdfs:label xml:lang="en">fining</rdfs:label>
+    <skos:altLabel xml:lang="en">refining</skos:altLabel>
+    <skos:definition xml:lang="en">Letting bubbles rise and clear, aided by fining agents.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#StrainPoint">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ThermalProperty"/>
+    <rdfs:label xml:lang="en">strain point</rdfs:label>
+    <skos:definition xml:lang="en">The temperature below which stress is effectively frozen; cool slowly to here, then faster.</skos:definition>
+    <skos:exactMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/StrainPoint"/>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#requires">
+    <rdfs:label xml:lang="en">requires</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Property"/>
+    <skos:definition xml:lang="en">A process requires a property to hold (e.g. fusing requires COE match).</skos:definition>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#StippleEngraving">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Engraving"/>
+    <rdfs:label xml:lang="en">stipple engraving</rdfs:label>
+    <skos:definition xml:lang="en">Dotted shading.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Team">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Agent"/>
+    <rdfs:label xml:lang="en">shop / chair</rdfs:label>
+    <skos:definition xml:lang="en">The whole working team, named by its workstation (the bench is 'the chair').</skos:definition>
+    <skos:closeMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/E74_Group"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Founding">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#MeltingProcess"/>
+    <rdfs:label xml:lang="en">founding / melting</rdfs:label>
+    <skos:definition xml:lang="en">Liquefying the batch.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#BitWork">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">bit work</rdfs:label>
+    <skos:definition xml:lang="en">Small hot additions (handles, feet, prunts, wings) applied from a bit gather.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#hasPart">
+    <owl:inverseOf>
+      <owl:ObjectProperty rdf:about="http://example.org/glassblowing#partOf">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <rdfs:label xml:lang="en">part of</rdfs:label>
+        <rdfs:comment xml:lang="en">Mereological containment.</rdfs:comment>
+      </owl:ObjectProperty>
+    </owl:inverseOf>
+    <rdfs:label xml:lang="en">has part</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#Powder">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Frit"/>
+    <rdfs:label xml:lang="en">powder</rdfs:label>
+    <skos:definition xml:lang="en">The finest grade of frit.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Fuming">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Flameworking"/>
+    <rdfs:label xml:lang="en">fuming</rdfs:label>
+    <skos:definition xml:lang="en">Depositing silver or gold vapour for iridescent surface colour.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Rod">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassStock"/>
+    <rdfs:label xml:lang="en">rod</rdfs:label>
+    <skos:definition xml:lang="en">Solid stock stick, esp. for flamework.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Reticello">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Filigrana"/>
+    <rdfs:label xml:lang="it">reticello</rdfs:label>
+    <skos:definition xml:lang="en">Two layers of oppositely-twisted cane crossed into a net, trapping a regular grid of air bubbles; a benchmark of control.</skos:definition>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:nodeID="n58e81b20eed141ad9a483fe5e54e6508b6">
+        <rdfs:label xml:lang="it">reticello</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-IT"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+    <gbo:originatesIn rdf:resource="http://example.org/glassblowing#MuraneseTradition"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Sheet">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassStock"/>
+    <rdfs:label xml:lang="en">sheet glass</rdfs:label>
+    <skos:altLabel xml:lang="en">plate</skos:altLabel>
+    <skos:definition xml:lang="en">Rolled flat glass, the substrate of kiln fusing.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Chilling">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GatheringProcess"/>
+    <rdfs:label xml:lang="en">chilling</rdfs:label>
+    <skos:definition xml:lang="en">Briefly cooling the gather's skin so it holds shape.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Flashing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#DecorationProcess"/>
+    <rdfs:label xml:lang="en">flashing</rdfs:label>
+    <skos:definition xml:lang="en">Applying a thin surface colour layer (thicker = casing).</skos:definition>
+  </owl:Class>
+  <gbo:Stabilizer rdf:about="http://example.org/glassblowing#Alumina">
+    <rdfs:label xml:lang="en">alumina</rdfs:label>
+    <skos:definition xml:lang="en">Aluminium oxide; improves durability and working range.</skos:definition>
+  </gbo:Stabilizer>
+  <owl:Class rdf:about="http://example.org/glassblowing#StraightShears">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Shears"/>
+    <rdfs:label xml:lang="en">straight shears</rdfs:label>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#PateDeVerre">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#KilnProcess"/>
+    <rdfs:label xml:lang="fr">pâte de verre</rdfs:label>
+    <skos:definition xml:lang="en">'Glass paste': a paste of frit/powder and binder packed into a mould and fired, giving a granular, luminous wall.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#AnnealingPoint">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ThermalProperty"/>
+    <rdfs:label xml:lang="en">annealing point</rdfs:label>
+    <skos:definition xml:lang="en">The temperature (~10^13 poise) at which internal stress relaxes in minutes; the centre of the anneal soak.</skos:definition>
+    <skos:exactMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/AnnealingPoint"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Gathering">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GatheringProcess"/>
+    <rdfs:label xml:lang="en">gathering</rdfs:label>
+    <skos:definition xml:lang="en">Winding molten glass onto the iron from the furnace; a first gather may be followed by overlay gathers.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#FreeBlowing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">free-blowing</rdfs:label>
+    <skos:altLabel xml:lang="en">offhand</skos:altLabel>
+    <skos:altLabel xml:lang="it">soffiato a mano</skos:altLabel>
+    <skos:definition xml:lang="en">Shaping in the air by tool and breath alone, no mould; the Studio Glass touchstone.</skos:definition>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-offhand-EN">
+        <rdfs:label xml:lang="en">offhand / free-blown</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-EN"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-offhand-IT">
+        <rdfs:label xml:lang="it">soffiato a mano</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-IT"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+    <gbo:originatesIn rdf:resource="http://example.org/glassblowing#StudioGlass"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Intaglio">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Engraving"/>
+    <rdfs:label xml:lang="en">intaglio</rdfs:label>
+    <skos:definition xml:lang="en">Design cut into the surface.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Blank">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Artifact"/>
+    <rdfs:label xml:lang="en">blank</rdfs:label>
+    <skos:definition xml:lang="en">A fused or formed piece awaiting further (usually cold) work.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#hasProperty">
+    <rdfs:label xml:lang="en">has property</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Substance"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Property"/>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/hasMaterialProperty"/>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#Pot">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HeatingEquipment"/>
+    <rdfs:label xml:lang="en">pot / crucible</rdfs:label>
+    <skos:definition xml:lang="en">The refractory vessel that holds glass inside a pot furnace.</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/crucible"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#IceGlass">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#DecorationProcess"/>
+    <rdfs:label xml:lang="en">ice glass</rdfs:label>
+    <skos:altLabel xml:lang="it">ghiaccio</skos:altLabel>
+    <skos:definition xml:lang="en">Thermal-shock crackle: plunge the hot gather in water, then reheat and reform, sealing a crazed surface.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Apprentice">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Agent"/>
+    <rdfs:label xml:lang="en">apprentice</rdfs:label>
+    <skos:altLabel xml:lang="it">garzone</skos:altLabel>
+    <skos:definition xml:lang="en">A learner working up the ladder.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Trailing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#DecorationProcess"/>
+    <rdfs:label xml:lang="en">trailing</rdfs:label>
+    <skos:definition xml:lang="en">Laying threads of hot glass onto the surface from a bit.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Opacifier">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#RawMaterial"/>
+    <rdfs:label xml:lang="en">opacifier</rdfs:label>
+    <skos:definition xml:lang="en">An agent (tin, fluorine, phosphate) that renders glass opaque or opalescent.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Kiln">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HeatingEquipment"/>
+    <rdfs:label xml:lang="en">kiln</rdfs:label>
+    <skos:definition xml:lang="en">An oven for warm-glass forming by heat and gravity (fusing, slumping, casting).</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Check">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">check</rdfs:label>
+    <skos:definition xml:lang="en">A small surface crack from thermal shock or mishandling.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#causes">
+    <rdfs:label xml:lang="en">causes</rdfs:label>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Defect"/>
+    <skos:definition xml:lang="en">A condition or process causes a defect.</skos:definition>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#CoefficientOfExpansion">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ThermalProperty"/>
+    <rdfs:label xml:lang="en">coefficient of expansion (COE/CTE)</rdfs:label>
+    <skos:definition xml:lang="en">How much glass grows per degree; the decisive number for joining glasses. Mismatch causes cracking. Studio families ~90/96/104; borosilicate ~33.</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/LinearThermalExpansionCoefficient"/>
+    <rdfs:seeAlso rdf:resource="https://glasdigi.cms.uni-jena.de/glass/ThermalExpansionCoefficient"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Torch">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HeatingEquipment"/>
+    <rdfs:label xml:lang="en">torch</rdfs:label>
+    <skos:altLabel xml:lang="en">lamp</skos:altLabel>
+    <skos:definition xml:lang="en">A bench burner for flame/lamp working of rod and tube.</skos:definition>
+  </owl:Class>
+  <owl:AllDisjointClasses rdf:nodeID="n58e81b20eed141ad9a483fe5e54e6508b1">
+    <owl:members rdf:parseType="Collection">
+      <rdf:Description rdf:about="http://example.org/glassblowing#Substance"/>
+      <rdf:Description rdf:about="http://example.org/glassblowing#Equipment"/>
+      <rdf:Description rdf:about="http://example.org/glassblowing#Process"/>
+      <rdf:Description rdf:about="http://example.org/glassblowing#Agent"/>
+    </owl:members>
+  </owl:AllDisjointClasses>
+  <owl:Class rdf:about="http://example.org/glassblowing#MurrinePickup">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#DecorationProcess"/>
+    <rdfs:label xml:lang="en">murrine pickup</rdfs:label>
+    <skos:definition xml:lang="en">Rolling the hot form over arranged murrine to fuse an image into the skin.</skos:definition>
+  </owl:Class>
+  <owl:AnnotationProperty rdf:about="http://example.org/glassblowing#originatesInHint">
+    <rdfs:label xml:lang="en">originates-in (hint)</rdfs:label>
+    <rdfs:comment xml:lang="en">Free-text tradition attribution; formalise with gbo:originatesIn once Tradition individuals are instantiated.</rdfs:comment>
+  </owl:AnnotationProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#Gatherer">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Agent"/>
+    <rdfs:label xml:lang="en">gatherer</rdfs:label>
+    <skos:definition xml:lang="en">Gathers glass from the furnace and preps irons.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Annealer">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HeatingEquipment"/>
+    <rdfs:label xml:lang="en">annealer</rdfs:label>
+    <skos:altLabel xml:lang="en">lehr</skos:altLabel>
+    <skos:altLabel xml:lang="en">garage</skos:altLabel>
+    <skos:definition xml:lang="en">A controlled-cooling oven; batch 'annealer' in a studio, continuous 'lehr' in industry.</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/CoolOven"/>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-annealer-EN">
+        <rdfs:label xml:lang="en">annealer</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-EN"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+    <gbo:hasLexicalVariant>
+      <gbo:LexicalVariant rdf:about="http://example.org/glassblowing#var-annealer-IND">
+        <rdfs:label xml:lang="en">lehr</rdfs:label>
+        <gbo:inDialect rdf:resource="http://example.org/glassblowing#dialect-SCI"/>
+      </gbo:LexicalVariant>
+    </gbo:hasLexicalVariant>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Slumping">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#KilnProcess"/>
+    <rdfs:label xml:lang="en">slumping</rdfs:label>
+    <skos:definition xml:lang="en">A fused blank sags over or into a mould to take a form.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (slumping); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#AcidPolishing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Polishing"/>
+    <rdfs:label xml:lang="en">acid polishing</rdfs:label>
+    <skos:definition xml:lang="en">A hydrofluoric/sulfuric bath to polish cut crystal (hazardous, industrial).</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Cullet">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#RawMaterial"/>
+    <rdfs:label xml:lang="en">cullet</rdfs:label>
+    <skos:definition xml:lang="en">Recycled or reused glass added to the batch to ease melting and reduce volatilisation.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#SodaLimeGlass">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassType"/>
+    <rdfs:label xml:lang="en">soda-lime-silica glass</rdfs:label>
+    <skos:altLabel xml:lang="en">soft glass</skos:altLabel>
+    <skos:definition xml:lang="en">Silica network fluxed with soda and stabilised with lime; the common studio, window and container glass. Long working range, forgiving.</skos:definition>
+  </owl:Class>
+  <gbo:Dialect rdf:about="http://example.org/glassblowing#dialect-FR">
+    <rdfs:label xml:lang="en">French</rdfs:label>
+  </gbo:Dialect>
+  <owl:Class rdf:about="http://example.org/glassblowing#DiamondShears">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Shears"/>
+    <rdfs:label xml:lang="en">diamond shears</rdfs:label>
+    <skos:altLabel xml:lang="en">jack shears</skos:altLabel>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Cutting">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ColdWorkingProcess"/>
+    <rdfs:label xml:lang="en">cutting (parting)</rdfs:label>
+    <skos:definition xml:lang="en">Sectioning blanks with cold saw, diamond band saw or tile saw; scoring and breaking for sheet.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#CanePickup">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#DecorationProcess"/>
+    <rdfs:label xml:lang="en">cane pickup</rdfs:label>
+    <skos:definition xml:lang="en">Rolling the hot form over arranged cane to fuse a pattern into the skin.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#GloryHole">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HeatingEquipment"/>
+    <rdfs:label xml:lang="en">glory hole</rdfs:label>
+    <skos:definition xml:lang="en">A reheating chamber; work is spun in it to stay hot and mobile between tooling steps.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#inDialect">
+    <rdfs:label xml:lang="en">in dialect</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#LexicalVariant"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Dialect"/>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#MurrineMaking">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#CaneWork"/>
+    <rdfs:label xml:lang="en">murrine making</rdfs:label>
+    <skos:definition xml:lang="en">Building a patterned cane, slicing it crosswise, then assembling and fusing the slices.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#LostWaxCasting">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#KilnCasting"/>
+    <rdfs:label xml:lang="en">lost-wax casting</rdfs:label>
+    <skos:definition xml:lang="en">Casting into an investment mould made by burning out a wax model.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#SolidSculpting">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">solid hot sculpting</rdfs:label>
+    <skos:definition xml:lang="en">Building form from solid gathers and bits rather than a bubble.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Collection">
+    <rdfs:label xml:lang="en">collection</rdfs:label>
+    <skos:closeMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/E78_Curated_Holding"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#ControlledCooling">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#AnnealingProcess"/>
+    <rdfs:label xml:lang="en">controlled cooling</rdfs:label>
+    <skos:definition xml:lang="en">Descending slowly to the strain point (the critical leg), then faster below it.</skos:definition>
+  </owl:Class>
+  <gbo:Colorant rdf:about="http://example.org/glassblowing#ManganeseColorant">
+    <rdfs:label xml:lang="en">manganese</rdfs:label>
+    <gbo:imparts xml:lang="en">purple/amethyst; also a decolouriser ('glassmaker's soap')</gbo:imparts>
+  </gbo:Colorant>
+  <owl:Class rdf:about="http://example.org/glassblowing#Lapping">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Grinding"/>
+    <rdfs:label xml:lang="en">lapping</rdfs:label>
+    <skos:definition xml:lang="en">The fine, flat grinding stage on a flat lap.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Blocking">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">blocking</rdfs:label>
+    <skos:definition xml:lang="en">Centring and rounding the gather with wet blocks.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Timespan">
+    <rdfs:label xml:lang="en">timespan</rdfs:label>
+    <skos:closeMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/E52_Time-Span"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#TakerIn">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Agent"/>
+    <rdfs:label xml:lang="en">taker-in</rdfs:label>
+    <skos:altLabel xml:lang="en">carry-in boy</skos:altLabel>
+    <skos:definition xml:lang="en">Carries finished work to the lehr.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#involves">
+    <rdfs:label xml:lang="en">involves</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Activity"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Agent"/>
+    <rdfs:seeAlso rdf:resource="http://www.cidoc-crm.org/cidoc-crm/P14_carried_out_by"/>
+  </owl:ObjectProperty>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#follows">
+    <owl:inverseOf>
+      <owl:ObjectProperty rdf:about="http://example.org/glassblowing#precedes">
+        <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#TransitiveProperty"/>
+        <rdfs:label xml:lang="en">precedes</rdfs:label>
+        <rdfs:domain rdf:resource="http://example.org/glassblowing#Process"/>
+        <rdfs:range rdf:resource="http://example.org/glassblowing#Process"/>
+        <skos:definition xml:lang="en">Workflow ordering: one process precedes another.</skos:definition>
+        <skos:closeMatch rdf:resource="https://material-digital.de/pmdco/hasNextProcess"/>
+      </owl:ObjectProperty>
+    </owl:inverseOf>
+    <rdfs:label xml:lang="en">follows</rdfs:label>
+    <skos:closeMatch rdf:resource="https://material-digital.de/pmdco/hasPreviousProcess"/>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#Paperweight">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Artifact"/>
+    <rdfs:label xml:lang="en">paperweight</rdfs:label>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Blister">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">blister</rdfs:label>
+    <skos:definition xml:lang="en">A large bubble from gas release, over-reheat or a wet tool.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Billet">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassStock"/>
+    <rdfs:label xml:lang="en">billet</rdfs:label>
+    <skos:definition xml:lang="en">A cast chunk of glass, typically for kiln casting.</skos:definition>
+  </owl:Class>
+  <gbo:Colorant rdf:about="http://example.org/glassblowing#IronColorant">
+    <rdfs:label xml:lang="en">iron</rdfs:label>
+    <gbo:imparts xml:lang="en">green to brown; blue-green (ubiquitous impurity)</gbo:imparts>
+  </gbo:Colorant>
+  <owl:Class rdf:about="http://example.org/glassblowing#Blocks">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HandTool"/>
+    <rdfs:label xml:lang="en">blocks</rdfs:label>
+    <skos:definition xml:lang="en">Wet cupped fruitwood tools for centring and rounding the gather; water flashes to steam and floats the glass.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Marvering">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">marvering</rdfs:label>
+    <skos:definition xml:lang="en">Rolling the gather on the marver to shape, cool or pick up colour.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#PasteMold">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#BlowMold"/>
+    <rdfs:label xml:lang="en">paste mould</rdfs:label>
+    <skos:definition xml:lang="en">A carbonised, water-swabbed mould that spins the piece for a seamless polished surface.</skos:definition>
+  </owl:Class>
+  <gbo:Stabilizer rdf:about="http://example.org/glassblowing#Lime">
+    <rdfs:label xml:lang="en">lime</rdfs:label>
+    <skos:definition xml:lang="en">Calcium oxide; the common stabiliser.</skos:definition>
+  </gbo:Stabilizer>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#prevents">
+    <rdfs:label xml:lang="en">prevents</rdfs:label>
+    <rdfs:domain rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:range rdf:resource="http://example.org/glassblowing#Defect"/>
+    <skos:definition xml:lang="en">A process prevents a defect (e.g. annealing prevents strain fracture).</skos:definition>
+  </owl:ObjectProperty>
+  <gbo:NetworkFormer rdf:about="http://example.org/glassblowing#Silica">
+    <rdfs:label xml:lang="en">silica (sand)</rdfs:label>
+    <skos:definition xml:lang="en">The primary network former; quartz sand.</skos:definition>
+  </gbo:NetworkFormer>
+  <owl:Class rdf:about="http://example.org/glassblowing#Conditioning">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#MeltingProcess"/>
+    <rdfs:label xml:lang="en">conditioning</rdfs:label>
+    <skos:altLabel xml:lang="en">plaining</skos:altLabel>
+    <skos:definition xml:lang="en">Evening temperature and homogenising the glass before gathering.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Devitrification">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Defect"/>
+    <rdfs:label xml:lang="en">devitrification</rdfs:label>
+    <skos:altLabel xml:lang="en">devit</skos:altLabel>
+    <skos:definition xml:lang="en">A hazy crystalline skin from too long in the crystallisation range; the enemy of kiln work and prolonged reheating.</skos:definition>
+    <rdfs:seeAlso rdf:resource="https://glasdigi.cms.uni-jena.de/glass/crystallizationProcess"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Vessel">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Artifact"/>
+    <rdfs:label xml:lang="en">vessel</rdfs:label>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#WorkingRange">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ThermalProperty"/>
+    <rdfs:label xml:lang="en">working range</rdfs:label>
+    <skos:definition xml:lang="en">The viscosity band soft enough to shape but stiff enough to hold form. Wide = 'long' glass; narrow = 'short' glass.</skos:definition>
+  </owl:Class>
+  <owl:ObjectProperty rdf:about="http://example.org/glassblowing#usedIn">
+    <owl:inverseOf>
+      <owl:ObjectProperty rdf:about="http://example.org/glassblowing#uses">
+        <rdfs:label xml:lang="en">uses</rdfs:label>
+        <rdfs:domain rdf:resource="http://example.org/glassblowing#Process"/>
+        <rdfs:range rdf:resource="http://example.org/glassblowing#Equipment"/>
+        <skos:definition xml:lang="en">A process uses a tool, iron, mould or heating device.</skos:definition>
+      </owl:ObjectProperty>
+    </owl:inverseOf>
+    <rdfs:label xml:lang="en">used in</rdfs:label>
+  </owl:ObjectProperty>
+  <owl:Class rdf:about="http://example.org/glassblowing#Agent">
+    <rdfs:label xml:lang="en">Agent</rdfs:label>
+    <skos:definition xml:lang="en">A person or team involved in making glass.</skos:definition>
+    <skos:closeMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/E39_Actor"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Murrine">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassStock"/>
+    <rdfs:label xml:lang="en">murrine</rdfs:label>
+    <skos:altLabel xml:lang="it">murrina</skos:altLabel>
+    <skos:definition xml:lang="en">Patterned cane sliced crosswise to reveal a repeating image.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT 300010953 (verify); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#BlowMold">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Mold"/>
+    <rdfs:label xml:lang="en">blow mould</rdfs:label>
+    <skos:definition xml:lang="en">A closed, often multi-part mould for reproducible form.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Colorant">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#RawMaterial"/>
+    <rdfs:label xml:lang="en">colorant</rdfs:label>
+    <skos:definition xml:lang="en">A metal oxide (or other agent) that colours glass; hue depends on chemistry, furnace atmosphere and sometimes striking.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (colorants); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#MoldFormingProcess">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:label xml:lang="en">mould forming process</rdfs:label>
+    <skos:definition xml:lang="en">Shaping glass in or against a mould.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Artifact">
+    <rdfs:label xml:lang="en">Artifact</rdfs:label>
+    <skos:definition xml:lang="en">A glass object, finished or in progress.</skos:definition>
+    <skos:closeMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/E22_Human-Made_Object"/>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (object types); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Substance">
+    <rdfs:label xml:lang="en">Substance</rdfs:label>
+    <skos:definition xml:lang="en">Glass matter in any form: a glass type, a raw batch material, or a semi-finished glass stock.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Cane">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassStock"/>
+    <rdfs:label xml:lang="en">cane</rdfs:label>
+    <skos:definition xml:lang="en">Pulled thin rod, often coloured or patterned; the raw material of filigree and murrine.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#BohemianTradition">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Tradition"/>
+    <rdfs:label xml:lang="en">Bohemian / Czech</rdfs:label>
+    <skos:definition xml:lang="en">Potash-lime crystal hard enough for deep wheel cutting and engraving; hyalith, lithyalin, cased ruby-cut-to-clear overlay.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Process">
+    <rdfs:label xml:lang="en">Process</rdfs:label>
+    <skos:definition xml:lang="en">An activity performed on or with glass, from melting to cold working.</skos:definition>
+    <skos:closeMatch rdf:resource="https://material-digital.de/pmdco/Process"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Mold">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Equipment"/>
+    <rdfs:label xml:lang="en">mould</rdfs:label>
+    <skos:definition xml:lang="en">A form the glass is shaped in or against.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#MuraneseTradition">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Tradition"/>
+    <rdfs:label xml:lang="en">Venetian / Muranese</rdfs:label>
+    <skos:definition xml:lang="en">The technique wellspring: cristallo, lattimo, filigrana/zanfirico/reticello, avventurina, calcedonio, ghiaccio, incalmo, sommerso, battuto; the maestro/servitore team language.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Activity">
+    <rdfs:label xml:lang="en">activity</rdfs:label>
+    <skos:definition xml:lang="en">One step within a creation event (e.g. an instance of blowing, grinding, gilding), with its own materials, tools, people, place and time.</skos:definition>
+    <skos:closeMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/E7_Activity"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#RawMaterial">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Substance"/>
+    <rdfs:label xml:lang="en">raw material</rdfs:label>
+    <skos:definition xml:lang="en">A batch constituent charged to the furnace.</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/RawMaterial"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Flameworking">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">flameworking</rdfs:label>
+    <skos:altLabel xml:lang="en">lampworking</skos:altLabel>
+    <skos:altLabel xml:lang="en">torchwork</skos:altLabel>
+    <skos:definition xml:lang="en">Forming at a bench torch from rod and tube rather than a furnace.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (lampworking); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#ThermalProperty">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Property"/>
+    <rdfs:label xml:lang="en">thermal property</rdfs:label>
+    <skos:definition xml:lang="en">A property governing how glass behaves with temperature. Each named 'point' is really a fixed viscosity.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Fusing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#KilnProcess"/>
+    <rdfs:label xml:lang="en">fusing</rdfs:label>
+    <skos:definition xml:lang="en">Heating compatible pieces until they bond.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (fusing); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#GlassType">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Substance"/>
+    <rdfs:label xml:lang="en">Glass type</rdfs:label>
+    <skos:definition xml:lang="en">A family of glass defined by its network former and modifiers (its chemistry).</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/Glass"/>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT; Wikidata Q11469 (glass)</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#HeatingEquipment">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Equipment"/>
+    <rdfs:label xml:lang="en">heating equipment</rdfs:label>
+    <skos:definition xml:lang="en">A device that melts, holds, reheats or cools glass.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#MeltingProcess">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:label xml:lang="en">melting process</rdfs:label>
+    <skos:definition xml:lang="en">Turning raw batch into homogeneous workable glass.</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/meltingProcess"/>
+    <rdfs:seeAlso rdf:resource="https://glasdigi.cms.uni-jena.de/glass/GlassManufacturingProcess"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#OpticalProperty">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Property"/>
+    <rdfs:label xml:lang="en">optical property</rdfs:label>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/OpticalProperty"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Shears">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HandTool"/>
+    <rdfs:label xml:lang="en">shears</rdfs:label>
+    <skos:definition xml:lang="en">Cutting tools for glass: straight shears cut trails and gathers; diamond/jack shears nip and shape.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Defect">
+    <rdfs:label xml:lang="en">Defect</rdfs:label>
+    <skos:definition xml:lang="en">An unwanted flaw in glass arising from batch, melt, forming or cooling.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#KilnProcess">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:label xml:lang="en">kiln process</rdfs:label>
+    <skos:altLabel xml:lang="en">warm glass</skos:altLabel>
+    <skos:definition xml:lang="en">Forming glass by heat and gravity in a kiln, governed by a firing schedule, rather than by hand at a furnace.</skos:definition>
+  </owl:Class>
+  <gbo:Dialect rdf:about="http://example.org/glassblowing#dialect-FLAME">
+    <rdfs:label xml:lang="en">flame / lamp-working subculture</rdfs:label>
+  </gbo:Dialect>
+  <owl:Class rdf:about="http://example.org/glassblowing#ColdWorkingProcess">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:label xml:lang="en">cold working process</rdfs:label>
+    <skos:definition xml:lang="en">Work done to cold, annealed glass with abrasives, wheels or acid.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#GatheringProcess">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:label xml:lang="en">gathering process</rdfs:label>
+    <skos:definition xml:lang="en">Collecting molten glass on an iron.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Dialect">
+    <rdfs:label xml:lang="en">dialect / register</rdfs:label>
+    <skos:definition xml:lang="en">A regional or subcultural vocabulary register in which glass terms are spoken.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Material">
+    <rdfs:label xml:lang="en">material (as processed)</rdfs:label>
+    <skos:definition xml:lang="en">A substance as processed in an activity; use for provenance where gbo:Substance is the type.</skos:definition>
+    <skos:closeMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/E57_Material"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Iron">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Equipment"/>
+    <rdfs:label xml:lang="en">iron</rdfs:label>
+    <skos:definition xml:lang="en">A steel rod on which glass is gathered and worked.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#CaneWork">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:label xml:lang="en">cane work</rdfs:label>
+    <skos:definition xml:lang="en">Pulling, twisting, assembling and slicing coloured cane.</skos:definition>
+    <gbo:originatesInHint xml:lang="en">Venetian / Muranese</gbo:originatesInHint>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#AnnealingProcess">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:label xml:lang="en">annealing process</rdfs:label>
+    <skos:definition xml:lang="en">Controlled cooling that relaxes and then locks in minimal residual stress; the step that makes glass survive.</skos:definition>
+    <skos:closeMatch rdf:resource="https://glasdigi.cms.uni-jena.de/glass/coolingProcess"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#HandTool">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Equipment"/>
+    <rdfs:label xml:lang="en">hand tool</rdfs:label>
+    <skos:definition xml:lang="en">A bench tool for shaping hot glass.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Casing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#HotFormingProcess"/>
+    <rdfs:label xml:lang="en">casing / overlay</rdfs:label>
+    <skos:definition xml:lang="en">Gathering one colour over another (or over clear), building concentric layers; the substrate for cameo, Graal and sommerso.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#CreationEvent">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:label xml:lang="en">creation event</rdfs:label>
+    <skos:definition xml:lang="en">The whole making of one artwork, composed of ordered activities. Event-centric anchor for provenance.</skos:definition>
+    <skos:closeMatch rdf:resource="http://www.cidoc-crm.org/cidoc-crm/E12_Production"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Grinding">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ColdWorkingProcess"/>
+    <rdfs:label xml:lang="en">grinding</rdfs:label>
+    <skos:definition xml:lang="en">Flattening and truing with graded diamond or silicon-carbide abrasive.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (grinding); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Stabilizer">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#RawMaterial"/>
+    <rdfs:label xml:lang="en">stabilizer</rdfs:label>
+    <skos:definition xml:lang="en">A modifier (lime, dolomite, alumina) that makes glass durable rather than water-soluble.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#HotFormingProcess">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:label xml:lang="en">hot forming process</rdfs:label>
+    <skos:definition xml:lang="en">Shaping glass while molten, by tool, breath, mould or gravity.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (glassblowing 300053932 — verify); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Filigrana">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#CaneWork"/>
+    <rdfs:label xml:lang="it">filigrana</rdfs:label>
+    <skos:altLabel xml:lang="it">zanfirico</skos:altLabel>
+    <skos:altLabel xml:lang="en">filigree</skos:altLabel>
+    <skos:definition xml:lang="en">Cane containing twisted internal threads; the family term for lacy thread-in-glass.</skos:definition>
+    <gbo:originatesIn rdf:resource="http://example.org/glassblowing#MuraneseTradition"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Tradition">
+    <rdfs:label xml:lang="en">Tradition</rdfs:label>
+    <skos:definition xml:lang="en">A regional or historical school of glassmaking with a characteristic material bias, technique set and dialect.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (styles &amp; periods); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Etching">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ColdWorkingProcess"/>
+    <rdfs:label xml:lang="en">etching</rdfs:label>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Engraving">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ColdWorkingProcess"/>
+    <rdfs:label xml:lang="en">engraving</rdfs:label>
+    <skos:definition xml:lang="en">Incising the surface by wheel, point or stipple.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (engraving); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <gbo:Dialect rdf:about="http://example.org/glassblowing#dialect-SCI">
+    <rdfs:label xml:lang="en">scientific / industrial</rdfs:label>
+  </gbo:Dialect>
+  <owl:Class rdf:about="http://example.org/glassblowing#DecorationProcess">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Process"/>
+    <rdfs:label xml:lang="en">decoration process</rdfs:label>
+    <skos:definition xml:lang="en">Applying colour or pattern to hot glass.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#AbrasiveBlasting">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ColdWorkingProcess"/>
+    <rdfs:label xml:lang="en">abrasive blasting</rdfs:label>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Frit">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#GlassStock"/>
+    <rdfs:label xml:lang="en">frit</rdfs:label>
+    <skos:definition xml:lang="en">Crushed glass, graded coarse to fine, for rolling in colour and for kiln work.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Flux">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#RawMaterial"/>
+    <rdfs:label xml:lang="en">flux</rdfs:label>
+    <skos:definition xml:lang="en">A modifier (soda ash, potash) that lowers the melting temperature of silica.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#GlassStock">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Substance"/>
+    <rdfs:label xml:lang="en">glass stock</rdfs:label>
+    <skos:definition xml:lang="en">A pre-made glass form the maker pulls or buys: cane, rod, frit, billet, sheet, murrine.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#DipMold">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Mold"/>
+    <rdfs:label xml:lang="en">dip mould</rdfs:label>
+    <skos:definition xml:lang="en">An open one-piece mould; the bubble is dipped and inflated to take a base pattern.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Polishing">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#ColdWorkingProcess"/>
+    <rdfs:label xml:lang="en">polishing</rdfs:label>
+    <skos:definition xml:lang="en">Bringing to clarity, mechanically or otherwise.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Property">
+    <rdfs:label xml:lang="en">Property</rdfs:label>
+    <skos:definition xml:lang="en">A measurable or observable characteristic of a glass substance.</skos:definition>
+    <skos:closeMatch rdf:resource="https://material-digital.de/pmdco/MaterialProperty"/>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#Equipment">
+    <rdfs:label xml:lang="en">Equipment</rdfs:label>
+    <skos:definition xml:lang="en">A tool, iron, mould or heating device used in making or finishing glass.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#StudioGlass">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#Tradition"/>
+    <rdfs:label xml:lang="en">American Studio Glass movement</rdfs:label>
+    <skos:definition xml:lang="en">Littleton and Labino, Toledo workshops 1962: a small furnace and workable glass that took blowing into the artist's studio; popularised 'offhand'.</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#KilnCasting">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#KilnProcess"/>
+    <rdfs:label xml:lang="en">kiln casting</rdfs:label>
+    <skos:definition xml:lang="en">Molten glass fills a refractory mould.</skos:definition>
+    <gbo:vocabularyTarget xml:lang="en">Getty AAT (casting); Wikidata</gbo:vocabularyTarget>
+  </owl:Class>
+  <gbo:Dialect rdf:about="http://example.org/glassblowing#dialect-IT">
+    <rdfs:label xml:lang="en">Venetian / Muranese</rdfs:label>
+  </gbo:Dialect>
+  <owl:Class rdf:about="http://example.org/glassblowing#NetworkFormer">
+    <rdfs:subClassOf rdf:resource="http://example.org/glassblowing#RawMaterial"/>
+    <rdfs:label xml:lang="en">network former</rdfs:label>
+    <skos:definition xml:lang="en">The oxide that forms the glass skeleton (silica; also boron oxide).</skos:definition>
+  </owl:Class>
+  <owl:Class rdf:about="http://example.org/glassblowing#LexicalVariant">
+    <rdfs:label xml:lang="en">lexical variant</rdfs:label>
+    <skos:definition xml:lang="en">A reified term: a word for a concept, tagged with the dialect it belongs to. Makes the concordance queryable.</skos:definition>
+  </owl:Class>
+  <gbo:Dialect rdf:about="http://example.org/glassblowing#dialect-EN">
+    <rdfs:label xml:lang="en">Anglo-American studio</rdfs:label>
+  </gbo:Dialect>
+</rdf:RDF>

@@ -1,0 +1,4189 @@
+{
+  "@context": {
+    "aat": "http://vocab.getty.edu/aat/",
+    "brick": "https://brickschema.org/schema/Brick#",
+    "crm": "http://www.cidoc-crm.org/cidoc-crm/",
+    "csvw": "http://www.w3.org/ns/csvw#",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "dcam": "http://purl.org/dc/dcam/",
+    "dcat": "http://www.w3.org/ns/dcat#",
+    "dcmitype": "http://purl.org/dc/dcmitype/",
+    "dcterms": "http://purl.org/dc/terms/",
+    "doap": "http://usefulinc.com/ns/doap#",
+    "foaf": "http://xmlns.com/foaf/0.1/",
+    "gbo": "http://example.org/glassblowing#",
+    "geo": "http://www.opengis.net/ont/geosparql#",
+    "glasdigi": "https://glasdigi.cms.uni-jena.de/glass/",
+    "odrl": "http://www.w3.org/ns/odrl/2/",
+    "org": "http://www.w3.org/ns/org#",
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "pmdco": "https://material-digital.de/pmdco/",
+    "prof": "http://www.w3.org/ns/dx/prof/",
+    "prov": "http://www.w3.org/ns/prov#",
+    "qb": "http://purl.org/linked-data/cube#",
+    "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "schema": "https://schema.org/",
+    "sh": "http://www.w3.org/ns/shacl#",
+    "skos": "http://www.w3.org/2004/02/skos/core#",
+    "sosa": "http://www.w3.org/ns/sosa/",
+    "ssn": "http://www.w3.org/ns/ssn/",
+    "time": "http://www.w3.org/2006/time#",
+    "vann": "http://purl.org/vocab/vann/",
+    "void": "http://rdfs.org/ns/void#",
+    "wd": "http://www.wikidata.org/entity/",
+    "wgs": "https://www.w3.org/2003/01/geo/wgs84_pos#",
+    "xsd": "http://www.w3.org/2001/XMLSchema#"
+  },
+  "@graph": [
+    {
+      "@id": "gbo:Timespan",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "timespan"
+      },
+      "skos:closeMatch": {
+        "@id": "crm:E52_Time-Span"
+      }
+    },
+    {
+      "@id": "gbo:Sculpture",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "sculpture"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Artifact"
+      }
+    },
+    {
+      "@id": "gbo:Founding",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "founding / melting"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:MeltingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Liquefying the batch."
+      }
+    },
+    {
+      "@id": "gbo:var-gaffer-IT",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-IT"
+      },
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "maestro"
+      }
+    },
+    {
+      "@id": "gbo:SofteningPoint",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "softening point"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ThermalProperty"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "Littleton point"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The temperature (~10^7.6 poise) at which glass sags under its own weight."
+      },
+      "skos:exactMatch": {
+        "@id": "glasdigi:SofteningPoint"
+      }
+    },
+    {
+      "@id": "gbo:AngloTradition",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "English / Anglo-American"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Lead crystal (Ravenscroft, 1670s) prized for weight and brilliance; the gaffer/chair/servitor/gatherer/taker-in team lexicon; cut glass."
+      }
+    },
+    {
+      "@id": "gbo:Equipment",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Equipment"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A tool, iron, mould or heating device used in making or finishing glass."
+      }
+    },
+    {
+      "@id": "gbo:CaneWork",
+      "@type": "owl:Class",
+      "gbo:originatesInHint": {
+        "@language": "en",
+        "@value": "Venetian / Muranese"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "cane work"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Process"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Pulling, twisting, assembling and slicing coloured cane."
+      }
+    },
+    {
+      "@id": "gbo:KilnProcess",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "kiln process"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Process"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "warm glass"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Forming glass by heat and gravity in a kiln, governed by a firing schedule, rather than by hand at a furnace."
+      }
+    },
+    {
+      "@id": "gbo:OpticMolding",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "optic moulding"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:MoldFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Impressing an optic texture with a ribbed mould."
+      }
+    },
+    {
+      "@id": "gbo:DipMolding",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "dip moulding"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:MoldFormingProcess"
+      }
+    },
+    {
+      "@id": "gbo:PuntyScar",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "punty scar"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A rough spot on the base from punty break-off; avoided with a gadget."
+      }
+    },
+    {
+      "@id": "gbo:Opacifier",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "opacifier"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:RawMaterial"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "An agent (tin, fluorine, phosphate) that renders glass opaque or opalescent."
+      }
+    },
+    {
+      "@id": "gbo:IslamicTradition",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Islamic"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Luster painting, enamelled and gilded lamps, wheel-cut relief; a bridge between antiquity and Venice."
+      }
+    },
+    {
+      "@id": "gbo:var-jacks-EN",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-EN"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "jacks"
+      }
+    },
+    {
+      "@id": "gbo:Silica",
+      "@type": "gbo:NetworkFormer",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "silica (sand)"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The primary network former; quartz sand."
+      }
+    },
+    {
+      "@id": "gbo:Polariscope",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "polariscope"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Equipment"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Crossed polarisers that reveal frozen stress as coloured fringes; the annealing-quality inspection instrument."
+      }
+    },
+    {
+      "@id": "gbo:Footmaker",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "footmaker / second gaffer"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Agent"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Makes and attaches feet and components."
+      }
+    },
+    {
+      "@id": "gbo:dialect-SE",
+      "@type": "gbo:Dialect",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Scandinavian / Swedish"
+      }
+    },
+    {
+      "@id": "gbo:partOf",
+      "@type": [
+        "owl:ObjectProperty",
+        "owl:TransitiveProperty"
+      ],
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Mereological containment."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "part of"
+      }
+    },
+    {
+      "@id": "gbo:RawMaterial",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "raw material"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Substance"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:RawMaterial"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A batch constituent charged to the furnace."
+      }
+    },
+    {
+      "@id": "gbo:CobaltOxide",
+      "@type": "gbo:Colorant",
+      "gbo:imparts": {
+        "@language": "en",
+        "@value": "deep blue (strong at tiny doses)"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "cobalt oxide"
+      }
+    },
+    {
+      "@id": "gbo:Latticino",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "latticino"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Filigrana"
+      },
+      "skos:altLabel": {
+        "@language": "it",
+        "@value": "lattimo"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "White (milk-glass) thread work used in filigree."
+      }
+    },
+    {
+      "@id": "gbo:GoldColloid",
+      "@type": "gbo:Colorant",
+      "gbo:imparts": {
+        "@language": "en",
+        "@value": "ruby / cranberry; a striking colour"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "colloidal gold"
+      }
+    },
+    {
+      "@id": "gbo:Cane",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "cane"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassStock"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Pulled thin rod, often coloured or patterned; the raw material of filigree and murrine."
+      }
+    },
+    {
+      "@id": "gbo:originatesIn",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "originates in"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A technique originates in a tradition (e.g. reticello originates in the Muranese tradition)."
+      }
+    },
+    {
+      "@id": "gbo:Etching",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "etching"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ColdWorkingProcess"
+      }
+    },
+    {
+      "@id": "gbo:Colorant",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (colorants); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "colorant"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:RawMaterial"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A metal oxide (or other agent) that colours glass; hue depends on chemistry, furnace atmosphere and sometimes striking."
+      }
+    },
+    {
+      "@id": "gbo:",
+      "@type": "owl:Ontology",
+      "dcterms:contributor": {
+        "@language": "en",
+        "@value": "Drafted with Claude (Anthropic)"
+      },
+      "dcterms:created": {
+        "@type": "xsd:date",
+        "@value": "2026-08-28"
+      },
+      "dcterms:creator": {
+        "@language": "en",
+        "@value": "Anson Parker"
+      },
+      "dcterms:description": {
+        "@language": "en",
+        "@value": "A craft-and-dialect ontology for hot glass: the material's life from batch\nthrough melting, gathering, hot forming, decoration, mould forming, kiln work,\nannealing and cold working, plus studio roles, defects, regional traditions and a\nqueryable dialect concordance. It is the artisanal/technique layer that bridges two\nexisting efforts: the GlasDigital materials-science ontology (physics, melting,\nmeasurement) which it aligns physical properties and equipment to, and the\nevent-centric cultural-heritage modelling of De Boer et al. (CIDOC-CRM / AAT /\nWikidata) which it mirrors for describing individual works and their creation."
+      },
+      "dcterms:license": {
+        "@id": "https://creativecommons.org/licenses/by/4.0/"
+      },
+      "dcterms:title": {
+        "@language": "en",
+        "@value": "A Glassblowing Ontology (craft, process & dialect layer)"
+      },
+      "owl:versionInfo": "0.1.0",
+      "rdfs:seeAlso": [
+        {
+          "@id": "https://w3id.org/pmd/glass-ontology/1.0.1"
+        },
+        {
+          "@id": "https://materialdigital.github.io/glasdigital-ontology/index-en.html"
+        },
+        {
+          "@id": "https://journal.dhbenelux.org/journal/issues/004/article-4-DeBoer.html"
+        }
+      ]
+    },
+    {
+      "@id": "gbo:createdBy",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Artifact"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "created by"
+      },
+      "rdfs:range": {
+        "@id": "gbo:CreationEvent"
+      },
+      "rdfs:seeAlso": {
+        "@id": "crm:P108i_was_produced_by"
+      }
+    },
+    {
+      "@id": "gbo:MeltingProcess",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "melting process"
+      },
+      "rdfs:seeAlso": {
+        "@id": "glasdigi:GlassManufacturingProcess"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Process"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:meltingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Turning raw batch into homogeneous workable glass."
+      }
+    },
+    {
+      "@id": "gbo:WorkingRange",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "working range"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ThermalProperty"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The viscosity band soft enough to shape but stiff enough to hold form. Wide = 'long' glass; narrow = 'short' glass."
+      }
+    },
+    {
+      "@id": "gbo:Blocks",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "blocks"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HandTool"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Wet cupped fruitwood tools for centring and rounding the gather; water flashes to steam and floats the glass."
+      }
+    },
+    {
+      "@id": "gbo:DecorativeCutting",
+      "@type": "owl:Class",
+      "gbo:originatesIn": {
+        "@id": "gbo:BohemianTradition"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "decorative cutting"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ColdWorkingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The lapidary tradition of mitre, panel and brilliant cuts on a cutting lathe; the Bohemian heartland."
+      }
+    },
+    {
+      "@id": "gbo:GloryHole",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "glory hole"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HeatingEquipment"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A reheating chamber; work is spun in it to stay hot and mobile between tooling steps."
+      }
+    },
+    {
+      "@id": "gbo:Slumping",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (slumping); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "slumping"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:KilnProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A fused blank sags over or into a mould to take a form."
+      }
+    },
+    {
+      "@id": "gbo:Blister",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "blister"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A large bubble from gas release, over-reheat or a wet tool."
+      }
+    },
+    {
+      "@id": "gbo:Incalmo",
+      "@type": "owl:Class",
+      "gbo:originatesIn": {
+        "@id": "gbo:MuraneseTradition"
+      },
+      "gbo:originatesInHint": {
+        "@language": "en",
+        "@value": "Venetian / Muranese"
+      },
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "incalmo"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Fusing two or more separately blown, open-mouthed forms rim-to-rim while hot to make crisp colour bands; demands matched diameters."
+      }
+    },
+    {
+      "@id": "gbo:Marvering",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "marvering"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Rolling the gather on the marver to shape, cool or pick up colour."
+      }
+    },
+    {
+      "@id": "gbo:Conditioning",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "conditioning"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:MeltingProcess"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "plaining"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Evening temperature and homogenising the glass before gathering."
+      }
+    },
+    {
+      "@id": "gbo:var-servitor-EN",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-EN"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "servitor"
+      }
+    },
+    {
+      "@id": "gbo:DecorationProcess",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "decoration process"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Process"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Applying colour or pattern to hot glass."
+      }
+    },
+    {
+      "@id": "gbo:Collection",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "collection"
+      },
+      "skos:closeMatch": {
+        "@id": "crm:E78_Curated_Holding"
+      }
+    },
+    {
+      "@id": "gbo:GlassStock",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "glass stock"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Substance"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A pre-made glass form the maker pulls or buys: cane, rod, frit, billet, sheet, murrine."
+      }
+    },
+    {
+      "@id": "gbo:PasteMold",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "paste mould"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:BlowMold"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A carbonised, water-swabbed mould that spins the piece for a seamless polished surface."
+      }
+    },
+    {
+      "@id": "gbo:var-offhand-IT",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-IT"
+      },
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "soffiato a mano"
+      }
+    },
+    {
+      "@id": "gbo:RefractiveIndex",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "refractive index"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:OpticalProperty"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "How strongly glass bends light; raised by lead and barium."
+      },
+      "skos:exactMatch": {
+        "@id": "glasdigi:RefractiveIndex"
+      }
+    },
+    {
+      "@id": "gbo:MurrineMaking",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "murrine making"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:CaneWork"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Building a patterned cane, slicing it crosswise, then assembling and fusing the slices."
+      }
+    },
+    {
+      "@id": "gbo:Kiln",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "kiln"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HeatingEquipment"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "An oven for warm-glass forming by heat and gravity (fusing, slumping, casting)."
+      }
+    },
+    {
+      "@id": "gbo:AbrasiveBlasting",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "abrasive blasting"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ColdWorkingProcess"
+      }
+    },
+    {
+      "@id": "gbo:Murrine",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT 300010953 (verify); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "murrine"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassStock"
+      },
+      "skos:altLabel": {
+        "@language": "it",
+        "@value": "murrina"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Patterned cane sliced crosswise to reveal a repeating image."
+      }
+    },
+    {
+      "@id": "gbo:Marver",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "marver"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HandTool"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A flat steel (historically marble) table for rolling, cooling, shaping and picking up colour."
+      }
+    },
+    {
+      "@id": "gbo:Blank",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "blank"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Artifact"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A fused or formed piece awaiting further (usually cold) work."
+      }
+    },
+    {
+      "@id": "gbo:CopperWheelEngraving",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "copper-wheel engraving"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Engraving"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Fine intaglio cut with small copper wheels and abrasive slurry."
+      }
+    },
+    {
+      "@id": "gbo:FreeBlowing",
+      "@type": "owl:Class",
+      "gbo:hasLexicalVariant": [
+        {
+          "@id": "gbo:var-offhand-EN"
+        },
+        {
+          "@id": "gbo:var-offhand-IT"
+        }
+      ],
+      "gbo:originatesIn": {
+        "@id": "gbo:StudioGlass"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "free-blowing"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:altLabel": [
+        {
+          "@language": "en",
+          "@value": "offhand"
+        },
+        {
+          "@language": "it",
+          "@value": "soffiato a mano"
+        }
+      ],
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Shaping in the air by tool and breath alone, no mould; the Studio Glass touchstone."
+      }
+    },
+    {
+      "@id": "gbo:RubyGoldGlass",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "gold ruby glass"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassType"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "cranberry glass"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Glass struck to a ruby colour by colloidal gold (Purple of Cassius); a striking colour developed on reheat."
+      }
+    },
+    {
+      "@id": "gbo:hasLexicalVariant",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "has lexical variant"
+      },
+      "rdfs:range": {
+        "@id": "gbo:LexicalVariant"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Links a concept to a dialect-tagged word for it."
+      }
+    },
+    {
+      "@id": "gbo:LexicalVariant",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "lexical variant"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A reified term: a word for a concept, tagged with the dialect it belongs to. Makes the concordance queryable."
+      }
+    },
+    {
+      "@id": "gbo:GlassTransition",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "glass transition (Tg)"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ThermalProperty"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:GlassTransitionTemperature"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The amorphous-solid/liquid boundary region."
+      }
+    },
+    {
+      "@id": "gbo:dialect-EN",
+      "@type": "gbo:Dialect",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Anglo-American studio"
+      }
+    },
+    {
+      "@id": "gbo:Dispersion",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "dispersion"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:OpticalProperty"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Wavelength-dependence of refraction; the 'fire' of cut crystal."
+      },
+      "skos:exactMatch": {
+        "@id": "glasdigi:Dispersion"
+      }
+    },
+    {
+      "@id": "gbo:Defect",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "An unwanted flaw in glass arising from batch, melt, forming or cooling."
+      }
+    },
+    {
+      "@id": "gbo:Soffietta",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "soffietta"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HandTool"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "puffer"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A cone-tipped blow tube that seals onto a transferred piece so it can still be inflated without a blowpipe."
+      }
+    },
+    {
+      "@id": "gbo:performedBy",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Process"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "performed by"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Agent"
+      },
+      "rdfs:seeAlso": {
+        "@id": "crm:P14_carried_out_by"
+      }
+    },
+    {
+      "@id": "gbo:ThermalShockResistance",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "thermal shock resistance"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ThermalProperty"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Ability to withstand a steep temperature gradient without fracturing."
+      },
+      "skos:exactMatch": {
+        "@id": "glasdigi:ThermalShockResistance"
+      }
+    },
+    {
+      "@id": "gbo:Flashing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "flashing"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:DecorationProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Applying a thin surface colour layer (thicker = casing)."
+      }
+    },
+    {
+      "@id": "gbo:Fusing",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (fusing); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "fusing"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:KilnProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Heating compatible pieces until they bond."
+      }
+    },
+    {
+      "@id": "gbo:Paperweight",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "paperweight"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Artifact"
+      }
+    },
+    {
+      "@id": "gbo:Annealer",
+      "@type": "owl:Class",
+      "gbo:hasLexicalVariant": [
+        {
+          "@id": "gbo:var-annealer-EN"
+        },
+        {
+          "@id": "gbo:var-annealer-IND"
+        }
+      ],
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "annealer"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HeatingEquipment"
+      },
+      "skos:altLabel": [
+        {
+          "@language": "en",
+          "@value": "lehr"
+        },
+        {
+          "@language": "en",
+          "@value": "garage"
+        }
+      ],
+      "skos:closeMatch": {
+        "@id": "glasdigi:CoolOven"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A controlled-cooling oven; batch 'annealer' in a studio, continuous 'lehr' in industry."
+      }
+    },
+    {
+      "@id": "gbo:Millefiori",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "millefiori"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Murrine"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Floral murrine ('thousand flowers')."
+      }
+    },
+    {
+      "@id": "gbo:Flux",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "flux"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:RawMaterial"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A modifier (soda ash, potash) that lowers the melting temperature of silica."
+      }
+    },
+    {
+      "@id": "gbo:Ream",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "ream"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A glassy layer of differing composition from contamination or inhomogeneity."
+      }
+    },
+    {
+      "@id": "gbo:TackFuse",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "tack fuse"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Fusing"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Pieces stick but keep their shape."
+      }
+    },
+    {
+      "@id": "gbo:TurnMold",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "turn / spun mould"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:BlowMold"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A mould in which the piece is rotated to erase seams."
+      }
+    },
+    {
+      "@id": "gbo:processes",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Activity"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "processes"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Material"
+      }
+    },
+    {
+      "@id": "gbo:CreationEvent",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "creation event"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Process"
+      },
+      "skos:closeMatch": {
+        "@id": "crm:E12_Production"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The whole making of one artwork, composed of ordered activities. Event-centric anchor for provenance."
+      }
+    },
+    {
+      "@id": "gbo:RomanTradition",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Roman / ancient"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Core-forming and casting precede blowing; glassblowing invented ~mid-1st century BCE in the Syro-Palestinian (Levantine) region, industrialised under Rome."
+      }
+    },
+    {
+      "@id": "gbo:Substance",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Substance"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Glass matter in any form: a glass type, a raw batch material, or a semi-finished glass stock."
+      }
+    },
+    {
+      "@id": "gbo:GatheringProcess",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "gathering process"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Process"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Collecting molten glass on an iron."
+      }
+    },
+    {
+      "@id": "gbo:BitWork",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "bit work"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Small hot additions (handles, feet, prunts, wings) applied from a bit gather."
+      }
+    },
+    {
+      "@id": "gbo:Casing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "casing / overlay"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Gathering one colour over another (or over clear), building concentric layers; the substrate for cameo, Graal and sommerso."
+      }
+    },
+    {
+      "@id": "gbo:AnnealingPoint",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "annealing point"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ThermalProperty"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The temperature (~10^13 poise) at which internal stress relaxes in minutes; the centre of the anneal soak."
+      },
+      "skos:exactMatch": {
+        "@id": "glasdigi:AnnealingPoint"
+      }
+    },
+    {
+      "@id": "_:n58e81b20eed141ad9a483fe5e54e6508b1",
+      "@type": "owl:AllDisjointClasses",
+      "owl:members": {
+        "@list": [
+          {
+            "@id": "gbo:Substance"
+          },
+          {
+            "@id": "gbo:Equipment"
+          },
+          {
+            "@id": "gbo:Process"
+          },
+          {
+            "@id": "gbo:Agent"
+          }
+        ]
+      }
+    },
+    {
+      "@id": "gbo:Mold",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "mould"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Equipment"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A form the glass is shaped in or against."
+      }
+    },
+    {
+      "@id": "gbo:ColdWorkingProcess",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "cold working process"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Process"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Work done to cold, annealed glass with abrasives, wheels or acid."
+      }
+    },
+    {
+      "@id": "gbo:MoldFormingProcess",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "mould forming process"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Process"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Shaping glass in or against a mould."
+      }
+    },
+    {
+      "@id": "gbo:CanePickup",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "cane pickup"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:DecorationProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Rolling the hot form over arranged cane to fuse a pattern into the skin."
+      }
+    },
+    {
+      "@id": "gbo:ScientificGlassblowing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "scientific glassblowing"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Flameworking"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Precision borosilicate/quartz fabrication: graded seals, T-seals, ring seals, vacuum manifolds; adjacent to neon tube bending and plasma-vessel work."
+      }
+    },
+    {
+      "@id": "gbo:DipMold",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "dip mould"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Mold"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "An open one-piece mould; the bubble is dipped and inflated to take a base pattern."
+      }
+    },
+    {
+      "@id": "gbo:var-boro-SCI",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-SCI"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "borosilicate"
+      }
+    },
+    {
+      "@id": "gbo:MezzaFiligrana",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "mezza filigrana"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Filigrana"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Single-twist half-filigree."
+      }
+    },
+    {
+      "@id": "gbo:Sandblasting",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (sandblasting); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "sandblasting"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:AbrasiveBlasting"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Frosting or carving the surface with abrasive under air pressure."
+      }
+    },
+    {
+      "@id": "gbo:AbbeNumber",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Abbe number"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:OpticalProperty"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A measure of dispersion (V-number)."
+      },
+      "skos:exactMatch": {
+        "@id": "glasdigi:AbbeNumber"
+      }
+    },
+    {
+      "@id": "gbo:Gaffer",
+      "@type": "owl:Class",
+      "gbo:hasLexicalVariant": [
+        {
+          "@id": "gbo:var-gaffer-EN"
+        },
+        {
+          "@id": "gbo:var-gaffer-IT"
+        }
+      ],
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (glassblowers); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "gaffer"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Agent"
+      },
+      "skos:altLabel": {
+        "@language": "it",
+        "@value": "maestro"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The master who sits in the chair and forms the piece."
+      }
+    },
+    {
+      "@id": "gbo:Stone",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "stone"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A solid inclusion of unmelted batch or refractory."
+      }
+    },
+    {
+      "@id": "gbo:ThermalProperty",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "thermal property"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Property"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A property governing how glass behaves with temperature. Each named 'point' is really a fixed viscosity."
+      }
+    },
+    {
+      "@id": "gbo:CastingMold",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "casting mould"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Mold"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A refractory/investment mould for kiln casting, typically lost-wax in plaster-silica."
+      }
+    },
+    {
+      "@id": "gbo:BorosilicateGlass",
+      "@type": "owl:Class",
+      "gbo:hasLexicalVariant": [
+        {
+          "@id": "gbo:var-boro-FLAME"
+        },
+        {
+          "@id": "gbo:var-boro-SCI"
+        }
+      ],
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "borosilicate glass"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassType"
+      },
+      "skos:altLabel": [
+        {
+          "@language": "en",
+          "@value": "boro"
+        },
+        {
+          "@language": "en",
+          "@value": "hard glass"
+        }
+      ],
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Boron-oxide co-former; very low expansion and high thermal-shock resistance. Scientific labware and the dominant American flamework medium."
+      }
+    },
+    {
+      "@id": "gbo:Stabilizer",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "stabilizer"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:RawMaterial"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A modifier (lime, dolomite, alumina) that makes glass durable rather than water-soluble."
+      }
+    },
+    {
+      "@id": "gbo:prevents",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Process"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "prevents"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A process prevents a defect (e.g. annealing prevents strain fracture)."
+      }
+    },
+    {
+      "@id": "gbo:Material",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "material (as processed)"
+      },
+      "skos:closeMatch": {
+        "@id": "crm:E57_Material"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A substance as processed in an activity; use for provenance where gbo:Substance is the type."
+      }
+    },
+    {
+      "@id": "gbo:BariumCrystal",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "barium / lead-free crystal"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassType"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "High-index optical and eco-crystal formulations replacing lead oxide with barium, lanthanum or similar."
+      }
+    },
+    {
+      "@id": "gbo:requires",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Process"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "requires"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Property"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A process requires a property to hold (e.g. fusing requires COE match)."
+      }
+    },
+    {
+      "@id": "gbo:SodaAsh",
+      "@type": "gbo:Flux",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "soda ash"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Sodium carbonate; the common flux."
+      }
+    },
+    {
+      "@id": "gbo:Billet",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "billet"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassStock"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A cast chunk of glass, typically for kiln casting."
+      }
+    },
+    {
+      "@id": "gbo:OpticMold",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "optic mould"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:DipMold"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A ribbed dip mould that impresses an optic texture, then blown out and often twisted."
+      }
+    },
+    {
+      "@id": "gbo:var-punty-IT",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-IT"
+      },
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "pontello"
+      }
+    },
+    {
+      "@id": "gbo:Cullet",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "cullet"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:RawMaterial"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Recycled or reused glass added to the batch to ease melting and reduce volatilisation."
+      }
+    },
+    {
+      "@id": "gbo:var-offhand-EN",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-EN"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "offhand / free-blown"
+      }
+    },
+    {
+      "@id": "gbo:Combing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "combing / feathering"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:DecorationProcess"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "festooning"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Dragging a hooked tool through trails or bands to create feathered, dragged or looped patterns; an ancient core-formed technique."
+      }
+    },
+    {
+      "@id": "gbo:MuraneseTradition",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Venetian / Muranese"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The technique wellspring: cristallo, lattimo, filigrana/zanfirico/reticello, avventurina, calcedonio, ghiaccio, incalmo, sommerso, battuto; the maestro/servitore team language."
+      }
+    },
+    {
+      "@id": "gbo:enables",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Equipment"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "enables"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Process"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Equipment enables a process (e.g. the marver enables marvering)."
+      }
+    },
+    {
+      "@id": "gbo:FiningAgent",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "fining agent"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:RawMaterial"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "refining agent"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "An additive (antimony, arsenic, sulfate) that scavenges bubbles from the melt."
+      }
+    },
+    {
+      "@id": "gbo:Frit",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "frit"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassStock"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Crushed glass, graded coarse to fine, for rolling in colour and for kiln work."
+      }
+    },
+    {
+      "@id": "gbo:var-gaffer-EN",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-EN"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "gaffer"
+      }
+    },
+    {
+      "@id": "gbo:PuntyRod",
+      "@type": "owl:Class",
+      "gbo:hasLexicalVariant": [
+        {
+          "@id": "gbo:var-punty-EN"
+        },
+        {
+          "@id": "gbo:var-punty-IT"
+        },
+        {
+          "@id": "gbo:var-punty-FLAME"
+        }
+      ],
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "punty rod"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Iron"
+      },
+      "skos:altLabel": [
+        {
+          "@language": "en",
+          "@value": "pontil"
+        },
+        {
+          "@language": "en",
+          "@value": "ponty"
+        },
+        {
+          "@language": "en",
+          "@value": "puntee"
+        },
+        {
+          "@language": "it",
+          "@value": "pontello"
+        }
+      ],
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A solid iron attached to a piece's base after transfer, so the opening can be finished."
+      }
+    },
+    {
+      "@id": "gbo:produces",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Process"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "produces"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Artifact"
+      },
+      "skos:closeMatch": {
+        "@id": "pmdco:hasOutputObject"
+      }
+    },
+    {
+      "@id": "gbo:Opening",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "opening the lip"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Flaring the mouth with jacks while spinning; centrifugal force does the work."
+      }
+    },
+    {
+      "@id": "gbo:Transferring",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "transferring"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Moving the piece from blowpipe to punty at the jack line so the opening can be finished."
+      }
+    },
+    {
+      "@id": "gbo:Furnace",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (furnaces); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "furnace"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HeatingEquipment"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:oven"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Holds molten glass at working temperature (pot or tank/day-tank)."
+      }
+    },
+    {
+      "@id": "gbo:originatesInHint",
+      "@type": "owl:AnnotationProperty",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Free-text tradition attribution; formalise with gbo:originatesIn once Tradition individuals are instantiated."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "originates-in (hint)"
+      }
+    },
+    {
+      "@id": "gbo:Vessel",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "vessel"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Artifact"
+      }
+    },
+    {
+      "@id": "gbo:Stringer",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "stringer"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Cane"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The thinnest form of cane."
+      }
+    },
+    {
+      "@id": "gbo:Cutting",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "cutting (parting)"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ColdWorkingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Sectioning blanks with cold saw, diamond band saw or tile saw; scoring and breaking for sheet."
+      }
+    },
+    {
+      "@id": "gbo:NetworkFormer",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "network former"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:RawMaterial"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The oxide that forms the glass skeleton (silica; also boron oxide)."
+      }
+    },
+    {
+      "@id": "gbo:SeleniumCadmium",
+      "@type": "gbo:Colorant",
+      "gbo:imparts": {
+        "@language": "en",
+        "@value": "yellow to orange to red (selenium ruby); a striking colour"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "selenium + cadmium"
+      }
+    },
+    {
+      "@id": "gbo:LeadGlass",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "lead glass"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassType"
+      },
+      "skos:altLabel": [
+        {
+          "@language": "en",
+          "@value": "lead crystal"
+        },
+        {
+          "@language": "en",
+          "@value": "crystal"
+        }
+      ],
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Potash-lead-silica glass; lead oxide raises refractive index and density, giving weight, ring and brilliance. Soft, long working range, ideal for cutting."
+      }
+    },
+    {
+      "@id": "gbo:Grinding",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (grinding); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "grinding"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ColdWorkingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Flattening and truing with graded diamond or silicon-carbide abrasive."
+      }
+    },
+    {
+      "@id": "gbo:Filigrana",
+      "@type": "owl:Class",
+      "gbo:originatesIn": {
+        "@id": "gbo:MuraneseTradition"
+      },
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "filigrana"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:CaneWork"
+      },
+      "skos:altLabel": [
+        {
+          "@language": "it",
+          "@value": "zanfirico"
+        },
+        {
+          "@language": "en",
+          "@value": "filigree"
+        }
+      ],
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Cane containing twisted internal threads; the family term for lacy thread-in-glass."
+      }
+    },
+    {
+      "@id": "gbo:LostWaxCasting",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "lost-wax casting"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:KilnCasting"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Casting into an investment mould made by burning out a wax model."
+      }
+    },
+    {
+      "@id": "gbo:Iron",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "iron"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Equipment"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A steel rod on which glass is gathered and worked."
+      }
+    },
+    {
+      "@id": "gbo:consumes",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Process"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "consumes"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Substance"
+      },
+      "rdfs:seeAlso": {
+        "@id": "glasdigi:hasInputRawMaterial"
+      },
+      "skos:closeMatch": {
+        "@id": "pmdco:hasInputObject"
+      }
+    },
+    {
+      "@id": "gbo:Necking",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "necking"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GatheringProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Running a groove (the jack line) with jacks to define where the piece will later separate."
+      }
+    },
+    {
+      "@id": "gbo:Blowpipe",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (blowpipes); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "blowpipe"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Iron"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "blow iron"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A hollow iron for gathering and inflating glass."
+      }
+    },
+    {
+      "@id": "gbo:MoldBlowing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "mould-blowing"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Inflating the bubble into a mould for form or texture."
+      }
+    },
+    {
+      "@id": "gbo:dialect-FR",
+      "@type": "gbo:Dialect",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "French"
+      }
+    },
+    {
+      "@id": "gbo:precedes",
+      "@type": [
+        "owl:ObjectProperty",
+        "owl:TransitiveProperty"
+      ],
+      "rdfs:domain": {
+        "@id": "gbo:Process"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "precedes"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Process"
+      },
+      "skos:closeMatch": {
+        "@id": "pmdco:hasNextProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Workflow ordering: one process precedes another."
+      }
+    },
+    {
+      "@id": "gbo:SilverColorant",
+      "@type": "gbo:Colorant",
+      "gbo:imparts": {
+        "@language": "en",
+        "@value": "yellow/amber stain; iridescent fuming hues"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "silver"
+      }
+    },
+    {
+      "@id": "gbo:OpticalProperty",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "optical property"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Property"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:OpticalProperty"
+      }
+    },
+    {
+      "@id": "gbo:Rod",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "rod"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassStock"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Solid stock stick, esp. for flamework."
+      }
+    },
+    {
+      "@id": "gbo:CoefficientOfExpansion",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "coefficient of expansion (COE/CTE)"
+      },
+      "rdfs:seeAlso": {
+        "@id": "glasdigi:ThermalExpansionCoefficient"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ThermalProperty"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:LinearThermalExpansionCoefficient"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "How much glass grows per degree; the decisive number for joining glasses. Mismatch causes cracking. Studio families ~90/96/104; borosilicate ~33."
+      }
+    },
+    {
+      "@id": "gbo:follows",
+      "@type": "owl:ObjectProperty",
+      "owl:inverseOf": {
+        "@id": "gbo:precedes"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "follows"
+      },
+      "skos:closeMatch": {
+        "@id": "pmdco:hasPreviousProcess"
+      }
+    },
+    {
+      "@id": "gbo:AcidPolishing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "acid polishing"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Polishing"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A hydrofluoric/sulfuric bath to polish cut crystal (hazardous, industrial)."
+      }
+    },
+    {
+      "@id": "gbo:Fining",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "fining"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:MeltingProcess"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "refining"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Letting bubbles rise and clear, aided by fining agents."
+      }
+    },
+    {
+      "@id": "gbo:Trailing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "trailing"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:DecorationProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Laying threads of hot glass onto the surface from a bit."
+      }
+    },
+    {
+      "@id": "gbo:Sommerso",
+      "@type": "owl:Class",
+      "gbo:originatesIn": {
+        "@id": "gbo:MuraneseTradition"
+      },
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "sommerso"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Casing"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "'Submerged': thick clear layers over interior colour, a mid-century Muranese hallmark."
+      }
+    },
+    {
+      "@id": "gbo:var-boro-FLAME",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-FLAME"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "boro / hard glass"
+      }
+    },
+    {
+      "@id": "gbo:requiresUseOf",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Activity"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "requires use of"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Equipment"
+      }
+    },
+    {
+      "@id": "gbo:Fuming",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "fuming"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Flameworking"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Depositing silver or gold vapour for iridescent surface colour."
+      }
+    },
+    {
+      "@id": "gbo:Tradition",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (styles & periods); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A regional or historical school of glassmaking with a characteristic material bias, technique set and dialect."
+      }
+    },
+    {
+      "@id": "gbo:Blocking",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "blocking"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Centring and rounding the gather with wet blocks."
+      }
+    },
+    {
+      "@id": "gbo:involves",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Activity"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "involves"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Agent"
+      },
+      "rdfs:seeAlso": {
+        "@id": "crm:P14_carried_out_by"
+      }
+    },
+    {
+      "@id": "gbo:MurrinePickup",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "murrine pickup"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:DecorationProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Rolling the hot form over arranged murrine to fuse an image into the skin."
+      }
+    },
+    {
+      "@id": "gbo:PateDeVerre",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "fr",
+        "@value": "pâte de verre"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:KilnProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "'Glass paste': a paste of frit/powder and binder packed into a mould and fired, giving a granular, luminous wall."
+      }
+    },
+    {
+      "@id": "gbo:Lapping",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "lapping"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Grinding"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The fine, flat grinding stage on a flat lap."
+      }
+    },
+    {
+      "@id": "gbo:AnnealingCrack",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "annealing crack"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "strain fracture"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A clean, sometimes delayed crack from inadequate annealing or COE mismatch."
+      }
+    },
+    {
+      "@id": "gbo:Potash",
+      "@type": "gbo:Flux",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "potash"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Potassium carbonate; flux of Bohemian and lead glasses."
+      }
+    },
+    {
+      "@id": "gbo:Flameworking",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (lampworking); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "flameworking"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:altLabel": [
+        {
+          "@language": "en",
+          "@value": "lampworking"
+        },
+        {
+          "@language": "en",
+          "@value": "torchwork"
+        }
+      ],
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Forming at a bench torch from rod and tube rather than a furnace."
+      }
+    },
+    {
+      "@id": "gbo:HeatingEquipment",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "heating equipment"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Equipment"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A device that melts, holds, reheats or cools glass."
+      }
+    },
+    {
+      "@id": "gbo:Check",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "check"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A small surface crack from thermal shock or mishandling."
+      }
+    },
+    {
+      "@id": "gbo:ContourFuse",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "contour fuse"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Fusing"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Edges round over."
+      }
+    },
+    {
+      "@id": "gbo:Cord",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "cord / striae"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Ropy optical streaks from an inhomogeneous melt."
+      }
+    },
+    {
+      "@id": "gbo:Torch",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "torch"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HeatingEquipment"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "lamp"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A bench burner for flame/lamp working of rod and tube."
+      }
+    },
+    {
+      "@id": "gbo:Gatherer",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "gatherer"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Agent"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Gathers glass from the furnace and preps irons."
+      }
+    },
+    {
+      "@id": "gbo:imparts",
+      "@type": "owl:AnnotationProperty",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Free-text colour/effect a colorant or process imparts to glass."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "imparts"
+      }
+    },
+    {
+      "@id": "gbo:uses",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Process"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "uses"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Equipment"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A process uses a tool, iron, mould or heating device."
+      }
+    },
+    {
+      "@id": "gbo:ScandinavianTradition",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Scandinavian / Swedish"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Orrefors & Kosta refinements of cased/engraved work: Graal (~1916), Ariel (~1937), Kraka, Ravenna; restrained modern design."
+      }
+    },
+    {
+      "@id": "gbo:vocabularyTarget",
+      "@type": "owl:AnnotationProperty",
+      "rdfs:comment": {
+        "@language": "en",
+        "@value": "Names an external controlled vocabulary (e.g. Getty AAT, Wikidata) to which this class should be aligned during an integration pass, following De Boer et al. Concrete IDs are intentionally omitted where not verified, to avoid false owl:sameAs/exactMatch assertions."
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "vocabulary alignment target"
+      }
+    },
+    {
+      "@id": "gbo:FaconDeVenise",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "fr",
+        "@value": "façon de Venise"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "'In the Venetian manner'; émigré Venetian makers spreading the style across Renaissance Europe."
+      }
+    },
+    {
+      "@id": "gbo:WetNewspaper",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "wet newspaper"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HandTool"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "blocking pads"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Folded wet newspaper held in the palm to shape the gather directly; old, universal, still standard."
+      }
+    },
+    {
+      "@id": "gbo:Lime",
+      "@type": "gbo:Stabilizer",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "lime"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Calcium oxide; the common stabiliser."
+      }
+    },
+    {
+      "@id": "gbo:var-annealer-IND",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-SCI"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "lehr"
+      }
+    },
+    {
+      "@id": "gbo:Seed",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "seed"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A tiny bubble from incomplete fining."
+      }
+    },
+    {
+      "@id": "gbo:var-servitor-IT",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-IT"
+      },
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "servitore"
+      }
+    },
+    {
+      "@id": "gbo:Engraving",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (engraving); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "engraving"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ColdWorkingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Incising the surface by wheel, point or stipple."
+      }
+    },
+    {
+      "@id": "gbo:KilnCasting",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (casting); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "kiln casting"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:KilnProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Molten glass fills a refractory mould."
+      }
+    },
+    {
+      "@id": "gbo:var-punty-EN",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-EN"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "punty / pontil"
+      }
+    },
+    {
+      "@id": "gbo:AnnealingProcess",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "annealing process"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Process"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:coolingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Controlled cooling that relaxes and then locks in minimal residual stress; the step that makes glass survive."
+      }
+    },
+    {
+      "@id": "gbo:Polishing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "polishing"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ColdWorkingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Bringing to clarity, mechanically or otherwise."
+      }
+    },
+    {
+      "@id": "gbo:hasProperty",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Substance"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "has property"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Property"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:hasMaterialProperty"
+      }
+    },
+    {
+      "@id": "gbo:Apprentice",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "apprentice"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Agent"
+      },
+      "skos:altLabel": {
+        "@language": "it",
+        "@value": "garzone"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A learner working up the ladder."
+      }
+    },
+    {
+      "@id": "gbo:hasPart",
+      "@type": "owl:ObjectProperty",
+      "owl:inverseOf": {
+        "@id": "gbo:partOf"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "has part"
+      }
+    },
+    {
+      "@id": "gbo:Activity",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "activity"
+      },
+      "skos:closeMatch": {
+        "@id": "crm:E7_Activity"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "One step within a creation event (e.g. an instance of blowing, grinding, gilding), with its own materials, tools, people, place and time."
+      }
+    },
+    {
+      "@id": "gbo:var-punty-FLAME",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-FLAME"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "punty (temporary handle rod)"
+      }
+    },
+    {
+      "@id": "gbo:Gathering",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "gathering"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GatheringProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Winding molten glass onto the iron from the furnace; a first gather may be followed by overlay gathers."
+      }
+    },
+    {
+      "@id": "gbo:Servitor",
+      "@type": "owl:Class",
+      "gbo:hasLexicalVariant": [
+        {
+          "@id": "gbo:var-servitor-EN"
+        },
+        {
+          "@id": "gbo:var-servitor-IT"
+        }
+      ],
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "servitor"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Agent"
+      },
+      "skos:altLabel": {
+        "@language": "it",
+        "@value": "servitore"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The first assistant; gathers bits, brings tools, makes feet and additions."
+      }
+    },
+    {
+      "@id": "gbo:IceGlass",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "ice glass"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:DecorationProcess"
+      },
+      "skos:altLabel": {
+        "@language": "it",
+        "@value": "ghiaccio"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Thermal-shock crackle: plunge the hot gather in water, then reheat and reform, sealing a crazed surface."
+      }
+    },
+    {
+      "@id": "gbo:BohemianTradition",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Bohemian / Czech"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Potash-lime crystal hard enough for deep wheel cutting and engraving; hyalith, lithyalin, cased ruby-cut-to-clear overlay."
+      }
+    },
+    {
+      "@id": "gbo:GlassType",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT; Wikidata Q11469 (glass)"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Glass type"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Substance"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:Glass"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A family of glass defined by its network former and modifiers (its chemistry)."
+      }
+    },
+    {
+      "@id": "gbo:inDialect",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:LexicalVariant"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "in dialect"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Dialect"
+      }
+    },
+    {
+      "@id": "gbo:HotFormingProcess",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (glassblowing 300053932 — verify); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "hot forming process"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Process"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Shaping glass while molten, by tool, breath, mould or gravity."
+      }
+    },
+    {
+      "@id": "gbo:StraightShears",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "straight shears"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Shears"
+      }
+    },
+    {
+      "@id": "gbo:causes",
+      "@type": "owl:ObjectProperty",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "causes"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A condition or process causes a defect."
+      }
+    },
+    {
+      "@id": "gbo:Confetti",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "confetti"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassStock"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "shards"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Thin blown-and-broken flakes for surface decoration."
+      }
+    },
+    {
+      "@id": "gbo:FirePolishing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "fire polishing"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Polishing"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A quick reheat to gloss the surface."
+      }
+    },
+    {
+      "@id": "gbo:WorkingPoint",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "working point"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ThermalProperty"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The viscosity (~10^4 poise) at which glass is readily shaped."
+      },
+      "skos:exactMatch": {
+        "@id": "glasdigi:WorkingPoint"
+      }
+    },
+    {
+      "@id": "gbo:Process",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Process"
+      },
+      "skos:closeMatch": {
+        "@id": "pmdco:Process"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "An activity performed on or with glass, from melting to cold working."
+      }
+    },
+    {
+      "@id": "gbo:Paddle",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "paddle"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HandTool"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "battledore"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A flat wood or graphite board to flatten a foot or base."
+      }
+    },
+    {
+      "@id": "gbo:Shears",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "shears"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HandTool"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Cutting tools for glass: straight shears cut trails and gathers; diamond/jack shears nip and shape."
+      }
+    },
+    {
+      "@id": "gbo:Alumina",
+      "@type": "gbo:Stabilizer",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "alumina"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Aluminium oxide; improves durability and working range."
+      }
+    },
+    {
+      "@id": "gbo:Sheet",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "sheet glass"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassStock"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "plate"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Rolled flat glass, the substrate of kiln fusing."
+      }
+    },
+    {
+      "@id": "gbo:Team",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "shop / chair"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Agent"
+      },
+      "skos:closeMatch": {
+        "@id": "crm:E74_Group"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The whole working team, named by its workstation (the bench is 'the chair')."
+      }
+    },
+    {
+      "@id": "gbo:IronColorant",
+      "@type": "gbo:Colorant",
+      "gbo:imparts": {
+        "@language": "en",
+        "@value": "green to brown; blue-green (ubiquitous impurity)"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "iron"
+      }
+    },
+    {
+      "@id": "gbo:Chilling",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "chilling"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GatheringProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Briefly cooling the gather's skin so it holds shape."
+      }
+    },
+    {
+      "@id": "gbo:DiamondShears",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "diamond shears"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Shears"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "jack shears"
+      }
+    },
+    {
+      "@id": "gbo:dialect-SCI",
+      "@type": "gbo:Dialect",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "scientific / industrial"
+      }
+    },
+    {
+      "@id": "gbo:Cameo",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "cameo"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Engraving"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A cased layer cut away to reveal the ground beneath."
+      }
+    },
+    {
+      "@id": "gbo:CompatibilityProperty",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "compatibility property"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Property"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A tested property (COE and viscosity match) determining whether two glasses can be joined without cracking."
+      }
+    },
+    {
+      "@id": "gbo:FullFuse",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "full fuse"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Fusing"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Pieces flow into a single flat sheet."
+      }
+    },
+    {
+      "@id": "gbo:Powder",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "powder"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Frit"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The finest grade of frit."
+      }
+    },
+    {
+      "@id": "gbo:ShearMark",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "shear mark"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A line or notch left by shears."
+      }
+    },
+    {
+      "@id": "gbo:Intaglio",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "intaglio"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Engraving"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Design cut into the surface."
+      }
+    },
+    {
+      "@id": "gbo:CopperColorant",
+      "@type": "gbo:Colorant",
+      "gbo:imparts": {
+        "@language": "en",
+        "@value": "turquoise when oxidised; copper-ruby red when reduced"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "copper"
+      }
+    },
+    {
+      "@id": "gbo:ChillMark",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "chill mark"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Surface ripples where glass touched something too cold."
+      }
+    },
+    {
+      "@id": "gbo:ManganeseColorant",
+      "@type": "gbo:Colorant",
+      "gbo:imparts": {
+        "@language": "en",
+        "@value": "purple/amethyst; also a decolouriser ('glassmaker's soap')"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "manganese"
+      }
+    },
+    {
+      "@id": "gbo:RollingInColor",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "rolling in colour"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:DecorationProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Rolling a hot gather over frit or powder, then melting it in."
+      }
+    },
+    {
+      "@id": "gbo:AcidEtching",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "acid etching"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Etching"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "French embossing"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Etching or matte-finishing the surface with hydrofluoric acid."
+      }
+    },
+    {
+      "@id": "gbo:SodaLimeGlass",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "soda-lime-silica glass"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassType"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "soft glass"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Silica network fluxed with soda and stabilised with lime; the common studio, window and container glass. Long working range, forgiving."
+      }
+    },
+    {
+      "@id": "gbo:AnnealSoak",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "anneal soak"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:AnnealingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Holding at the annealing point long enough to relax stress uniformly through the wall."
+      }
+    },
+    {
+      "@id": "gbo:BlowMold",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "blow mould"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Mold"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A closed, often multi-part mould for reproducible form."
+      }
+    },
+    {
+      "@id": "gbo:consistsOf",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:CreationEvent"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "consists of"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Activity"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A creation event consists of ordered activities."
+      }
+    },
+    {
+      "@id": "gbo:Jacks",
+      "@type": "owl:Class",
+      "gbo:hasLexicalVariant": [
+        {
+          "@id": "gbo:var-jacks-EN"
+        },
+        {
+          "@id": "gbo:var-jacks-IT"
+        }
+      ],
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "jacks"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HandTool"
+      },
+      "skos:altLabel": {
+        "@language": "it",
+        "@value": "pucellas"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Spring-steel tongs; the primary shaping tool for necking, opening and defining line."
+      }
+    },
+    {
+      "@id": "gbo:Pot",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "pot / crucible"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HeatingEquipment"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:crucible"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The refractory vessel that holds glass inside a pot furnace."
+      }
+    },
+    {
+      "@id": "gbo:dialect-CZ",
+      "@type": "gbo:Dialect",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Bohemian / Czech"
+      }
+    },
+    {
+      "@id": "gbo:ControlledCooling",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "controlled cooling"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:AnnealingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Descending slowly to the strain point (the critical leg), then faster below it."
+      }
+    },
+    {
+      "@id": "gbo:ChineseJapaneseTradition",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Chinese & Japanese"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Distinct lineages: Chinese 'Peking glass' cased-and-carved; Japanese Edo-kiriko cut glass and contemporary flame/kiln work."
+      }
+    },
+    {
+      "@id": "gbo:UraniumGlass",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "uranium glass"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassType"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "vaseline glass"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Glass coloured with uranium, fluorescing yellow-green under UV."
+      }
+    },
+    {
+      "@id": "gbo:Birefringence",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "birefringence"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:OpticalProperty"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:StressOpticCoefficient"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Stress-induced double refraction, made visible under crossed polarisers; the diagnostic for annealing quality."
+      }
+    },
+    {
+      "@id": "gbo:Battuto",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "battuto"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ColdWorkingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Dense shallow wheel-cutting leaving a hammered ('beaten') texture; finishes cane and sommerso pieces."
+      }
+    },
+    {
+      "@id": "gbo:SolidSculpting",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "solid hot sculpting"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Building form from solid gathers and bits rather than a bubble."
+      }
+    },
+    {
+      "@id": "gbo:Property",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Property"
+      },
+      "skos:closeMatch": {
+        "@id": "pmdco:MaterialProperty"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A measurable or observable characteristic of a glass substance."
+      }
+    },
+    {
+      "@id": "gbo:StudioGlass",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "American Studio Glass movement"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Tradition"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Littleton and Labino, Toledo workshops 1962: a small furnace and workable glass that took blowing into the artist's studio; popularised 'offhand'."
+      }
+    },
+    {
+      "@id": "gbo:dialect-IT",
+      "@type": "gbo:Dialect",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Venetian / Muranese"
+      }
+    },
+    {
+      "@id": "gbo:Devitrification",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "devitrification"
+      },
+      "rdfs:seeAlso": {
+        "@id": "glasdigi:crystallizationProcess"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Defect"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "devit"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A hazy crystalline skin from too long in the crystallisation range; the enemy of kiln work and prolonged reheating."
+      }
+    },
+    {
+      "@id": "gbo:BitGatherer",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "bit gatherer"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Agent"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Brings hot bits on demand for handles, prunts and additions."
+      }
+    },
+    {
+      "@id": "gbo:Place",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "place"
+      },
+      "skos:closeMatch": {
+        "@id": "crm:E53_Place"
+      }
+    },
+    {
+      "@id": "gbo:Artifact",
+      "@type": "owl:Class",
+      "gbo:vocabularyTarget": {
+        "@language": "en",
+        "@value": "Getty AAT (object types); Wikidata"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Artifact"
+      },
+      "skos:closeMatch": {
+        "@id": "crm:E22_Human-Made_Object"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A glass object, finished or in progress."
+      }
+    },
+    {
+      "@id": "gbo:usedIn",
+      "@type": "owl:ObjectProperty",
+      "owl:inverseOf": {
+        "@id": "gbo:uses"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "used in"
+      }
+    },
+    {
+      "@id": "gbo:StrainPoint",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "strain point"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ThermalProperty"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "The temperature below which stress is effectively frozen; cool slowly to here, then faster."
+      },
+      "skos:exactMatch": {
+        "@id": "glasdigi:StrainPoint"
+      }
+    },
+    {
+      "@id": "gbo:DiamondPointEngraving",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "diamond-point engraving"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Engraving"
+      }
+    },
+    {
+      "@id": "gbo:var-jacks-IT",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-IT"
+      },
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "pucellas"
+      }
+    },
+    {
+      "@id": "gbo:Reticello",
+      "@type": "owl:Class",
+      "gbo:hasLexicalVariant": {
+        "@id": "_:n58e81b20eed141ad9a483fe5e54e6508b6"
+      },
+      "gbo:originatesIn": {
+        "@id": "gbo:MuraneseTradition"
+      },
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "reticello"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Filigrana"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Two layers of oppositely-twisted cane crossed into a net, trapping a regular grid of air bubbles; a benchmark of control."
+      }
+    },
+    {
+      "@id": "_:n58e81b20eed141ad9a483fe5e54e6508b6",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-IT"
+      },
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "reticello"
+      }
+    },
+    {
+      "@id": "gbo:Retortoli",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "it",
+        "@value": "retortoli"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Filigrana"
+      },
+      "skos:altLabel": {
+        "@language": "it",
+        "@value": "ritorti"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Twisted-ribbon canes."
+      }
+    },
+    {
+      "@id": "gbo:var-annealer-EN",
+      "@type": "gbo:LexicalVariant",
+      "gbo:inDialect": {
+        "@id": "gbo:dialect-EN"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "annealer"
+      }
+    },
+    {
+      "@id": "gbo:Dialect",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "dialect / register"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A regional or subcultural vocabulary register in which glass terms are spoken."
+      }
+    },
+    {
+      "@id": "gbo:Gadget",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "gadget"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HandTool"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A spring clamp that grips a finished foot in place of a hot punty, avoiding a punty scar."
+      }
+    },
+    {
+      "@id": "gbo:Blowing",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "blowing"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HotFormingProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Inflating a bubble (parison) inside the gather."
+      }
+    },
+    {
+      "@id": "gbo:dialect-FLAME",
+      "@type": "gbo:Dialect",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "flame / lamp-working subculture"
+      }
+    },
+    {
+      "@id": "gbo:BatchCharging",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "batch charging"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:MeltingProcess"
+      },
+      "skos:closeMatch": {
+        "@id": "glasdigi:batchProcess"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Loading raw batch into the furnace."
+      }
+    },
+    {
+      "@id": "gbo:StippleEngraving",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "stipple engraving"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Engraving"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Dotted shading."
+      }
+    },
+    {
+      "@id": "gbo:Agent",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "Agent"
+      },
+      "skos:closeMatch": {
+        "@id": "crm:E39_Actor"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A person or team involved in making glass."
+      }
+    },
+    {
+      "@id": "gbo:Viscosity",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "viscosity"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:ThermalProperty"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Resistance to flow; the master variable of all hot forming. Glass thickens continuously as it cools rather than melting at a point."
+      },
+      "skos:exactMatch": {
+        "@id": "glasdigi:Viscosity"
+      }
+    },
+    {
+      "@id": "gbo:OpalGlass",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "opal / opaque glass"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:GlassType"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Glass made translucent-to-opaque by an opacifier (fluorine, tin, phosphate) crystallising a fine second phase."
+      }
+    },
+    {
+      "@id": "gbo:appliesTechnique",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:Activity"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "applies technique"
+      },
+      "rdfs:range": {
+        "@id": "gbo:Process"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Links a concrete activity to the technique class it is an instance of applying."
+      }
+    },
+    {
+      "@id": "gbo:composedOf",
+      "@type": "owl:ObjectProperty",
+      "rdfs:domain": {
+        "@id": "gbo:GlassType"
+      },
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "composed of"
+      },
+      "rdfs:range": {
+        "@id": "gbo:RawMaterial"
+      },
+      "rdfs:seeAlso": {
+        "@id": "glasdigi:hasGlassComponent"
+      },
+      "skos:closeMatch": {
+        "@id": "pmdco:composedBy"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Recipe membership: a glass type is composed of raw materials."
+      }
+    },
+    {
+      "@id": "gbo:Tweezers",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "tweezers"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:HandTool"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "For pulling, pinching and tooling small features."
+      }
+    },
+    {
+      "@id": "gbo:TakerIn",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "taker-in"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Agent"
+      },
+      "skos:altLabel": {
+        "@language": "en",
+        "@value": "carry-in boy"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "Carries finished work to the lehr."
+      }
+    },
+    {
+      "@id": "gbo:HandTool",
+      "@type": "owl:Class",
+      "rdfs:label": {
+        "@language": "en",
+        "@value": "hand tool"
+      },
+      "rdfs:subClassOf": {
+        "@id": "gbo:Equipment"
+      },
+      "skos:definition": {
+        "@language": "en",
+        "@value": "A bench tool for shaping hot glass."
+      }
+    }
+  ]
+}

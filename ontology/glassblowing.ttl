@@ -1,0 +1,979 @@
+@prefix gbo:      <http://example.org/glassblowing#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix skos:     <http://www.w3.org/2004/02/skos/core#> .
+@prefix dcterms:  <http://purl.org/dc/terms/> .
+@prefix glasdigi: <https://glasdigi.cms.uni-jena.de/glass/> .
+@prefix pmdco:    <https://material-digital.de/pmdco/> .
+@prefix crm:      <http://www.cidoc-crm.org/cidoc-crm/> .
+@prefix aat:      <http://vocab.getty.edu/aat/> .
+@prefix wd:       <http://www.wikidata.org/entity/> .
+
+########################################################################
+# NOTE ON THE BASE IRI
+# The namespace http://example.org/glassblowing# is a PLACEHOLDER.
+# Before publishing, find-and-replace it with a resolvable namespace you
+# control (e.g. https://lexipedia.xyz/ns/glassblowing#). Everything else
+# stays as-is. All alignment targets (glasdigi:, pmdco:, crm:) are real,
+# resolvable IRIs and were verified against the source ontologies.
+########################################################################
+
+########################################################################
+# ONTOLOGY HEADER
+########################################################################
+
+gbo: a owl:Ontology ;
+    dcterms:title "A Glassblowing Ontology (craft, process & dialect layer)"@en ;
+    dcterms:description """A craft-and-dialect ontology for hot glass: the material's life from batch
+through melting, gathering, hot forming, decoration, mould forming, kiln work,
+annealing and cold working, plus studio roles, defects, regional traditions and a
+queryable dialect concordance. It is the artisanal/technique layer that bridges two
+existing efforts: the GlasDigital materials-science ontology (physics, melting,
+measurement) which it aligns physical properties and equipment to, and the
+event-centric cultural-heritage modelling of De Boer et al. (CIDOC-CRM / AAT /
+Wikidata) which it mirrors for describing individual works and their creation."""@en ;
+    dcterms:creator "Anson Parker"@en ;
+    dcterms:contributor "Drafted with Claude (Anthropic)"@en ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    dcterms:created "2026-08-28"^^xsd:date ;
+    owl:versionInfo "0.1.0" ;
+    rdfs:seeAlso <https://w3id.org/pmd/glass-ontology/1.0.1> ;
+    rdfs:seeAlso <https://materialdigital.github.io/glasdigital-ontology/index-en.html> ;
+    rdfs:seeAlso <https://journal.dhbenelux.org/journal/issues/004/article-4-DeBoer.html> .
+
+# --- Custom annotation properties -------------------------------------
+gbo:imparts a owl:AnnotationProperty ;
+    rdfs:label "imparts"@en ;
+    rdfs:comment "Free-text colour/effect a colorant or process imparts to glass."@en .
+
+gbo:vocabularyTarget a owl:AnnotationProperty ;
+    rdfs:label "vocabulary alignment target"@en ;
+    rdfs:comment "Names an external controlled vocabulary (e.g. Getty AAT, Wikidata) to which this class should be aligned during an integration pass, following De Boer et al. Concrete IDs are intentionally omitted where not verified, to avoid false owl:sameAs/exactMatch assertions."@en .
+
+########################################################################
+# UPPER CLASSES
+########################################################################
+
+gbo:Substance a owl:Class ;
+    rdfs:label "Substance"@en ;
+    skos:definition "Glass matter in any form: a glass type, a raw batch material, or a semi-finished glass stock."@en .
+
+gbo:Property a owl:Class ;
+    rdfs:label "Property"@en ;
+    skos:definition "A measurable or observable characteristic of a glass substance."@en ;
+    skos:closeMatch pmdco:MaterialProperty .
+
+gbo:Equipment a owl:Class ;
+    rdfs:label "Equipment"@en ;
+    skos:definition "A tool, iron, mould or heating device used in making or finishing glass."@en .
+
+gbo:Process a owl:Class ;
+    rdfs:label "Process"@en ;
+    skos:definition "An activity performed on or with glass, from melting to cold working."@en ;
+    skos:closeMatch pmdco:Process .
+
+gbo:Artifact a owl:Class ;
+    rdfs:label "Artifact"@en ;
+    skos:definition "A glass object, finished or in progress."@en ;
+    skos:closeMatch crm:E22_Human-Made_Object ;
+    gbo:vocabularyTarget "Getty AAT (object types); Wikidata"@en .
+
+gbo:Agent a owl:Class ;
+    rdfs:label "Agent"@en ;
+    skos:definition "A person or team involved in making glass."@en ;
+    skos:closeMatch crm:E39_Actor .
+
+gbo:Defect a owl:Class ;
+    rdfs:label "Defect"@en ;
+    skos:definition "An unwanted flaw in glass arising from batch, melt, forming or cooling."@en .
+
+gbo:Tradition a owl:Class ;
+    rdfs:label "Tradition"@en ;
+    skos:definition "A regional or historical school of glassmaking with a characteristic material bias, technique set and dialect."@en ;
+    gbo:vocabularyTarget "Getty AAT (styles & periods); Wikidata"@en .
+
+# top-level disjointness (kept deliberately light)
+[] a owl:AllDisjointClasses ;
+   owl:members ( gbo:Substance gbo:Equipment gbo:Process gbo:Agent ) .
+
+########################################################################
+# SUBSTANCE :: GLASS TYPES
+########################################################################
+
+gbo:GlassType a owl:Class ;
+    rdfs:subClassOf gbo:Substance ;
+    rdfs:label "Glass type"@en ;
+    skos:definition "A family of glass defined by its network former and modifiers (its chemistry)."@en ;
+    skos:closeMatch glasdigi:Glass ;
+    gbo:vocabularyTarget "Getty AAT; Wikidata Q11469 (glass)"@en .
+
+gbo:SodaLimeGlass a owl:Class ; rdfs:subClassOf gbo:GlassType ;
+    rdfs:label "soda-lime-silica glass"@en ;
+    skos:altLabel "soft glass"@en ;
+    skos:definition "Silica network fluxed with soda and stabilised with lime; the common studio, window and container glass. Long working range, forgiving."@en .
+
+gbo:LeadGlass a owl:Class ; rdfs:subClassOf gbo:GlassType ;
+    rdfs:label "lead glass"@en ;
+    skos:altLabel "lead crystal"@en ; skos:altLabel "crystal"@en ;
+    skos:definition "Potash-lead-silica glass; lead oxide raises refractive index and density, giving weight, ring and brilliance. Soft, long working range, ideal for cutting."@en .
+
+gbo:BorosilicateGlass a owl:Class ; rdfs:subClassOf gbo:GlassType ;
+    rdfs:label "borosilicate glass"@en ;
+    skos:altLabel "boro"@en ; skos:altLabel "hard glass"@en ;
+    skos:definition "Boron-oxide co-former; very low expansion and high thermal-shock resistance. Scientific labware and the dominant American flamework medium."@en .
+
+gbo:BariumCrystal a owl:Class ; rdfs:subClassOf gbo:GlassType ;
+    rdfs:label "barium / lead-free crystal"@en ;
+    skos:definition "High-index optical and eco-crystal formulations replacing lead oxide with barium, lanthanum or similar."@en .
+
+gbo:OpalGlass a owl:Class ; rdfs:subClassOf gbo:GlassType ;
+    rdfs:label "opal / opaque glass"@en ;
+    skos:definition "Glass made translucent-to-opaque by an opacifier (fluorine, tin, phosphate) crystallising a fine second phase."@en .
+
+gbo:UraniumGlass a owl:Class ; rdfs:subClassOf gbo:GlassType ;
+    rdfs:label "uranium glass"@en ;
+    skos:altLabel "vaseline glass"@en ;
+    skos:definition "Glass coloured with uranium, fluorescing yellow-green under UV."@en .
+
+gbo:RubyGoldGlass a owl:Class ; rdfs:subClassOf gbo:GlassType ;
+    rdfs:label "gold ruby glass"@en ;
+    skos:altLabel "cranberry glass"@en ;
+    skos:definition "Glass struck to a ruby colour by colloidal gold (Purple of Cassius); a striking colour developed on reheat."@en .
+
+########################################################################
+# SUBSTANCE :: RAW MATERIALS
+########################################################################
+
+gbo:RawMaterial a owl:Class ;
+    rdfs:subClassOf gbo:Substance ;
+    rdfs:label "raw material"@en ;
+    skos:definition "A batch constituent charged to the furnace."@en ;
+    skos:closeMatch glasdigi:RawMaterial .
+
+gbo:NetworkFormer a owl:Class ; rdfs:subClassOf gbo:RawMaterial ;
+    rdfs:label "network former"@en ;
+    skos:definition "The oxide that forms the glass skeleton (silica; also boron oxide)."@en .
+
+gbo:Flux a owl:Class ; rdfs:subClassOf gbo:RawMaterial ;
+    rdfs:label "flux"@en ;
+    skos:definition "A modifier (soda ash, potash) that lowers the melting temperature of silica."@en .
+
+gbo:Stabilizer a owl:Class ; rdfs:subClassOf gbo:RawMaterial ;
+    rdfs:label "stabilizer"@en ;
+    skos:definition "A modifier (lime, dolomite, alumina) that makes glass durable rather than water-soluble."@en .
+
+gbo:Cullet a owl:Class ; rdfs:subClassOf gbo:RawMaterial ;
+    rdfs:label "cullet"@en ;
+    skos:definition "Recycled or reused glass added to the batch to ease melting and reduce volatilisation."@en .
+
+gbo:FiningAgent a owl:Class ; rdfs:subClassOf gbo:RawMaterial ;
+    rdfs:label "fining agent"@en ;
+    skos:altLabel "refining agent"@en ;
+    skos:definition "An additive (antimony, arsenic, sulfate) that scavenges bubbles from the melt."@en .
+
+gbo:Colorant a owl:Class ; rdfs:subClassOf gbo:RawMaterial ;
+    rdfs:label "colorant"@en ;
+    skos:definition "A metal oxide (or other agent) that colours glass; hue depends on chemistry, furnace atmosphere and sometimes striking."@en ;
+    gbo:vocabularyTarget "Getty AAT (colorants); Wikidata"@en .
+
+gbo:Opacifier a owl:Class ; rdfs:subClassOf gbo:RawMaterial ;
+    rdfs:label "opacifier"@en ;
+    skos:definition "An agent (tin, fluorine, phosphate) that renders glass opaque or opalescent."@en .
+
+# key network formers / fluxes / stabilizers as individuals
+gbo:Silica a gbo:NetworkFormer ; rdfs:label "silica (sand)"@en ;
+    skos:definition "The primary network former; quartz sand."@en .
+gbo:SodaAsh a gbo:Flux ; rdfs:label "soda ash"@en ; skos:definition "Sodium carbonate; the common flux."@en .
+gbo:Potash a gbo:Flux ; rdfs:label "potash"@en ; skos:definition "Potassium carbonate; flux of Bohemian and lead glasses."@en .
+gbo:Lime a gbo:Stabilizer ; rdfs:label "lime"@en ; skos:definition "Calcium oxide; the common stabiliser."@en .
+gbo:Alumina a gbo:Stabilizer ; rdfs:label "alumina"@en ; skos:definition "Aluminium oxide; improves durability and working range."@en .
+
+# major colorants as individuals
+gbo:CobaltOxide a gbo:Colorant ; rdfs:label "cobalt oxide"@en ; gbo:imparts "deep blue (strong at tiny doses)"@en .
+gbo:CopperColorant a gbo:Colorant ; rdfs:label "copper"@en ; gbo:imparts "turquoise when oxidised; copper-ruby red when reduced"@en .
+gbo:IronColorant a gbo:Colorant ; rdfs:label "iron"@en ; gbo:imparts "green to brown; blue-green (ubiquitous impurity)"@en .
+gbo:ManganeseColorant a gbo:Colorant ; rdfs:label "manganese"@en ; gbo:imparts "purple/amethyst; also a decolouriser ('glassmaker's soap')"@en .
+gbo:SeleniumCadmium a gbo:Colorant ; rdfs:label "selenium + cadmium"@en ; gbo:imparts "yellow to orange to red (selenium ruby); a striking colour"@en .
+gbo:GoldColloid a gbo:Colorant ; rdfs:label "colloidal gold"@en ; gbo:imparts "ruby / cranberry; a striking colour"@en .
+gbo:SilverColorant a gbo:Colorant ; rdfs:label "silver"@en ; gbo:imparts "yellow/amber stain; iridescent fuming hues"@en .
+
+########################################################################
+# SUBSTANCE :: GLASS STOCK
+########################################################################
+
+gbo:GlassStock a owl:Class ;
+    rdfs:subClassOf gbo:Substance ;
+    rdfs:label "glass stock"@en ;
+    skos:definition "A pre-made glass form the maker pulls or buys: cane, rod, frit, billet, sheet, murrine."@en .
+
+gbo:Cane a owl:Class ; rdfs:subClassOf gbo:GlassStock ;
+    rdfs:label "cane"@en ;
+    skos:definition "Pulled thin rod, often coloured or patterned; the raw material of filigree and murrine."@en .
+gbo:Stringer a owl:Class ; rdfs:subClassOf gbo:Cane ;
+    rdfs:label "stringer"@en ; skos:definition "The thinnest form of cane."@en .
+gbo:Rod a owl:Class ; rdfs:subClassOf gbo:GlassStock ; rdfs:label "rod"@en ;
+    skos:definition "Solid stock stick, esp. for flamework."@en .
+gbo:Billet a owl:Class ; rdfs:subClassOf gbo:GlassStock ; rdfs:label "billet"@en ;
+    skos:definition "A cast chunk of glass, typically for kiln casting."@en .
+gbo:Frit a owl:Class ; rdfs:subClassOf gbo:GlassStock ; rdfs:label "frit"@en ;
+    skos:definition "Crushed glass, graded coarse to fine, for rolling in colour and for kiln work."@en .
+gbo:Powder a owl:Class ; rdfs:subClassOf gbo:Frit ; rdfs:label "powder"@en ;
+    skos:definition "The finest grade of frit."@en .
+gbo:Murrine a owl:Class ; rdfs:subClassOf gbo:GlassStock ;
+    rdfs:label "murrine"@en ; skos:altLabel "murrina"@it ;
+    skos:definition "Patterned cane sliced crosswise to reveal a repeating image."@en ;
+    gbo:vocabularyTarget "Getty AAT 300010953 (verify); Wikidata"@en .
+gbo:Millefiori a owl:Class ; rdfs:subClassOf gbo:Murrine ;
+    rdfs:label "millefiori"@en ;
+    skos:definition "Floral murrine ('thousand flowers')."@en .
+gbo:Sheet a owl:Class ; rdfs:subClassOf gbo:GlassStock ; rdfs:label "sheet glass"@en ;
+    skos:altLabel "plate"@en ; skos:definition "Rolled flat glass, the substrate of kiln fusing."@en .
+gbo:Confetti a owl:Class ; rdfs:subClassOf gbo:GlassStock ; rdfs:label "confetti"@en ;
+    skos:altLabel "shards"@en ; skos:definition "Thin blown-and-broken flakes for surface decoration."@en .
+
+########################################################################
+# PROPERTY :: THERMAL, OPTICAL, COMPATIBILITY
+########################################################################
+
+gbo:ThermalProperty a owl:Class ; rdfs:subClassOf gbo:Property ;
+    rdfs:label "thermal property"@en ;
+    skos:definition "A property governing how glass behaves with temperature. Each named 'point' is really a fixed viscosity."@en .
+
+gbo:Viscosity a owl:Class ; rdfs:subClassOf gbo:ThermalProperty ;
+    rdfs:label "viscosity"@en ;
+    skos:definition "Resistance to flow; the master variable of all hot forming. Glass thickens continuously as it cools rather than melting at a point."@en ;
+    skos:exactMatch glasdigi:Viscosity .
+
+gbo:WorkingRange a owl:Class ; rdfs:subClassOf gbo:ThermalProperty ;
+    rdfs:label "working range"@en ;
+    skos:definition "The viscosity band soft enough to shape but stiff enough to hold form. Wide = 'long' glass; narrow = 'short' glass."@en .
+
+gbo:SofteningPoint a owl:Class ; rdfs:subClassOf gbo:ThermalProperty ;
+    rdfs:label "softening point"@en ;
+    skos:altLabel "Littleton point"@en ;
+    skos:definition "The temperature (~10^7.6 poise) at which glass sags under its own weight."@en ;
+    skos:exactMatch glasdigi:SofteningPoint .
+
+gbo:WorkingPoint a owl:Class ; rdfs:subClassOf gbo:ThermalProperty ;
+    rdfs:label "working point"@en ;
+    skos:definition "The viscosity (~10^4 poise) at which glass is readily shaped."@en ;
+    skos:exactMatch glasdigi:WorkingPoint .
+
+gbo:GlassTransition a owl:Class ; rdfs:subClassOf gbo:ThermalProperty ;
+    rdfs:label "glass transition (Tg)"@en ;
+    skos:definition "The amorphous-solid/liquid boundary region."@en ;
+    skos:closeMatch glasdigi:GlassTransitionTemperature .
+
+gbo:AnnealingPoint a owl:Class ; rdfs:subClassOf gbo:ThermalProperty ;
+    rdfs:label "annealing point"@en ;
+    skos:definition "The temperature (~10^13 poise) at which internal stress relaxes in minutes; the centre of the anneal soak."@en ;
+    skos:exactMatch glasdigi:AnnealingPoint .
+
+gbo:StrainPoint a owl:Class ; rdfs:subClassOf gbo:ThermalProperty ;
+    rdfs:label "strain point"@en ;
+    skos:definition "The temperature below which stress is effectively frozen; cool slowly to here, then faster."@en ;
+    skos:exactMatch glasdigi:StrainPoint .
+
+gbo:CoefficientOfExpansion a owl:Class ; rdfs:subClassOf gbo:ThermalProperty ;
+    rdfs:label "coefficient of expansion (COE/CTE)"@en ;
+    skos:definition "How much glass grows per degree; the decisive number for joining glasses. Mismatch causes cracking. Studio families ~90/96/104; borosilicate ~33."@en ;
+    skos:closeMatch glasdigi:LinearThermalExpansionCoefficient ;
+    rdfs:seeAlso glasdigi:ThermalExpansionCoefficient .
+
+gbo:ThermalShockResistance a owl:Class ; rdfs:subClassOf gbo:ThermalProperty ;
+    rdfs:label "thermal shock resistance"@en ;
+    skos:definition "Ability to withstand a steep temperature gradient without fracturing."@en ;
+    skos:exactMatch glasdigi:ThermalShockResistance .
+
+gbo:OpticalProperty a owl:Class ; rdfs:subClassOf gbo:Property ;
+    rdfs:label "optical property"@en ;
+    skos:closeMatch glasdigi:OpticalProperty .
+
+gbo:RefractiveIndex a owl:Class ; rdfs:subClassOf gbo:OpticalProperty ;
+    rdfs:label "refractive index"@en ;
+    skos:definition "How strongly glass bends light; raised by lead and barium."@en ;
+    skos:exactMatch glasdigi:RefractiveIndex .
+
+gbo:Dispersion a owl:Class ; rdfs:subClassOf gbo:OpticalProperty ;
+    rdfs:label "dispersion"@en ;
+    skos:definition "Wavelength-dependence of refraction; the 'fire' of cut crystal."@en ;
+    skos:exactMatch glasdigi:Dispersion .
+
+gbo:AbbeNumber a owl:Class ; rdfs:subClassOf gbo:OpticalProperty ;
+    rdfs:label "Abbe number"@en ;
+    skos:definition "A measure of dispersion (V-number)."@en ;
+    skos:exactMatch glasdigi:AbbeNumber .
+
+gbo:Birefringence a owl:Class ; rdfs:subClassOf gbo:OpticalProperty ;
+    rdfs:label "birefringence"@en ;
+    skos:definition "Stress-induced double refraction, made visible under crossed polarisers; the diagnostic for annealing quality."@en ;
+    skos:closeMatch glasdigi:StressOpticCoefficient .
+
+gbo:CompatibilityProperty a owl:Class ; rdfs:subClassOf gbo:Property ;
+    rdfs:label "compatibility property"@en ;
+    skos:definition "A tested property (COE and viscosity match) determining whether two glasses can be joined without cracking."@en .
+
+########################################################################
+# EQUIPMENT :: HEATING
+########################################################################
+
+gbo:HeatingEquipment a owl:Class ; rdfs:subClassOf gbo:Equipment ;
+    rdfs:label "heating equipment"@en ;
+    skos:definition "A device that melts, holds, reheats or cools glass."@en .
+
+gbo:Furnace a owl:Class ; rdfs:subClassOf gbo:HeatingEquipment ;
+    rdfs:label "furnace"@en ;
+    skos:definition "Holds molten glass at working temperature (pot or tank/day-tank)."@en ;
+    skos:closeMatch glasdigi:oven ;
+    gbo:vocabularyTarget "Getty AAT (furnaces); Wikidata"@en .
+
+gbo:Pot a owl:Class ; rdfs:subClassOf gbo:HeatingEquipment ;
+    rdfs:label "pot / crucible"@en ;
+    skos:definition "The refractory vessel that holds glass inside a pot furnace."@en ;
+    skos:closeMatch glasdigi:crucible .
+
+gbo:GloryHole a owl:Class ; rdfs:subClassOf gbo:HeatingEquipment ;
+    rdfs:label "glory hole"@en ;
+    skos:definition "A reheating chamber; work is spun in it to stay hot and mobile between tooling steps."@en .
+
+gbo:Annealer a owl:Class ; rdfs:subClassOf gbo:HeatingEquipment ;
+    rdfs:label "annealer"@en ;
+    skos:altLabel "lehr"@en ; skos:altLabel "garage"@en ;
+    skos:definition "A controlled-cooling oven; batch 'annealer' in a studio, continuous 'lehr' in industry."@en ;
+    skos:closeMatch glasdigi:CoolOven .
+
+gbo:Kiln a owl:Class ; rdfs:subClassOf gbo:HeatingEquipment ;
+    rdfs:label "kiln"@en ;
+    skos:definition "An oven for warm-glass forming by heat and gravity (fusing, slumping, casting)."@en .
+
+gbo:Torch a owl:Class ; rdfs:subClassOf gbo:HeatingEquipment ;
+    rdfs:label "torch"@en ;
+    skos:altLabel "lamp"@en ;
+    skos:definition "A bench burner for flame/lamp working of rod and tube."@en .
+
+########################################################################
+# EQUIPMENT :: IRONS
+########################################################################
+
+gbo:Iron a owl:Class ; rdfs:subClassOf gbo:Equipment ;
+    rdfs:label "iron"@en ;
+    skos:definition "A steel rod on which glass is gathered and worked."@en .
+
+gbo:Blowpipe a owl:Class ; rdfs:subClassOf gbo:Iron ;
+    rdfs:label "blowpipe"@en ;
+    skos:altLabel "blow iron"@en ;
+    skos:definition "A hollow iron for gathering and inflating glass."@en ;
+    gbo:vocabularyTarget "Getty AAT (blowpipes); Wikidata"@en .
+
+gbo:PuntyRod a owl:Class ; rdfs:subClassOf gbo:Iron ;
+    rdfs:label "punty rod"@en ;
+    skos:altLabel "pontil"@en ; skos:altLabel "ponty"@en ; skos:altLabel "puntee"@en ;
+    skos:altLabel "pontello"@it ;
+    skos:definition "A solid iron attached to a piece's base after transfer, so the opening can be finished."@en .
+
+########################################################################
+# EQUIPMENT :: HAND TOOLS
+########################################################################
+
+gbo:HandTool a owl:Class ; rdfs:subClassOf gbo:Equipment ;
+    rdfs:label "hand tool"@en ;
+    skos:definition "A bench tool for shaping hot glass."@en .
+
+gbo:Jacks a owl:Class ; rdfs:subClassOf gbo:HandTool ;
+    rdfs:label "jacks"@en ;
+    skos:altLabel "pucellas"@it ;
+    skos:definition "Spring-steel tongs; the primary shaping tool for necking, opening and defining line."@en .
+
+gbo:Blocks a owl:Class ; rdfs:subClassOf gbo:HandTool ;
+    rdfs:label "blocks"@en ;
+    skos:definition "Wet cupped fruitwood tools for centring and rounding the gather; water flashes to steam and floats the glass."@en .
+
+gbo:Marver a owl:Class ; rdfs:subClassOf gbo:HandTool ;
+    rdfs:label "marver"@en ;
+    skos:definition "A flat steel (historically marble) table for rolling, cooling, shaping and picking up colour."@en .
+
+gbo:Paddle a owl:Class ; rdfs:subClassOf gbo:HandTool ;
+    rdfs:label "paddle"@en ;
+    skos:altLabel "battledore"@en ;
+    skos:definition "A flat wood or graphite board to flatten a foot or base."@en .
+
+gbo:Shears a owl:Class ; rdfs:subClassOf gbo:HandTool ;
+    rdfs:label "shears"@en ;
+    skos:definition "Cutting tools for glass: straight shears cut trails and gathers; diamond/jack shears nip and shape."@en .
+gbo:StraightShears a owl:Class ; rdfs:subClassOf gbo:Shears ; rdfs:label "straight shears"@en .
+gbo:DiamondShears a owl:Class ; rdfs:subClassOf gbo:Shears ; rdfs:label "diamond shears"@en ; skos:altLabel "jack shears"@en .
+
+gbo:Soffietta a owl:Class ; rdfs:subClassOf gbo:HandTool ;
+    rdfs:label "soffietta"@it ;
+    skos:altLabel "puffer"@en ;
+    skos:definition "A cone-tipped blow tube that seals onto a transferred piece so it can still be inflated without a blowpipe."@en .
+
+gbo:Gadget a owl:Class ; rdfs:subClassOf gbo:HandTool ;
+    rdfs:label "gadget"@en ;
+    skos:definition "A spring clamp that grips a finished foot in place of a hot punty, avoiding a punty scar."@en .
+
+gbo:WetNewspaper a owl:Class ; rdfs:subClassOf gbo:HandTool ;
+    rdfs:label "wet newspaper"@en ;
+    skos:altLabel "blocking pads"@en ;
+    skos:definition "Folded wet newspaper held in the palm to shape the gather directly; old, universal, still standard."@en .
+
+gbo:Tweezers a owl:Class ; rdfs:subClassOf gbo:HandTool ;
+    rdfs:label "tweezers"@en ;
+    skos:definition "For pulling, pinching and tooling small features."@en .
+
+gbo:Polariscope a owl:Class ; rdfs:subClassOf gbo:Equipment ;
+    rdfs:label "polariscope"@en ;
+    skos:definition "Crossed polarisers that reveal frozen stress as coloured fringes; the annealing-quality inspection instrument."@en .
+
+########################################################################
+# EQUIPMENT :: MOULDS
+########################################################################
+
+gbo:Mold a owl:Class ; rdfs:subClassOf gbo:Equipment ;
+    rdfs:label "mould"@en ;
+    skos:definition "A form the glass is shaped in or against."@en .
+
+gbo:DipMold a owl:Class ; rdfs:subClassOf gbo:Mold ; rdfs:label "dip mould"@en ;
+    skos:definition "An open one-piece mould; the bubble is dipped and inflated to take a base pattern."@en .
+gbo:OpticMold a owl:Class ; rdfs:subClassOf gbo:DipMold ; rdfs:label "optic mould"@en ;
+    skos:definition "A ribbed dip mould that impresses an optic texture, then blown out and often twisted."@en .
+gbo:BlowMold a owl:Class ; rdfs:subClassOf gbo:Mold ; rdfs:label "blow mould"@en ;
+    skos:definition "A closed, often multi-part mould for reproducible form."@en .
+gbo:PasteMold a owl:Class ; rdfs:subClassOf gbo:BlowMold ; rdfs:label "paste mould"@en ;
+    skos:definition "A carbonised, water-swabbed mould that spins the piece for a seamless polished surface."@en .
+gbo:TurnMold a owl:Class ; rdfs:subClassOf gbo:BlowMold ; rdfs:label "turn / spun mould"@en ;
+    skos:definition "A mould in which the piece is rotated to erase seams."@en .
+gbo:CastingMold a owl:Class ; rdfs:subClassOf gbo:Mold ; rdfs:label "casting mould"@en ;
+    skos:definition "A refractory/investment mould for kiln casting, typically lost-wax in plaster-silica."@en .
+
+########################################################################
+# PROCESS :: MELTING
+########################################################################
+
+gbo:MeltingProcess a owl:Class ; rdfs:subClassOf gbo:Process ;
+    rdfs:label "melting process"@en ;
+    skos:definition "Turning raw batch into homogeneous workable glass."@en ;
+    skos:closeMatch glasdigi:meltingProcess ;
+    rdfs:seeAlso glasdigi:GlassManufacturingProcess .
+
+gbo:BatchCharging a owl:Class ; rdfs:subClassOf gbo:MeltingProcess ;
+    rdfs:label "batch charging"@en ;
+    skos:definition "Loading raw batch into the furnace."@en ;
+    skos:closeMatch glasdigi:batchProcess .
+gbo:Founding a owl:Class ; rdfs:subClassOf gbo:MeltingProcess ;
+    rdfs:label "founding / melting"@en ;
+    skos:definition "Liquefying the batch."@en .
+gbo:Fining a owl:Class ; rdfs:subClassOf gbo:MeltingProcess ;
+    rdfs:label "fining"@en ; skos:altLabel "refining"@en ;
+    skos:definition "Letting bubbles rise and clear, aided by fining agents."@en .
+gbo:Conditioning a owl:Class ; rdfs:subClassOf gbo:MeltingProcess ;
+    rdfs:label "conditioning"@en ; skos:altLabel "plaining"@en ;
+    skos:definition "Evening temperature and homogenising the glass before gathering."@en .
+
+########################################################################
+# PROCESS :: GATHERING
+########################################################################
+
+gbo:GatheringProcess a owl:Class ; rdfs:subClassOf gbo:Process ;
+    rdfs:label "gathering process"@en ;
+    skos:definition "Collecting molten glass on an iron."@en .
+
+gbo:Gathering a owl:Class ; rdfs:subClassOf gbo:GatheringProcess ;
+    rdfs:label "gathering"@en ;
+    skos:definition "Winding molten glass onto the iron from the furnace; a first gather may be followed by overlay gathers."@en .
+gbo:Chilling a owl:Class ; rdfs:subClassOf gbo:GatheringProcess ;
+    rdfs:label "chilling"@en ;
+    skos:definition "Briefly cooling the gather's skin so it holds shape."@en .
+gbo:Necking a owl:Class ; rdfs:subClassOf gbo:GatheringProcess ;
+    rdfs:label "necking"@en ;
+    skos:definition "Running a groove (the jack line) with jacks to define where the piece will later separate."@en .
+
+########################################################################
+# PROCESS :: HOT FORMING (BLOWING & SCULPTURAL)
+########################################################################
+
+gbo:HotFormingProcess a owl:Class ; rdfs:subClassOf gbo:Process ;
+    rdfs:label "hot forming process"@en ;
+    skos:definition "Shaping glass while molten, by tool, breath, mould or gravity."@en ;
+    gbo:vocabularyTarget "Getty AAT (glassblowing 300053932 — verify); Wikidata"@en .
+
+gbo:Blocking a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ; rdfs:label "blocking"@en ;
+    skos:definition "Centring and rounding the gather with wet blocks."@en .
+gbo:Marvering a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ; rdfs:label "marvering"@en ;
+    skos:definition "Rolling the gather on the marver to shape, cool or pick up colour."@en .
+gbo:Blowing a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ; rdfs:label "blowing"@en ;
+    skos:definition "Inflating a bubble (parison) inside the gather."@en .
+gbo:Transferring a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ; rdfs:label "transferring"@en ;
+    skos:definition "Moving the piece from blowpipe to punty at the jack line so the opening can be finished."@en .
+gbo:Opening a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ; rdfs:label "opening the lip"@en ;
+    skos:definition "Flaring the mouth with jacks while spinning; centrifugal force does the work."@en .
+
+gbo:FreeBlowing a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ;
+    rdfs:label "free-blowing"@en ; skos:altLabel "offhand"@en ; skos:altLabel "soffiato a mano"@it ;
+    skos:definition "Shaping in the air by tool and breath alone, no mould; the Studio Glass touchstone."@en .
+gbo:MoldBlowing a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ;
+    rdfs:label "mould-blowing"@en ;
+    skos:definition "Inflating the bubble into a mould for form or texture."@en .
+
+gbo:Incalmo a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ;
+    rdfs:label "incalmo"@it ;
+    skos:definition "Fusing two or more separately blown, open-mouthed forms rim-to-rim while hot to make crisp colour bands; demands matched diameters."@en ;
+    gbo:originatesInHint "Venetian / Muranese"@en .
+gbo:Casing a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ;
+    rdfs:label "casing / overlay"@en ;
+    skos:definition "Gathering one colour over another (or over clear), building concentric layers; the substrate for cameo, Graal and sommerso."@en .
+gbo:Sommerso a owl:Class ; rdfs:subClassOf gbo:Casing ;
+    rdfs:label "sommerso"@it ;
+    skos:definition "'Submerged': thick clear layers over interior colour, a mid-century Muranese hallmark."@en .
+gbo:BitWork a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ;
+    rdfs:label "bit work"@en ;
+    skos:definition "Small hot additions (handles, feet, prunts, wings) applied from a bit gather."@en .
+
+gbo:SolidSculpting a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ;
+    rdfs:label "solid hot sculpting"@en ;
+    skos:definition "Building form from solid gathers and bits rather than a bubble."@en .
+gbo:Flameworking a owl:Class ; rdfs:subClassOf gbo:HotFormingProcess ;
+    rdfs:label "flameworking"@en ; skos:altLabel "lampworking"@en ; skos:altLabel "torchwork"@en ;
+    skos:definition "Forming at a bench torch from rod and tube rather than a furnace."@en ;
+    gbo:vocabularyTarget "Getty AAT (lampworking); Wikidata"@en .
+gbo:ScientificGlassblowing a owl:Class ; rdfs:subClassOf gbo:Flameworking ;
+    rdfs:label "scientific glassblowing"@en ;
+    skos:definition "Precision borosilicate/quartz fabrication: graded seals, T-seals, ring seals, vacuum manifolds; adjacent to neon tube bending and plasma-vessel work."@en .
+gbo:Fuming a owl:Class ; rdfs:subClassOf gbo:Flameworking ;
+    rdfs:label "fuming"@en ;
+    skos:definition "Depositing silver or gold vapour for iridescent surface colour."@en .
+
+########################################################################
+# PROCESS :: HOT DECORATION
+########################################################################
+
+gbo:DecorationProcess a owl:Class ; rdfs:subClassOf gbo:Process ;
+    rdfs:label "decoration process"@en ;
+    skos:definition "Applying colour or pattern to hot glass."@en .
+
+gbo:RollingInColor a owl:Class ; rdfs:subClassOf gbo:DecorationProcess ; rdfs:label "rolling in colour"@en ;
+    skos:definition "Rolling a hot gather over frit or powder, then melting it in."@en .
+gbo:Flashing a owl:Class ; rdfs:subClassOf gbo:DecorationProcess ; rdfs:label "flashing"@en ;
+    skos:definition "Applying a thin surface colour layer (thicker = casing)."@en .
+gbo:Trailing a owl:Class ; rdfs:subClassOf gbo:DecorationProcess ; rdfs:label "trailing"@en ;
+    skos:definition "Laying threads of hot glass onto the surface from a bit."@en .
+gbo:Combing a owl:Class ; rdfs:subClassOf gbo:DecorationProcess ; rdfs:label "combing / feathering"@en ;
+    skos:altLabel "festooning"@en ;
+    skos:definition "Dragging a hooked tool through trails or bands to create feathered, dragged or looped patterns; an ancient core-formed technique."@en .
+gbo:CanePickup a owl:Class ; rdfs:subClassOf gbo:DecorationProcess ; rdfs:label "cane pickup"@en ;
+    skos:definition "Rolling the hot form over arranged cane to fuse a pattern into the skin."@en .
+gbo:MurrinePickup a owl:Class ; rdfs:subClassOf gbo:DecorationProcess ; rdfs:label "murrine pickup"@en ;
+    skos:definition "Rolling the hot form over arranged murrine to fuse an image into the skin."@en .
+gbo:IceGlass a owl:Class ; rdfs:subClassOf gbo:DecorationProcess ;
+    rdfs:label "ice glass"@en ; skos:altLabel "ghiaccio"@it ;
+    skos:definition "Thermal-shock crackle: plunge the hot gather in water, then reheat and reform, sealing a crazed surface."@en .
+
+########################################################################
+# PROCESS :: CANE, MURRINE & FILIGREE (Muranese subdomain)
+########################################################################
+
+gbo:CaneWork a owl:Class ; rdfs:subClassOf gbo:Process ;
+    rdfs:label "cane work"@en ;
+    skos:definition "Pulling, twisting, assembling and slicing coloured cane."@en ;
+    gbo:originatesInHint "Venetian / Muranese"@en .
+
+gbo:Filigrana a owl:Class ; rdfs:subClassOf gbo:CaneWork ;
+    rdfs:label "filigrana"@it ; skos:altLabel "zanfirico"@it ; skos:altLabel "filigree"@en ;
+    skos:definition "Cane containing twisted internal threads; the family term for lacy thread-in-glass."@en .
+gbo:Reticello a owl:Class ; rdfs:subClassOf gbo:Filigrana ;
+    rdfs:label "reticello"@it ;
+    skos:definition "Two layers of oppositely-twisted cane crossed into a net, trapping a regular grid of air bubbles; a benchmark of control."@en .
+gbo:MezzaFiligrana a owl:Class ; rdfs:subClassOf gbo:Filigrana ;
+    rdfs:label "mezza filigrana"@it ;
+    skos:definition "Single-twist half-filigree."@en .
+gbo:Retortoli a owl:Class ; rdfs:subClassOf gbo:Filigrana ;
+    rdfs:label "retortoli"@it ; skos:altLabel "ritorti"@it ;
+    skos:definition "Twisted-ribbon canes."@en .
+gbo:Latticino a owl:Class ; rdfs:subClassOf gbo:Filigrana ;
+    rdfs:label "latticino"@it ; skos:altLabel "lattimo"@it ;
+    skos:definition "White (milk-glass) thread work used in filigree."@en .
+gbo:MurrineMaking a owl:Class ; rdfs:subClassOf gbo:CaneWork ;
+    rdfs:label "murrine making"@en ;
+    skos:definition "Building a patterned cane, slicing it crosswise, then assembling and fusing the slices."@en .
+
+########################################################################
+# PROCESS :: MOULD FORMING
+########################################################################
+
+gbo:MoldFormingProcess a owl:Class ; rdfs:subClassOf gbo:Process ;
+    rdfs:label "mould forming process"@en ;
+    skos:definition "Shaping glass in or against a mould."@en .
+gbo:DipMolding a owl:Class ; rdfs:subClassOf gbo:MoldFormingProcess ; rdfs:label "dip moulding"@en .
+gbo:OpticMolding a owl:Class ; rdfs:subClassOf gbo:MoldFormingProcess ; rdfs:label "optic moulding"@en ;
+    skos:definition "Impressing an optic texture with a ribbed mould."@en .
+
+########################################################################
+# PROCESS :: KILN / WARM GLASS
+########################################################################
+
+gbo:KilnProcess a owl:Class ; rdfs:subClassOf gbo:Process ;
+    rdfs:label "kiln process"@en ; skos:altLabel "warm glass"@en ;
+    skos:definition "Forming glass by heat and gravity in a kiln, governed by a firing schedule, rather than by hand at a furnace."@en .
+
+gbo:Fusing a owl:Class ; rdfs:subClassOf gbo:KilnProcess ; rdfs:label "fusing"@en ;
+    skos:definition "Heating compatible pieces until they bond."@en ;
+    gbo:vocabularyTarget "Getty AAT (fusing); Wikidata"@en .
+gbo:TackFuse a owl:Class ; rdfs:subClassOf gbo:Fusing ; rdfs:label "tack fuse"@en ;
+    skos:definition "Pieces stick but keep their shape."@en .
+gbo:ContourFuse a owl:Class ; rdfs:subClassOf gbo:Fusing ; rdfs:label "contour fuse"@en ;
+    skos:definition "Edges round over."@en .
+gbo:FullFuse a owl:Class ; rdfs:subClassOf gbo:Fusing ; rdfs:label "full fuse"@en ;
+    skos:definition "Pieces flow into a single flat sheet."@en .
+gbo:Slumping a owl:Class ; rdfs:subClassOf gbo:KilnProcess ; rdfs:label "slumping"@en ;
+    skos:definition "A fused blank sags over or into a mould to take a form."@en ;
+    gbo:vocabularyTarget "Getty AAT (slumping); Wikidata"@en .
+gbo:KilnCasting a owl:Class ; rdfs:subClassOf gbo:KilnProcess ; rdfs:label "kiln casting"@en ;
+    skos:definition "Molten glass fills a refractory mould."@en ;
+    gbo:vocabularyTarget "Getty AAT (casting); Wikidata"@en .
+gbo:LostWaxCasting a owl:Class ; rdfs:subClassOf gbo:KilnCasting ; rdfs:label "lost-wax casting"@en ;
+    skos:definition "Casting into an investment mould made by burning out a wax model."@en .
+gbo:PateDeVerre a owl:Class ; rdfs:subClassOf gbo:KilnProcess ; rdfs:label "pâte de verre"@fr ;
+    skos:definition "'Glass paste': a paste of frit/powder and binder packed into a mould and fired, giving a granular, luminous wall."@en .
+
+########################################################################
+# PROCESS :: ANNEALING
+########################################################################
+
+gbo:AnnealingProcess a owl:Class ; rdfs:subClassOf gbo:Process ;
+    rdfs:label "annealing process"@en ;
+    skos:definition "Controlled cooling that relaxes and then locks in minimal residual stress; the step that makes glass survive."@en ;
+    skos:closeMatch glasdigi:coolingProcess .
+gbo:AnnealSoak a owl:Class ; rdfs:subClassOf gbo:AnnealingProcess ; rdfs:label "anneal soak"@en ;
+    skos:definition "Holding at the annealing point long enough to relax stress uniformly through the wall."@en .
+gbo:ControlledCooling a owl:Class ; rdfs:subClassOf gbo:AnnealingProcess ; rdfs:label "controlled cooling"@en ;
+    skos:definition "Descending slowly to the strain point (the critical leg), then faster below it."@en .
+
+########################################################################
+# PROCESS :: COLD WORKING
+########################################################################
+
+gbo:ColdWorkingProcess a owl:Class ; rdfs:subClassOf gbo:Process ;
+    rdfs:label "cold working process"@en ;
+    skos:definition "Work done to cold, annealed glass with abrasives, wheels or acid."@en .
+
+gbo:Cutting a owl:Class ; rdfs:subClassOf gbo:ColdWorkingProcess ; rdfs:label "cutting (parting)"@en ;
+    skos:definition "Sectioning blanks with cold saw, diamond band saw or tile saw; scoring and breaking for sheet."@en .
+gbo:Grinding a owl:Class ; rdfs:subClassOf gbo:ColdWorkingProcess ; rdfs:label "grinding"@en ;
+    skos:definition "Flattening and truing with graded diamond or silicon-carbide abrasive."@en ;
+    gbo:vocabularyTarget "Getty AAT (grinding); Wikidata"@en .
+gbo:Lapping a owl:Class ; rdfs:subClassOf gbo:Grinding ; rdfs:label "lapping"@en ;
+    skos:definition "The fine, flat grinding stage on a flat lap."@en .
+gbo:Polishing a owl:Class ; rdfs:subClassOf gbo:ColdWorkingProcess ; rdfs:label "polishing"@en ;
+    skos:definition "Bringing to clarity, mechanically or otherwise."@en .
+gbo:FirePolishing a owl:Class ; rdfs:subClassOf gbo:Polishing ; rdfs:label "fire polishing"@en ;
+    skos:definition "A quick reheat to gloss the surface."@en .
+gbo:AcidPolishing a owl:Class ; rdfs:subClassOf gbo:Polishing ; rdfs:label "acid polishing"@en ;
+    skos:definition "A hydrofluoric/sulfuric bath to polish cut crystal (hazardous, industrial)."@en .
+gbo:DecorativeCutting a owl:Class ; rdfs:subClassOf gbo:ColdWorkingProcess ; rdfs:label "decorative cutting"@en ;
+    skos:definition "The lapidary tradition of mitre, panel and brilliant cuts on a cutting lathe; the Bohemian heartland."@en .
+gbo:Engraving a owl:Class ; rdfs:subClassOf gbo:ColdWorkingProcess ; rdfs:label "engraving"@en ;
+    skos:definition "Incising the surface by wheel, point or stipple."@en ;
+    gbo:vocabularyTarget "Getty AAT (engraving); Wikidata"@en .
+gbo:CopperWheelEngraving a owl:Class ; rdfs:subClassOf gbo:Engraving ; rdfs:label "copper-wheel engraving"@en ;
+    skos:definition "Fine intaglio cut with small copper wheels and abrasive slurry."@en .
+gbo:DiamondPointEngraving a owl:Class ; rdfs:subClassOf gbo:Engraving ; rdfs:label "diamond-point engraving"@en .
+gbo:StippleEngraving a owl:Class ; rdfs:subClassOf gbo:Engraving ; rdfs:label "stipple engraving"@en ;
+    skos:definition "Dotted shading."@en .
+gbo:Intaglio a owl:Class ; rdfs:subClassOf gbo:Engraving ; rdfs:label "intaglio"@en ;
+    skos:definition "Design cut into the surface."@en .
+gbo:Cameo a owl:Class ; rdfs:subClassOf gbo:Engraving ; rdfs:label "cameo"@en ;
+    skos:definition "A cased layer cut away to reveal the ground beneath."@en .
+gbo:AbrasiveBlasting a owl:Class ; rdfs:subClassOf gbo:ColdWorkingProcess ; rdfs:label "abrasive blasting"@en .
+gbo:Sandblasting a owl:Class ; rdfs:subClassOf gbo:AbrasiveBlasting ; rdfs:label "sandblasting"@en ;
+    skos:definition "Frosting or carving the surface with abrasive under air pressure."@en ;
+    gbo:vocabularyTarget "Getty AAT (sandblasting); Wikidata"@en .
+gbo:Etching a owl:Class ; rdfs:subClassOf gbo:ColdWorkingProcess ; rdfs:label "etching"@en .
+gbo:AcidEtching a owl:Class ; rdfs:subClassOf gbo:Etching ; rdfs:label "acid etching"@en ;
+    skos:altLabel "French embossing"@en ;
+    skos:definition "Etching or matte-finishing the surface with hydrofluoric acid."@en .
+gbo:Battuto a owl:Class ; rdfs:subClassOf gbo:ColdWorkingProcess ;
+    rdfs:label "battuto"@it ;
+    skos:definition "Dense shallow wheel-cutting leaving a hammered ('beaten') texture; finishes cane and sommerso pieces."@en .
+
+########################################################################
+# ARTIFACT
+########################################################################
+
+gbo:Vessel a owl:Class ; rdfs:subClassOf gbo:Artifact ; rdfs:label "vessel"@en .
+gbo:Sculpture a owl:Class ; rdfs:subClassOf gbo:Artifact ; rdfs:label "sculpture"@en .
+gbo:Paperweight a owl:Class ; rdfs:subClassOf gbo:Artifact ; rdfs:label "paperweight"@en .
+gbo:Blank a owl:Class ; rdfs:subClassOf gbo:Artifact ; rdfs:label "blank"@en ;
+    skos:definition "A fused or formed piece awaiting further (usually cold) work."@en .
+
+########################################################################
+# AGENT :: STUDIO ROLES
+########################################################################
+
+gbo:Gaffer a owl:Class ; rdfs:subClassOf gbo:Agent ;
+    rdfs:label "gaffer"@en ; skos:altLabel "maestro"@it ;
+    skos:definition "The master who sits in the chair and forms the piece."@en ;
+    gbo:vocabularyTarget "Getty AAT (glassblowers); Wikidata"@en .
+gbo:Servitor a owl:Class ; rdfs:subClassOf gbo:Agent ;
+    rdfs:label "servitor"@en ; skos:altLabel "servitore"@it ;
+    skos:definition "The first assistant; gathers bits, brings tools, makes feet and additions."@en .
+gbo:Footmaker a owl:Class ; rdfs:subClassOf gbo:Agent ;
+    rdfs:label "footmaker / second gaffer"@en ;
+    skos:definition "Makes and attaches feet and components."@en .
+gbo:Gatherer a owl:Class ; rdfs:subClassOf gbo:Agent ;
+    rdfs:label "gatherer"@en ;
+    skos:definition "Gathers glass from the furnace and preps irons."@en .
+gbo:BitGatherer a owl:Class ; rdfs:subClassOf gbo:Agent ;
+    rdfs:label "bit gatherer"@en ;
+    skos:definition "Brings hot bits on demand for handles, prunts and additions."@en .
+gbo:TakerIn a owl:Class ; rdfs:subClassOf gbo:Agent ;
+    rdfs:label "taker-in"@en ; skos:altLabel "carry-in boy"@en ;
+    skos:definition "Carries finished work to the lehr."@en .
+gbo:Apprentice a owl:Class ; rdfs:subClassOf gbo:Agent ;
+    rdfs:label "apprentice"@en ; skos:altLabel "garzone"@it ;
+    skos:definition "A learner working up the ladder."@en .
+gbo:Team a owl:Class ; rdfs:subClassOf gbo:Agent ;
+    rdfs:label "shop / chair"@en ;
+    skos:definition "The whole working team, named by its workstation (the bench is 'the chair')."@en ;
+    skos:closeMatch crm:E74_Group .
+
+########################################################################
+# DEFECT
+########################################################################
+
+gbo:Seed a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "seed"@en ;
+    skos:definition "A tiny bubble from incomplete fining."@en .
+gbo:Blister a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "blister"@en ;
+    skos:definition "A large bubble from gas release, over-reheat or a wet tool."@en .
+gbo:Stone a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "stone"@en ;
+    skos:definition "A solid inclusion of unmelted batch or refractory."@en .
+gbo:Cord a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "cord / striae"@en ;
+    skos:definition "Ropy optical streaks from an inhomogeneous melt."@en .
+gbo:Devitrification a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "devitrification"@en ;
+    skos:altLabel "devit"@en ;
+    skos:definition "A hazy crystalline skin from too long in the crystallisation range; the enemy of kiln work and prolonged reheating."@en ;
+    rdfs:seeAlso glasdigi:crystallizationProcess .
+gbo:ChillMark a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "chill mark"@en ;
+    skos:definition "Surface ripples where glass touched something too cold."@en .
+gbo:ShearMark a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "shear mark"@en ;
+    skos:definition "A line or notch left by shears."@en .
+gbo:PuntyScar a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "punty scar"@en ;
+    skos:definition "A rough spot on the base from punty break-off; avoided with a gadget."@en .
+gbo:Check a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "check"@en ;
+    skos:definition "A small surface crack from thermal shock or mishandling."@en .
+gbo:AnnealingCrack a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "annealing crack"@en ;
+    skos:altLabel "strain fracture"@en ;
+    skos:definition "A clean, sometimes delayed crack from inadequate annealing or COE mismatch."@en .
+gbo:Ream a owl:Class ; rdfs:subClassOf gbo:Defect ; rdfs:label "ream"@en ;
+    skos:definition "A glassy layer of differing composition from contamination or inhomogeneity."@en .
+
+########################################################################
+# TRADITION
+########################################################################
+
+gbo:RomanTradition a owl:Class ; rdfs:subClassOf gbo:Tradition ; rdfs:label "Roman / ancient"@en ;
+    skos:definition "Core-forming and casting precede blowing; glassblowing invented ~mid-1st century BCE in the Syro-Palestinian (Levantine) region, industrialised under Rome."@en .
+gbo:IslamicTradition a owl:Class ; rdfs:subClassOf gbo:Tradition ; rdfs:label "Islamic"@en ;
+    skos:definition "Luster painting, enamelled and gilded lamps, wheel-cut relief; a bridge between antiquity and Venice."@en .
+gbo:MuraneseTradition a owl:Class ; rdfs:subClassOf gbo:Tradition ; rdfs:label "Venetian / Muranese"@en ;
+    skos:definition "The technique wellspring: cristallo, lattimo, filigrana/zanfirico/reticello, avventurina, calcedonio, ghiaccio, incalmo, sommerso, battuto; the maestro/servitore team language."@en .
+gbo:FaconDeVenise a owl:Class ; rdfs:subClassOf gbo:Tradition ; rdfs:label "façon de Venise"@fr ;
+    skos:definition "'In the Venetian manner'; émigré Venetian makers spreading the style across Renaissance Europe."@en .
+gbo:BohemianTradition a owl:Class ; rdfs:subClassOf gbo:Tradition ; rdfs:label "Bohemian / Czech"@en ;
+    skos:definition "Potash-lime crystal hard enough for deep wheel cutting and engraving; hyalith, lithyalin, cased ruby-cut-to-clear overlay."@en .
+gbo:AngloTradition a owl:Class ; rdfs:subClassOf gbo:Tradition ; rdfs:label "English / Anglo-American"@en ;
+    skos:definition "Lead crystal (Ravenscroft, 1670s) prized for weight and brilliance; the gaffer/chair/servitor/gatherer/taker-in team lexicon; cut glass."@en .
+gbo:ScandinavianTradition a owl:Class ; rdfs:subClassOf gbo:Tradition ; rdfs:label "Scandinavian / Swedish"@en ;
+    skos:definition "Orrefors & Kosta refinements of cased/engraved work: Graal (~1916), Ariel (~1937), Kraka, Ravenna; restrained modern design."@en .
+gbo:StudioGlass a owl:Class ; rdfs:subClassOf gbo:Tradition ; rdfs:label "American Studio Glass movement"@en ;
+    skos:definition "Littleton and Labino, Toledo workshops 1962: a small furnace and workable glass that took blowing into the artist's studio; popularised 'offhand'."@en .
+gbo:ChineseJapaneseTradition a owl:Class ; rdfs:subClassOf gbo:Tradition ; rdfs:label "Chinese & Japanese"@en ;
+    skos:definition "Distinct lineages: Chinese 'Peking glass' cased-and-carved; Japanese Edo-kiriko cut glass and contemporary flame/kiln work."@en .
+
+########################################################################
+# CULTURAL-HERITAGE APPLICATION LAYER (after De Boer et al.)
+# Event-centric classes for describing individual works & their making,
+# aligned to CIDOC-CRM. Use these to instantiate real pieces.
+########################################################################
+
+gbo:CreationEvent a owl:Class ; rdfs:subClassOf gbo:Process ;
+    rdfs:label "creation event"@en ;
+    skos:definition "The whole making of one artwork, composed of ordered activities. Event-centric anchor for provenance."@en ;
+    skos:closeMatch crm:E12_Production .
+gbo:Activity a owl:Class ;
+    rdfs:label "activity"@en ;
+    skos:definition "One step within a creation event (e.g. an instance of blowing, grinding, gilding), with its own materials, tools, people, place and time."@en ;
+    skos:closeMatch crm:E7_Activity .
+gbo:Material a owl:Class ;
+    rdfs:label "material (as processed)"@en ;
+    skos:definition "A substance as processed in an activity; use for provenance where gbo:Substance is the type."@en ;
+    skos:closeMatch crm:E57_Material .
+gbo:Place a owl:Class ; rdfs:label "place"@en ; skos:closeMatch crm:E53_Place .
+gbo:Timespan a owl:Class ; rdfs:label "timespan"@en ; skos:closeMatch crm:E52_Time-Span .
+gbo:Collection a owl:Class ; rdfs:label "collection"@en ; skos:closeMatch crm:E78_Curated_Holding .
+
+########################################################################
+# OBJECT PROPERTIES (the relations that make explanations)
+########################################################################
+
+gbo:partOf a owl:ObjectProperty, owl:TransitiveProperty ;
+    rdfs:label "part of"@en ; rdfs:comment "Mereological containment."@en .
+gbo:hasPart a owl:ObjectProperty ; owl:inverseOf gbo:partOf ; rdfs:label "has part"@en .
+
+gbo:composedOf a owl:ObjectProperty ;
+    rdfs:label "composed of"@en ;
+    rdfs:domain gbo:GlassType ; rdfs:range gbo:RawMaterial ;
+    skos:definition "Recipe membership: a glass type is composed of raw materials."@en ;
+    rdfs:seeAlso glasdigi:hasGlassComponent ; skos:closeMatch pmdco:composedBy .
+
+gbo:hasProperty a owl:ObjectProperty ;
+    rdfs:label "has property"@en ;
+    rdfs:domain gbo:Substance ; rdfs:range gbo:Property ;
+    skos:closeMatch glasdigi:hasMaterialProperty .
+
+gbo:uses a owl:ObjectProperty ;
+    rdfs:label "uses"@en ;
+    rdfs:domain gbo:Process ; rdfs:range gbo:Equipment ;
+    skos:definition "A process uses a tool, iron, mould or heating device."@en .
+gbo:usedIn a owl:ObjectProperty ; owl:inverseOf gbo:uses ; rdfs:label "used in"@en .
+gbo:enables a owl:ObjectProperty ;
+    rdfs:label "enables"@en ;
+    rdfs:domain gbo:Equipment ; rdfs:range gbo:Process ;
+    skos:definition "Equipment enables a process (e.g. the marver enables marvering)."@en .
+
+gbo:produces a owl:ObjectProperty ;
+    rdfs:label "produces"@en ;
+    rdfs:domain gbo:Process ; rdfs:range gbo:Artifact ;
+    skos:closeMatch pmdco:hasOutputObject .
+gbo:consumes a owl:ObjectProperty ;
+    rdfs:label "consumes"@en ;
+    rdfs:domain gbo:Process ; rdfs:range gbo:Substance ;
+    skos:closeMatch pmdco:hasInputObject ; rdfs:seeAlso glasdigi:hasInputRawMaterial .
+
+gbo:precedes a owl:ObjectProperty, owl:TransitiveProperty ;
+    rdfs:label "precedes"@en ;
+    rdfs:domain gbo:Process ; rdfs:range gbo:Process ;
+    skos:definition "Workflow ordering: one process precedes another."@en ;
+    skos:closeMatch pmdco:hasNextProcess .
+gbo:follows a owl:ObjectProperty ; owl:inverseOf gbo:precedes ; rdfs:label "follows"@en ;
+    skos:closeMatch pmdco:hasPreviousProcess .
+
+gbo:requires a owl:ObjectProperty ;
+    rdfs:label "requires"@en ;
+    rdfs:domain gbo:Process ; rdfs:range gbo:Property ;
+    skos:definition "A process requires a property to hold (e.g. fusing requires COE match)."@en .
+
+gbo:causes a owl:ObjectProperty ;
+    rdfs:label "causes"@en ;
+    rdfs:range gbo:Defect ;
+    skos:definition "A condition or process causes a defect."@en .
+gbo:prevents a owl:ObjectProperty ;
+    rdfs:label "prevents"@en ;
+    rdfs:domain gbo:Process ; rdfs:range gbo:Defect ;
+    skos:definition "A process prevents a defect (e.g. annealing prevents strain fracture)."@en .
+
+gbo:performedBy a owl:ObjectProperty ;
+    rdfs:label "performed by"@en ;
+    rdfs:domain gbo:Process ; rdfs:range gbo:Agent ;
+    rdfs:seeAlso crm:P14_carried_out_by .
+
+gbo:originatesIn a owl:ObjectProperty ;
+    rdfs:label "originates in"@en ;
+    rdfs:range gbo:Tradition ;
+    skos:definition "A technique originates in a tradition (e.g. reticello originates in the Muranese tradition)."@en .
+
+# lightweight prose hint used above before the individuals exist
+gbo:originatesInHint a owl:AnnotationProperty ;
+    rdfs:label "originates-in (hint)"@en ;
+    rdfs:comment "Free-text tradition attribution; formalise with gbo:originatesIn once Tradition individuals are instantiated."@en .
+
+# --- Dialect layer ----------------------------------------------------
+gbo:Dialect a owl:Class ;
+    rdfs:label "dialect / register"@en ;
+    skos:definition "A regional or subcultural vocabulary register in which glass terms are spoken."@en .
+gbo:LexicalVariant a owl:Class ;
+    rdfs:label "lexical variant"@en ;
+    skos:definition "A reified term: a word for a concept, tagged with the dialect it belongs to. Makes the concordance queryable."@en .
+gbo:hasLexicalVariant a owl:ObjectProperty ;
+    rdfs:label "has lexical variant"@en ;
+    rdfs:range gbo:LexicalVariant ;
+    skos:definition "Links a concept to a dialect-tagged word for it."@en .
+gbo:inDialect a owl:ObjectProperty ;
+    rdfs:label "in dialect"@en ;
+    rdfs:domain gbo:LexicalVariant ; rdfs:range gbo:Dialect .
+
+# --- CH application-layer relations (after De Boer et al.) -------------
+gbo:consistsOf a owl:ObjectProperty ;
+    rdfs:label "consists of"@en ;
+    rdfs:domain gbo:CreationEvent ; rdfs:range gbo:Activity ;
+    skos:definition "A creation event consists of ordered activities."@en .
+gbo:involves a owl:ObjectProperty ;
+    rdfs:label "involves"@en ;
+    rdfs:domain gbo:Activity ; rdfs:range gbo:Agent ;
+    rdfs:seeAlso crm:P14_carried_out_by .
+gbo:processes a owl:ObjectProperty ;
+    rdfs:label "processes"@en ;
+    rdfs:domain gbo:Activity ; rdfs:range gbo:Material .
+gbo:requiresUseOf a owl:ObjectProperty ;
+    rdfs:label "requires use of"@en ;
+    rdfs:domain gbo:Activity ; rdfs:range gbo:Equipment .
+gbo:createdBy a owl:ObjectProperty ;
+    rdfs:label "created by"@en ;
+    rdfs:domain gbo:Artifact ; rdfs:range gbo:CreationEvent ;
+    rdfs:seeAlso crm:P108i_was_produced_by .
+gbo:appliesTechnique a owl:ObjectProperty ;
+    rdfs:label "applies technique"@en ;
+    rdfs:domain gbo:Activity ; rdfs:range gbo:Process ;
+    skos:definition "Links a concrete activity to the technique class it is an instance of applying."@en .
+
+########################################################################
+# DIALECT INDIVIDUALS + CONCORDANCE
+########################################################################
+
+gbo:dialect-EN a gbo:Dialect ; rdfs:label "Anglo-American studio"@en .
+gbo:dialect-IT a gbo:Dialect ; rdfs:label "Venetian / Muranese"@en .
+gbo:dialect-CZ a gbo:Dialect ; rdfs:label "Bohemian / Czech"@en .
+gbo:dialect-SE a gbo:Dialect ; rdfs:label "Scandinavian / Swedish"@en .
+gbo:dialect-FLAME a gbo:Dialect ; rdfs:label "flame / lamp-working subculture"@en .
+gbo:dialect-SCI a gbo:Dialect ; rdfs:label "scientific / industrial"@en .
+gbo:dialect-FR a gbo:Dialect ; rdfs:label "French"@en .
+
+# Concordance entries for the terms that fork by register.
+gbo:var-jacks-EN a gbo:LexicalVariant ; rdfs:label "jacks"@en ; gbo:inDialect gbo:dialect-EN .
+gbo:var-jacks-IT a gbo:LexicalVariant ; rdfs:label "pucellas"@it ; gbo:inDialect gbo:dialect-IT .
+gbo:Jacks gbo:hasLexicalVariant gbo:var-jacks-EN, gbo:var-jacks-IT .
+
+gbo:var-gaffer-EN a gbo:LexicalVariant ; rdfs:label "gaffer"@en ; gbo:inDialect gbo:dialect-EN .
+gbo:var-gaffer-IT a gbo:LexicalVariant ; rdfs:label "maestro"@it ; gbo:inDialect gbo:dialect-IT .
+gbo:Gaffer gbo:hasLexicalVariant gbo:var-gaffer-EN, gbo:var-gaffer-IT .
+
+gbo:var-servitor-EN a gbo:LexicalVariant ; rdfs:label "servitor"@en ; gbo:inDialect gbo:dialect-EN .
+gbo:var-servitor-IT a gbo:LexicalVariant ; rdfs:label "servitore"@it ; gbo:inDialect gbo:dialect-IT .
+gbo:Servitor gbo:hasLexicalVariant gbo:var-servitor-EN, gbo:var-servitor-IT .
+
+gbo:var-punty-EN a gbo:LexicalVariant ; rdfs:label "punty / pontil"@en ; gbo:inDialect gbo:dialect-EN .
+gbo:var-punty-IT a gbo:LexicalVariant ; rdfs:label "pontello"@it ; gbo:inDialect gbo:dialect-IT .
+gbo:var-punty-FLAME a gbo:LexicalVariant ; rdfs:label "punty (temporary handle rod)"@en ; gbo:inDialect gbo:dialect-FLAME .
+gbo:PuntyRod gbo:hasLexicalVariant gbo:var-punty-EN, gbo:var-punty-IT, gbo:var-punty-FLAME .
+
+gbo:var-offhand-EN a gbo:LexicalVariant ; rdfs:label "offhand / free-blown"@en ; gbo:inDialect gbo:dialect-EN .
+gbo:var-offhand-IT a gbo:LexicalVariant ; rdfs:label "soffiato a mano"@it ; gbo:inDialect gbo:dialect-IT .
+gbo:FreeBlowing gbo:hasLexicalVariant gbo:var-offhand-EN, gbo:var-offhand-IT .
+
+gbo:var-boro-FLAME a gbo:LexicalVariant ; rdfs:label "boro / hard glass"@en ; gbo:inDialect gbo:dialect-FLAME .
+gbo:var-boro-SCI a gbo:LexicalVariant ; rdfs:label "borosilicate"@en ; gbo:inDialect gbo:dialect-SCI .
+gbo:BorosilicateGlass gbo:hasLexicalVariant gbo:var-boro-FLAME, gbo:var-boro-SCI .
+
+gbo:var-annealer-EN a gbo:LexicalVariant ; rdfs:label "annealer"@en ; gbo:inDialect gbo:dialect-EN .
+gbo:var-annealer-IND a gbo:LexicalVariant ; rdfs:label "lehr"@en ; gbo:inDialect gbo:dialect-SCI .
+gbo:Annealer gbo:hasLexicalVariant gbo:var-annealer-EN, gbo:var-annealer-IND .
+
+# Muranese-origin techniques attached to their dialect and tradition
+gbo:Reticello gbo:hasLexicalVariant [ a gbo:LexicalVariant ; rdfs:label "reticello"@it ; gbo:inDialect gbo:dialect-IT ] ;
+    gbo:originatesIn gbo:MuraneseTradition .
+gbo:Sommerso gbo:originatesIn gbo:MuraneseTradition .
+gbo:Incalmo gbo:originatesIn gbo:MuraneseTradition .
+gbo:Filigrana gbo:originatesIn gbo:MuraneseTradition .
+gbo:DecorativeCutting gbo:originatesIn gbo:BohemianTradition .
+gbo:FreeBlowing gbo:originatesIn gbo:StudioGlass .

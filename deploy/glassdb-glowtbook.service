@@ -1,0 +1,25 @@
+[Unit]
+Description=Glass Database glowtbook (Streamlit)
+After=network.target
+
+[Service]
+Type=simple
+User=glassdb
+Group=glassdb
+WorkingDirectory=/opt/glassdatabase
+EnvironmentFile=/opt/glassdatabase/.env
+Environment=HOME=/opt/glassdatabase
+ExecStart=/opt/glassdatabase/.venv/bin/streamlit run glowtbook/app.py \
+    --server.port 8503 --server.address 127.0.0.1 \
+    --server.baseUrlPath glowtbook \
+    --server.headless true \
+    --server.enableCORS false \
+    --browser.gatherUsageStats false
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,250 @@
+"""
+Glass Database — read API
+=========================
+A generic, read-only HTTP API other developers can build on. It self-describes
+from the ingest registry, so every dataset is explorable without bespoke code,
+and the interactive docs at /docs (Swagger) are the "convenient exploration"
+surface.
+
+Safety model:
+  * READ-ONLY. No write endpoints — content is added via the admin/CLI.
+  * PUBLIC by default. Restricted datasets and private columns (emails, phones,
+    claim tokens, internal notes) are withheld unless a caller sends a valid
+    admin key, matching the Removal & Correction Policy.
+  * Table and column names are validated against the registry before hitting
+    SQL, so arbitrary identifiers can't be injected.
+
+Run:  uvicorn api.main:app --reload
+Docs: http://127.0.0.1:8000/docs
+"""
+
+from __future__ import annotations
+
+import csv
+import io
+import os
+import sys
+from pathlib import Path
+
+from fastapi import FastAPI, HTTPException, Query, Request, Response
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from central.dbconn import connect  # noqa: E402
+
+ADMIN_KEY = os.environ.get("GLASSDB_ADMIN_TOKEN", "")
+MAX_LIMIT = 200
+DIP_MEDIA = Path(__file__).resolve().parent.parent / "data" / "dip_media"
+
+app = FastAPI(
+    title="Glass Database API",
+    version="0.1.0",
+    root_path=os.environ.get("ROOT_PATH", ""),   # e.g. "/api" behind a reverse proxy
+    description=(
+        "Read-only, self-describing access to the Glass Database — studios, "
+        "artists, programs, opportunities, events, trade shows and more. "
+        "Published under a Creative Commons license. Restricted data and "
+        "personal contact fields are withheld from public responses."
+    ),
+)
+app.add_middleware(
+    CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"],
+)
+
+
+# --- helpers ---------------------------------------------------------------
+def _is_admin(request: Request) -> bool:
+    key = request.headers.get("x-api-key", "")
+    return bool(ADMIN_KEY) and key == ADMIN_KEY
+
+
+def _dataset(conn, table: str):
+    row = conn.execute(
+        "SELECT tbl, domain, visibility, row_count, description FROM _datasets WHERE tbl=?",
+        (table,),
+    ).fetchone()
+    return dict(row) if row else None
+
+
+def _columns(conn, table: str, admin: bool):
+    rows = conn.execute(
+        "SELECT column, label, ordinal, is_public FROM _columns WHERE tbl=? ORDER BY ordinal",
+        (table,),
+    ).fetchall()
+    out = []
+    for r in rows:
+        d = dict(r)
+        if admin or d["is_public"]:
+            out.append(d)
+    return out
+
+
+def _visible_cols(conn, table: str, admin: bool) -> list[str]:
+    cols = [c["column"] for c in _columns(conn, table, admin)]
+    return ["_row_id", *cols, "_source_file", "_source_sheet", "_imported_at"]
+
+
+def _require_table(conn, table: str, admin: bool):
+    ds = _dataset(conn, table)
+    if not ds:
+        raise HTTPException(404, f"No such dataset: {table}")
+    if ds["visibility"] == "restricted" and not admin:
+        raise HTTPException(403, f"Dataset '{table}' is restricted.")
+    return ds
+
+
+# --- endpoints -------------------------------------------------------------
+@app.get("/", summary="Service overview")
+def root(request: Request):
+    conn = connect()
+    admin = _is_admin(request)
+    where = "" if admin else "WHERE visibility='public'"
+    rows = conn.execute(
+        f"SELECT domain, COUNT(*) n, SUM(row_count) rows FROM _datasets {where} GROUP BY domain ORDER BY domain"
+    ).fetchall()
+    return {
+        "service": "Glass Database API",
+        "license": "CC-BY (see glassdatabase.org)",
+        "docs": "/docs",
+        "endpoints": ["/datasets", "/datasets/{table}", "/datasets/{table}/{row_id}", "/schema/{table}"],
+        "domains": [dict(r) for r in rows],
+        "admin": admin,
+    }
+
+
+@app.get("/datasets", summary="List datasets")
+def list_datasets(request: Request):
+    conn = connect()
+    admin = _is_admin(request)
+    where = "" if admin else "WHERE visibility='public'"
+    rows = conn.execute(
+        f"SELECT tbl, domain, visibility, row_count, description, source_file, source_sheet "
+        f"FROM _datasets {where} ORDER BY domain, tbl"
+    ).fetchall()
+    return {"count": len(rows), "datasets": [dict(r) for r in rows]}
+
+
+@app.get("/schema/{table}", summary="Columns of a dataset")
+def schema(table: str, request: Request):
+    conn = connect()
+    admin = _is_admin(request)
+    ds = _require_table(conn, table, admin)
+    return {"dataset": ds, "columns": _columns(conn, table, admin)}
+
+
+@app.get("/datasets/{table}", summary="Rows of a dataset (filter, search, paginate, CSV)")
+def rows(
+    table: str,
+    request: Request,
+    limit: int = Query(50, ge=1, le=MAX_LIMIT),
+    offset: int = Query(0, ge=0),
+    q: str | None = Query(None, description="Case-insensitive search across visible text columns"),
+    order_by: str | None = Query(None, description="A visible column name"),
+    desc: bool = False,
+    format: str = Query("json", pattern="^(json|csv)$"),
+):
+    conn = connect()
+    admin = _is_admin(request)
+    _require_table(conn, table, admin)
+    visible = _visible_cols(conn, table, admin)
+    vset = set(visible)
+
+    # arbitrary column filters: ?country=USA&type=... (validated against columns)
+    filters = {k: v for k, v in request.query_params.items()
+               if k in vset and k not in {"limit", "offset", "q", "order_by", "desc", "format"}}
+
+    where, params = [], []
+    for col, val in filters.items():
+        where.append(f'"{col}" = ?'); params.append(val)
+    if q:
+        text_cols = [c for c in visible if not c.startswith("_")]
+        if text_cols:
+            where.append("(" + " OR ".join(f'"{c}" LIKE ?' for c in text_cols) + ")")
+            params += [f"%{q}%"] * len(text_cols)
+    where_sql = ("WHERE " + " AND ".join(where)) if where else ""
+
+    order_sql = ""
+    if order_by and order_by in vset:
+        order_sql = f'ORDER BY "{order_by}" ' + ("DESC" if desc else "ASC")
+
+    collist = ", ".join(f'"{c}"' for c in visible)
+    total = conn.execute(f'SELECT COUNT(*) FROM "{table}" {where_sql}', params).fetchone()[0]
+    cur = conn.execute(
+        f'SELECT {collist} FROM "{table}" {where_sql} {order_sql} LIMIT ? OFFSET ?',
+        [*params, limit, offset],
+    )
+    data = [dict(zip(visible, r)) for r in cur.fetchall()]
+
+    if format == "csv":
+        buf = io.StringIO()
+        w = csv.DictWriter(buf, fieldnames=visible)
+        w.writeheader(); w.writerows(data)
+        buf.seek(0)
+        return StreamingResponse(
+            iter([buf.getvalue()]), media_type="text/csv",
+            headers={"Content-Disposition": f'attachment; filename="{table}.csv"'},
+        )
+
+    return {
+        "dataset": table, "total": total, "limit": limit, "offset": offset,
+        "returned": len(data), "filters": filters, "rows": data,
+    }
+
+
+@app.get("/objects/{row_id}/image", summary="Primary image of a public object (bytes, credentials intact)")
+def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (0 = primary)")):
+    """Serve a contributed object's image exactly as stored — no re-encoding — so any
+    embedded C2PA Content Credential stays intact and can be verified at
+    contentcredentials.org/verify or c2paviewer.com by pasting this URL."""
+    import base64 as _b64
+    conn = connect()
+    # only public/approved objects have rows here
+    try:
+        exists = conn.execute("SELECT 1 FROM objects WHERE _row_id=?", (row_id,)).fetchone()
+    except Exception:
+        raise HTTPException(404, "No such object")   # objects table not created yet
+    if not exists:
+        raise HTTPException(404, "No such object")
+    rows = conn.execute(
+        "SELECT image_b64 FROM object_images WHERE object_row_id=? ORDER BY "
+        "CASE role WHEN 'primary' THEN 0 ELSE 1 END, id", (row_id,)).fetchall()
+    if not rows or i >= len(rows):
+        raise HTTPException(404, "No such image")
+    try:
+        raw = _b64.b64decode(rows[i]["image_b64"])
+    except Exception:
+        raise HTTPException(500, "Image could not be decoded")
+    return Response(content=raw, media_type="image/jpeg",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.get("/objects/{row_id}/video", summary="Condensed DIP video of a public object, if any")
+def object_video(row_id: str):
+    """Serve the transcoded (web-friendly) DIP video for an approved object."""
+    conn = connect()
+    try:
+        row = conn.execute("SELECT content_hash FROM objects WHERE _row_id=?", (row_id,)).fetchone()
+    except Exception:
+        raise HTTPException(404, "No such object")   # objects table not created yet
+    if not row:
+        raise HTTPException(404, "No such object")
+    path = DIP_MEDIA / f"{row['content_hash']}.mp4"
+    if not path.exists():
+        raise HTTPException(404, "No video for this object")
+    return Response(content=path.read_bytes(), media_type="video/mp4",
+                    headers={"Cache-Control": "public, max-age=3600",
+                             "Accept-Ranges": "bytes"})
+
+
+@app.get("/datasets/{table}/{row_id}", summary="One row by id")
+def one(table: str, row_id: str, request: Request):
+    conn = connect()
+    admin = _is_admin(request)
+    _require_table(conn, table, admin)
+    visible = _visible_cols(conn, table, admin)
+    collist = ", ".join(f'"{c}"' for c in visible)
+    r = conn.execute(f'SELECT {collist} FROM "{table}" WHERE _row_id=?', (row_id,)).fetchone()
+    if not r:
+        raise HTTPException(404, "No such row")
+    return dict(zip(visible, r))

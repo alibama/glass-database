@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets & config — never commit
+.env
+.htpasswd
+.streamlit/secrets.toml
+
+# Real / built databases — NOT for distribution (may contain private columns).
+# Run `make seed` (synthetic demo) or `python -m central.ingest build` instead.
+data/glassdb.db
+data/glassdb.db-wal
+data/glassdb.db-shm
+data/glassdb.sql
+
+# Generated at runtime
+data/glowtbook_demo.db
+data/glowtbook_demo.db-*
+data/glowtbook_media/
+data/dip_media/
+data/aip_bags/
+data/c2pa/            # self-signed test cert + PRIVATE signing key
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

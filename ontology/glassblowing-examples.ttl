@@ -1,0 +1,80 @@
+@prefix gbo:  <http://example.org/glassblowing#> .
+@prefix ex:   <http://example.org/glassblowing/example#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .
+
+########################################################################
+# WORKED EXAMPLE (ABox)
+# A concrete piece described with the cultural-heritage application layer.
+# Load this together with glassblowing.ttl. It shows the event-centric
+# pattern (after De Boer et al.): an Artifact createdBy a CreationEvent
+# that consistsOf ordered Activities, each applying a technique, involving
+# an agent, processing a material, requiring a tool.
+########################################################################
+
+ex: a owl:Ontology ;
+    rdfs:label "Glassblowing ontology — worked example instances"@en ;
+    owl:imports <http://example.org/glassblowing#> .
+
+# --- The object ------------------------------------------------------
+ex:ReticelloVase_001 a gbo:Vessel ;
+    rdfs:label "Reticello vase (example)"@en ;
+    gbo:createdBy ex:Creation_001 ;
+    gbo:partOf ex:StudioCollection .
+
+ex:StudioCollection a gbo:Collection ; rdfs:label "Studio collection"@en .
+
+# --- The material processed -----------------------------------------
+ex:SodaLimeClear_001 a gbo:Material ;
+    rdfs:label "clear soda-lime (COE 104)"@en ;
+    gbo:hasProperty ex:coe104 .
+ex:coe104 a gbo:CoefficientOfExpansion ; rdfs:label "COE ~104"@en .
+
+# --- People (the chair) ---------------------------------------------
+ex:Gaffer_A   a gbo:Gaffer   ; rdfs:label "the gaffer"@en .
+ex:Servitor_A a gbo:Servitor ; rdfs:label "the servitor"@en .
+
+# --- The creation event and its ordered activities ------------------
+ex:Creation_001 a gbo:CreationEvent ;
+    rdfs:label "Making of Reticello vase 001"@en ;
+    gbo:consistsOf ex:Act_pullCane , ex:Act_pickup , ex:Act_blow ,
+                   ex:Act_incalmo , ex:Act_anneal , ex:Act_battuto ;
+    gbo:originatesIn gbo:MuraneseTradition .
+
+ex:Act_pullCane a gbo:Activity ; rdfs:label "pull reticello cane"@en ;
+    gbo:appliesTechnique gbo:Filigrana ;
+    gbo:involves ex:Servitor_A ;
+    gbo:processes ex:SodaLimeClear_001 ;
+    gbo:precedes ex:Act_pickup .
+
+ex:Act_pickup a gbo:Activity ; rdfs:label "cane pickup"@en ;
+    gbo:appliesTechnique gbo:CanePickup ;
+    gbo:involves ex:Gaffer_A ;
+    gbo:requiresUseOf gbo:Marver ;
+    gbo:precedes ex:Act_blow .
+
+ex:Act_blow a gbo:Activity ; rdfs:label "free-blow the body"@en ;
+    gbo:appliesTechnique gbo:FreeBlowing ;
+    gbo:involves ex:Gaffer_A ;
+    gbo:requiresUseOf gbo:Blowpipe , gbo:Jacks , gbo:Blocks ;
+    gbo:precedes ex:Act_incalmo .
+
+ex:Act_incalmo a gbo:Activity ; rdfs:label "join rim band by incalmo"@en ;
+    gbo:appliesTechnique gbo:Incalmo ;
+    gbo:involves ex:Gaffer_A , ex:Servitor_A ;
+    gbo:precedes ex:Act_anneal .
+
+ex:Act_anneal a gbo:Activity ; rdfs:label "anneal"@en ;
+    gbo:appliesTechnique gbo:AnnealingProcess ;
+    gbo:requiresUseOf gbo:Annealer ;
+    gbo:precedes ex:Act_battuto .
+
+ex:Act_battuto a gbo:Activity ; rdfs:label "battuto surface (cold)"@en ;
+    gbo:appliesTechnique gbo:Battuto ;
+    gbo:requiresUseOf gbo:Polariscope .
+
+# The technique-level facts these instances rely on already live in the
+# TBox, e.g.:  gbo:Incalmo gbo:originatesIn gbo:MuraneseTradition ;
+#              gbo:AnnealingProcess gbo:prevents gbo:AnnealingCrack (add as needed).

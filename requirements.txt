@@ -1,0 +1,19 @@
+# Ingest + admin
+openpyxl>=3.1
+pandas>=2.0
+streamlit>=1.42
+Authlib>=1.3.2   # Streamlit native login (st.login)
+httpx>=0.27      # Authlib's Starlette OAuth client needs it (used by st.login)
+Pillow>=10       # image condensing for object contributions (AIP -> DIP)
+c2pa-python>=0.37  # Content Credentials (C2PA) signing/reading of object images
+cryptography>=42   # ES256 key + self-signed signing cert for C2PA
+bagit>=1.8         # BagIt AIP packaging (sha256+sha512 fixity)
+boto3>=1.34        # push AIP bags to MinIO / S3-compatible object storage
+
+# API
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
+# OPTIONAL — only needed to point at Turso instead of the local file.
+# Everything runs on the standard library's sqlite3 without it.
+# libsql>=0.1

@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+title: "Glass Database"
+message: "If you use this software or data, please cite it."
+type: software
+authors:
+  - family-names: Parker
+    given-names: Anson
+repository-code: "https://github.com/alibama/glass-database"
+url: "https://glassdatabase.org"
+license: Apache-2.0
+keywords:
+  - glass
+  - provenance
+  - C2PA
+  - OAIS
+  - BagIt
+  - cultural heritage
