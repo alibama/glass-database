@@ -104,6 +104,15 @@ It's idempotent and preserves your database, secrets, generated media, and
 signing key across runs. See [`deploy/README-DEPLOY.md`](deploy/README-DEPLOY.md)
 and [`deploy/AUTH.md`](deploy/AUTH.md).
 
+## Mobile
+
+Glowtbook installs as a **PWA** — a home-screen app on iOS and Android with no
+rewrite. Because it self-hosts behind Apache, the real page is made installable
+by injecting a manifest + icons at the proxy (so Google sign-in keeps working,
+unlike the usual iframe shell). On mobile you also get **camera capture** for
+photographing a piece on the spot. Setup and the app-store (Capacitor) path:
+[`deploy/MOBILE.md`](deploy/MOBILE.md).
+
 ## Tests
 
 ```bash

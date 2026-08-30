@@ -1,0 +1,15 @@
+{
+  "name": "Glowtbook — Glass Database",
+  "short_name": "Glowtbook",
+  "description": "Journal your glass work and log objects with provenance, on the go.",
+  "start_url": "/glowtbook/",
+  "scope": "/glowtbook/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#6b21a8",
+  "icons": [
+    {"src": "/glowtbook/pwa/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "/glowtbook/pwa/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

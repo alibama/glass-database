@@ -60,6 +60,15 @@ EVENT_TYPES = ["created", "acquired", "exhibited", "appraised", "sold",
 
 st.set_page_config(page_title="Glowtbook", page_icon="🔥", layout="centered")
 
+# Mobile polish: tighter padding, comfortable tap targets when installed as a PWA.
+st.markdown("""<style>
+@media (max-width: 640px) {
+  .block-container {padding: 1rem 0.9rem 3rem !important;}
+  .stButton>button, .stDownloadButton>button {width: 100%; padding: 0.6rem 1rem;}
+  [data-testid="stFileUploaderDropzone"] {padding: 0.75rem;}
+}
+</style>""", unsafe_allow_html=True)
+
 
 # --- per-user store --------------------------------------------------------
 @st.cache_resource
@@ -463,15 +472,25 @@ elif page == "Objects":
         with tab_media:
             ups = st.file_uploader("Add images (originals kept local as the archival copy)",
                                    type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+            with st.expander("📷 Take a photo (mobile)"):
+                shot = st.camera_input("Capture the piece")
             role = st.selectbox("Role", ["primary", "photo", "detail"])
             cap = st.text_input("Caption")
-            if st.button("Save images", disabled=not ups):
+            if st.button("Save images", disabled=not (ups or shot)):
                 d = aip_dir(uid, oid)
-                for u in ups:
+                saved = 0
+                for u in (ups or []):
                     fp = d / u.name; fp.write_bytes(u.getvalue())
                     conn.execute("INSERT INTO object_image (object_id,user_id,role,aip_path,caption) VALUES (?,?,?,?,?)",
                                  (oid, uid, role, str(fp), cap))
-                conn.commit(); st.success(f"Saved {len(ups)} image(s)."); st.rerun()
+                    saved += 1
+                if shot is not None:
+                    fp = d / f"capture-{datetime.now().strftime('%Y%m%d-%H%M%S')}.jpg"
+                    fp.write_bytes(shot.getvalue())
+                    conn.execute("INSERT INTO object_image (object_id,user_id,role,aip_path,caption) VALUES (?,?,?,?,?)",
+                                 (oid, uid, role, str(fp), cap))
+                    saved += 1
+                conn.commit(); st.success(f"Saved {saved} image(s)."); st.rerun()
             imgs = conn.execute("SELECT * FROM object_image WHERE object_id=? AND user_id=?", (oid, uid)).fetchall()
             cols = st.columns(3)
             for i, im in enumerate(imgs):

@@ -75,6 +75,8 @@ say "Installing base packages"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq python3 python3-venv python3-pip rsync apache2-utils openssl certbot ffmpeg
+# PWA layer for Glowtbook (mobile install): head-injection + static asset serving
+a2enmod substitute filter headers alias >/dev/null 2>&1 || true
 
 # --- service user + app dir ------------------------------------------------
 say "Creating service user '$APP_USER' and $APP_DIR"

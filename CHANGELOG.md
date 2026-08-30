@@ -5,6 +5,9 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Mobile** — Glowtbook installs as a PWA (manifest + icons + service worker,
+  injected at the Apache proxy so OAuth still works), with camera capture and a
+  mobile-tuned layout. App-store path documented via Capacitor (deploy/MOBILE.md).
 - **Publication gate** — a central `_approvals` table gates every dataset row;
   nothing (imported, edited, or contributed) is served publicly until approved.
   Admin → ✅ Approvals gives per-dataset counts, one-click "approve all pending",
