@@ -5,6 +5,12 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Publication gate** — a central `_approvals` table gates every dataset row;
+  nothing (imported, edited, or contributed) is served publicly until approved.
+  Admin → ✅ Approvals gives per-dataset counts, one-click "approve all pending",
+  reject, and row-level select-and-approve. Default-deny, no destructive schema
+  change (safe on a live DB); migrate an existing DB with
+  `python -m scripts.migrate_approval_gate`.
 - Central self-describing SQLite store + re-runnable spreadsheet importer.
 - Read-only, self-documenting FastAPI service with private-column withholding
   and restricted-dataset protection.

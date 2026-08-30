@@ -31,6 +31,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from central import approvals  # noqa: E402
 from central.dbconn import connect  # noqa: E402
 
 ADMIN_KEY = os.environ.get("GLASSDB_ADMIN_TOKEN", "")
@@ -51,6 +52,14 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def _startup():
+    try:
+        approvals.ensure_approvals(connect())
+    except Exception:
+        pass
 
 
 # --- helpers ---------------------------------------------------------------
@@ -122,7 +131,23 @@ def list_datasets(request: Request):
         f"SELECT tbl, domain, visibility, row_count, description, source_file, source_sheet "
         f"FROM _datasets {where} ORDER BY domain, tbl"
     ).fetchall()
-    return {"count": len(rows), "datasets": [dict(r) for r in rows]}
+    out = []
+    for r in rows:
+        d = dict(r)
+        if not admin:
+            # public row_count reflects what's actually published; hide datasets
+            # with nothing approved yet
+            try:
+                appr = conn.execute(
+                    "SELECT COUNT(*) FROM _approvals WHERE tbl=? AND status='approved'",
+                    (d["tbl"],)).fetchone()[0]
+            except Exception:
+                appr = 0
+            if appr == 0:
+                continue
+            d["row_count"] = appr
+        out.append(d)
+    return {"count": len(out), "datasets": out}
 
 
 @app.get("/schema/{table}", summary="Columns of a dataset")
@@ -162,6 +187,8 @@ def rows(
         if text_cols:
             where.append("(" + " OR ".join(f'"{c}" LIKE ?' for c in text_cols) + ")")
             params += [f"%{q}%"] * len(text_cols)
+    if not admin:                       # publication gate: public sees approved rows only
+        where.append(approvals.approved_subquery()); params.append(table)
     where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
     order_sql = ""
@@ -244,7 +271,10 @@ def one(table: str, row_id: str, request: Request):
     _require_table(conn, table, admin)
     visible = _visible_cols(conn, table, admin)
     collist = ", ".join(f'"{c}"' for c in visible)
-    r = conn.execute(f'SELECT {collist} FROM "{table}" WHERE _row_id=?', (row_id,)).fetchone()
+    gate = "" if admin else f" AND {approvals.approved_subquery()}"
+    gp = [] if admin else [table]
+    r = conn.execute(f'SELECT {collist} FROM "{table}" WHERE _row_id=?{gate}',
+                     (row_id, *gp)).fetchone()
     if not r:
         raise HTTPException(404, "No such row")
     return dict(zip(visible, r))

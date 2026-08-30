@@ -131,6 +131,35 @@ OAIS mapping, end to end: **SIP** = what the contributor uploads in Glowtbook;
 **DIP** = the condensed, public rendition — downscaled images, transcoded video
 + poster, and the C2PA-signed manifest — served through the API and Explorer.
 
+## The publication gate — nothing public until approved
+
+Every dataset row — whether it arrived via `central/ingest.py`, was edited in the
+admin, or was contributed through Glowtbook — is gated by a central `_approvals`
+table:
+
+```
+_approvals(tbl, row_id, status, reviewed_at, reviewer)   -- status: approved | rejected | (absent = pending)
+```
+
+The default is **deny**: a row with no entry is not served. The API and explorer
+add one filter — `_row_id IN (SELECT row_id FROM _approvals WHERE tbl=? AND
+status='approved')` — so public surfaces only ever show approved rows. An admin
+key on the API bypasses the gate for review.
+
+Why a side table instead of a column on every dataset: it makes the default
+deny for free, needs **no schema change** to enable on a live database, and lets
+a whole dataset be approved in a single statement.
+
+**Admin → ✅ Approvals** shows approved/pending counts per dataset with:
+- "Approve ALL pending content" (first-time setup, republishes the existing DB),
+- per-dataset "Approve all pending" / "Reject all pending", and
+- row-level select-and-approve for finer control.
+
+Object and profile promotions write an approved entry automatically, so the
+existing moderation queues feed the same gate. Enable on an existing deployment
+with `python -m scripts.migrate_approval_gate` (creates the empty table; existing
+rows become pending until you approve them).
+
 ## Suggested build order (remaining)
 
 1. **Trusted C2PA cert** — replace the self-signed test cert with a Trust-List

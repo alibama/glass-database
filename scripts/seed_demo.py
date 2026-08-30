@@ -109,6 +109,11 @@ def seed() -> str:
             VALUES (?,?,?,?,?,?,?,?)""",
             (tbl, domain, "demo-seed", "demo", vis, len(rows), desc, NOW))
     c.commit()
+    # the demo publishes out of the box: approve every seeded row through the gate
+    from central import approvals
+    approvals.ensure_approvals(c)
+    for tbl, _, _, _, _, rows in DATASETS:
+        approvals.approve_all(c, tbl)
     from central.dbconn import local_path
     return str(local_path())
 

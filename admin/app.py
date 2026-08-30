@@ -27,6 +27,7 @@ import pandas as pd
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from central import approvals  # noqa: E402
 from central.dbconn import connect, using_turso  # noqa: E402
 
 st.set_page_config(page_title="Glass Database — admin", page_icon="🛠️", layout="wide")
@@ -34,13 +35,15 @@ st.set_page_config(page_title="Glass Database — admin", page_icon="🛠️", l
 
 @st.cache_resource
 def _c():
-    return connect()
+    c = connect()
+    approvals.ensure_approvals(c)
+    return c
 
 conn = _c()
 
 st.sidebar.title("🛠️ Admin")
 st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'}**")
-section = st.sidebar.radio("Section", ["📋 Datasets", "🛡️ Review queue", "🧹 Duplicates"],
+section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue", "🧹 Duplicates"],
                            label_visibility="collapsed")
 
 
@@ -148,6 +151,7 @@ def approve_object_submission(sub):
     conn.execute("UPDATE _datasets SET row_count=(SELECT COUNT(*) FROM objects) WHERE tbl='objects'")
     conn.execute("UPDATE object_submissions SET status='approved' WHERE id=?", (sub["id"],))
     conn.commit()
+    approvals.set_status(conn, "objects", [rid], "approved")   # publish through the gate
     return rid
 
 
@@ -183,9 +187,72 @@ if section == "📋 Datasets":
                     conn.execute(f'INSERT INTO "{tbl}" ({", ".join(chr(34)+x+chr(34) for x in allc)}) '
                                  f'VALUES ({", ".join("?" for _ in allc)})', row)
                     conn.execute("UPDATE _datasets SET row_count=row_count+1 WHERE tbl=?", (tbl,))
-                    conn.commit(); st.success(f"Added {rid}.")
+                    conn.commit()
+                    approvals.set_status(conn, tbl, [rid], "approved")   # admin add = published
+                    st.success(f"Added {rid} (published).")
                 else:
                     st.error("Fill at least one field.")
+
+# ===========================================================================
+# APPROVALS — the publication gate (nothing is public until approved)
+# ===========================================================================
+elif section == "✅ Approvals":
+    st.header("Publication gate")
+    st.caption("Nothing in a dataset is served publicly until it's approved here. "
+               "New imports and contributions arrive **pending** by default.")
+
+    public = [d for d in datasets() if d["visibility"] == "public"]
+    totals = {d["tbl"]: approvals.counts(conn, d["tbl"]) for d in public}
+    tot_pending = sum(c["pending"] for c in totals.values())
+    tot_appr = sum(c["approved"] for c in totals.values())
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Public datasets", len(public))
+    m2.metric("Approved (published)", tot_appr)
+    m3.metric("Pending review", tot_pending)
+
+    with st.expander("⚡ First-time setup — approve everything already in the database"):
+        st.write("Use this once to publish the content that was already loaded. "
+                 "After that, review new material per dataset below.")
+        ok = st.checkbox("Yes, approve every pending row in every public dataset.")
+        if st.button("Approve ALL pending content", type="primary", disabled=not ok):
+            n = sum(approvals.approve_all(conn, d["tbl"]) for d in public)
+            st.success(f"Approved {n} row(s) across {len(public)} dataset(s)."); st.rerun()
+
+    st.divider()
+    st.subheader("By dataset")
+    for d in public:
+        c = totals[d["tbl"]]
+        head = f"**{d['tbl']}** — {c['approved']} approved · {c['pending']} pending"
+        if c["rejected"]:
+            head += f" · {c['rejected']} rejected"
+        cc = st.container(border=True)
+        cc.markdown(head)
+        b1, b2, b3 = cc.columns([1, 1, 3])
+        if b1.button("✅ Approve all pending", key=f"apall_{d['tbl']}", disabled=not c["pending"]):
+            n = approvals.approve_all(conn, d["tbl"]); st.toast(f"Approved {n} in {d['tbl']}"); st.rerun()
+        if b2.button("✖ Reject all pending", key=f"rjall_{d['tbl']}", disabled=not c["pending"]):
+            n = approvals.reject_all_pending(conn, d["tbl"]); st.toast(f"Rejected {n} in {d['tbl']}"); st.rerun()
+        if c["pending"]:
+            with cc.expander(f"Review individual pending rows ({c['pending']})"):
+                pubcols = [col["column"] for col in columns(d["tbl"]) if col["is_public"]][:6]
+                rows = approvals.pending_rows(conn, d["tbl"], pubcols, limit=50)
+                if rows:
+                    df = pd.DataFrame([dict(r) for r in rows])
+                    df.insert(0, "✓ approve", False)
+                    edited = st.data_editor(df, hide_index=True, width="stretch",
+                                            disabled=[c for c in df.columns if c != "✓ approve"],
+                                            key=f"ed_{d['tbl']}")
+                    sel = edited[edited["✓ approve"]]["_row_id"].tolist()
+                    s1, s2 = st.columns(2)
+                    if s1.button(f"Approve selected ({len(sel)})", key=f"apsel_{d['tbl']}", disabled=not sel):
+                        approvals.set_status(conn, d["tbl"], sel, "approved")
+                        st.toast(f"Approved {len(sel)}"); st.rerun()
+                    if s2.button(f"Reject selected ({len(sel)})", key=f"rjsel_{d['tbl']}", disabled=not sel):
+                        approvals.set_status(conn, d["tbl"], sel, "rejected")
+                        st.toast(f"Rejected {len(sel)}"); st.rerun()
+                    if c["pending"] > 50:
+                        st.caption("Showing the first 50 — use “Approve all pending” for the rest.")
 
 # ===========================================================================
 # REVIEW QUEUE
@@ -272,7 +339,9 @@ elif section == "🛡️ Review queue":
                              payload.get("career_highlights", ""), now))
                         conn.execute("UPDATE _datasets SET row_count=(SELECT COUNT(*) FROM profiles) WHERE tbl='profiles'")
                         conn.execute("UPDATE submissions SET status='approved' WHERE id=?", (s["id"],))
-                        conn.commit(); st.success("Published to profiles."); st.rerun()
+                        conn.commit()
+                        approvals.set_status(conn, "profiles", [rid], "approved")
+                        st.success("Published to profiles."); st.rerun()
                     if r.button("✖ Reject", key=f"rj_{s['id']}"):
                         conn.execute("UPDATE submissions SET status='rejected' WHERE id=?", (s["id"],))
                         conn.commit(); st.rerun()

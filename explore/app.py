@@ -20,6 +20,7 @@ import pandas as pd
 import streamlit as st
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from central import approvals  # noqa: E402
 from central.dbconn import connect  # noqa: E402
 
 PUBLIC_BASE = os.environ.get("PUBLIC_BASE_URL", "https://glassdatabase.org").rstrip("/")
@@ -29,16 +30,20 @@ st.set_page_config(page_title="Explore · Glass Database", page_icon="📊", lay
 
 @st.cache_resource
 def _conn():
-    return connect()
+    c = connect()
+    approvals.ensure_approvals(c)
+    return c
 
 
 @st.cache_data(ttl=300)
 def registry() -> list[dict]:
     rows = _conn().execute(
-        "SELECT tbl, domain, row_count, description FROM _datasets "
-        "WHERE visibility='public' ORDER BY domain, tbl"
+        "SELECT d.tbl, d.domain, d.description, "
+        "  (SELECT COUNT(*) FROM _approvals a WHERE a.tbl=d.tbl AND a.status='approved') AS row_count "
+        "FROM _datasets d WHERE d.visibility='public' ORDER BY d.domain, d.tbl"
     ).fetchall()
-    return [dict(r) for r in rows]
+    # only surface datasets that actually have approved (published) rows
+    return [dict(r) for r in rows if r["row_count"] > 0]
 
 
 @st.cache_data(ttl=300)
@@ -52,7 +57,9 @@ def public_columns(tbl: str) -> list[tuple[str, str]]:
 @st.cache_data(ttl=300)
 def load(tbl: str, cols: tuple[str, ...]) -> pd.DataFrame:
     collist = ", ".join(f'"{c}"' for c in cols)
-    return pd.read_sql_query(f'SELECT {collist} FROM "{tbl}"', _conn())
+    return pd.read_sql_query(
+        f'SELECT {collist} FROM "{tbl}" WHERE {approvals.approved_subquery()}',
+        _conn(), params=[tbl])
 
 
 

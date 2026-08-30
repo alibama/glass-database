@@ -256,6 +256,9 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
                       (rid, role, cap, b64))
         c.execute("UPDATE _datasets SET row_count=(SELECT COUNT(*) FROM objects) WHERE tbl='objects'")
         c.commit()
+        from central import approvals as _appr
+        _appr.ensure_approvals(c)
+        _appr.set_status(c, "objects", [rid], "approved")   # immediate publish path
         manifest["_pending"] = False
 
     # Optionally archive the full-fidelity AIP as a BagIt bag (+ MinIO)

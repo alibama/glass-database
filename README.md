@@ -53,7 +53,10 @@ condensed, public rendition to the registry:
 
 Contributions are **moderated** by default (an admin approves before anything is
 public) and can optionally be announced to **Bluesky** with the provenance image
-attached. Full detail: [`deploy/PROVENANCE-ARCHITECTURE.md`](deploy/PROVENANCE-ARCHITECTURE.md).
+attached. In fact the whole registry is gated: a central `_approvals` table means
+**no row — imported, edited, or contributed — is served publicly until it's
+approved**, and the admin console has one-click batch approval per dataset. Full
+detail: [`deploy/PROVENANCE-ARCHITECTURE.md`](deploy/PROVENANCE-ARCHITECTURE.md).
 
 ![Contribution & moderation process (BPMN)](docs/contribution-process.svg)
 
