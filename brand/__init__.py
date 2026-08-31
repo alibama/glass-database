@@ -1,10 +1,13 @@
 """
 brand
 =====
-One shared look and a cross-app nav bar for the three Streamlit surfaces
-(Explore, Glowtbook, Admin), so they read as one product and match the homepage:
-the furnace/molten palette, Fraunces headings, the glass mark, and pills that
-jump between Home, Explore, Glowtbook, and Admin.
+One shared look and a cross-app nav for the three Streamlit surfaces (Explore,
+Glowtbook, Admin), so they read as one product and match the homepage: the
+furnace/molten palette, Fraunces headings, the glass mark, and a row of buttons
+that jump between Home, Explore, Glowtbook, and Admin.
+
+The nav uses native `st.link_button`s (not HTML anchors) so the whole button is
+clickable, and the active page is shown with the molten "primary" style.
 
 Usage — right after st.set_page_config():
 
@@ -26,8 +29,8 @@ _MARK = (
     '<ellipse cx="15" cy="27" rx="3.4" ry="5" fill="#fff7ed" opacity="0.5"/></svg>'
 )
 
-_NAV_ITEMS = [
-    ("home", "Home", "/"),
+# key, label, href  (the brand mark doubles as Home)
+_NAV = [
     ("explore", "Explore", "/explore/"),
     ("glowtbook", "Glowtbook", "/glowtbook/"),
     ("admin", "Admin", "/admin/"),
@@ -43,47 +46,35 @@ _CSS = """
 h1, h2, h3, h4, [data-testid="stHeading"] {
   font-family:'Fraunces', Georgia, serif !important; letter-spacing:-.01em; }
 header[data-testid="stHeader"] { background:transparent; }
-.block-container { padding-top:1.1rem; }
-a { color:var(--molten-deep); }
+.block-container { padding-top:1rem; }
+
+/* brand lockup */
+.gdb-brand { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none;
+  color:var(--ink); font-family:'Fraunces', Georgia, serif; font-weight:900; font-size:1.35rem; }
+.gdb-brand svg { width:26px; height:30px; }
+.gdb-rule { height:3px; margin:.25rem 0 1.1rem;
+  background:linear-gradient(90deg, var(--ember), var(--molten-deep) 45%, transparent);
+  border-radius:2px; }
+
+/* nav + form primary buttons: molten pill */
+[data-testid="stLinkButton"] a { border-radius:999px !important; font-weight:600 !important; }
 .stButton>button[kind="primary"], .stDownloadButton>button[kind="primary"],
 .stFormSubmitButton>button[kind="primary"] {
   background:linear-gradient(180deg, var(--ember), var(--molten-deep));
   border:0; color:#2a1400; font-weight:600; }
-.stButton>button[kind="primary"]:hover, .stFormSubmitButton>button[kind="primary"]:hover {
-  filter:brightness(1.06); color:#2a1400; }
-
-/* shared nav bar */
-.gdb-nav { display:flex; align-items:center; justify-content:space-between; gap:1rem;
-  flex-wrap:wrap; background:linear-gradient(180deg, var(--furnace), var(--furnace-2));
-  color:#f6eef2; border-radius:14px; padding:.55rem .9rem; margin:0 0 1.3rem; }
-.gdb-nav .brand { display:flex; align-items:center; gap:.5rem; text-decoration:none;
-  color:#fff; font-family:'Fraunces', serif; font-weight:900; font-size:1.12rem; }
-.gdb-nav .brand svg { width:26px; height:29px; }
-.gdb-nav .links { display:flex; gap:.25rem; flex-wrap:wrap; }
-.gdb-nav .links a { color:#e9dfee; text-decoration:none; padding:.34rem .82rem;
-  border-radius:999px; font-weight:600; font-size:.94rem; }
-.gdb-nav .links a:hover { background:rgba(255,255,255,.10); }
-.gdb-nav .links a.active { background:linear-gradient(180deg, var(--ember), var(--molten-deep));
-  color:#2a1400; }
-.gdb-nav .links a.glowtbook.active {
-  background:linear-gradient(180deg, #a78bfa, var(--purple)); color:#fff; }
+a { color:var(--molten-deep); }
 </style>
 """
 
 
 def apply_theme(active: str = "") -> None:
-    """Inject the shared theme and render the cross-app nav bar. `active` is one of
-    'home' | 'explore' | 'glowtbook' | 'admin' and highlights that pill.
-
-    Uses st.html (not st.markdown) because recent Streamlit sanitizes raw HTML/CSS
-    passed through markdown, which would strip the bar's styling and links."""
-    links = "".join(
-        f'<a class="{key} {"active" if key == active else ""}" href="{href}" '
-        f'target="_self" rel="noopener">{label}</a>'
-        for key, label, href in _NAV_ITEMS
-    )
-    st.html(
-        _CSS
-        + f'<div class="gdb-nav"><a class="brand" href="/" target="_self">{_MARK}Glass Database</a>'
-        + f'<div class="links">{links}</div></div>'
-    )
+    """Inject the shared theme and render the cross-app nav. `active` is one of
+    'explore' | 'glowtbook' | 'admin' and gets the molten primary style.
+    The glass mark doubles as the Home link."""
+    st.html(_CSS)
+    brand, spacer, *btns = st.columns([2.4, 0.4, 1, 1.15, 1], vertical_alignment="center")
+    brand.html(f'<a class="gdb-brand" href="/" target="_self">{_MARK}Glass Database</a>')
+    for col, (key, label, href) in zip(btns, _NAV):
+        col.link_button(label, href, use_container_width=True,
+                        type="primary" if key == active else "secondary")
+    st.html('<div class="gdb-rule"></div>')
