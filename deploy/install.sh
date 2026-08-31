@@ -97,6 +97,7 @@ rsync -a --delete \
     --exclude 'public' \
     "$SRC/" "$APP_DIR/"
 cp "$SRC/deploy/landing-index.html" "$APP_DIR/public/index.html"
+cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
 if [ ! -f "$APP_DIR/data/glassdb.db" ] && [ -f "$SRC/data/glassdb.db" ]; then
     cp "$SRC/data/glassdb.db" "$APP_DIR/data/glassdb.db"
     say "Seeded initial database from the shipped glassdb.db"

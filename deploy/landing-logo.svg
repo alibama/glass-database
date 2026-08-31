@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 260" fill="none">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="62%" r="55%">
+      <stop offset="0" stop-color="#fb923c" stop-opacity="0.55"/>
+      <stop offset="0.6" stop-color="#ea580c" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#ea580c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="molten" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fef08a"/><stop offset="0.45" stop-color="#fb923c"/>
+      <stop offset="1" stop-color="#ea580c"/>
+    </linearGradient>
+  </defs>
+  <circle cx="120" cy="162" r="118" fill="url(#glow)"/>
+  <rect x="112" y="20" width="16" height="140" rx="8" fill="#cbd5e1"/>
+  <rect x="112" y="20" width="7" height="140" rx="3.5" fill="#eef2f6"/>
+  <ellipse cx="120" cy="176" rx="72" ry="80" fill="url(#molten)"/>
+  <ellipse cx="95" cy="150" rx="20" ry="30" fill="#fff7ed" opacity="0.45"/>
+</svg>

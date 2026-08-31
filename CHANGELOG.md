@@ -5,6 +5,12 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Homepage** — a complete landing page (furnace/molten identity, Fraunces
+  display) linking Explore, Glowtbook, the API, and contribution, with a
+  swappable logo at public/logo.svg.
+- **Contribution module** — object CRUD + the central publish pipeline extracted
+  to glowtbook/contribute.py (UI-agnostic), so a Gradio surface, write API, or
+  native client can reuse it. Streamlit stays the UI.
 - **Mobile** — Glowtbook installs as a PWA (manifest + icons + service worker,
   injected at the Apache proxy so OAuth still works), with camera capture and a
   mobile-tuned layout. App-store path documented via Capacitor (deploy/MOBILE.md).
