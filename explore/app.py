@@ -27,6 +27,10 @@ PUBLIC_BASE = os.environ.get("PUBLIC_BASE_URL", "https://glassdatabase.org").rst
 
 st.set_page_config(page_title="Explore · Glass Database", page_icon="📊", layout="wide")
 
+from brand import apply_theme  # noqa: E402
+
+apply_theme("explore")
+
 
 @st.cache_resource
 def _conn():
@@ -84,6 +88,7 @@ if mode == "Objects (provenance)":
     st.title("Glass objects — provenance")
     st.caption("Pieces contributed through Glowtbook. Images and provenance are a "
                "condensed public rendition; originals stay with the contributor.")
+    st.markdown("Made something? [Add your own piece in Glowtbook](/glowtbook/).")
     try:
         rows = _conn().execute(
             "SELECT * FROM objects ORDER BY published_at DESC").fetchall()

@@ -5,6 +5,10 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Unified look + cross-app nav** — a shared `brand` package gives Explore,
+  Glowtbook, and Admin the homepage identity (furnace/molten palette, Fraunces
+  headings, the glass mark) and a top nav bar to jump between Home, Explore,
+  Glowtbook, and Admin. Streamlit theme set in .streamlit/config.toml.
 - **C2PA fixes (spec-correctness)** — signed images now use the edit intent with
   the original as a `parentOf` ingredient, so the first action is `c2pa.opened`
   (fixes `assertion.action.malformed`); creator/metadata moved from the

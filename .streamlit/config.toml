@@ -1,0 +1,8 @@
+# Native Streamlit theme (the CSS in the `brand` package carries the rest of the
+# identity: Fraunces headings, the furnace nav bar, molten buttons).
+[theme]
+primaryColor = "#ea580c"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#faf7fb"
+textColor = "#23202a"
+font = "sans serif"

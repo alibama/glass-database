@@ -32,6 +32,10 @@ from central.dbconn import connect, using_turso  # noqa: E402
 
 st.set_page_config(page_title="Glass Database — admin", page_icon="🛠️", layout="wide")
 
+from brand import apply_theme  # noqa: E402
+
+apply_theme("admin")
+
 
 @st.cache_resource
 def _c():

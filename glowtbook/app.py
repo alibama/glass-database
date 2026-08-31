@@ -60,6 +60,10 @@ EVENT_TYPES = ["created", "acquired", "exhibited", "appraised", "sold",
 
 st.set_page_config(page_title="Glowtbook", page_icon="🔥", layout="centered")
 
+from brand import apply_theme  # noqa: E402
+
+apply_theme("glowtbook")
+
 # Mobile polish: tighter padding, comfortable tap targets when installed as a PWA.
 st.markdown("""<style>
 @media (max-width: 640px) {
