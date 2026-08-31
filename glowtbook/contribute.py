@@ -142,13 +142,17 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
                     pcond = media.condense_image(poster)   # poster is a DIP image
                     ingredients.append({"title": p.name + ".poster.jpg",
                                         "hash": media.sha256_hex(pcond), "role": "video-poster"})
-                    conds.append(("video-poster", im.get("caption", "") or "video still", pcond))
+                    # a poster is a freshly extracted frame -> no parent (created)
+                    conds.append(("video-poster", im.get("caption", "") or "video still",
+                                  pcond, None, None))
                 except Exception:
                     pass  # transcode failed -> this video stays AIP-only
             continue
-        dip = media.condense_image(p.read_bytes())
+        raw = p.read_bytes()
+        dip = media.condense_image(raw)
+        fmt = "image/png" if p.suffix.lower() == ".png" else "image/jpeg"
         ingredients.append({"title": p.name, "hash": media.sha256_hex(dip), "role": im["role"]})
-        conds.append((im["role"], im.get("caption", ""), dip))
+        conds.append((im["role"], im.get("caption", ""), dip, raw, fmt))   # raw = parent original
     manifest = media.build_manifest(dict(obj), [dict(e) for e in events], ingredients,
                                     techniques, include_value, contributor=display)
 
@@ -160,11 +164,14 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
                             if a["label"] == "glassdb.provenance.events"), [])}
     condensed = []          # (role, caption, b64)
     primary_bytes = None     # for optional Bluesky post / receipts
-    for role, cap, dip in conds:
+    for role, cap, dip, parent_bytes, parent_fmt in conds:
         out = dip
         if do_sign:
             try:
-                out = c2pa_sign.sign_jpeg(dip, obj["title"], obj["maker"] or display, prov)
+                out = c2pa_sign.sign_jpeg(dip, obj["title"], obj["maker"] or display, prov,
+                                          parent_bytes=parent_bytes,
+                                          parent_format=parent_fmt or "image/jpeg",
+                                          year=obj["year"])
             except Exception:
                 do_sign = False  # fall back to unsigned for the whole batch
                 out = dip

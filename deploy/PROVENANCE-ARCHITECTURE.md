@@ -54,12 +54,28 @@ Every object contribution already follows the OAIS packaging model:
   (ES256) with a manifest carrying a `stds.schema-org.CreativeWork` author and
   our `glassdb.provenance` assertion, so the credential travels *with* the file.
   Explore reads it back and shows a verify panel.
-- **Cert model**: a self-signed ES256 cert is generated under `data/c2pa/` on
-  first use. That produces a real, readable credential that verifiers flag
-  "untrusted" — honest for a POC. For production, drop an end-entity cert from a
-  **C2PA Trust List** CA (e.g. SSL.com's 2026 free tier) in as
-  `data/c2pa/cert.pem` + `key.pem`; nothing else changes and the validation
-  state flips to trusted.
+- **Manifest shape (spec-correct)**: each signed image is built with the C2PA
+  **edit intent** and records the original as a `parentOf` **ingredient**, so the
+  first action is `c2pa.opened` (followed by `c2pa.resized` / `c2pa.converted`) —
+  satisfying the spec rule that the first action be `created` or `opened`. A
+  first-party capture with no prior version instead uses the **create intent**
+  (`c2pa.created`, digital-capture source). Creator and descriptive metadata ride
+  in a **CAWG metadata assertion** (`cawg.metadata`, JSON-LD with `dc:` fields),
+  the successor to the deprecated `stds.schema-org.CreativeWork` assertion; our
+  domain data stays in a custom `glassdb.provenance` assertion.
+- **Cert model & trust**: a self-signed ES256 cert is generated under
+  `data/c2pa/` on first use. Verifiers report `signingCredential.untrusted`
+  because the cert isn't on the C2PA Trust List (and isn't chained to a private
+  trust anchor) — honest for a POC. Two ways to become trusted: configure a
+  private trust anchor for internal verification, or, once the app is complete,
+  apply to the [C2PA Conformance Program](https://c2pa.org/conformance/) and use a
+  trusted cert. Either way it's a drop-in at `data/c2pa/cert.pem` + `key.pem`; no
+  code change.
+- **Next on the identity side**: add a **CAWG identity assertion**
+  (`cawg.identity`) so a contributor can cryptographically prove control of a
+  named identity. Unlike the metadata assertion, it needs an identity signature
+  (its own signer), so it's a follow-up rather than a drop-in. See
+  [cawg.io](https://cawg.io/).
 
 ## Where each of your threads plugs in
 

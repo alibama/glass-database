@@ -5,6 +5,11 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **C2PA fixes (spec-correctness)** — signed images now use the edit intent with
+  the original as a `parentOf` ingredient, so the first action is `c2pa.opened`
+  (fixes `assertion.action.malformed`); creator/metadata moved from the
+  deprecated schema.org CreativeWork assertion to a **CAWG metadata** assertion.
+  Validation now reads Valid apart from the expected untrusted-cert note.
 - **Homepage** — a complete landing page (furnace/molten identity, Fraunces
   display) linking Explore, Glowtbook, the API, and contribution, with a
   swappable logo at public/logo.svg.

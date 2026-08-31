@@ -19,6 +19,7 @@ reliable path in c2pa-python 0.37.
 from __future__ import annotations
 
 import datetime
+import io
 import json
 import os
 import tempfile
@@ -94,17 +95,34 @@ def _signer(cert_pem: bytes, key_pem: bytes):
     return c2pa.Signer.from_callback(cb, c2pa.C2paSigningAlg.ES256, cert_pem.decode(), None)
 
 
-def sign_jpeg(src_jpeg: bytes, title: str, author: str, provenance: dict) -> bytes:
-    """Embed a C2PA manifest into a JPEG and return the signed bytes."""
+def sign_jpeg(src_jpeg: bytes, title: str, author: str, provenance: dict,
+              parent_bytes: bytes | None = None, parent_format: str = "image/jpeg",
+              year: str = "") -> bytes:
+    """Embed a C2PA manifest into a JPEG and return the signed bytes.
+
+    When the source this was derived from is supplied as ``parent_bytes``, it's
+    recorded as a ``parentOf`` ingredient under the **edit** intent — so the first
+    action is ``c2pa.opened`` (required by the spec) followed by resized/converted.
+    Creator/description ride in a **CAWG metadata** assertion (the successor to the
+    deprecated schema.org CreativeWork assertion). Our domain provenance stays in a
+    custom ``glassdb.provenance`` assertion.
+    """
     c2pa, *_ = _libs()
     cert_pem, key_pem = ensure_test_cert()
+    meta = {
+        "@context": {"dc": "http://purl.org/dc/elements/1.1/",
+                     "xmp": "http://ns.adobe.com/xap/1.0/"},
+        "dc:creator": [author or "unknown"],
+        "dc:title": title or "Glass object",
+        "dc:format": "image/jpeg",
+    }
+    if year:
+        meta["xmp:CreateDate"] = str(year)
     manifest = {
         "claim_generator_info": [{"name": "Glowtbook", "version": "0.1"}],
         "title": title or "Glass object",
         "assertions": [
-            {"label": "stds.schema-org.CreativeWork",
-             "data": {"@context": "https://schema.org", "@type": "CreativeWork",
-                      "author": [{"@type": "Person", "name": author or "unknown"}]}},
+            {"label": "cawg.metadata", "data": meta},
             {"label": "glassdb.provenance", "data": provenance},
         ],
     }
@@ -112,7 +130,19 @@ def sign_jpeg(src_jpeg: bytes, title: str, author: str, provenance: dict) -> byt
     with tempfile.TemporaryDirectory() as d:
         s, o = os.path.join(d, "s.jpg"), os.path.join(d, "o.jpg")
         Path(s).write_bytes(src_jpeg)
-        c2pa.Builder(json.dumps(manifest)).sign_file(s, o, signer)
+        builder = c2pa.Builder(json.dumps(manifest))
+        if parent_bytes:
+            builder.set_intent(c2pa.C2paBuilderIntent.EDIT)   # first action -> c2pa.opened
+            builder.add_ingredient(
+                json.dumps({"title": "original", "relationship": "parentOf"}),
+                parent_format, io.BytesIO(parent_bytes))
+            builder.add_action(json.dumps({"action": "c2pa.resized"}))
+            builder.add_action(json.dumps({"action": "c2pa.converted"}))
+        else:
+            # a first-party capture with no prior version: first action -> c2pa.created
+            builder.set_intent(c2pa.C2paBuilderIntent.CREATE,
+                               c2pa.C2paDigitalSourceType.DIGITAL_CAPTURE)
+        builder.sign_file(s, o, signer)
         return Path(o).read_bytes()
 
 
@@ -130,10 +160,21 @@ def read_credentials(image_bytes: bytes) -> dict | None:
     if not active:
         return None
     sig = active.get("signature_info", {}) or {}
+    assertions = active.get("assertions", [])
+    labels = [a.get("label") for a in assertions]
+    creator = None
+    actions = []
+    for a in assertions:
+        if a.get("label") == "cawg.metadata":
+            creator = (a.get("data", {}) or {}).get("dc:creator")
+        if (a.get("label") or "").startswith("c2pa.actions"):
+            actions = [x.get("action") for x in (a.get("data", {}) or {}).get("actions", [])]
     return {
         "title": active.get("title"),
         "issuer": sig.get("issuer") or sig.get("common_name"),
         "time": sig.get("time"),
+        "creator": creator,
+        "actions": actions,
         "validation_state": data.get("validation_state"),
-        "assertions": [a.get("label") for a in active.get("assertions", [])],
+        "assertions": labels,
     }

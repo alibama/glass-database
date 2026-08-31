@@ -158,6 +158,10 @@ if mode == "Objects (provenance)":
                         creds = c2pa_sign.read_credentials(_b64.b64decode(first["image_b64"])) if first else None
                         if creds:
                             st.write(f"**Signed by:** {creds.get('issuer') or 'unknown'}")
+                            if creds.get("creator"):
+                                st.write(f"**Creator:** {', '.join(creds['creator'])}")
+                            if creds.get("actions"):
+                                st.write(f"**Actions:** {' → '.join(creds['actions'])}")
                             st.write(f"**Assertions:** {', '.join(creds.get('assertions') or [])}")
                             st.caption(f"Validation: {creds.get('validation_state')} "
                                        "— self-signed test cert, not yet trust-list verified.")
