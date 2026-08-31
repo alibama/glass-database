@@ -65,13 +65,13 @@ from brand import apply_theme  # noqa: E402
 apply_theme("glowtbook")
 
 # Mobile polish: tighter padding, comfortable tap targets when installed as a PWA.
-st.markdown("""<style>
+st.html("""<style>
 @media (max-width: 640px) {
   .block-container {padding: 1rem 0.9rem 3rem !important;}
   .stButton>button, .stDownloadButton>button {width: 100%; padding: 0.6rem 1rem;}
   [data-testid="stFileUploaderDropzone"] {padding: 0.75rem;}
 }
-</style>""", unsafe_allow_html=True)
+</style>""")
 
 
 # --- per-user store --------------------------------------------------------

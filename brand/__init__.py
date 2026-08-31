@@ -73,14 +73,17 @@ a { color:var(--molten-deep); }
 
 def apply_theme(active: str = "") -> None:
     """Inject the shared theme and render the cross-app nav bar. `active` is one of
-    'home' | 'explore' | 'glowtbook' | 'admin' and highlights that pill."""
+    'home' | 'explore' | 'glowtbook' | 'admin' and highlights that pill.
+
+    Uses st.html (not st.markdown) because recent Streamlit sanitizes raw HTML/CSS
+    passed through markdown, which would strip the bar's styling and links."""
     links = "".join(
-        f'<a class="{key} {"active" if key == active else ""}" href="{href}">{label}</a>'
+        f'<a class="{key} {"active" if key == active else ""}" href="{href}" '
+        f'target="_self" rel="noopener">{label}</a>'
         for key, label, href in _NAV_ITEMS
     )
-    st.markdown(
+    st.html(
         _CSS
-        + f'<div class="gdb-nav"><a class="brand" href="/">{_MARK}Glass Database</a>'
-        + f'<div class="links">{links}</div></div>',
-        unsafe_allow_html=True,
+        + f'<div class="gdb-nav"><a class="brand" href="/" target="_self">{_MARK}Glass Database</a>'
+        + f'<div class="links">{links}</div></div>'
     )
