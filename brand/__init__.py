@@ -45,8 +45,11 @@ _CSS = """
 }
 h1, h2, h3, h4, [data-testid="stHeading"] {
   font-family:'Fraunces', Georgia, serif !important; letter-spacing:-.01em; }
-header[data-testid="stHeader"] { background:transparent; }
-.block-container { padding-top:1rem; }
+/* Streamlit's fixed top header sits over the page; hide it so it can't cover
+   (and swallow clicks meant for) our nav bar, then give the content top room. */
+header[data-testid="stHeader"] { display:none !important; }
+[data-testid="stToolbar"] { display:none !important; }
+.block-container { padding-top:1.6rem; }
 
 /* brand lockup */
 .gdb-brand { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none;
