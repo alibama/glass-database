@@ -102,16 +102,18 @@ cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
 # Serve the object-fingerprint capture apps (they need the camera, so they run as
 # standalone browser pages, not inside the Streamlit iframe).
 mkdir -p "$APP_DIR/public/fingerprint"
-"$APP_DIR/.venv/bin/python" - <<'PYFP' 2>/dev/null || echo "  (object-fingerprint not installed; capture apps skipped)"
-import shutil
-try:
-    import object_fingerprint as ofp
-    for kind in ("enroll", "verify"):
-        shutil.copy(ofp.capture_app(kind), "$APP_DIR/public/fingerprint/%s.html" % kind)
-    print("  copied fingerprint capture apps")
-except Exception as e:
-    raise SystemExit(1)
+if "$APP_DIR/.venv/bin/python" -c "import object_fingerprint" 2>/dev/null; then
+    "$APP_DIR/.venv/bin/python" - "$APP_DIR/public/fingerprint" <<'PYFP'
+import sys, shutil
+import object_fingerprint as ofp
+dest = sys.argv[1]
+for kind in ("enroll", "verify"):
+    shutil.copy(ofp.capture_app(kind), f"{dest}/{kind}.html")
+print("  copied fingerprint capture apps ->", dest)
 PYFP
+else
+    echo "  object-fingerprint not installed; capture apps skipped"
+fi
 if [ ! -f "$APP_DIR/data/glassdb.db" ] && [ -f "$SRC/data/glassdb.db" ]; then
     cp "$SRC/data/glassdb.db" "$APP_DIR/data/glassdb.db"
     say "Seeded initial database from the shipped glassdb.db"
