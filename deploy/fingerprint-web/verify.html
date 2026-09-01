@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Glass Verify</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg:#0e1316; --bg-lift:#161e22; --line:#26333a;
+    --ink:#ece7dd; --ink-dim:#8b989e;
+    --hot:#f2b417; --cool:#3fb6c9; --danger:#e2564d; --ok:#5fd08a;
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{margin:0; background:var(--bg); color:var(--ink); overflow:hidden;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-variant-numeric:tabular-nums; -webkit-user-select:none; user-select:none}
+
+  #stage{position:fixed; inset:0; background:#000; display:flex; align-items:center; justify-content:center}
+  video{width:100%; height:100%; object-fit:cover; background:#000}
+  canvas{display:none}
+
+  .hud{position:fixed; inset:0; pointer-events:none}
+  .hud > *{pointer-events:auto}
+
+  /* signature: matched-coverage ring + confidence in one gauge */
+  #gauge{position:absolute; top:max(12px,env(safe-area-inset-top)); left:50%;
+    transform:translateX(-50%); width:172px; height:172px; filter:drop-shadow(0 3px 14px rgba(0,0,0,.55))}
+  #gauge svg{width:100%; height:100%; overflow:visible}
+  .sector{fill:#ffffff12; stroke:var(--bg); stroke-width:1.1; transition:fill .2s ease}
+  .sector.done{fill:var(--ok)}
+  #arcBg{fill:none; stroke:#ffffff14; stroke-width:3.4}
+  #arc{fill:none; stroke:var(--hot); stroke-width:3.4; stroke-linecap:round;
+    transition:stroke-dashoffset .5s cubic-bezier(.2,.8,.2,1), stroke .4s}
+  #score{font-size:34px; font-weight:700; fill:var(--ink); letter-spacing:-.02em}
+  #verdict{font-size:9.5px; font-weight:700; fill:var(--ink-dim); letter-spacing:.02em}
+  #gauge.match #arc{stroke:var(--ok)} #gauge.match #verdict{fill:var(--ok)}
+  #gauge.nomatch #arc{stroke:var(--danger)} #gauge.nomatch #verdict{fill:var(--danger)}
+  #gauge.inconc #arc{stroke:var(--hot)} #gauge.inconc #verdict{fill:var(--hot)}
+  #gauge.bump{animation:bump .45s ease}
+  @keyframes bump{0%{transform:translateX(-50%) scale(1)}35%{transform:translateX(-50%) scale(1.06)}100%{transform:translateX(-50%) scale(1)}}
+  #plus{position:absolute; top:52px; left:50%; transform:translateX(-50%); font-size:22px; font-weight:700; color:var(--ok); opacity:0; pointer-events:none}
+  #plus.go{animation:plus 1s ease forwards}
+  @keyframes plus{0%{opacity:0; transform:translateX(-50%) translateY(6px)}18%{opacity:1}100%{opacity:0; transform:translateX(-50%) translateY(-26px)}}
+
+  #subs{position:absolute; top:max(14px,env(safe-area-inset-top)); left:14px; display:flex; flex-direction:column; gap:10px}
+  .sub{width:96px}
+  .sub label{display:block; font-size:10.5px; color:var(--ink-dim); margin-bottom:4px; font-weight:600}
+  .track{height:5px; border-radius:3px; background:#ffffff14; overflow:hidden}
+  .fill{height:100%; width:0; background:var(--ok); border-radius:3px; transition:width .5s cubic-bezier(.2,.8,.2,1)}
+
+  #rail{position:absolute; top:max(14px,env(safe-area-inset-top)); right:14px; display:flex; flex-direction:column; align-items:flex-end; gap:8px}
+  .chip{background:#0c1114cc; border:1px solid var(--line); border-radius:11px; padding:8px 11px; font-size:12px; font-weight:600; backdrop-filter:blur(8px); text-align:right; line-height:1.3}
+  .chip b{color:var(--ok)}
+  .icon-btn{background:#0c1114cc; border:1px solid var(--line); color:var(--ink); border-radius:11px; padding:9px 12px; font-size:13px; font-weight:600; backdrop-filter:blur(8px); cursor:pointer}
+  .icon-btn:disabled{opacity:.4}
+
+  #reticle{position:absolute; top:56%; left:50%; width:66px; height:66px; margin:-33px 0 0 -33px; border:1.5px solid #ffffff4d; border-radius:10px; opacity:.55}
+  #reticle::before,#reticle::after{content:""; position:absolute; left:50%; width:1px; height:9px; background:#ffffff88; margin-left:-.5px}
+  #reticle::before{top:-9px} #reticle::after{bottom:-9px}
+
+  #bar{position:absolute; left:0; right:0; bottom:0; padding:16px 18px calc(16px + env(safe-area-inset-bottom));
+    display:flex; align-items:center; justify-content:space-between; gap:14px; background:linear-gradient(to top,#000000d6,#0000)}
+  #hint{flex:1; font-size:12.5px; color:var(--ink-dim); line-height:1.35; max-width:38%}
+  #shutWrap{position:relative; width:86px; height:86px; flex:none; display:grid; place-items:center}
+  #shutRing{position:absolute; inset:0; transform:rotate(-90deg)}
+  #shutRing circle{fill:none; stroke-width:4; stroke-linecap:round}
+  #shutRing .bg{stroke:#ffffff22}
+  #shutRing .fg{stroke:var(--ink-dim); transition:stroke-dashoffset .12s linear, stroke .2s}
+  #shutWrap.worthy #shutRing .fg{stroke:var(--hot)}
+  #shutWrap.hit #shutRing .fg{stroke:var(--ok)}
+  #shutter{width:64px; height:64px; border-radius:50%; background:var(--hot); border:4px solid var(--bg); cursor:pointer; transition:transform .07s,background .2s}
+  #shutWrap.hit #shutter{background:var(--ok)}
+  #shutter:active{transform:scale(.9)}
+  #shutWrap.auto #shutter{background:var(--bg)}
+  #shutWrap.auto #shutter::after{content:"AUTO"; display:grid; place-items:center; height:100%; font-size:10px; font-weight:700; color:var(--hot); letter-spacing:.5px}
+  #tools{flex:1; display:flex; gap:9px; justify-content:flex-end; flex-wrap:wrap}
+  .tool{background:#0c1114cc; border:1px solid var(--line); color:var(--ink); border-radius:11px; padding:9px 11px; font-size:12px; font-weight:600; backdrop-filter:blur(8px); cursor:pointer}
+  .tool.on{border-color:var(--hot); color:var(--hot)}
+
+  /* pairs drawer */
+  #film{position:absolute; left:0; right:0; bottom:0; transform:translateY(100%); transition:transform .28s cubic-bezier(.2,.8,.2,1);
+    background:#0b0f12f4; border-top:1px solid var(--line); backdrop-filter:blur(12px);
+    padding:14px 14px calc(14px + env(safe-area-inset-bottom)); max-height:70vh; overflow:auto}
+  #film.open{transform:translateY(0)}
+  #film h2{margin:0 0 4px; font-size:15px}
+  #film p{margin:0 0 12px; font-size:12.5px; color:var(--ink-dim)}
+  .pair{display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--line)}
+  .pair .imgs{display:flex; gap:6px}
+  .pair .imgs div{position:relative; width:60px; height:60px; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--line)}
+  .pair .imgs img{width:100%; height:100%; object-fit:cover; display:block}
+  .pair .imgs .tag{position:absolute; left:0; top:0; font-size:8px; padding:1px 4px; background:#000000bb; border-bottom-right-radius:6px}
+  .pair .meta{flex:1}
+  .pair .barrow{height:6px; border-radius:3px; background:#ffffff14; overflow:hidden; margin-top:5px}
+  .pair .barrow i{display:block; height:100%; border-radius:3px}
+  .pair .pct{font-size:14px; font-weight:700}
+  .pair small{color:var(--ink-dim); font-size:11px}
+  .filmbtns{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  .filmbtns button{flex:1; min-width:120px; border-radius:11px; padding:12px; font-size:13.5px; font-weight:600; cursor:pointer; border:1px solid var(--line)}
+  .primary{background:var(--hot); color:#191100; border-color:var(--hot)!important}
+  .ghost{background:transparent; color:var(--ink)}
+  .ghost.warn{color:var(--danger); border-color:#5a2b28!important}
+
+  /* gate */
+  #gate{position:fixed; inset:0; background:var(--bg); z-index:20; display:flex; flex-direction:column; padding:26px 22px calc(26px + env(safe-area-inset-bottom)); overflow:auto}
+  #gate .wrap{max-width:520px; margin:auto; width:100%}
+  #gate .mark{width:44px; height:44px; margin-bottom:20px}
+  #gate h1{font-size:26px; margin:0 0 6px; letter-spacing:-.02em; line-height:1.1}
+  #gate .lede{font-size:14.5px; color:var(--ink-dim); margin:0 0 22px; line-height:1.5; max-width:46ch}
+  .drop{border:1.5px dashed var(--line); border-radius:14px; padding:22px; text-align:center; cursor:pointer; transition:border-color .2s}
+  .drop:hover{border-color:var(--hot)}
+  .drop b{display:block; font-size:14.5px; margin-bottom:3px}
+  .drop span{font-size:12.5px; color:var(--ink-dim)}
+  #refCard{margin-top:16px; border:1px solid var(--line); border-radius:13px; padding:15px; display:none}
+  #refCard.show{display:block}
+  #refCard .rt{font-size:14px; font-weight:600; margin-bottom:8px}
+  #refCard .row{display:flex; justify-content:space-between; font-size:12.8px; color:var(--ink-dim); padding:3px 0}
+  #refCard .row b{color:var(--ink); font-weight:600}
+  #start{width:100%; margin-top:18px; background:var(--hot); color:#191100; border:none; border-radius:13px; padding:15px; font-size:15.5px; font-weight:700; cursor:pointer; display:none}
+  #start.show{display:block}
+  #err{color:var(--danger); font-size:13px; margin-top:14px; min-height:1em}
+
+  .toast{position:fixed; left:50%; bottom:120px; transform:translateX(-50%) translateY(12px); background:#0c1114ee; border:1px solid var(--line); color:var(--ink); padding:9px 15px; border-radius:11px; font-size:13px; font-weight:600; opacity:0; transition:.22s; pointer-events:none; z-index:15}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast.warn{border-color:#5a2b28; color:var(--danger)}
+  .toast.ok{border-color:#2f5a41; color:var(--ok)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+  @media (max-width:430px){#hint{display:none} #tools{flex:none}}
+</style>
+</head>
+<body>
+
+<div id="stage"><video id="cam" playsinline autoplay muted></video><canvas id="cap"></canvas></div>
+
+<div class="hud" id="hud" hidden>
+  <div id="subs">
+    <div class="sub"><label>Match quality</label><div class="track"><div class="fill" id="fQual"></div></div></div>
+    <div class="sub"><label>Spread</label><div class="track"><div class="fill" id="fSpread"></div></div></div>
+  </div>
+
+  <div id="gauge">
+    <svg viewBox="0 0 100 100">
+      <g id="sectors"></g>
+      <circle id="arcBg" cx="50" cy="50" r="33"/>
+      <circle id="arc" cx="50" cy="50" r="33"/>
+      <text id="score" x="50" y="52" text-anchor="middle">0</text>
+      <text id="verdict" x="50" y="64" text-anchor="middle">Gathering</text>
+    </svg>
+    <div id="plus"></div>
+  </div>
+
+  <div id="rail">
+    <div class="chip">Shots <b id="total">0</b><br><span id="matched">0 matched</span></div>
+    <button class="icon-btn" id="review" disabled>Pairs</button>
+  </div>
+
+  <div id="reticle"></div>
+
+  <div id="bar">
+    <div id="hint">Circle the piece. The shutter turns green when your view lines up with a reference shot — those are the frames that decide it.</div>
+    <div id="shutWrap">
+      <svg id="shutRing" viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="fg" cx="50" cy="50" r="45"/></svg>
+      <div id="shutter" role="button" aria-label="capture"></div>
+    </div>
+    <div id="tools">
+      <button class="tool" id="autoBtn">Auto</button>
+      <button class="tool" id="flipBtn">Flip</button>
+    </div>
+  </div>
+
+  <div id="film">
+    <h2>Matched pairs</h2>
+    <p id="filmMeta">No shots yet.</p>
+    <div id="pairs"></div>
+    <div class="filmbtns">
+      <button class="primary" id="exportBtn">Export result (.json)</button>
+      <button class="ghost" id="closeFilm">Keep capturing</button>
+      <button class="ghost warn" id="clearBtn">Reset shots</button>
+    </div>
+  </div>
+</div>
+
+<div id="gate">
+  <div class="wrap">
+    <svg class="mark" viewBox="0 0 44 44" fill="none">
+      <path d="M22 3C15 14 15 30 22 41C29 30 29 14 22 3Z" stroke="#f2b417" stroke-width="2.2" stroke-linejoin="round"/>
+      <ellipse cx="22" cy="22" rx="19" ry="8" stroke="#3fb6c9" stroke-width="1.6" opacity=".8"/>
+    </svg>
+    <h1>Verify a piece</h1>
+    <p class="lede">Load a piece's enrolled fingerprint, then capture the piece in front of you. Each shot is matched against the reference — the confidence score rises as your angles line up with ones on file.</p>
+    <label class="drop" id="drop">
+      <b>Load reference fingerprint</b>
+      <span>The <code>glass-fingerprint-….zip</code> from enrollment (or its fingerprint.json)</span>
+      <input id="file" type="file" accept=".zip,.json,application/zip,application/json" hidden>
+    </label>
+    <div id="refCard">
+      <div class="rt" id="refTitle">Reference loaded</div>
+      <div class="row"><span>Enrolled</span><b id="refDate">—</b></div>
+      <div class="row"><span>Reference strength</span><b id="refRating">—</b></div>
+      <div class="row"><span>Reference frames</span><b id="refFrames">—</b></div>
+    </div>
+    <button id="start">Enable camera</button>
+    <div id="err"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+(function(){
+  const $=s=>document.querySelector(s);
+  const video=$("#cam"), cap=$("#cap"), capx=cap.getContext("2d");
+
+  /* ---- tunables ---- */
+  const AW=160, AH=Math.round(AW*0.75);
+  const GRAD_T=90, SHARP_MIN=12, SHARP_GOOD=55, NOVELTY_MIN=8;
+  const SIM_LO=6, SIM_HI=22;          // hamming -> similarity mapping
+  const STRONG_T=0.6;                 // similarity to count as a real match
+  const SPREAD_TARGET=6;              // distinct ref cells matched for full spread
+  const MATCH_READY=70, NO_MATCH=40;  // verdict thresholds
+  const MIN_EFFORT=8;                 // sharp shots before "no match" is allowed
+  const AZ=24;
+
+  const aCanvas=document.createElement("canvas"); aCanvas.width=AW; aCanvas.height=AH;
+  const actx=aCanvas.getContext("2d",{willReadFrequently:true});
+
+  const S={ ref:null, refByFile:{}, frames:[], stream:null, imageCapture:null, facing:"environment",
+    auto:false, lastAuto:0, live:{sharp:0,dhash:null,cnov:64,worthy:false,hit:false},
+    conf:0, prevConf:0, seq:0 };
+
+  /* ring */
+  const sectorsG=$("#sectors");
+  const polar=(cx,cy,r,d)=>{const a=(d-90)*Math.PI/180; return [cx+r*Math.cos(a),cy+r*Math.sin(a)];};
+  function wedge(i){const rO=46,rI=38,st=360/AZ,a0=i*st,a1=a0+st-1.1;
+    const [x0,y0]=polar(50,50,rO,a0),[x1,y1]=polar(50,50,rO,a1),[x2,y2]=polar(50,50,rI,a1),[x3,y3]=polar(50,50,rI,a0);
+    return `M${x0} ${y0} A${rO} ${rO} 0 0 1 ${x1} ${y1} L${x2} ${y2} A${rI} ${rI} 0 0 0 ${x3} ${y3} Z`;}
+  for(let i=0;i<AZ;i++){const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",wedge(i)); p.setAttribute("class","sector"); sectorsG.appendChild(p);}
+  const R=33, C=2*Math.PI*R;
+  $("#arcBg").style.strokeDasharray=C; $("#arc").style.strokeDasharray=C; $("#arc").style.strokeDashoffset=C;
+
+  /* analysis */
+  function popcount(x){x=x>>>0;x=x-((x>>>1)&0x55555555);x=(x&0x33333333)+((x>>>2)&0x33333333);x=(x+(x>>>4))&0x0f0f0f0f;return (x*0x01010101)>>>24;}
+  const ham=(a,b)=>popcount(a[0]^b[0])+popcount(a[1]^b[1]);
+  function dhash(g,w,h){const bw=9,bh=8,sm=new Float32Array(bw*bh);
+    for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){const sx=Math.floor((x+.5)*w/bw),sy=Math.floor((y+.5)*h/bh);sm[y*bw+x]=g[sy*w+sx];}
+    let hi=0,lo=0,b=0;for(let y=0;y<bh;y++)for(let x=0;x<bw-1;x++){const v=sm[y*bw+x]<sm[y*bw+x+1]?1:0; if(b<32)hi=(hi<<1)|v; else lo=(lo<<1)|v; b++;}
+    return [hi>>>0,lo>>>0];}
+  function analyze(){ if(!video.videoWidth) return null;
+    actx.drawImage(video,0,0,AW,AH); const d=actx.getImageData(0,0,AW,AH).data, g=new Float32Array(AW*AH);
+    for(let i=0,p=0;i<d.length;i+=4,p++) g[p]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    let s1=0,s2=0,n=0,det=0;
+    for(let y=1;y<AH-1;y++)for(let x=1;x<AW-1;x++){const idx=y*AW+x;
+      const lap=4*g[idx]-g[idx-1]-g[idx+1]-g[idx-AW]-g[idx+AW]; s1+=lap; s2+=lap*lap; n++;
+      const gx=g[idx+1]-g[idx-1],gy=g[idx+AW]-g[idx-AW]; if(gx*gx+gy*gy>GRAD_T) det++;}
+    return {sharp:s2/n-(s1/n)*(s1/n), detail:det/n, dhash:dhash(g,AW,AH)};}
+  const cnovOf=dh=>{let m=64; for(const f of S.frames){const d=ham(dh,f.dhash); if(d<m)m=d;} return m;};
+
+  /* matching */
+  const simOf=dist=>Math.max(0,Math.min(1,(SIM_HI-dist)/(SIM_HI-SIM_LO)));
+  function matchFrame(dh){ let best=null,bd=64;
+    for(const r of S.ref.frames){const d=ham(dh,r.dhash); if(d<bd){bd=d; best=r;}}
+    return {ref:best, dist:bd, sim:simOf(bd)}; }
+
+  function recompute(){
+    const strong=S.frames.map(f=>f.match).filter(m=>m&&m.sim>=STRONG_T);
+    const topSims=strong.map(p=>p.sim).sort((a,b)=>b-a).slice(0,8);
+    const quality=topSims.length? topSims.reduce((a,b)=>a+b,0)/topSims.length : 0;
+    const cells=new Set(strong.map(p=>p.ref.cell));
+    const spread=Math.min(1,cells.size/SPREAD_TARGET);
+    const conf=Math.round(100*quality*(0.4+0.6*spread));
+    return {conf, quality, spread, cells, strongCount:strong.length};
+  }
+  function verdictFor(r){
+    const effort=S.frames.filter(f=>f.sharp>=SHARP_MIN).length;
+    if(r.conf>=MATCH_READY && r.cells.size>=3) return ["match","Match likely"];
+    if(effort>=MIN_EFFORT && r.conf<NO_MATCH && r.cells.size<2) return ["nomatch","No match here"];
+    return ["inconc","Inconclusive"];
+  }
+  function update(){
+    const r=recompute(); S.prevConf=S.conf; S.conf=r.conf;
+    $("#fQual").style.width=(r.quality*100)+"%";
+    $("#fSpread").style.width=(r.spread*100)+"%";
+    $("#arc").style.strokeDashoffset=C*(1-r.conf/100);
+    $("#score").textContent=r.conf;
+    const [cls,label]=verdictFor(r);
+    const g=$("#gauge"); g.classList.remove("match","nomatch","inconc"); g.classList.add(cls);
+    $("#verdict").textContent=label;
+    // matched-sector ring (only meaningful if reference had a compass at enrollment)
+    const matchedSectors=new Set(S.frames.map(f=>f.match).filter(m=>m&&m.sim>=STRONG_T&&m.ref.sector>=0).map(m=>m.ref.sector));
+    [...sectorsG.children].forEach((el,i)=>el.classList.toggle("done",matchedSectors.has(i)));
+    $("#matched").textContent=r.cells.size+" matched";
+    const delta=S.conf-S.prevConf;
+    if(delta>0){ g.classList.remove("bump"); void g.offsetWidth; g.classList.add("bump");
+      const pl=$("#plus"); pl.textContent="+"+delta; pl.classList.remove("go"); void pl.offsetWidth; pl.classList.add("go"); buzz(12);
+      if(cls==="match" && S.prevConf<MATCH_READY){ toast("Match likely","ok"); buzz([30,40,30]); } }
+    refresh();
+  }
+
+  /* capture */
+  async function grab(){ if(S.imageCapture&&S.imageCapture.takePhoto){try{return await S.imageCapture.takePhoto();}catch(_){}}
+    const w=video.videoWidth||1280,h=video.videoHeight||720; cap.width=w; cap.height=h; capx.drawImage(video,0,0,w,h);
+    return await new Promise(r=>cap.toBlob(r,"image/jpeg",0.92)); }
+  async function capture(manual){
+    const a=S.live;
+    if(a.sharp<SHARP_MIN){ toast("Too blurry — hold steady","warn"); return; }
+    if(!manual && a.cnov<NOVELTY_MIN) return;
+    let blob; try{blob=await grab();}catch(_){toast("Capture failed","warn"); return;}
+    if(!blob) return;
+    const m=matchFrame(a.dhash);
+    const f={blob,url:URL.createObjectURL(blob),seq:++S.seq,sharp:a.sharp,dhash:a.dhash,match:m,t:new Date().toISOString()};
+    S.frames.push(f); update(); flash();
+  }
+
+  /* live loop */
+  let lastA=0;
+  function loop(ts){ if($("#hud").hidden) return;
+    if(ts-lastA>150){ lastA=ts; const a=analyze();
+      if(a){ a.cnov=cnovOf(a.dhash); const lm=matchFrame(a.dhash);
+        a.worthy=a.sharp>=SHARP_MIN && a.cnov>=NOVELTY_MIN; a.hit=a.sharp>=SHARP_MIN && lm.sim>=STRONG_T; S.live=a;
+        const q=Math.max(0,Math.min(1,(a.sharp-SHARP_MIN)/(SHARP_GOOD-SHARP_MIN)));
+        const ring=$("#shutRing .fg"), c=2*Math.PI*45; ring.style.strokeDasharray=c;
+        ring.style.strokeDashoffset=c*(1-(a.hit?1:a.worthy?0.75:q*0.4));
+        $("#shutWrap").classList.toggle("worthy",a.worthy); $("#shutWrap").classList.toggle("hit",a.hit);
+        if(S.auto && a.worthy && ts-S.lastAuto>750){ S.lastAuto=ts; capture(false); }
+      } }
+    requestAnimationFrame(loop); }
+
+  /* camera */
+  async function startCamera(){ stopCamera();
+    const attempts=[
+      {audio:false,video:{facingMode:{ideal:S.facing},width:{ideal:1920},height:{ideal:1080}}},
+      {audio:false,video:{facingMode:S.facing}},
+      {audio:false,video:true}
+    ];
+    let err=null;
+    for(const c of attempts){
+      try{ S.stream=await navigator.mediaDevices.getUserMedia(c); err=null; break; }
+      catch(e){ err=e; }
+    }
+    if(!S.stream){ throw err; }
+    video.srcObject=S.stream; await video.play().catch(()=>{});
+    const t=S.stream.getVideoTracks()[0];
+    if("ImageCapture" in window){try{S.imageCapture=new ImageCapture(t);}catch(_){S.imageCapture=null;}} else S.imageCapture=null; }
+  function stopCamera(){ if(S.stream){S.stream.getTracks().forEach(t=>t.stop()); S.stream=null;} }
+
+  /* ui */
+  function refresh(){ $("#total").textContent=S.frames.length; $("#review").disabled=!S.frames.length;
+    const r=recompute(); const [,label]=verdictFor(r);
+    $("#filmMeta").textContent=S.frames.length? `${label} — confidence ${r.conf}/100, ${r.cells.size} reference views matched`:"No shots yet.";
+    const box=$("#pairs"); box.innerHTML="";
+    S.frames.slice().map(f=>f).sort((a,b)=>(b.match?b.match.sim:0)-(a.match?a.match.sim:0)).forEach(f=>{
+      const m=f.match; const sim=m?Math.round(m.sim*100):0;
+      const col=m&&m.sim>=STRONG_T?"var(--ok)":m&&m.sim>=0.35?"var(--hot)":"var(--danger)";
+      const refImg=m&&m.ref&&S.refByFile[m.ref.file]? `<img src="${S.refByFile[m.ref.file]}" alt="">`:`<div style="display:grid;place-items:center;height:100%;font-size:9px;color:var(--ink-dim)">no image</div>`;
+      const row=document.createElement("div"); row.className="pair";
+      row.innerHTML=`<div class="imgs">
+          <div><span class="tag">yours</span><img src="${f.url}" alt=""></div>
+          <div><span class="tag">on file</span>${refImg}</div></div>
+        <div class="meta"><span class="pct" style="color:${col}">${sim}%</span>
+          <small> · dist ${m?m.dist:"—"}${m&&m.ref?" · "+m.ref.file.replace("frames/",""):""}</small>
+          <div class="barrow"><i style="width:${sim}%;background:${col}"></i></div></div>`;
+      box.appendChild(row); }); }
+  function toast(m,k){const t=$("#toast"); t.textContent=m; t.className="toast show"+(k?" "+k:""); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),1700);}
+  function flash(){document.body.animate([{filter:"brightness(2)"},{filter:"brightness(1)"}],{duration:120});}
+  function buzz(p){try{navigator.vibrate&&navigator.vibrate(p);}catch(_){}}
+
+  $("#shutter").onclick=()=>capture(true);
+  $("#autoBtn").onclick=e=>{S.auto=!S.auto; S.lastAuto=0; e.target.classList.toggle("on",S.auto); $("#shutWrap").classList.toggle("auto",S.auto); toast(S.auto?"Auto-capture on":"Auto-capture off");};
+  $("#flipBtn").onclick=async()=>{S.facing=S.facing==="environment"?"user":"environment"; try{await startCamera();}catch(_){toast("Couldn't switch camera","warn");}};
+  $("#review").onclick=()=>$("#film").classList.add("open");
+  $("#closeFilm").onclick=()=>$("#film").classList.remove("open");
+  $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Discard captured shots?"))return;
+    S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; update(); };
+
+  $("#exportBtn").onclick=()=>{
+    if(!S.frames.length){toast("Nothing to export","warn"); return;}
+    const r=recompute(); const [,label]=verdictFor(r);
+    const report={ tool:"glass-verify", version:1, created:new Date().toISOString(),
+      reference:{created:S.ref.created,rating:S.ref.rating,tier:S.ref.tier,frames:S.ref.frames.length},
+      verdict:label, confidence:r.conf, matchQuality:+r.quality.toFixed(3), spread:+r.spread.toFixed(3),
+      referenceViewsMatched:r.cells.size, shots:S.frames.length,
+      params:{SIM_LO,SIM_HI,STRONG_T,SPREAD_TARGET,MATCH_READY,NO_MATCH},
+      note:"Decision-support match report. Confidence is a perceptual-structure match score, not proof of authenticity.",
+      pairs:S.frames.map(f=>({shot:f.seq,sharp:+f.sharp.toFixed(1),
+        refFile:f.match&&f.match.ref?f.match.ref.file:null,dist:f.match?f.match.dist:null,similarity:f.match?+f.match.sim.toFixed(3):null})) };
+    const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob), a=document.createElement("a");
+    a.href=url; a.download=`glass-verify-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.json`; a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),4000); toast("Result exported","ok");
+  };
+
+  /* load reference */
+  $("#drop").onclick=()=>$("#file").click();
+  $("#file").onchange=async e=>{ const file=e.target.files[0]; if(!file) return; $("#err").textContent="";
+    try{
+      let ref=null;
+      if(/\.json$/i.test(file.name)){ ref=JSON.parse(await file.text()); }
+      else{ const zip=await JSZip.loadAsync(file);
+        const jf=zip.file("fingerprint.json")||zip.file(Object.keys(zip.files).find(n=>/fingerprint\.json$/i.test(n)));
+        if(!jf) throw new Error("no fingerprint.json inside");
+        ref=JSON.parse(await jf.async("string"));
+        for(const fr of ref.frames){ const zf=zip.file(fr.file); if(zf){ const b=await zf.async("blob"); S.refByFile[fr.file]=URL.createObjectURL(b); } }
+      }
+      if(!ref||!Array.isArray(ref.frames)||!ref.frames.length) throw new Error("no frames in fingerprint");
+      // normalise dhash to [hi,lo] numbers
+      ref.frames.forEach(f=>{ if(f.dhash&&f.dhash.length===2){ f.dhash=[f.dhash[0]>>>0,f.dhash[1]>>>0]; } if(f.sector==null)f.sector=-1; if(f.cell==null)f.cell="c"+f.file; });
+      S.ref=ref;
+      $("#refDate").textContent=(ref.created||"").slice(0,10)||"unknown";
+      $("#refRating").textContent=(ref.rating!=null?ref.rating+"/100":"—")+(ref.tier?" ("+ref.tier+")":"");
+      $("#refFrames").textContent=ref.frames.length+(Object.keys(S.refByFile).length?"":" (json only — no images)");
+      $("#refCard").classList.add("show"); $("#start").classList.add("show");
+      toast("Reference loaded","ok");
+    }catch(err){ console.error(err); $("#err").textContent="Couldn't read that file: "+(err.message||err); }
+  };
+
+  $("#start").onclick=async()=>{ if(!S.ref){$("#err").textContent="Load a reference first."; return;} $("#err").textContent="";
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("#err").textContent="No camera API here. Use Chrome or Safari over https (or localhost)."; return;}
+    if(!window.isSecureContext){$("#err").textContent="The camera needs a secure page (https:// or localhost)."; return;}
+    const btn=$("#start"), label=btn.textContent; btn.disabled=true; btn.textContent="Starting camera…";
+    try{await startCamera();}
+    catch(err){
+      const n=(err&&err.name)||String(err);
+      let msg;
+      if(n==="NotAllowedError"||n==="SecurityError") msg="Camera permission was denied. Allow camera access for this site, then reload.";
+      else if(n==="NotReadableError"||n==="TrackStartError"||n==="AbortError") msg="The camera is busy or unavailable — close any other app or browser tab using it (or unplug/replug a webcam) and try again.";
+      else if(n==="NotFoundError"||n==="DevicesNotFoundError") msg="No camera was found on this device.";
+      else if(n==="OverconstrainedError") msg="This camera can't meet the requested settings.";
+      else msg="Couldn't open the camera ("+n+").";
+      $("#err").textContent=msg; btn.disabled=false; btn.textContent=label; return;}
+    btn.disabled=false; btn.textContent=label;
+    $("#gate").hidden=true; $("#hud").hidden=false; update(); requestAnimationFrame(loop);
+  };
+
+  window.addEventListener("beforeunload",e=>{if(S.frames.length){e.preventDefault(); e.returnValue="";}});
+})();
+</script>
+</body>
+</html>

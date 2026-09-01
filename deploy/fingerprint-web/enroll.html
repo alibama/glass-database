@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Glass Fingerprint</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  :root{
+    --bg:#0e1316; --bg-lift:#161e22; --line:#26333a;
+    --ink:#ece7dd; --ink-dim:#8b989e;
+    --hot:#f2b417; --hot-deep:#c9860a; --cool:#3fb6c9; --danger:#e2564d; --ok:#5fd08a;
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{margin:0; background:var(--bg); color:var(--ink); overflow:hidden;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    font-variant-numeric:tabular-nums; -webkit-user-select:none; user-select:none}
+
+  #stage{position:fixed; inset:0; background:#000; display:flex; align-items:center; justify-content:center}
+  video{width:100%; height:100%; object-fit:cover; background:#000}
+  canvas{display:none}
+
+  .hud{position:fixed; inset:0; pointer-events:none}
+  .hud > *{pointer-events:auto}
+
+  /* ---- signature element: coverage ring + rating in one gauge ---- */
+  #gauge{position:absolute; top:max(12px,env(safe-area-inset-top)); left:50%;
+    transform:translateX(-50%); width:172px; height:172px;
+    filter:drop-shadow(0 3px 14px rgba(0,0,0,.55))}
+  #gauge svg{width:100%; height:100%; overflow:visible}
+  .sector{fill:#ffffff12; stroke:var(--bg); stroke-width:1.1; transition:fill .2s ease}
+  .sector.done{fill:var(--hot)}
+  .sector.here{fill:#ffffff45}
+  #arcBg{fill:none; stroke:#ffffff14; stroke-width:3.4}
+  #arc{fill:none; stroke:var(--hot); stroke-width:3.4; stroke-linecap:round;
+    transition:stroke-dashoffset .5s cubic-bezier(.2,.8,.2,1), stroke .4s}
+  #readyTick{stroke:var(--ink-dim); stroke-width:1.6}
+  #score{font-size:34px; font-weight:700; fill:var(--ink); letter-spacing:-.02em}
+  #tier{font-size:10px; font-weight:600; fill:var(--ink-dim); letter-spacing:.02em}
+  #seal{opacity:0; transition:opacity .4s}
+  #gauge.ready #arc{stroke:var(--ok)}
+  #gauge.ready #seal{opacity:1}
+  #gauge.bump{animation:bump .45s ease}
+  @keyframes bump{0%{transform:translateX(-50%) scale(1)}35%{transform:translateX(-50%) scale(1.06)}100%{transform:translateX(-50%) scale(1)}}
+  #plus{position:absolute; top:52px; left:50%; transform:translateX(-50%);
+    font-size:22px; font-weight:700; color:var(--hot); opacity:0; pointer-events:none}
+  #plus.go{animation:plus 1s ease forwards}
+  @keyframes plus{0%{opacity:0; transform:translateX(-50%) translateY(6px)}
+    18%{opacity:1}100%{opacity:0; transform:translateX(-50%) translateY(-26px)}}
+
+  /* subscore trio */
+  #subs{position:absolute; top:max(14px,env(safe-area-inset-top)); left:14px;
+    display:flex; flex-direction:column; gap:10px}
+  .sub{width:96px}
+  .sub label{display:block; font-size:10.5px; color:var(--ink-dim); margin-bottom:4px; font-weight:600}
+  .track{height:5px; border-radius:3px; background:#ffffff14; overflow:hidden}
+  .fill{height:100%; width:0; background:var(--hot); border-radius:3px; transition:width .5s cubic-bezier(.2,.8,.2,1)}
+
+  /* right rail */
+  #rail{position:absolute; top:max(14px,env(safe-area-inset-top)); right:14px;
+    display:flex; flex-direction:column; align-items:flex-end; gap:8px}
+  .chip{background:#0c1114cc; border:1px solid var(--line); border-radius:11px;
+    padding:8px 11px; font-size:12.5px; font-weight:600; backdrop-filter:blur(8px)}
+  .chip b{color:var(--hot)}
+  .icon-btn{background:#0c1114cc; border:1px solid var(--line); color:var(--ink);
+    border-radius:11px; padding:9px 12px; font-size:13px; font-weight:600; backdrop-filter:blur(8px); cursor:pointer}
+  .icon-btn:disabled{opacity:.4}
+
+  #reticle{position:absolute; top:56%; left:50%; width:66px; height:66px; margin:-33px 0 0 -33px;
+    border:1.5px solid #ffffff4d; border-radius:10px; opacity:.55}
+  #reticle::before,#reticle::after{content:""; position:absolute; left:50%; width:1px; height:9px; background:#ffffff88; margin-left:-.5px}
+  #reticle::before{top:-9px} #reticle::after{bottom:-9px}
+
+  #bar{position:absolute; left:0; right:0; bottom:0;
+    padding:16px 18px calc(16px + env(safe-area-inset-bottom));
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    background:linear-gradient(to top,#000000d6,#0000)}
+  #hint{flex:1; font-size:12.5px; color:var(--ink-dim); line-height:1.35; max-width:38%}
+  #shutWrap{position:relative; width:86px; height:86px; flex:none; display:grid; place-items:center}
+  #shutRing{position:absolute; inset:0; transform:rotate(-90deg)}
+  #shutRing circle{fill:none; stroke-width:4; stroke-linecap:round}
+  #shutRing .bg{stroke:#ffffff22}
+  #shutRing .fg{stroke:var(--ink-dim); transition:stroke-dashoffset .12s linear, stroke .2s}
+  #shutWrap.worthy #shutRing .fg{stroke:var(--hot)}
+  #shutter{width:64px; height:64px; border-radius:50%; background:var(--hot);
+    border:4px solid var(--bg); cursor:pointer; transition:transform .07s}
+  #shutter:active{transform:scale(.9)}
+  #shutWrap.auto #shutter{background:var(--bg)}
+  #shutWrap.auto #shutter::after{content:"AUTO"; display:grid; place-items:center; height:100%;
+    font-size:10px; font-weight:700; color:var(--hot); letter-spacing:.5px}
+  #tools{flex:1; display:flex; gap:9px; justify-content:flex-end; flex-wrap:wrap}
+  .tool{background:#0c1114cc; border:1px solid var(--line); color:var(--ink);
+    border-radius:11px; padding:9px 11px; font-size:12px; font-weight:600; backdrop-filter:blur(8px); cursor:pointer}
+  .tool.on{border-color:var(--hot); color:var(--hot)}
+
+  /* review drawer */
+  #film{position:absolute; left:0; right:0; bottom:0; transform:translateY(100%);
+    transition:transform .28s cubic-bezier(.2,.8,.2,1);
+    background:#0b0f12f4; border-top:1px solid var(--line); backdrop-filter:blur(12px);
+    padding:14px 14px calc(14px + env(safe-area-inset-bottom)); max-height:64vh; overflow:auto}
+  #film.open{transform:translateY(0)}
+  #film h2{margin:0 0 4px; font-size:15px}
+  #film p{margin:0 0 12px; font-size:12.5px; color:var(--ink-dim)}
+  .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:8px}
+  .thumb{position:relative; aspect-ratio:1; border-radius:9px; overflow:hidden; background:#000; border:1px solid var(--line)}
+  .thumb img{width:100%; height:100%; object-fit:cover; display:block}
+  .thumb span{position:absolute; left:4px; bottom:3px; font-size:9px; padding:1px 5px; border-radius:6px; background:#000000aa}
+  .thumb .x{position:absolute; top:3px; right:3px; width:20px; height:20px; border:none; border-radius:6px;
+    background:#000000aa; color:#fff; font-size:13px; cursor:pointer; line-height:1}
+  .filmbtns{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
+  .filmbtns button{flex:1; min-width:120px; border-radius:11px; padding:12px; font-size:13.5px; font-weight:600; cursor:pointer; border:1px solid var(--line)}
+  .primary{background:var(--hot); color:#191100; border-color:var(--hot)!important}
+  .ghost{background:transparent; color:var(--ink)}
+  .ghost.warn{color:var(--danger); border-color:#5a2b28!important}
+
+  /* gate */
+  #gate{position:fixed; inset:0; background:var(--bg); z-index:20; display:flex; flex-direction:column;
+    padding:26px 22px calc(26px + env(safe-area-inset-bottom)); overflow:auto}
+  #gate .wrap{max-width:520px; margin:auto; width:100%}
+  #gate .mark{width:44px; height:44px; margin-bottom:20px}
+  #gate h1{font-size:26px; margin:0 0 6px; letter-spacing:-.02em; line-height:1.1}
+  #gate .lede{font-size:14.5px; color:var(--ink-dim); margin:0 0 24px; line-height:1.5; max-width:46ch}
+  .check{border-top:1px solid var(--line); padding:13px 0; display:flex; gap:13px}
+  .check .n{color:var(--hot); font-weight:700; font-size:13px; width:20px; flex:none; padding-top:1px}
+  .check b{font-size:14px; display:block; margin-bottom:2px}
+  .check p{margin:0; font-size:12.8px; color:var(--ink-dim); line-height:1.45}
+  #start{width:100%; margin-top:24px; background:var(--hot); color:#191100; border:none;
+    border-radius:13px; padding:15px; font-size:15.5px; font-weight:700; cursor:pointer}
+  #err{color:var(--danger); font-size:13px; margin-top:14px; min-height:1em}
+
+  .toast{position:fixed; left:50%; bottom:120px; transform:translateX(-50%) translateY(12px);
+    background:#0c1114ee; border:1px solid var(--line); color:var(--ink); padding:9px 15px;
+    border-radius:11px; font-size:13px; font-weight:600; opacity:0; transition:.22s; pointer-events:none; z-index:15}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
+  .toast.warn{border-color:#5a2b28; color:var(--danger)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+  @media (max-width:430px){#hint{display:none} #tools{flex:none}}
+</style>
+</head>
+<body>
+
+<div id="stage"><video id="cam" playsinline autoplay muted></video><canvas id="cap"></canvas></div>
+
+<div class="hud" id="hud" hidden>
+  <div id="subs">
+    <div class="sub"><label>Coverage</label><div class="track"><div class="fill" id="fCov"></div></div></div>
+    <div class="sub"><label>Detail</label><div class="track"><div class="fill" id="fDet"></div></div></div>
+    <div class="sub"><label>Robustness</label><div class="track"><div class="fill" id="fRob"></div></div></div>
+  </div>
+
+  <div id="gauge">
+    <svg viewBox="0 0 100 100">
+      <g id="sectors"></g>
+      <circle id="arcBg" cx="50" cy="50" r="33"/>
+      <circle id="arc" cx="50" cy="50" r="33"/>
+      <line id="readyTick" x1="50" y1="14" x2="50" y2="20"/>
+      <text id="score" x="50" y="52" text-anchor="middle">0</text>
+      <text id="tier" x="50" y="65" text-anchor="middle">Sparse</text>
+      <g id="seal"><circle cx="50" cy="76" r="6" fill="none" stroke="#5fd08a" stroke-width="1.6"/>
+        <path d="M47 76 l2 2 l4 -4" fill="none" stroke="#5fd08a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></g>
+    </svg>
+    <div id="plus"></div>
+  </div>
+
+  <div id="rail">
+    <div class="chip">Frames <b id="total">0</b></div>
+    <button class="icon-btn" id="review" disabled>Review</button>
+  </div>
+
+  <div id="reticle"></div>
+
+  <div id="bar">
+    <div id="hint">Keep the piece centred and circle it slowly. The ring around the shutter turns amber when a shot will count.</div>
+    <div id="shutWrap">
+      <svg id="shutRing" viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="fg" cx="50" cy="50" r="45"/></svg>
+      <div id="shutter" role="button" aria-label="capture"></div>
+    </div>
+    <div id="tools">
+      <button class="tool" id="autoBtn">Auto</button>
+      <button class="tool" id="flipBtn">Flip</button>
+    </div>
+  </div>
+
+  <div id="film">
+    <h2>Captured frames</h2>
+    <p id="filmMeta">Nothing captured yet.</p>
+    <div class="grid" id="grid"></div>
+    <div class="filmbtns">
+      <button class="primary" id="exportBtn">Export fingerprint (.zip)</button>
+      <button class="ghost" id="closeFilm">Keep capturing</button>
+      <button class="ghost warn" id="clearBtn">Clear all</button>
+    </div>
+  </div>
+</div>
+
+<div id="gate">
+  <div class="wrap">
+    <svg class="mark" viewBox="0 0 44 44" fill="none">
+      <path d="M22 3C15 14 15 30 22 41C29 30 29 14 22 3Z" stroke="#f2b417" stroke-width="2.2" stroke-linejoin="round"/>
+      <ellipse cx="22" cy="22" rx="19" ry="8" stroke="#3fb6c9" stroke-width="1.6" opacity=".8"/>
+    </svg>
+    <h1>Glass fingerprint</h1>
+    <p class="lede">Capture a blown-glass piece from enough angles to build a fingerprint strong enough to re-identify it later. A live rating climbs as coverage, sharpness, and distinctive detail add up — capture until it reaches Strong.</p>
+    <div class="check"><div class="n">1</div><div><b>Kill reflections</b><p>Dark, matte, neutral surroundings so moving highlights don't get baked into the fingerprint. This screen stays dark on purpose.</p></div></div>
+    <div class="check"><div class="n">2</div><div><b>Circle it slowly, at a few heights</b><p>Keep it centred and orbit, then again higher and lower. Blurry or repeat angles are ignored, so move deliberately.</p></div></div>
+    <div class="check"><div class="n">3</div><div><b>Feed the detail score</b><p>The distinctive, hard-to-forge parts drive the rating fastest: move in close on the pontil mark, any signature, and cold-working, and take a backlit angle or two to record the internal bubbles.</p></div></div>
+    <button id="start">Enable camera</button>
+    <div id="err"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+(function(){
+  const $=s=>document.querySelector(s);
+  const video=$("#cam"), cap=$("#cap"), capx=cap.getContext("2d");
+
+  /* ---- tunables (may need field adjustment per device/lighting) ---- */
+  const AW=160, AR=0.75;                 // analysis width, height ratio
+  let AH=Math.round(AW*AR);
+  const GRAD_T=90;                       // gradient^2 threshold -> "detail" pixel
+  const SHARP_MIN=12, SHARP_GOOD=55;     // blur gate / crisp indicator
+  const NOVELTY_MIN=8;                   // hamming dist to count as a new view
+  const COV_TARGET=16;                   // distinct cells for full coverage
+  const DET_SCALE=6, ROB_SCALE=18;       // saturation constants
+  const READY=75;
+  const AZ=24;                           // coverage sectors
+  const TIERS=[[90,"Verified-ready"],[75,"Strong"],[50,"Good"],[25,"Partial"],[0,"Sparse"]];
+
+  const aCanvas=document.createElement("canvas"); aCanvas.width=AW; aCanvas.height=AH;
+  const actx=aCanvas.getContext("2d",{willReadFrequently:true});
+
+  const S={ frames:[], stream:null, imageCapture:null, facing:"environment",
+    orient:null, here:-1, pseudo:0, auto:false, lastAuto:0,
+    live:{sharp:0,detail:0,dhash:null,novelty:64,worthy:false},
+    rating:0, prevRating:0, prevTierIdx:4, seq:0, ready:false };
+
+  /* ---------- coverage ring ---------- */
+  const sectorsG=$("#sectors");
+  const polar=(cx,cy,r,d)=>{const a=(d-90)*Math.PI/180; return [cx+r*Math.cos(a),cy+r*Math.sin(a)];};
+  function wedge(i){const cx=50,cy=50,rO=46,rI=38,st=360/AZ,a0=i*st,a1=a0+st-1.1;
+    const [x0,y0]=polar(cx,cy,rO,a0),[x1,y1]=polar(cx,cy,rO,a1),[x2,y2]=polar(cx,cy,rI,a1),[x3,y3]=polar(cx,cy,rI,a0);
+    return `M${x0} ${y0} A${rO} ${rO} 0 0 1 ${x1} ${y1} L${x2} ${y2} A${rI} ${rI} 0 0 0 ${x3} ${y3} Z`;}
+  for(let i=0;i<AZ;i++){const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+    p.setAttribute("d",wedge(i)); p.setAttribute("class","sector"); sectorsG.appendChild(p);}
+  const coveredSectors=()=>new Set(S.frames.filter(f=>f.sharp>=SHARP_MIN&&f.sector>=0).map(f=>f.sector));
+  function paintRing(){const cs=coveredSectors();
+    [...sectorsG.children].forEach((el,i)=>{el.classList.toggle("done",cs.has(i));
+      el.classList.toggle("here",i===S.here&&!cs.has(i));});}
+
+  /* rating arc geometry */
+  const R=33, C=2*Math.PI*R;
+  $("#arcBg").style.strokeDasharray=C; $("#arc").style.strokeDasharray=C; $("#arc").style.strokeDashoffset=C;
+  (function(){const ang=READY/100*360; const [x1,y1]=polar(50,50,R+3.2,ang),[x2,y2]=polar(50,50,R-3.2,ang);
+    const t=$("#readyTick"); t.setAttribute("x1",x1);t.setAttribute("y1",y1);t.setAttribute("x2",x2);t.setAttribute("y2",y2);})();
+
+  /* ---------- image analysis ---------- */
+  function popcount(x){x=x>>>0;x=x-((x>>>1)&0x55555555);x=(x&0x33333333)+((x>>>2)&0x33333333);
+    x=(x+(x>>>4))&0x0f0f0f0f;return (x*0x01010101)>>>24;}
+  const ham=(a,b)=>popcount(a[0]^b[0])+popcount(a[1]^b[1]);
+  function dhash(g,w,h){const bw=9,bh=8,sm=new Float32Array(bw*bh);
+    for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){const sx=Math.floor((x+.5)*w/bw),sy=Math.floor((y+.5)*h/bh);sm[y*bw+x]=g[sy*w+sx];}
+    let hi=0,lo=0,b=0;for(let y=0;y<bh;y++)for(let x=0;x<bw-1;x++){const v=sm[y*bw+x]<sm[y*bw+x+1]?1:0;
+      if(b<32)hi=(hi<<1)|v; else lo=(lo<<1)|v; b++;}
+    return [hi>>>0,lo>>>0];}
+  function analyze(){
+    if(!video.videoWidth) return null;
+    actx.drawImage(video,0,0,AW,AH);
+    const d=actx.getImageData(0,0,AW,AH).data, g=new Float32Array(AW*AH);
+    for(let i=0,p=0;i<d.length;i+=4,p++) g[p]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+    let s1=0,s2=0,n=0,det=0;
+    for(let y=1;y<AH-1;y++)for(let x=1;x<AW-1;x++){const idx=y*AW+x;
+      const lap=4*g[idx]-g[idx-1]-g[idx+1]-g[idx-AW]-g[idx+AW]; s1+=lap; s2+=lap*lap; n++;
+      const gx=g[idx+1]-g[idx-1],gy=g[idx+AW]-g[idx-AW]; if(gx*gx+gy*gy>GRAD_T) det++;}
+    const sharp=s2/n-(s1/n)*(s1/n);
+    return {sharp, detail:det/n, dhash:dhash(g,AW,AH)};
+  }
+  const noveltyOf=dh=>{if(!dh) return 64; let m=64;
+    for(const f of S.frames){const hd=ham(dh,f.dhash); if(hd<m)m=hd;} return m;};
+
+  /* ---------- rating ---------- */
+  function computeRating(){
+    const good=S.frames.filter(f=>f.sharp>=SHARP_MIN);
+    const cells=new Set(good.map(f=>f.cell));
+    const cov=Math.min(1,cells.size/COV_TARGET)*40;
+    const distinct=good.filter(f=>f.noveltyAtCapture>=NOVELTY_MIN);
+    const detSum=distinct.reduce((a,f)=>a+Math.min(f.detail/0.06,1.4),0);
+    const det=(1-Math.exp(-detSum/DET_SCALE))*35;
+    const rob=(1-Math.exp(-good.length/ROB_SCALE))*25;
+    return {total:Math.min(100,Math.round(cov+det+rob)), cov:cov/40, det:det/35, rob:rob/25};
+  }
+  function tierIdx(v){for(let i=0;i<TIERS.length;i++) if(v>=TIERS[i][0]) return i; return TIERS.length-1;}
+  function updateRating(){
+    const r=computeRating();
+    S.prevRating=S.rating; S.rating=r.total;
+    $("#fCov").style.width=(r.cov*100)+"%";
+    $("#fDet").style.width=(r.det*100)+"%";
+    $("#fRob").style.width=(r.rob*100)+"%";
+    $("#arc").style.strokeDashoffset=C*(1-r.total/100);
+    $("#score").textContent=r.total;
+    const ti=tierIdx(r.total); $("#tier").textContent=TIERS[ti][1];
+    const g=$("#gauge");
+    const nowReady=r.total>=READY;
+    if(nowReady&&!S.ready){S.ready=true; toast("Fingerprint ready — keep going to strengthen it","ok"); buzz([30,40,30]);}
+    if(!nowReady&&S.ready){S.ready=false;}
+    g.classList.toggle("ready",nowReady);
+
+    const delta=S.rating-S.prevRating;
+    if(delta>0){
+      g.classList.remove("bump"); void g.offsetWidth; g.classList.add("bump");
+      const pl=$("#plus"); pl.textContent="+"+delta; pl.classList.remove("go"); void pl.offsetWidth; pl.classList.add("go");
+      const tiNow=tierIdx(S.rating), tiPrev=S.prevTierIdx;
+      if(tiNow<tiPrev){ buzz([25,35,25]); toast("Tier up — "+TIERS[tiNow][1],"ok"); } // lower idx = higher tier
+      S.prevTierIdx=tiNow;
+    }
+  }
+
+  /* ---------- capture ---------- */
+  async function grab(){
+    if(S.imageCapture&&S.imageCapture.takePhoto){try{return await S.imageCapture.takePhoto();}catch(_){}}
+    const w=video.videoWidth||1280,h=video.videoHeight||720; cap.width=w; cap.height=h; capx.drawImage(video,0,0,w,h);
+    return await new Promise(r=>cap.toBlob(r,"image/jpeg",0.94));
+  }
+  function cellOf(sector,band,dh){
+    if(sector>=0) return sector+":"+band;
+    if(noveltyOf(dh)>=NOVELTY_MIN){S.pseudo++;} return "n"+S.pseudo;   // no compass: cells track visual novelty
+  }
+  async function capture(manual){
+    const a=S.live;
+    if(a.sharp<SHARP_MIN){ toast("Too blurry — hold steady","warn"); return; }
+    const nov=a.novelty;
+    if(!manual && nov<NOVELTY_MIN) return;                 // auto skips duplicates silently
+    if(manual && nov<NOVELTY_MIN) toast("Already have this angle","warn");
+    let blob; try{blob=await grab();}catch(_){toast("Capture failed","warn"); return;}
+    if(!blob) return;
+    const band=S.orient? (S.orient.beta<35?0:S.orient.beta<65?1:2) : 0;
+    const seq=++S.seq;
+    const f={blob,url:URL.createObjectURL(blob),seq,sharp:a.sharp,detail:a.detail,
+      dhash:a.dhash,noveltyAtCapture:nov,sector:S.here,band,cell:cellOf(S.here,band,a.dhash),
+      t:new Date().toISOString(),orientation:S.orient};
+    S.frames.push(f);
+    paintRing(); updateRating(); refresh(); flash();
+    if(!manual||nov>=NOVELTY_MIN) buzz(12);
+  }
+
+  /* ---------- live loop ---------- */
+  let lastA=0;
+  function loop(ts){
+    if($("#hud").hidden){return;}
+    if(ts-lastA>150){ lastA=ts;
+      const a=analyze();
+      if(a){ a.novelty=noveltyOf(a.dhash);
+        a.worthy=a.sharp>=SHARP_MIN && a.novelty>=NOVELTY_MIN && S.rating<100;
+        S.live=a;
+        const q=Math.max(0,Math.min(1,(a.sharp-SHARP_MIN)/(SHARP_GOOD-SHARP_MIN)));
+        const ring=$("#shutRing .fg"), c=2*Math.PI*45;
+        ring.style.strokeDasharray=c; ring.style.strokeDashoffset=c*(1-(a.worthy?1:q*0.5));
+        $("#shutWrap").classList.toggle("worthy",a.worthy);
+        if(S.auto && a.worthy && ts-S.lastAuto>750){ S.lastAuto=ts; capture(false); }
+      }
+    }
+    requestAnimationFrame(loop);
+  }
+
+  /* ---------- orientation ---------- */
+  function onOrient(e){ if(e.alpha==null) return; S.orient={alpha:e.alpha,beta:e.beta,gamma:e.gamma};
+    const idx=Math.floor((((e.alpha%360)+360)%360)/(360/AZ))%AZ; if(idx!==S.here){S.here=idx; paintRing();} }
+  async function enableMotion(){try{
+    if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"){
+      const r=await DeviceOrientationEvent.requestPermission(); if(r!=="granted") return false;}
+    window.addEventListener("deviceorientation",onOrient,true); return true;}catch(_){return false;}}
+
+  /* ---------- camera ---------- */
+  async function startCamera(){ stopCamera();
+    // Try a sane resolution first, then fall back — forcing 4K makes many phone
+    // cameras (and some webcams) fail with NotReadableError.
+    const attempts=[
+      {audio:false,video:{facingMode:{ideal:S.facing},width:{ideal:1920},height:{ideal:1080}}},
+      {audio:false,video:{facingMode:S.facing}},
+      {audio:false,video:true}
+    ];
+    let err=null;
+    for(const c of attempts){
+      try{ S.stream=await navigator.mediaDevices.getUserMedia(c); err=null; break; }
+      catch(e){ err=e; }
+    }
+    if(!S.stream){ throw err; }
+    video.srcObject=S.stream; await video.play().catch(()=>{});
+    const t=S.stream.getVideoTracks()[0];
+    if("ImageCapture" in window){try{S.imageCapture=new ImageCapture(t);}catch(_){S.imageCapture=null;}} else S.imageCapture=null; }
+  function stopCamera(){ if(S.stream){S.stream.getTracks().forEach(t=>t.stop()); S.stream=null;} }
+
+  /* ---------- ui ---------- */
+  function refresh(){ $("#total").textContent=S.frames.length; $("#review").disabled=!S.frames.length;
+    $("#filmMeta").textContent=S.frames.length? `${S.frames.length} frames — rating ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]})`:"Nothing captured yet.";
+    const g=$("#grid"); g.innerHTML="";
+    S.frames.slice().reverse().forEach(f=>{const d=document.createElement("div"); d.className="thumb";
+      const tag=f.sharp<SHARP_MIN?"blurry":f.noveltyAtCapture<NOVELTY_MIN?"dup":"kept";
+      d.innerHTML=`<img src="${f.url}" alt=""><span>${tag}</span><button class="x">×</button>`;
+      d.querySelector(".x").onclick=()=>{URL.revokeObjectURL(f.url); S.frames=S.frames.filter(x=>x!==f); paintRing(); updateRating(); refresh();};
+      g.appendChild(d);}); }
+  function toast(m,k){const t=$("#toast"); t.textContent=m; t.className="toast show"+(k==="warn"?" warn":"");
+    clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),1700);}
+  function flash(){document.body.animate([{filter:"brightness(2)"},{filter:"brightness(1)"}],{duration:120});}
+  function buzz(p){try{navigator.vibrate&&navigator.vibrate(p);}catch(_){}}
+
+  $("#shutter").onclick=()=>capture(true);
+  $("#autoBtn").onclick=e=>{S.auto=!S.auto; S.lastAuto=0; e.target.classList.toggle("on",S.auto);
+    $("#shutWrap").classList.toggle("auto",S.auto); toast(S.auto?"Auto-capture on":"Auto-capture off");};
+  $("#flipBtn").onclick=async()=>{S.facing=S.facing==="environment"?"user":"environment"; try{await startCamera();}catch(_){toast("Couldn't switch camera","warn");}};
+  $("#review").onclick=()=>$("#film").classList.add("open");
+  $("#closeFilm").onclick=()=>$("#film").classList.remove("open");
+  $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Delete all captured frames?"))return;
+    S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.pseudo=0; S.here=-1; S.ready=false; S.prevTierIdx=4;
+    paintRing(); updateRating(); refresh();};
+
+  $("#exportBtn").onclick=async()=>{
+    if(!S.frames.length){toast("Nothing to export","warn"); return;}
+    const b=$("#exportBtn"); b.disabled=true; b.textContent="Zipping…";
+    try{ const zip=new JSZip(), r=computeRating();
+      const fp={ tool:"glass-fingerprint", version:1, created:new Date().toISOString(),
+        rating:r.total, tier:TIERS[tierIdx(r.total)][1], ready:r.total>=READY,
+        subscores:{coverage:+r.cov.toFixed(3),detail:+r.det.toFixed(3),robustness:+r.rob.toFixed(3)},
+        device:{ua:navigator.userAgent,resolution:{w:video.videoWidth,h:video.videoHeight}},
+        params:{SHARP_MIN,NOVELTY_MIN,COV_TARGET,dhash:"9x8 dHash, [hi,lo] 32-bit ints"},
+        note:"Enrollment fingerprint. dhash + detail + coverage per frame let a later capture be matched to this reference.",
+        frames:[] };
+      for(const f of S.frames){ const name=`frames/${String(f.seq).padStart(3,"0")}.jpg`; zip.file(name,f.blob);
+        fp.frames.push({file:name,t:f.t,sector:f.sector,band:f.band,cell:f.cell,
+          sharp:+f.sharp.toFixed(1),detail:+f.detail.toFixed(4),
+          dhash:[f.dhash[0],f.dhash[1]],noveltyAtCapture:f.noveltyAtCapture,orientation:f.orientation});}
+      zip.file("fingerprint.json",JSON.stringify(fp,null,2));
+      const blob=await zip.generateAsync({type:"blob"}), url=URL.createObjectURL(blob), a=document.createElement("a");
+      a.href=url; a.download=`glass-fingerprint-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.zip`; a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),4000); toast("Fingerprint exported","ok");
+    }catch(e){console.error(e); toast("Export failed","warn");} finally{b.disabled=false; b.textContent="Export fingerprint (.zip)";}
+  };
+
+  $("#start").onclick=async()=>{
+    $("#err").textContent="";
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("#err").textContent="No camera API here. Use Chrome or Safari over https (or localhost)."; return;}
+    if(!window.isSecureContext){$("#err").textContent="The camera needs a secure page (https:// or localhost)."; return;}
+    const btn=$("#start"), label=btn.textContent; btn.disabled=true; btn.textContent="Starting camera…";
+    try{await startCamera();}
+    catch(err){
+      const n=(err&&err.name)||String(err);
+      let msg;
+      if(n==="NotAllowedError"||n==="SecurityError") msg="Camera permission was denied. Allow camera access for this site, then reload.";
+      else if(n==="NotReadableError"||n==="TrackStartError"||n==="AbortError") msg="The camera is busy or unavailable — close any other app or browser tab using it (or unplug/replug a webcam) and try again.";
+      else if(n==="NotFoundError"||n==="DevicesNotFoundError") msg="No camera was found on this device.";
+      else if(n==="OverconstrainedError") msg="This camera can't meet the requested settings.";
+      else msg="Couldn't open the camera ("+n+").";
+      $("#err").textContent=msg; btn.disabled=false; btn.textContent=label; return;}
+    btn.disabled=false; btn.textContent=label;
+    const ok=await enableMotion();
+    $("#hint").textContent=ok?"Circle the piece slowly. The shutter ring turns amber when a shot will count.":
+      "No compass here — coverage tracks by how different each view looks instead. Move to a new angle for each shot.";
+    $("#gate").hidden=true; $("#hud").hidden=false; paintRing(); updateRating(); refresh(); requestAnimationFrame(loop);
+  };
+
+  window.addEventListener("beforeunload",e=>{if(S.frames.length){e.preventDefault(); e.returnValue="";}});
+})();
+</script>
+</body>
+</html>

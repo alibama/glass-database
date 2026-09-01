@@ -100,19 +100,24 @@ cp "$SRC/deploy/landing-index.html" "$APP_DIR/public/index.html"
 cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
 
 # Serve the object-fingerprint capture apps (they need the camera, so they run as
-# standalone browser pages, not inside the Streamlit iframe).
+# standalone browser pages, not inside the Streamlit iframe). Prefer the copies
+# vendored in this repo (kept current/patched); fall back to the package's.
 mkdir -p "$APP_DIR/public/fingerprint"
-if "$APP_DIR/.venv/bin/python" -c "import object_fingerprint" 2>/dev/null; then
+if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
+    cp "$SRC/deploy/fingerprint-web/enroll.html" "$APP_DIR/public/fingerprint/enroll.html"
+    cp "$SRC/deploy/fingerprint-web/verify.html" "$APP_DIR/public/fingerprint/verify.html"
+    echo "  installed vendored fingerprint capture apps"
+elif "$APP_DIR/.venv/bin/python" -c "import object_fingerprint" 2>/dev/null; then
     "$APP_DIR/.venv/bin/python" - "$APP_DIR/public/fingerprint" <<'PYFP'
 import sys, shutil
 import object_fingerprint as ofp
 dest = sys.argv[1]
 for kind in ("enroll", "verify"):
     shutil.copy(ofp.capture_app(kind), f"{dest}/{kind}.html")
-print("  copied fingerprint capture apps ->", dest)
+print("  copied fingerprint capture apps from the package ->", dest)
 PYFP
 else
-    echo "  object-fingerprint not installed; capture apps skipped"
+    echo "  object-fingerprint capture apps unavailable; skipped"
 fi
 if [ ! -f "$APP_DIR/data/glassdb.db" ] && [ -f "$SRC/data/glassdb.db" ]; then
     cp "$SRC/data/glassdb.db" "$APP_DIR/data/glassdb.db"
