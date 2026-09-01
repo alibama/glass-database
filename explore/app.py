@@ -25,7 +25,7 @@ from central.dbconn import connect  # noqa: E402
 
 PUBLIC_BASE = os.environ.get("PUBLIC_BASE_URL", "https://glassdatabase.org").rstrip("/")
 
-st.set_page_config(page_title="Explore · Glass Database", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Explore · Glass Database", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
 
 from brand import apply_theme  # noqa: E402
 

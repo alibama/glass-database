@@ -1,5 +1,20 @@
 # Deploying Glass Database on Ubuntu
 
+## Updating production (git-based)
+
+Keep a git checkout on the server and update with one command:
+
+```bash
+cd ~/glass-database          # your checkout
+bash deploy/update.sh        # NOT sudo — it pulls, then sudo-deploys
+```
+
+`update.sh` fast-forward-pulls from GitHub, runs the installer (which preserves
+the live database, `.env`, `.htpasswd`, secrets, generated media, and the C2PA
+signing key, updates deps, and restarts services), then health-checks each
+service. `git pull` needs no credentials on a public repo.
+
+
 A one-command install that puts the API and admin behind Nginx on your server.
 Tested against the layout in this repo; targets Ubuntu 22.04 / 24.04.
 

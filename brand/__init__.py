@@ -45,11 +45,10 @@ _CSS = """
 }
 h1, h2, h3, h4, [data-testid="stHeading"] {
   font-family:'Fraunces', Georgia, serif !important; letter-spacing:-.01em; }
-/* Streamlit's fixed top header sits over the page; hide it so it can't cover
-   (and swallow clicks meant for) our nav bar, then give the content top room. */
-header[data-testid="stHeader"] { display:none !important; }
-[data-testid="stToolbar"] { display:none !important; }
-.block-container { padding-top:1.6rem; }
+/* NOTE: do NOT hide header[data-testid="stHeader"] — on mobile it holds the
+   control that opens the sidebar. And do NOT shrink the block-container top
+   padding: Streamlit uses it to clear the fixed header, so reducing it slides
+   content (the nav) under the header, where it can't be clicked. */
 
 /* brand lockup */
 .gdb-brand { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none;

@@ -1,32 +1,51 @@
 #!/usr/bin/env bash
 #
-# Redeploy after a code change. Run from the updated project directory:
-#   sudo bash deploy/update.sh
+# One-command production update: pull the latest code from git, then deploy it.
 #
-# Preserves the live database and .env; updates code + deps; restarts services.
+#   cd ~/glass-database        # your git checkout
+#   bash deploy/update.sh      # do NOT use sudo — it asks for sudo itself
+#
+# Pulls from the git remote (fast-forward only), then runs the full installer,
+# which preserves the live database, .env, .htpasswd, secrets, generated media,
+# and the C2PA signing key, updates dependencies, and restarts the services.
 set -euo pipefail
 
-APP_USER="glassdb"
-APP_DIR="/opt/glassdatabase"
+DOMAIN="${1:-glassdatabase.org}"
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$SRC"
 
-if [ "$(id -u)" -ne 0 ]; then echo "Please run with sudo/root."; exit 1; fi
+if [ "$(id -u)" -eq 0 ]; then
+  echo "Run this WITHOUT sudo, as the user who owns the git checkout."
+  echo "It will prompt for sudo only for the deploy step (so .git stays yours)."
+  exit 1
+fi
 
-echo "==> Syncing code (keeping data/ and .env)"
-rsync -a --delete \
-    --exclude '.venv' --exclude '__pycache__' --exclude '.git' \
-    --exclude 'data/glassdb.db' --exclude 'data/glassdb.db-*' \
-    --exclude 'data/glowtbook_demo.db' \
-    --exclude '.env' --exclude '.htpasswd' \
-    --exclude '.streamlit/secrets.toml' \
-    "$SRC/" "$APP_DIR/"
+if [ -d .git ]; then
+  echo "==> Pulling latest from git"
+  BEFORE="$(git rev-parse --short HEAD)"
+  git pull --ff-only
+  AFTER="$(git rev-parse --short HEAD)"
+  if [ "$BEFORE" = "$AFTER" ]; then
+    echo "    already up to date ($AFTER)"
+  else
+    echo "    $BEFORE -> $AFTER:"
+    git --no-pager log --oneline "$BEFORE..$AFTER" | sed 's/^/      /'
+  fi
+else
+  echo "==> Not a git checkout — deploying the current files as-is."
+fi
 
-echo "==> Updating dependencies"
-"$APP_DIR/.venv/bin/pip" install --quiet --upgrade -r "$APP_DIR/requirements.txt"
+echo "==> Deploying to /opt/glassdatabase (data, .env, secrets, media, signing key preserved)"
+sudo bash "$SRC/deploy/install.sh" "$DOMAIN"
 
-chown -R "$APP_USER:$APP_USER" "$APP_DIR"
-
-echo "==> Restarting services"
-systemctl restart glassdb-api glassdb-admin glassdb-explore glassdb-glowtbook
-systemctl reload nginx 2>/dev/null || systemctl reload apache2 2>/dev/null || true
-echo "==> Done."
+echo "==> Health check"
+ok=1
+for s in api explore glowtbook admin; do
+  if sudo systemctl is-active --quiet "glassdb-$s"; then
+    echo "    glassdb-$s: active"
+  else
+    echo "    glassdb-$s: NOT ACTIVE  —  sudo journalctl -u glassdb-$s -n 50"
+    ok=0
+  fi
+done
+[ "$ok" = 1 ] && echo "==> Update complete." || { echo "==> Update finished with service errors (see above)."; exit 1; }

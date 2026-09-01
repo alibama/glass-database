@@ -5,6 +5,9 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **update.sh** — one-command git-based production update (pull → install →
+  health check). Fixed mobile: the shared header is no longer hidden (it holds
+  the sidebar toggle), and Explore/Admin open with the sidebar expanded.
 - **Accessibility (mDLAUG)** — the Explore → Objects view is rendered as
   purpose-built accessible HTML aligned to the Mobile Digital Library
   Accessibility & Usability Guidelines: named list of items, real image alt
