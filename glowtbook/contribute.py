@@ -82,10 +82,14 @@ def ensure_central_objects(c):
         _row_id TEXT PRIMARY KEY, _source_file TEXT, _source_sheet TEXT, _imported_at TEXT,
         title TEXT, maker TEXT, year TEXT, techniques TEXT, materials TEXT, dimensions TEXT,
         description TEXT, contributor TEXT, sourcing TEXT, value_display TEXT DEFAULT '',
-        has_credentials INTEGER DEFAULT 0, manifest_json TEXT, content_hash TEXT, published_at TEXT)""")
+        has_credentials INTEGER DEFAULT 0, manifest_json TEXT, content_hash TEXT, published_at TEXT,
+        fingerprint_json TEXT, fingerprint_rating INTEGER, fingerprint_tier TEXT)""")
     # tolerate an older objects table from a previous deploy
-    if "has_credentials" not in {r[1] for r in c.execute("PRAGMA table_info(objects)")}:
-        c.execute("ALTER TABLE objects ADD COLUMN has_credentials INTEGER DEFAULT 0")
+    have = {r[1] for r in c.execute("PRAGMA table_info(objects)")}
+    for col, decl in [("has_credentials", "INTEGER DEFAULT 0"), ("fingerprint_json", "TEXT"),
+                      ("fingerprint_rating", "INTEGER"), ("fingerprint_tier", "TEXT")]:
+        if col not in have:
+            c.execute(f"ALTER TABLE objects ADD COLUMN {col} {decl}")
     c.execute("""CREATE TABLE IF NOT EXISTS object_images (
         id INTEGER PRIMARY KEY AUTOINCREMENT, object_row_id TEXT, role TEXT, caption TEXT,
         image_b64 TEXT, created_at TEXT DEFAULT (datetime('now')))""")
@@ -156,6 +160,23 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
     manifest = media.build_manifest(dict(obj), [dict(e) for e in events], ingredients,
                                     techniques, include_value, contributor=display)
 
+    # physical re-identification fingerprint (optional; travels in the manifest)
+    fp_json = None
+    try:
+        fp_json = obj["fingerprint_json"]
+    except Exception:
+        fp_json = None
+    fp_assertion = None
+    if fp_json:
+        try:
+            from glowtbook import fingerprint as _fp
+            s = _fp.summary(fp_json)
+            manifest["fingerprint"] = {"rating": s.get("rating"), "tier": s.get("tier"),
+                                       "data": _fp._as_obj(fp_json)}
+            fp_assertion = _fp.assertion(fp_json)
+        except Exception:
+            fp_json = None
+
     # Optionally embed Content Credentials (C2PA) in each condensed image
     do_sign = bool(sign) and c2pa_sign.available()
     prov = {"content_hash": manifest["content_hash"], "sourcing": manifest["sourcing"],
@@ -171,7 +192,8 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
                 out = c2pa_sign.sign_jpeg(dip, obj["title"], obj["maker"] or display, prov,
                                           parent_bytes=parent_bytes,
                                           parent_format=parent_fmt or "image/jpeg",
-                                          year=obj["year"])
+                                          year=obj["year"],
+                                          extra_assertions=[fp_assertion] if fp_assertion else None)
             except Exception:
                 do_sign = False  # fall back to unsigned for the whole batch
                 out = dip

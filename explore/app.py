@@ -124,9 +124,39 @@ if mode == "Objects (provenance)":
             "verify_url": ("https://contentcredentials.org/verify?source="
                            + quote(f"{PUBLIC_BASE}/api/objects/{o['_row_id']}/image", safe="")),
             "video_url": f"{PUBLIC_BASE}/api/objects/{o['_row_id']}/video" if has_video else None,
+            "fingerprint": man.get("fingerprint"),
         })
 
     st.html(build_objects_html(objects, verify_base=PUBLIC_BASE))
+
+    # Verify a physical piece against a registered fingerprint
+    with_fp = [o for o in objects if o.get("fingerprint")
+               and o["fingerprint"].get("rating") is not None]
+    if with_fp:
+        st.divider()
+        st.subheader("Verify a physical piece")
+        st.caption("Confirm a physical object is the same one registered here — match a fresh "
+                   "camera capture against its re-identification fingerprint.")
+        labels = {f'{o["title"]} — {o["maker"] or "?"} '
+                  f'({o["fingerprint"]["rating"]}/100 {o["fingerprint"]["tier"]})': o for o in with_fp}
+        pick = st.selectbox("Object", list(labels), key="fp_pick")
+        chosen = labels[pick]
+        st.markdown("**1.** [Open the capture app](/fingerprint/verify.html) (new tab — needs the "
+                    "camera). Capture the piece from several angles, then export the `.zip`.")
+        cand = st.file_uploader("**2.** Upload your capture (.zip) to match", type=["zip"], key="fp_cand")
+        if cand and st.button("Check the match", type="primary"):
+            try:
+                from glowtbook import fingerprint as _fp
+                res = _fp.verify_zip(chosen["fingerprint"]["data"], cand.getvalue())
+                verdict = res.get("verdict")
+                icon = {"match-likely": "✅", "no-match": "⛔", "inconclusive": "⚠️"}.get(verdict, "•")
+                st.metric("Confidence", f'{res.get("confidence")}/100', res.get("label"))
+                st.write(f"{icon} **{res.get('label')}** — {res.get('reference_views_matched', 0)} "
+                         f"reference views matched across {res.get('n_candidates', 0)} captured frames.")
+                st.caption("Decision support, not a forensic guarantee — capturing distinctive, "
+                           "hard-to-forge detail (pontil marks, backlit internal bubbles) matters most.")
+            except Exception as ex:  # noqa: BLE001
+                st.error(f"Couldn't run the match: {ex}")
     st.stop()
 
 # ===========================================================================

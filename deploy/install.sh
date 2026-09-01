@@ -98,6 +98,20 @@ rsync -a --delete \
     "$SRC/" "$APP_DIR/"
 cp "$SRC/deploy/landing-index.html" "$APP_DIR/public/index.html"
 cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
+
+# Serve the object-fingerprint capture apps (they need the camera, so they run as
+# standalone browser pages, not inside the Streamlit iframe).
+mkdir -p "$APP_DIR/public/fingerprint"
+"$APP_DIR/.venv/bin/python" - <<'PYFP' 2>/dev/null || echo "  (object-fingerprint not installed; capture apps skipped)"
+import shutil
+try:
+    import object_fingerprint as ofp
+    for kind in ("enroll", "verify"):
+        shutil.copy(ofp.capture_app(kind), "$APP_DIR/public/fingerprint/%s.html" % kind)
+    print("  copied fingerprint capture apps")
+except Exception as e:
+    raise SystemExit(1)
+PYFP
 if [ ! -f "$APP_DIR/data/glassdb.db" ] && [ -f "$SRC/data/glassdb.db" ]; then
     cp "$SRC/data/glassdb.db" "$APP_DIR/data/glassdb.db"
     say "Seeded initial database from the shipped glassdb.db"

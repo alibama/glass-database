@@ -97,7 +97,7 @@ def store() -> sqlite3.Connection:
         dimensions TEXT DEFAULT '', description TEXT DEFAULT '',
         acquired TEXT DEFAULT '', current_location TEXT DEFAULT '',
         value_amount TEXT DEFAULT '', value_currency TEXT DEFAULT 'USD', insured INTEGER DEFAULT 0,
-        status TEXT DEFAULT 'in collection',
+        status TEXT DEFAULT 'in collection', fingerprint_json TEXT,
         created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')));
       CREATE TABLE IF NOT EXISTS object_image (
         id INTEGER PRIMARY KEY, object_id INTEGER, user_id TEXT, role TEXT DEFAULT 'photo',
@@ -126,7 +126,7 @@ _EXPECTED_COLUMNS = {
     "object": [("acquired", "TEXT DEFAULT ''"), ("current_location", "TEXT DEFAULT ''"),
                ("value_amount", "TEXT DEFAULT ''"), ("value_currency", "TEXT DEFAULT 'USD'"),
                ("insured", "INTEGER DEFAULT 0"), ("status", "TEXT DEFAULT 'in collection'"),
-               ("updated_at", "TEXT")],
+               ("updated_at", "TEXT"), ("fingerprint_json", "TEXT")],
     "object_image": [("role", "TEXT DEFAULT 'photo'"), ("caption", "TEXT DEFAULT ''")],
     "prov_event": [("location", "TEXT DEFAULT ''"), ("note", "TEXT DEFAULT ''"),
                    ("value_amount", "TEXT DEFAULT ''"), ("value_currency", "TEXT DEFAULT ''")],
@@ -307,8 +307,8 @@ elif page == "Objects":
         oid = st.selectbox("Open object", [o["id"] for o in objs], format_func=lambda i: labels[i])
         o = conn.execute("SELECT * FROM object WHERE id=? AND user_id=?", (oid, uid)).fetchone()
 
-        tab_meta, tab_media, tab_prov, tab_contrib = st.tabs(
-            ["Details", "Images", "Provenance", "Contribute"])
+        tab_meta, tab_media, tab_prov, tab_fp, tab_contrib = st.tabs(
+            ["Details", "Images", "Provenance", "Fingerprint", "Contribute"])
 
         with tab_meta:
             title = st.text_input("Title", value=o["title"])
@@ -376,6 +376,35 @@ elif page == "Objects":
             for e in evs:
                 st.markdown(f"**{e['event_type']}** — {e['event_date'] or '?'}  ·  {e['actor']}")
                 if e["note"]: st.caption(e["note"])
+
+        with tab_fp:
+            from glowtbook import fingerprint as _fp
+            st.write("Capture a **re-identification fingerprint** — a set of perceptual "
+                     "hashes over many angles that can later confirm *this is the same "
+                     "physical piece*. It travels with the object's Content Credentials.")
+            if not _fp.available():
+                st.info("Install `object-fingerprint` on the server to enable this.")
+            else:
+                st.markdown("**1.** [Open the capture app](/fingerprint/enroll.html) "
+                            "(new tab — it needs the camera). Turn the piece slowly until the "
+                            "strength reads **Strong**, then export the `.zip`.")
+                up = st.file_uploader("**2.** Import the fingerprint export (.zip)", type=["zip"],
+                                      key=f"fp_up_{oid}")
+                if up and st.button("Save fingerprint", key=f"fp_save_{oid}"):
+                    r = _fp.load_enrollment(up.getvalue())
+                    if r.get("ok"):
+                        conn.execute("UPDATE object SET fingerprint_json=? WHERE id=? AND user_id=?",
+                                     (json.dumps(r["fingerprint"]), oid, uid))
+                        conn.commit()
+                        st.success(f"Fingerprint saved — {r['rating']}/100 ({r['tier']}), "
+                                   f"{r['n_frames']} views."); st.rerun()
+                    else:
+                        st.error(f"Couldn't read that export: {r.get('error')}")
+                cur_fp = o["fingerprint_json"] if "fingerprint_json" in o.keys() else None
+                if cur_fp:
+                    s = _fp.summary(cur_fp)
+                    st.success(f"On file: **{s['rating']}/100 ({s['tier']})**. "
+                               "It'll be embedded when you contribute this piece.")
 
         with tab_contrib:
             st.write("Publish a **condensed** version of this object and its provenance to the "

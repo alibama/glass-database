@@ -141,6 +141,15 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
         out.append(f'<p class="gdb-unverified" data-mdlaug-ok="RED4">Provenance: '
                    f'{_esc(o.get("sourcing") or "self-reported")} — unverified.</p>')
 
+        fp = o.get("fingerprint")
+        if fp and fp.get("rating") is not None:
+            out.append('<p data-mdlaug-ok="EVA1"><strong>Physical fingerprint:</strong> '
+                       f'{_esc(fp.get("rating"))}/100 ({_esc(fp.get("tier") or "")}) — '
+                       'a re-identification fingerprint is on file for this piece. '
+                       f'<a href="/fingerprint/verify.html?object={_esc(o["id"])}">Verify a '
+                       'physical piece<span class="visually-hidden"> (opens the camera capture '
+                       'app in a new browser tab)</span></a>.</p>')
+
         # ACC3/COM4: provenance events as a real data table with header scope
         events = o.get("events") or []
         if events:

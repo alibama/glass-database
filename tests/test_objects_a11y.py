@@ -21,6 +21,7 @@ def _sample(n=2):
                       "actions": ["c2pa.opened", "c2pa.resized"], "validation_state": "Valid"},
             "verify_url": "https://contentcredentials.org/verify?source=x",
             "video_url": None,
+            "fingerprint": {"rating": 84, "tier": "Strong"},
         })
     return objs
 
@@ -73,3 +74,9 @@ def test_user_content_is_escaped():
 def test_contents_jumplinks_present():
     html = build_objects_html(_sample(2))
     assert 'aria-label="Objects on this page"' in html and 'href="#obj-row0"' in html  # NAV4
+
+
+def test_fingerprint_line_present():
+    html = build_objects_html(_sample(1))
+    assert "Physical fingerprint:" in html and "84/100 (Strong)" in html
+    assert "/fingerprint/verify.html" in html

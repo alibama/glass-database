@@ -246,6 +246,26 @@ def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (
                     headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/objects/{row_id}/fingerprint", summary="Re-identification fingerprint of a public object")
+def object_fingerprint(row_id: str):
+    """Return the object's stored re-identification fingerprint (for verification)."""
+    import json as _json
+    conn = connect()
+    try:
+        row = conn.execute("SELECT manifest_json FROM objects WHERE _row_id=?", (row_id,)).fetchone()
+    except Exception:
+        raise HTTPException(404, "No such object")
+    if not row:
+        raise HTTPException(404, "No such object")
+    try:
+        fp = (_json.loads(row["manifest_json"] or "{}")).get("fingerprint")
+    except Exception:
+        fp = None
+    if not fp:
+        raise HTTPException(404, "No fingerprint for this object")
+    return fp
+
+
 @app.get("/objects/{row_id}/video", summary="Condensed DIP video of a public object, if any")
 def object_video(row_id: str):
     """Serve the transcoded (web-friendly) DIP video for an approved object."""

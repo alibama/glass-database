@@ -9,6 +9,8 @@ c2pa-python>=0.37  # Content Credentials (C2PA) signing/reading of object images
 cryptography>=42   # ES256 key + self-signed signing cert for C2PA
 bagit>=1.8         # BagIt AIP packaging (sha256+sha512 fixity)
 boto3>=1.34        # push AIP bags to MinIO / S3-compatible object storage
+# Physical-object re-identification fingerprints + capture apps
+object-fingerprint[c2pa] @ git+https://github.com/alibama/object-fingerprint.git
 
 # API
 fastapi>=0.110

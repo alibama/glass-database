@@ -97,7 +97,7 @@ def _signer(cert_pem: bytes, key_pem: bytes):
 
 def sign_jpeg(src_jpeg: bytes, title: str, author: str, provenance: dict,
               parent_bytes: bytes | None = None, parent_format: str = "image/jpeg",
-              year: str = "") -> bytes:
+              year: str = "", extra_assertions: list | None = None) -> bytes:
     """Embed a C2PA manifest into a JPEG and return the signed bytes.
 
     When the source this was derived from is supplied as ``parent_bytes``, it's
@@ -126,6 +126,9 @@ def sign_jpeg(src_jpeg: bytes, title: str, author: str, provenance: dict,
             {"label": "glassdb.provenance", "data": provenance},
         ],
     }
+    for a in (extra_assertions or []):
+        if a:
+            manifest["assertions"].append(a)
     signer = _signer(cert_pem, key_pem)
     with tempfile.TemporaryDirectory() as d:
         s, o = os.path.join(d, "s.jpg"), os.path.join(d, "o.jpg")

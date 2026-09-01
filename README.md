@@ -104,6 +104,10 @@ It's idempotent and preserves your database, secrets, generated media, and
 signing key across runs. See [`deploy/README-DEPLOY.md`](deploy/README-DEPLOY.md)
 and [`deploy/AUTH.md`](deploy/AUTH.md).
 
+## Physical re-identification
+
+Objects can carry a **re-identification fingerprint** (perceptual hashes over many angles, via [object-fingerprint](https://github.com/alibama/object-fingerprint)): enroll a piece in Glowtbook, and anyone can later confirm *this is the same physical object* by matching a fresh camera capture in Explore. The fingerprint is embedded in the object's C2PA credential.
+
 ## Accessibility
 
 The **Explore → Objects** view is built to the [mDLAUG](https://sites.uwm.edu/mdlaug/) mobile digital-library accessibility guidelines — named collection lists, real image alt text, live result counts, per-item position, and provenance as data tables. See [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md).

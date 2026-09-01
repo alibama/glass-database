@@ -5,6 +5,10 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Physical re-identification (object-fingerprint)** — enroll a piece's fingerprint
+  in Glowtbook (Fingerprint tab → capture app → import), which rides in the manifest
+  and is embedded as a C2PA assertion; verify a physical piece in Explore by matching
+  a fresh capture. Capture apps served at /fingerprint/{enroll,verify}.html.
 - **update.sh** — one-command git-based production update (pull → install →
   health check). Fixed mobile: the shared header is no longer hidden (it holds
   the sidebar toggle), and Explore/Admin open with the sidebar expanded.
