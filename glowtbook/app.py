@@ -111,8 +111,43 @@ def store() -> sqlite3.Connection:
         id INTEGER PRIMARY KEY, user_id TEXT, object_id INTEGER, content_hash TEXT,
         manifest_json TEXT, created_at TEXT DEFAULT (datetime('now')));
     """)
+    _migrate_columns(c)
     c.commit()
     return c
+
+
+# Columns added after the first release. CREATE TABLE IF NOT EXISTS won't add
+# these to a database made by an older version, so add any that are missing.
+# (ALTER ADD COLUMN defaults must be constants — no datetime() here.)
+_EXPECTED_COLUMNS = {
+    "journal": [("tags", "TEXT DEFAULT ''"), ("location", "TEXT DEFAULT ''"),
+                ("technique", "TEXT DEFAULT ''"), ("image_path", "TEXT DEFAULT ''"),
+                ("object_id", "INTEGER")],
+    "object": [("acquired", "TEXT DEFAULT ''"), ("current_location", "TEXT DEFAULT ''"),
+               ("value_amount", "TEXT DEFAULT ''"), ("value_currency", "TEXT DEFAULT 'USD'"),
+               ("insured", "INTEGER DEFAULT 0"), ("status", "TEXT DEFAULT 'in collection'"),
+               ("updated_at", "TEXT")],
+    "object_image": [("role", "TEXT DEFAULT 'photo'"), ("caption", "TEXT DEFAULT ''")],
+    "prov_event": [("location", "TEXT DEFAULT ''"), ("note", "TEXT DEFAULT ''"),
+                   ("value_amount", "TEXT DEFAULT ''"), ("value_currency", "TEXT DEFAULT ''")],
+    "profile": [("website", "TEXT DEFAULT ''"), ("nationality_base", "TEXT DEFAULT ''"),
+                ("status", "TEXT DEFAULT 'active'"), ("techniques", "TEXT DEFAULT ''"),
+                ("contributions", "TEXT DEFAULT ''"), ("career_highlights", "TEXT DEFAULT ''")],
+}
+
+
+def _migrate_columns(c: sqlite3.Connection) -> None:
+    for table, cols in _EXPECTED_COLUMNS.items():
+        try:
+            have = {r[1] for r in c.execute(f'PRAGMA table_info("{table}")')}
+        except sqlite3.OperationalError:
+            continue  # table not present yet
+        for col, decl in cols:
+            if col not in have:
+                try:
+                    c.execute(f'ALTER TABLE "{table}" ADD COLUMN {col} {decl}')
+                except sqlite3.OperationalError:
+                    pass  # already added by a concurrent run
 
 
 
