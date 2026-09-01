@@ -104,6 +104,10 @@ It's idempotent and preserves your database, secrets, generated media, and
 signing key across runs. See [`deploy/README-DEPLOY.md`](deploy/README-DEPLOY.md)
 and [`deploy/AUTH.md`](deploy/AUTH.md).
 
+## Accessibility
+
+The **Explore → Objects** view is built to the [mDLAUG](https://sites.uwm.edu/mdlaug/) mobile digital-library accessibility guidelines — named collection lists, real image alt text, live result counts, per-item position, and provenance as data tables. See [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md).
+
 ## Mobile
 
 Glowtbook installs as a **PWA** — a home-screen app on iOS and Android with no

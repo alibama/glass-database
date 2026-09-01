@@ -5,6 +5,11 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Accessibility (mDLAUG)** — the Explore → Objects view is rendered as
+  purpose-built accessible HTML aligned to the Mobile Digital Library
+  Accessibility & Usability Guidelines: named list of items, real image alt
+  text, live result count, per-item position, provenance as a data table, and
+  file links with format/size. Regression tests + docs/ACCESSIBILITY.md.
 - **Unified look + cross-app nav** — a shared `brand` package gives Explore,
   Glowtbook, and Admin the homepage identity (furnace/molten palette, Fraunces
   headings, the glass mark) and a top nav bar to jump between Home, Explore,

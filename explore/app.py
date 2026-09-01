@@ -85,118 +85,48 @@ mode = st.sidebar.radio("View", ["Datasets", "Objects (provenance)"], label_visi
 if mode == "Objects (provenance)":
     import base64 as _b64
     import json as _json
+
+    from explore.objects_a11y import build_objects_html
     st.title("Glass objects — provenance")
-    st.caption("Pieces contributed through Glowtbook. Images and provenance are a "
-               "condensed public rendition; originals stay with the contributor.")
-    st.markdown("Made something? [Add your own piece in Glowtbook](/glowtbook/).")
     try:
-        rows = _conn().execute(
-            "SELECT * FROM objects ORDER BY published_at DESC").fetchall()
+        rows = _conn().execute("SELECT * FROM objects ORDER BY published_at DESC").fetchall()
     except Exception:
         rows = []
-    if not rows:
-        st.info("No objects contributed yet. Add one in Glowtbook → Objects → Contribute.")
-        st.stop()
+
+    objects = []
     for o in rows:
-        st.markdown(f"### {o['title']}  \n"
-                    f"*{o['maker'] or 'maker unknown'} · {o['year'] or '—'}*")
-        cimg, cmeta = st.columns([1, 1])
-        with cimg:
-            imgs = _conn().execute(
-                "SELECT role, caption, image_b64 FROM object_images WHERE object_row_id=? ORDER BY id",
-                (o["_row_id"],)).fetchall()
-            shown = 0
-            has_video = False
-            for im in imgs:
-                if im["role"] == "video-poster":
-                    has_video = True
-                try:
-                    cimg.image(_b64.b64decode(im["image_b64"]),
-                               caption=f'{im["role"]}: {im["caption"]}'.strip(": "), width=260)
-                    shown += 1
-                except Exception:
-                    pass
-            if has_video:
-                vurl = f"{PUBLIC_BASE}/api/objects/{o['_row_id']}/video"
-                try:
-                    cimg.video(vurl)
-                except Exception:
-                    cimg.markdown(f"[▶ Play condensed video]({vurl})")
-            if not shown and not has_video:
-                cimg.caption("(no image)")
-        with cmeta:
-            if o["techniques"]:
-                cmeta.write("**Techniques:** " + o["techniques"])
-            if o["materials"]:
-                cmeta.write("**Materials:** " + o["materials"])
-            if o["dimensions"]:
-                cmeta.write("**Dimensions:** " + o["dimensions"])
-            if o["value_display"]:
-                cmeta.write("**Stated value:** " + o["value_display"])
-            cmeta.caption(f"Contributed by {o['contributor'] or 'unknown'} · "
-                          f"⚠ {o['sourcing']} provenance (unverified)")
-            if o["description"]:
-                cmeta.write(o["description"])
-            if ("has_credentials" in o.keys()) and o["has_credentials"]:
-                cmeta.markdown("🔐 **Content Credentials embedded** (C2PA)")
-                first = _conn().execute(
-                    "SELECT image_b64 FROM object_images WHERE object_row_id=? ORDER BY "
-                    "CASE role WHEN 'primary' THEN 0 ELSE 1 END, id LIMIT 1",
-                    (o["_row_id"],)).fetchone()
-                img_url = f"{PUBLIC_BASE}/api/objects/{o['_row_id']}/image"
-                if first:
-                    cmeta.download_button(
-                        "⬇ Signed image (credentials intact)", _b64.b64decode(first["image_b64"]),
-                        file_name=f"{o['content_hash'] or o['_row_id']}.jpg", mime="image/jpeg",
-                        key=f"dl_{o['_row_id']}")
-                cc = "https://contentcredentials.org/verify?source=" + quote(img_url, safe="")
-                cmeta.markdown(
-                    f"Verify externally: [Content Credentials]({cc}) · "
-                    "[c2paviewer.com](https://c2paviewer.com) — drop the file in, or paste this URL:")
-                cmeta.code(img_url, language=None)
-                cmeta.caption("Re-encoding (e.g. by social platforms) strips the credential — "
-                              "use this original file/URL to verify. A self-signed test cert reads "
-                              "as *untrusted* until a Trust-List cert is installed.")
-                with cmeta.expander("Read credential here"):
-                    try:
-                        from glowtbook import c2pa_sign
-                        creds = c2pa_sign.read_credentials(_b64.b64decode(first["image_b64"])) if first else None
-                        if creds:
-                            st.write(f"**Signed by:** {creds.get('issuer') or 'unknown'}")
-                            if creds.get("creator"):
-                                st.write(f"**Creator:** {', '.join(creds['creator'])}")
-                            if creds.get("actions"):
-                                st.write(f"**Actions:** {' → '.join(creds['actions'])}")
-                            st.write(f"**Assertions:** {', '.join(creds.get('assertions') or [])}")
-                            st.caption(f"Validation: {creds.get('validation_state')} "
-                                       "— self-signed test cert, not yet trust-list verified.")
-                        else:
-                            st.caption("No readable credential found.")
-                    except Exception as ex:  # noqa: BLE001
-                        st.caption(f"Couldn't read credential: {ex}")
-        # provenance timeline from the manifest
+        imgs = _conn().execute(
+            "SELECT role, caption, image_b64 FROM object_images WHERE object_row_id=? ORDER BY "
+            "CASE role WHEN 'primary' THEN 0 ELSE 1 END, id", (o["_row_id"],)).fetchall()
+        images = [(im["role"], im["caption"], im["image_b64"]) for im in imgs]
         try:
             man = _json.loads(o["manifest_json"] or "{}")
             events = next((a["data"] for a in man.get("assertions", [])
                            if a["label"] == "glassdb.provenance.events"), [])
         except Exception:
             man, events = {}, []
-        if events:
-            st.markdown("**Provenance**")
-            for e in events:
-                line = f"- **{e.get('event_type','?')}** — {e.get('event_date','?')}"
-                who = e.get("actor") or e.get("location")
-                if who:
-                    line += f" · {who}"
-                st.markdown(line)
-                if e.get("note"):
-                    st.caption("  " + e["note"])
-        if man:
-            st.download_button("⬇ Provenance manifest (C2PA-ready)",
-                               _json.dumps(man, indent=2, ensure_ascii=False),
-                               file_name=f"{o['content_hash']}.manifest.json",
-                               mime="application/json", key=f"man_{o['_row_id']}")
-        st.divider()
+        creds = None
+        if ("has_credentials" in o.keys()) and o["has_credentials"] and images:
+            try:
+                from glowtbook import c2pa_sign
+                creds = c2pa_sign.read_credentials(_b64.b64decode(images[0][2]))
+            except Exception:
+                creds = None
+        has_video = any(r == "video-poster" for r, _, _ in images)
+        objects.append({
+            "id": o["_row_id"], "title": o["title"], "maker": o["maker"], "year": o["year"],
+            "techniques": o["techniques"], "materials": o["materials"], "dimensions": o["dimensions"],
+            "description": o["description"], "contributor": o["contributor"], "sourcing": o["sourcing"],
+            "value_display": o["value_display"], "content_hash": o["content_hash"],
+            "has_credentials": bool(o["has_credentials"]) if "has_credentials" in o.keys() else False,
+            "manifest_json": _json.dumps(man, ensure_ascii=False) if man else "",
+            "images": images, "events": events, "creds": creds,
+            "verify_url": ("https://contentcredentials.org/verify?source="
+                           + quote(f"{PUBLIC_BASE}/api/objects/{o['_row_id']}/image", safe="")),
+            "video_url": f"{PUBLIC_BASE}/api/objects/{o['_row_id']}/video" if has_video else None,
+        })
+
+    st.html(build_objects_html(objects, verify_base=PUBLIC_BASE))
     st.stop()
 
 # ===========================================================================
