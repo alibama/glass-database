@@ -11,6 +11,7 @@ bagit>=1.8         # BagIt AIP packaging (sha256+sha512 fixity)
 boto3>=1.34        # push AIP bags to MinIO / S3-compatible object storage
 # Physical-object re-identification fingerprints + capture apps
 object-fingerprint[c2pa] @ git+https://github.com/alibama/object-fingerprint.git
+opencv-contrib-python-headless>=4.9  # ArUco capture-mat detection (dimensions)
 
 # API
 fastapi>=0.110

@@ -5,6 +5,10 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Capture mat → real dimensions** — enroll on the ArUco reference mat and the
+  import measures the piece server-side (OpenCV): W×D×H in mm from the 30 mm
+  markers, written into the fingerprint metadata and offered to the object's
+  dimensions field. Printable mat served at /fingerprint/capture-mat.pdf.
 - **Fingerprint apps refreshed** — vendored the latest enroll/verify capture apps
   (colour-histogram descriptor + center-crop + thumbnail storage + optional in-browser
   DINOv2). verify.html now loads the reference straight from the registry

@@ -106,6 +106,8 @@ mkdir -p "$APP_DIR/public/fingerprint"
 if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     cp "$SRC/deploy/fingerprint-web/enroll.html" "$APP_DIR/public/fingerprint/enroll.html"
     cp "$SRC/deploy/fingerprint-web/verify.html" "$APP_DIR/public/fingerprint/verify.html"
+    [ -f "$SRC/deploy/fingerprint-web/capture-mat.pdf" ] && \
+        cp "$SRC/deploy/fingerprint-web/capture-mat.pdf" "$APP_DIR/public/fingerprint/capture-mat.pdf"
     echo "  installed vendored fingerprint capture apps"
 elif "$APP_DIR/.venv/bin/python" -c "import object_fingerprint" 2>/dev/null; then
     "$APP_DIR/.venv/bin/python" - "$APP_DIR/public/fingerprint" <<'PYFP'

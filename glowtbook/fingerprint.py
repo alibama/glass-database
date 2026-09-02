@@ -38,8 +38,19 @@ def load_enrollment(zip_bytes: bytes) -> dict:
         frames = fp.get("frames") or []
         if not frames:
             return {"ok": False, "error": "no frames in the fingerprint"}
+        dims = None
+        try:
+            from glowtbook import matdetect
+            m = matdetect.measure_zip(zip_bytes)
+            if m.get("ok"):
+                dims = m
+                fp.setdefault("metadata", {})["dimensions_mm"] = {
+                    "width": m["width_mm"], "depth": m["depth_mm"], "height": m["height_mm"]}
+        except Exception:
+            dims = None
         return {"ok": True, "rating": fp.get("rating"), "tier": fp.get("tier"),
-                "n_frames": len(frames), "fingerprint": _strip_images(fp), "sheet": preview}
+                "n_frames": len(frames), "fingerprint": _strip_images(fp), "sheet": preview,
+                "dimensions": dims}
     except Exception as ex:  # noqa: BLE001
         return {"ok": False, "error": str(ex)}
 
