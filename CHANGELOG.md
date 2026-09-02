@@ -5,6 +5,12 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Opportunities calendar + intake** — a public intake form (Explore →
+  Opportunities) for open calls / residencies / grants / shows that writes a
+  *pending* row through the existing approval gate; once approved they appear on a
+  display page with per-item **Add to Google Calendar** links and a subscribable /
+  downloadable **.ics** feed (`/api/opportunities.ics`). Admin approves them in
+  ✅ Approvals like any dataset; contact details stay private.
 - **Colour balancing (mat-anchored white balance)** — enroll and verify now
   white-balance each analysis frame against the mat's white before computing the
   colour histogram, so the descriptor is lighting/device invariant. Same piece

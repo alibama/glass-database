@@ -246,6 +246,20 @@ def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (
                     headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/opportunities.ics", summary="Subscribable calendar of approved opportunities")
+def opportunities_ics():
+    from central import opportunities as opp
+    conn = connect()
+    try:
+        opp.ensure_opportunities(conn)
+        ics = opp.build_ics(opp.approved(conn), base_url=os.environ.get("PUBLIC_BASE_URL", ""))
+    except Exception:
+        ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n"
+    return Response(content=ics, media_type="text/calendar; charset=utf-8",
+                    headers={"Content-Disposition": 'inline; filename="glass-opportunities.ics"',
+                             "Cache-Control": "public, max-age=1800"})
+
+
 @app.get("/objects/{row_id}/fingerprint", summary="Re-identification fingerprint of a public object")
 def object_fingerprint(row_id: str):
     """Return the object's stored re-identification fingerprint (for verification)."""

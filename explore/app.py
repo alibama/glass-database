@@ -77,7 +77,83 @@ st.sidebar.caption("Public data from the Glass Database. Play with it, filter it
 if st.sidebar.button("↻ Refresh data"):
     st.cache_data.clear(); st.rerun()
 
-mode = st.sidebar.radio("View", ["Datasets", "Objects (provenance)"], label_visibility="collapsed")
+mode = st.sidebar.radio("View", ["Datasets", "Objects (provenance)", "Opportunities"],
+                        label_visibility="collapsed")
+
+# ===========================================================================
+# OPPORTUNITIES — calendar (display + .ics + Google Calendar) and public intake
+# ===========================================================================
+if mode == "Opportunities":
+    from central import opportunities as _opp
+    _opp.ensure_opportunities(_conn())
+    st.title("Artist opportunities")
+    st.caption("Open calls, residencies, grants, and shows. Subscribe once and new "
+               "approved listings appear in your calendar automatically.")
+    rows = _opp.approved(_conn())
+
+    ics = _opp.build_ics(rows, PUBLIC_BASE)
+    ics_url = f"{PUBLIC_BASE}/api/opportunities.ics"
+    webcal = ics_url.replace("https://", "webcal://").replace("http://", "webcal://")
+    c1, c2 = st.columns([1, 2])
+    c1.download_button("⬇ Download calendar (.ics)", ics, file_name="glass-opportunities.ics",
+                       mime="text/calendar", width="stretch")
+    c2.markdown(f"**Subscribe:** [add to Apple/Outlook calendar]({webcal}) · in Google Calendar, "
+                f"*Other calendars → From URL* → `{ics_url}`")
+    st.divider()
+
+    if not rows:
+        st.info("No opportunities published yet — be the first to submit one below.")
+    for r in rows:
+        du = _opp.days_until(r.get("deadline"))
+        when = ""
+        if du is not None:
+            when = f"deadline {r['deadline']} · " + (f"{du} days left" if du >= 0 else "closed")
+        st.markdown(f"### {r['title']}")
+        meta = " · ".join(x for x in [r.get("opp_type"), r.get("organization"),
+                                      r.get("location"), when] if x)
+        if meta:
+            st.caption(meta)
+        if r.get("fee"):
+            st.caption(f"Fee: {r['fee']}")
+        if r.get("description"):
+            st.write(r["description"])
+        links = []
+        if r.get("url"):
+            links.append(f"[Details ↗]({r['url']})")
+        g = _opp.gcal_link(r)
+        if g:
+            links.append(f"[Add to Google Calendar]({g})")
+        if links:
+            st.markdown(" · ".join(links))
+        st.divider()
+
+    with st.expander("➕ Submit an opportunity  (reviewed before it appears)"):
+        with st.form("opp_intake", clear_on_submit=True):
+            title = st.text_input("Title *")
+            a, b = st.columns(2)
+            org = a.text_input("Organization")
+            typ = b.selectbox("Type", _opp.TYPES)
+            url = st.text_input("Link (URL)")
+            loc, dl = st.columns(2)
+            location = loc.text_input("Location (or ‘Online’)")
+            deadline = dl.date_input("Application deadline *", value=None, format="YYYY-MM-DD")
+            f1, f2 = st.columns(2)
+            fee = f1.text_input("Entry fee (if any)")
+            elig = f2.text_input("Eligibility")
+            desc = st.text_area("Description")
+            contact = st.text_input("Contact email  🔒 kept private")
+            by = st.text_input("Your name or email  🔒 kept private")
+            if st.form_submit_button("Submit for review", type="primary"):
+                if not title.strip() or deadline is None:
+                    st.error("Title and application deadline are required.")
+                else:
+                    _opp.submit(_conn(), {"title": title, "organization": org, "opp_type": typ,
+                                          "url": url, "location": location, "deadline": str(deadline),
+                                          "fee": fee, "eligibility": elig, "description": desc,
+                                          "contact_email": contact, "submitted_by": by})
+                    st.success("Thanks — submitted for review. It'll appear here once an admin "
+                               "approves it.")
+    st.stop()
 
 # ===========================================================================
 # OBJECTS — render contributed objects with images + provenance timeline
