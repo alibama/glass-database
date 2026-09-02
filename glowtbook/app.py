@@ -20,7 +20,7 @@ import json
 import sqlite3
 import sys
 from collections.abc import Mapping
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
 import streamlit as st
