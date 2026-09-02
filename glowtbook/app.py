@@ -334,20 +334,14 @@ elif page == "Objects":
         with tab_media:
             ups = st.file_uploader("Add images (originals kept local as the archival copy)",
                                    type=["jpg", "jpeg", "png"], accept_multiple_files=True)
-            with st.expander("📷 Take a photo (mobile)"):
-                shot = st.camera_input("Capture the piece")
+            st.caption("On a phone, the file picker offers **Take Photo** directly.")
             role = st.selectbox("Role", ["primary", "photo", "detail"])
             cap = st.text_input("Caption")
-            if st.button("Save images", disabled=not (ups or shot)):
+            if st.button("Save images", disabled=not ups):
                 d = aip_dir(uid, oid)
                 saved = 0
                 for u in (ups or []):
                     fp = d / u.name; fp.write_bytes(u.getvalue())
-                    add_image(conn, oid, uid, role=role, aip_path=fp, caption=cap)
-                    saved += 1
-                if shot is not None:
-                    fp = d / f"capture-{datetime.now().strftime('%Y%m%d-%H%M%S')}.jpg"
-                    fp.write_bytes(shot.getvalue())
                     add_image(conn, oid, uid, role=role, aip_path=fp, caption=cap)
                     saved += 1
                 conn.commit(); st.success(f"Saved {saved} image(s)."); st.rerun()

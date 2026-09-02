@@ -575,6 +575,9 @@
     const dc=(ref.metadata&&ref.metadata.dominantColor)||dominantColor(aggChist(ref.frames));
     $("#refColor").innerHTML = dc? `<span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${dc.hex};vertical-align:middle;margin-right:6px;border:1px solid #0006"></span>${dc.name}` : "—";
     S.hasEmb = ref.frames.some(f=>f.emb&&f.emb.length);
+    // Prefer the AI (DINOv2) descriptor when the reference carries embeddings —
+    // colour alone can't separate similar-coloured pieces; texture can.
+    if(S.hasEmb){ S.descriptor="dino"; const el=$("#descBtn"); if(el) el.textContent="Match: AI (DINOv2)"; }
     $("#refCard").classList.add("show"); $("#start").classList.add("show");
     toast("Reference loaded","ok");
   }
