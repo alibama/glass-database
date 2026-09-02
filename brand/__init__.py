@@ -52,7 +52,8 @@ h1, h2, h3, h4, [data-testid="stHeading"] {
 
 /* brand lockup */
 .gdb-brand { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none;
-  color:var(--ink); font-family:'Fraunces', Georgia, serif; font-weight:900; font-size:1.35rem; }
+  color:var(--ink); font-family:'Fraunces', Georgia, serif; font-weight:900; font-size:1.35rem;
+  margin:0 0 .5rem; }
 .gdb-brand svg { width:26px; height:30px; }
 .gdb-rule { height:3px; margin:.25rem 0 1.1rem;
   background:linear-gradient(90deg, var(--ember), var(--molten-deep) 45%, transparent);
@@ -74,9 +75,9 @@ def apply_theme(active: str = "") -> None:
     'explore' | 'glowtbook' | 'admin' and gets the molten primary style.
     The glass mark doubles as the Home link."""
     st.html(_CSS)
-    brand, spacer, *btns = st.columns([2.4, 0.4, 1, 1.15, 1], vertical_alignment="center")
-    brand.html(f'<a class="gdb-brand" href="/" target="_self">{_MARK}Glass Database</a>')
-    for col, (key, label, href) in zip(btns, _NAV):
+    st.html(f'<a class="gdb-brand" href="/" target="_self">{_MARK}Glass Database</a>')
+    cols = st.columns(len(_NAV))
+    for col, (key, label, href) in zip(cols, _NAV):
         col.link_button(label, href, use_container_width=True,
                         type="primary" if key == active else "secondary")
     st.html('<div class="gdb-rule"></div>')
