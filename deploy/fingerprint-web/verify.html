@@ -269,6 +269,19 @@
     if(df){ if(mx===r)h=((g-b)/df)%6; else if(mx===g)h=(b-r)/df+2; else h=(r-g)/df+4; h*=60; if(h<0)h+=360; }
     return [h, mx?df/mx:0, mx/255]; }
   const CH_HB=16, CH_SB=4, CH_N=CH_HB*CH_SB;
+  // Mat-anchored white balance (identical to enroll, so descriptors are comparable).
+  function whiteBalance(d){
+    // white-patch AWB: the mat's white margin is the brightest region and its
+    // colour is the illuminant. Estimate it from the brightest pixels and scale
+    // channels to neutralise it, so hues are lighting/device invariant. No-op if
+    // there's no bright reference (off-mat).
+    let mx=0; const N=d.length;
+    for(let i=0;i<N;i+=4){ const l=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(l>mx)mx=l; }
+    const thr=mx*0.85; let sr=0,sg=0,sb=0,n=0;
+    for(let i=0;i<N;i+=4){ const l=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(l>=thr){ sr+=d[i]; sg+=d[i+1]; sb+=d[i+2]; n++; } }
+    if(n<30) return;
+    const mr=sr/n,mg=sg/n,mb=sb/n, avg=(mr+mg+mb)/3, kr=avg/(mr||1),kg=avg/(mg||1),kb=avg/(mb||1);
+    for(let i=0;i<N;i+=4){ d[i]=Math.min(255,d[i]*kr); d[i+1]=Math.min(255,d[i+1]*kg); d[i+2]=Math.min(255,d[i+2]*kb); } }
   function colorHist(data,w,h){ const hist=new Float32Array(CH_N);
     const x0=(w*0.30)|0,x1=(w*0.70)|0,y0=(h*0.20)|0,y1=(h*0.80)|0; let cnt=0;
     for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){ const i=(y*w+x)*4; const hs=rgb2hs(data[i],data[i+1],data[i+2]);
@@ -310,7 +323,7 @@
     for(let y=1;y<AH-1;y++)for(let x=1;x<AW-1;x++){const idx=y*AW+x;
       const lap=4*g[idx]-g[idx-1]-g[idx+1]-g[idx-AW]-g[idx+AW]; s1+=lap; s2+=lap*lap; n++;
       const gx=g[idx+1]-g[idx-1],gy=g[idx+AW]-g[idx-AW]; if(gx*gx+gy*gy>GRAD_T){det++;sx+=x;sy+=y;sxx+=x*x;syy+=y*y;scnt++;}}
-    setSubject(sx,sy,sxx,syy,scnt); return {sharp:s2/n-(s1/n)*(s1/n), detail:det/n, dhash:dhash(g,AW,AH), chist:colorHist(d,AW,AH)};}
+    setSubject(sx,sy,sxx,syy,scnt); whiteBalance(d); return {sharp:s2/n-(s1/n)*(s1/n), detail:det/n, dhash:dhash(g,AW,AH), chist:colorHist(d,AW,AH)};}
   const cnovOf=dh=>{let m=64; for(const f of S.frames){const d=ham(dh,f.dhash); if(d<m)m=d;} return m;};
 
   /* matching */

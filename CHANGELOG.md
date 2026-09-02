@@ -5,6 +5,11 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Colour balancing (mat-anchored white balance)** — enroll and verify now
+  white-balance each analysis frame against the mat's white before computing the
+  colour histogram, so the descriptor is lighting/device invariant. Same piece
+  under a warm vs cool cast converges (Δ19°→Δ2° hue in tests), improving matching;
+  the recorded dominant colour is corrected too. Requires re-enrolling.
 - **Capture mat → real dimensions** — enroll on the ArUco reference mat and the
   import measures the piece server-side (OpenCV): W×D×H in mm from the 30 mm
   markers, written into the fingerprint metadata and offered to the object's
