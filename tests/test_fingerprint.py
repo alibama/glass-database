@@ -1,81 +1,62 @@
-"""Object re-identification fingerprint integration."""
+"""Object-fingerprint integration (format-agnostic import + compact assertion)."""
 import io
 import json
 import zipfile
 
-import pytest
-
-fp_mod = pytest.importorskip("glowtbook.fingerprint")
-pytestmark = pytest.mark.skipif(not fp_mod.available(), reason="object-fingerprint not installed")
+from glowtbook import fingerprint as fp_mod
 
 
-def _blocks(seed, size=(400, 300), block=40):
-    import random
-
-    from PIL import Image
-    rng = random.Random(seed)
-    im = Image.new("RGB", size); px = im.load(); grid = {}
-    for by in range(0, size[1], block):
-        for bx in range(0, size[0], block):
-            grid[(bx, by)] = (rng.randint(0, 255), rng.randint(0, 255), rng.randint(0, 255))
-    for y in range(size[1]):
-        for x in range(size[0]):
-            px[x, y] = grid[(x - x % block, y - y % block)]
-    b = io.BytesIO(); im.save(b, "JPEG", quality=90); return b.getvalue()
-
-
-def _enroll_zip(seeds):
-    import object_fingerprint as ofp
+def _export_zip(rating=84, tier="Strong", n=6, embeddings=False):
     frames = []
-    imgs = []
-    for i, s in enumerate(seeds):
-        b = _blocks(s); imgs.append((f"frames/{i:03d}.jpg", b))
-        frames.append({"file": f"frames/{i:03d}.jpg", "cell": f"{i}:1",
-                       "dhash": ofp.dhash(b), "detail": 0.08, "sector": i})
-    doc = {"tool": "object-fingerprint", "version": 1, "created": "2026-01-01T00:00:00Z",
-           "rating": 84, "tier": "Strong",
-           "subscores": {"coverage": 0.9, "detail": 0.82, "robustness": 0.75},
-           "params": {}, "frames": frames}
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w") as z:
+    zbuf = io.BytesIO()
+    with zipfile.ZipFile(zbuf, "w") as z:
+        for i in range(n):
+            name = f"frames/{i:03d}.jpg"
+            z.writestr(name, b"\xff\xd8\xff\xe0thumb")  # tiny thumbnail
+            fr = {"file": name, "sector": i, "cell": f"{i}:1",
+                  "dhash": [i + 1, i + 2], "chist": [0.1] * 64}
+            if embeddings:
+                fr["emb"] = [0.01 * i] * 384
+            frames.append(fr)
+        doc = {"tool": "glass-fingerprint", "version": 1, "created": "2026-01-01T00:00:00Z",
+               "rating": rating, "tier": tier,
+               "metadata": {"dominantColor": {"name": "amber", "hex": "#c60"},
+                            "hasEmbeddings": embeddings},
+               "frames": frames}
         z.writestr("fingerprint.json", json.dumps(doc))
-        for name, b in imgs:
-            z.writestr(name, b)
-    return buf.getvalue(), imgs
+    return zbuf.getvalue()
 
 
-def _cand_zip(seeds):
-    buf = io.BytesIO()
-    with zipfile.ZipFile(buf, "w") as z:
-        for i, s in enumerate(seeds):
-            z.writestr(f"{i:03d}.jpg", _blocks(s))
-    return buf.getvalue()
+def test_import_raw_fingerprint():
+    r = fp_mod.load_enrollment(_export_zip())
+    assert r["ok"] and r["rating"] == 84 and r["tier"] == "Strong" and r["n_frames"] == 6
+    assert r["fingerprint"]["frames"] and "chist" in r["fingerprint"]["frames"][0]
+    assert r["sheet"]  # a preview thumbnail was pulled out
 
 
-def test_load_enrollment():
-    zb, _ = _enroll_zip([1, 2, 3, 4, 5, 6, 7, 8])
-    r = fp_mod.load_enrollment(zb)
-    assert r["ok"] and r["rating"] == 84 and r["tier"] == "Strong"
-    assert r["n_frames"] == 8 and r["sheet"] and r["fingerprint"]["frames"]
+def test_import_plain_json():
+    zb = _export_zip()
+    with zipfile.ZipFile(io.BytesIO(zb)) as z:
+        raw = z.read("fingerprint.json")
+    r = fp_mod.load_enrollment(raw)
+    assert r["ok"] and r["n_frames"] == 6
 
 
-def test_verify_same_and_different():
-    zb, _ = _enroll_zip([1, 2, 3, 4, 5, 6, 7, 8])
-    ref = fp_mod.load_enrollment(zb)["fingerprint"]
-    same = fp_mod.verify_zip(ref, _cand_zip([1, 2, 3, 4, 5, 6, 7, 8]))
-    diff = fp_mod.verify_zip(ref, _cand_zip([101, 102, 103, 104, 105, 106, 107, 108]))
-    assert same["verdict"] == "match-likely" and same["confidence"] >= 70
-    assert diff["verdict"] == "no-match" and diff["confidence"] < 40
+def test_summary_and_embeddings_flag():
+    ref = fp_mod.load_enrollment(_export_zip(embeddings=True))["fingerprint"]
+    s = fp_mod.summary(ref)
+    assert s["tier"] == "Strong" and s["has_embeddings"] is True and s["dominant_color"] == "amber"
 
 
-def test_assertion_and_summary():
-    zb, _ = _enroll_zip([1, 2, 3, 4])
-    ref = fp_mod.load_enrollment(zb)["fingerprint"]
-    assert fp_mod.summary(ref)["tier"] == "Strong"
+def test_compact_assertion_binds_a_hash():
+    ref = fp_mod.load_enrollment(_export_zip())["fingerprint"]
     a = fp_mod.assertion(ref)
-    assert a and "label" in a and "data" in a
+    assert a["label"] and a["data"]["fingerprint_sha256"]
+    assert len(a["data"]["fingerprint_sha256"]) == 64 and a["data"]["views"] == 6
+    # the assertion is compact — it does NOT embed the per-frame vectors
+    assert "frames" not in a["data"]
 
 
 def test_bad_zip_is_graceful():
-    r = fp_mod.load_enrollment(b"not a zip")
+    r = fp_mod.load_enrollment(b"not a zip and not json")
     assert r["ok"] is False and "error" in r

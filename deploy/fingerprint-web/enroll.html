@@ -20,6 +20,12 @@
 
   #stage{position:fixed; inset:0; background:#000; display:flex; align-items:center; justify-content:center}
   video{width:100%; height:100%; object-fit:cover; background:#000}
+  #ov{position:absolute; inset:0; display:block; width:100%; height:100%; object-fit:cover; pointer-events:none}
+  #objlabel{position:absolute; left:50%; top:11%; transform:translateX(-50%); z-index:4; pointer-events:none;
+    background:#0c1114cc; border:1px solid var(--line); color:var(--ink); font-size:11.5px; font-weight:600;
+    padding:5px 12px; border-radius:999px; backdrop-filter:blur(8px); opacity:0; transition:opacity .25s; white-space:nowrap}
+  #objlabel.show{opacity:1}
+  #err code{background:#0c1114; border:1px solid var(--line); padding:1px 5px; border-radius:5px; font-size:12px}
   canvas{display:none}
 
   .hud{position:fixed; inset:0; pointer-events:none}
@@ -79,7 +85,7 @@
     background:linear-gradient(to top,#000000d6,#0000)}
   #hint{flex:1; font-size:12.5px; color:var(--ink-dim); line-height:1.35; max-width:38%}
   #shutWrap{position:relative; width:86px; height:86px; flex:none; display:grid; place-items:center}
-  #shutRing{position:absolute; inset:0; transform:rotate(-90deg)}
+  #shutRing{position:absolute; inset:0; transform:rotate(-90deg); pointer-events:none}
   #shutRing circle{fill:none; stroke-width:4; stroke-linecap:round}
   #shutRing .bg{stroke:#ffffff22}
   #shutRing .fg{stroke:var(--ink-dim); transition:stroke-dashoffset .12s linear, stroke .2s}
@@ -141,7 +147,7 @@
 </head>
 <body>
 
-<div id="stage"><video id="cam" playsinline autoplay muted></video><canvas id="cap"></canvas></div>
+<div id="stage"><video id="cam" playsinline autoplay muted></video><canvas id="ov"></canvas><canvas id="cap"></canvas></div>
 
 <div class="hud" id="hud" hidden>
   <div id="subs">
@@ -170,6 +176,7 @@
   </div>
 
   <div id="reticle"></div>
+  <div id="objlabel"></div>
 
   <div id="bar">
     <div id="hint">Keep the piece centred and circle it slowly. The ring around the shutter turns amber when a shot will count.</div>
@@ -180,6 +187,9 @@
     <div id="tools">
       <button class="tool" id="autoBtn">Auto</button>
       <button class="tool" id="flipBtn">Flip</button>
+      <button class="tool on" id="lensBtn">Lens</button>
+      <button class="tool" id="aiBtn">AI: off</button>
+      <select id="camSel" class="tool" style="display:none;max-width:150px" aria-label="camera"></select>
     </div>
   </div>
 
@@ -234,7 +244,7 @@
   const aCanvas=document.createElement("canvas"); aCanvas.width=AW; aCanvas.height=AH;
   const actx=aCanvas.getContext("2d",{willReadFrequently:true});
 
-  const S={ frames:[], stream:null, imageCapture:null, facing:"environment",
+  const S={ frames:[], stream:null, imageCapture:null, facing:"environment", deviceId:null,
     orient:null, here:-1, pseudo:0, auto:false, lastAuto:0,
     live:{sharp:0,detail:0,dhash:null,novelty:64,worthy:false},
     rating:0, prevRating:0, prevTierIdx:4, seq:0, ready:false };
@@ -262,22 +272,65 @@
   function popcount(x){x=x>>>0;x=x-((x>>>1)&0x55555555);x=(x&0x33333333)+((x>>>2)&0x33333333);
     x=(x+(x>>>4))&0x0f0f0f0f;return (x*0x01010101)>>>24;}
   const ham=(a,b)=>popcount(a[0]^b[0])+popcount(a[1]^b[1]);
+  const CROP=0.6;  // hash only the central 60% so the background (couch vs table) can't dominate the fingerprint
   function dhash(g,w,h){const bw=9,bh=8,sm=new Float32Array(bw*bh);
-    for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){const sx=Math.floor((x+.5)*w/bw),sy=Math.floor((y+.5)*h/bh);sm[y*bw+x]=g[sy*w+sx];}
+    const ox=w*(1-CROP)/2, oy=h*(1-CROP)/2, cw=w*CROP, ch=h*CROP;
+    for(let y=0;y<bh;y++)for(let x=0;x<bw;x++){
+      const sx=Math.min(w-1,Math.floor(ox+(x+.5)*cw/bw)), sy=Math.min(h-1,Math.floor(oy+(y+.5)*ch/bh));
+      sm[y*bw+x]=g[sy*w+sx];}
     let hi=0,lo=0,b=0;for(let y=0;y<bh;y++)for(let x=0;x<bw-1;x++){const v=sm[y*bw+x]<sm[y*bw+x+1]?1:0;
       if(b<32)hi=(hi<<1)|v; else lo=(lo<<1)|v; b++;}
     return [hi>>>0,lo>>>0];}
+  /* --- colour signature (view-stable): HSV hue-sat histogram of the object region --- */
+  function rgb2hs(r,g,b){const mx=Math.max(r,g,b),mn=Math.min(r,g,b),df=mx-mn; let h=0;
+    if(df){ if(mx===r)h=((g-b)/df)%6; else if(mx===g)h=(b-r)/df+2; else h=(r-g)/df+4; h*=60; if(h<0)h+=360; }
+    return [h, mx?df/mx:0, mx/255]; }
+  const CH_HB=16, CH_SB=4, CH_N=CH_HB*CH_SB;
+  function colorHist(data,w,h){ const hist=new Float32Array(CH_N);
+    const x0=(w*0.30)|0,x1=(w*0.70)|0,y0=(h*0.20)|0,y1=(h*0.80)|0; let cnt=0;
+    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){ const i=(y*w+x)*4; const hs=rgb2hs(data[i],data[i+1],data[i+2]);
+      if(hs[1]>0.24&&hs[2]>0.16&&hs[2]<0.96){ const hb=Math.min(CH_HB-1,(hs[0]/360*CH_HB)|0), sb=Math.min(CH_SB-1,(hs[1]*CH_SB)|0); hist[hb*CH_SB+sb]++; cnt++; } }
+    if(cnt<40) return null; const out=new Array(CH_N);
+    for(let i=0;i<CH_N;i++) out[i]=Math.round(hist[i]/cnt*1000); return out; }
+  function histCorr(a,b){ if(!a||!b||a.length!==b.length) return 0; const n=a.length; let ma=0,mb=0;
+    for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];} ma/=n; mb/=n; let num=0,da=0,db=0;
+    for(let i=0;i<n;i++){const u=a[i]-ma,v=b[i]-mb; num+=u*v; da+=u*u; db+=v*v;} const d=Math.sqrt(da*db);
+    return d? Math.max(0,num/d):0; }
+  /* --- metadata + optional DINOv2 embedding --- */
+  const HUE_NAMES=[[15,"red"],[42,"orange"],[70,"yellow"],[160,"green"],[200,"cyan"],[255,"blue"],[290,"violet"],[335,"magenta"],[360,"red"]];
+  function dominantColor(chist){ if(!chist) return null; let bi=-1,bv=-1;
+    for(let i=0;i<chist.length;i++){ if(chist[i]>bv){bv=chist[i];bi=i;} } if(bi<0||bv<=0) return null;
+    const hb=Math.floor(bi/CH_SB), hue=(hb+0.5)/CH_HB*360, sat=((bi%CH_SB)+0.5)/CH_SB;
+    const name=HUE_NAMES.find(z=>hue<=z[0])[1]; const c=sat*0.85, x=c*(1-Math.abs((hue/60)%2-1)), m=0.85-c; const h6=hue/60; let r,g,b;
+    if(h6<1)[r,g,b]=[c,x,0]; else if(h6<2)[r,g,b]=[x,c,0]; else if(h6<3)[r,g,b]=[0,c,x];
+    else if(h6<4)[r,g,b]=[0,x,c]; else if(h6<5)[r,g,b]=[x,0,c]; else [r,g,b]=[c,0,x];
+    const hex="#"+[r,g,b].map(z=>Math.round((z+m)*255).toString(16).padStart(2,"0")).join(""); return {name,hex}; }
+  function aggChist(frames){ const g=frames.find(f=>f.chist); if(!g) return null; const n=g.chist.length, acc=new Array(n).fill(0); let c=0;
+    for(const f of frames){ if(f.chist){ for(let i=0;i<n;i++) acc[i]+=f.chist[i]; c++; } } if(!c) return null; return acc.map(v=>Math.round(v/c)); }
+  let _embedder=null,_embErr=false; S.aiEmbed=false;
+  function withTimeout(p,ms){ return Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),ms))]); }
+  async function embedFromBlob(blob){ try{ const img=await createImageBitmap(blob);
+    const c=document.createElement("canvas"); c.width=img.width; c.height=img.height; c.getContext("2d").drawImage(img,0,0);
+    return await embedCanvas(c); }catch(_){ return null; } }
+  async function getEmbedder(){ if(_embedder) return _embedder; if(_embErr) return null;
+    try{ const m=await withTimeout(import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/+esm"),20000);
+      m.env.allowLocalModels=false; m.env.useBrowserCache=true;
+      _embedder=await withTimeout(m.pipeline("image-feature-extraction","Xenova/dinov2-small"),60000); return _embedder;
+    }catch(e){ console.error("DINOv2 load failed",e); _embErr=true; return null; } }
+  async function embedCanvas(cnv){ const ext=await getEmbedder(); if(!ext) return null;
+    try{ const out=await ext(cnv.toDataURL("image/jpeg"),{pooling:"mean",normalize:true}); return Array.from(out.data); }
+    catch(e){ console.error("embed failed",e); return null; } }
   function analyze(){
     if(!video.videoWidth) return null;
     actx.drawImage(video,0,0,AW,AH);
     const d=actx.getImageData(0,0,AW,AH).data, g=new Float32Array(AW*AH);
     for(let i=0,p=0;i<d.length;i+=4,p++) g[p]=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
-    let s1=0,s2=0,n=0,det=0;
+    let s1=0,s2=0,n=0,det=0,sx=0,sy=0,sxx=0,syy=0,scnt=0;
     for(let y=1;y<AH-1;y++)for(let x=1;x<AW-1;x++){const idx=y*AW+x;
       const lap=4*g[idx]-g[idx-1]-g[idx+1]-g[idx-AW]-g[idx+AW]; s1+=lap; s2+=lap*lap; n++;
-      const gx=g[idx+1]-g[idx-1],gy=g[idx+AW]-g[idx-AW]; if(gx*gx+gy*gy>GRAD_T) det++;}
-    const sharp=s2/n-(s1/n)*(s1/n);
-    return {sharp, detail:det/n, dhash:dhash(g,AW,AH)};
+      const gx=g[idx+1]-g[idx-1],gy=g[idx+AW]-g[idx-AW]; if(gx*gx+gy*gy>GRAD_T){det++;sx+=x;sy+=y;sxx+=x*x;syy+=y*y;scnt++;}}
+    const sharp=s2/n-(s1/n)*(s1/n); setSubject(sx,sy,sxx,syy,scnt);
+    return {sharp, detail:det/n, dhash:dhash(g,AW,AH), chist:colorHist(d,AW,AH)};
   }
   const noveltyOf=dh=>{if(!dh) return 64; let m=64;
     for(const f of S.frames){const hd=ham(dh,f.dhash); if(hd<m)m=hd;} return m;};
@@ -321,9 +374,14 @@
 
   /* ---------- capture ---------- */
   async function grab(){
-    if(S.imageCapture&&S.imageCapture.takePhoto){try{return await S.imageCapture.takePhoto();}catch(_){}}
-    const w=video.videoWidth||1280,h=video.videoHeight||720; cap.width=w; cap.height=h; capx.drawImage(video,0,0,w,h);
-    return await new Promise(r=>cap.toBlob(r,"image/jpeg",0.94));
+    // Store a small thumbnail only. The fingerprint descriptor (dHash/detail) is
+    // computed from the 160x120 analysis buffer, NOT this image, so a thumbnail
+    // costs nothing for matching and keeps a 70-shot session a couple of MB, not 100+.
+    const vw=video.videoWidth||1280, vh=video.videoHeight||720;
+    const MAX=384, s=Math.min(1, MAX/Math.max(vw,vh));
+    const w=Math.max(1,Math.round(vw*s)), h=Math.max(1,Math.round(vh*s));
+    cap.width=w; cap.height=h; capx.drawImage(video,0,0,w,h);
+    return await new Promise(r=>cap.toBlob(r,"image/jpeg",0.6));
   }
   function cellOf(sector,band,dh){
     if(sector>=0) return sector+":"+band;
@@ -339,10 +397,11 @@
     if(!blob) return;
     const band=S.orient? (S.orient.beta<35?0:S.orient.beta<65?1:2) : 0;
     const seq=++S.seq;
-    const f={blob,url:URL.createObjectURL(blob),seq,sharp:a.sharp,detail:a.detail,
+    const f={blob,url:URL.createObjectURL(blob),seq,sharp:a.sharp,detail:a.detail,chist:a.chist,emb:null,
       dhash:a.dhash,noveltyAtCapture:nov,sector:S.here,band,cell:cellOf(S.here,band,a.dhash),
       t:new Date().toISOString(),orientation:S.orient};
     S.frames.push(f);
+    if(S.aiEmbed){ embedFromBlob(f.blob).then(e=>{ if(e) f.emb=e; }).catch(()=>{}); }
     paintRing(); updateRating(); refresh(); flash();
     if(!manual||nov>=NOVELTY_MIN) buzz(12);
   }
@@ -355,7 +414,7 @@
       const a=analyze();
       if(a){ a.novelty=noveltyOf(a.dhash);
         a.worthy=a.sharp>=SHARP_MIN && a.novelty>=NOVELTY_MIN && S.rating<100;
-        S.live=a;
+        S.live=a; renderOverlay(a);
         const q=Math.max(0,Math.min(1,(a.sharp-SHARP_MIN)/(SHARP_GOOD-SHARP_MIN)));
         const ring=$("#shutRing .fg"), c=2*Math.PI*45;
         ring.style.strokeDasharray=c; ring.style.strokeDashoffset=c*(1-(a.worthy?1:q*0.5));
@@ -376,27 +435,102 @@
 
   /* ---------- camera ---------- */
   async function startCamera(){ stopCamera();
-    // Try a sane resolution first, then fall back — forcing 4K makes many phone
-    // cameras (and some webcams) fail with NotReadableError.
-    const attempts=[
-      {audio:false,video:{facingMode:{ideal:S.facing},width:{ideal:1920},height:{ideal:1080}}},
-      {audio:false,video:{facingMode:S.facing}},
-      {audio:false,video:true}
-    ];
-    let err=null;
-    for(const c of attempts){
-      try{ S.stream=await navigator.mediaDevices.getUserMedia(c); err=null; break; }
-      catch(e){ err=e; }
-    }
-    if(!S.stream){ throw err; }
-    video.srcObject=S.stream; await video.play().catch(()=>{});
+    // facingMode hangs on some phones, so grab ANY camera with one clean request,
+    // then switch to the back one by device id (reliable). A picked id that fails
+    // falls back to any camera rather than leaving a black screen.
+    const grab = c => Promise.race([ navigator.mediaDevices.getUserMedia(c),
+      new Promise((_,rej)=>setTimeout(()=>rej(Object.assign(new Error("camera timeout"),{name:"TimeoutError"})),12000)) ]);
+    const constraints = S.deviceId ? {audio:false, video:{deviceId:{exact:S.deviceId}}} : {audio:false, video:true};
+    try{ S.stream = await grab(constraints); }
+    catch(e){ if(S.deviceId){ S.deviceId=null; S.stream = await grab({audio:false, video:true}); } else throw e; }
+    video.srcObject=S.stream; video.onloadedmetadata=()=>sizeOverlay();
+    video.play().catch(()=>{}); sizeOverlay(); populateCameras();
     const t=S.stream.getVideoTracks()[0];
     if("ImageCapture" in window){try{S.imageCapture=new ImageCapture(t);}catch(_){S.imageCapture=null;}} else S.imageCapture=null; }
   function stopCamera(){ if(S.stream){S.stream.getTracks().forEach(t=>t.stop()); S.stream=null;} }
 
+  async function populateCameras(){
+    if(!navigator.mediaDevices||!navigator.mediaDevices.enumerateDevices) return;
+    const sel=$("#camSel");
+    try{
+      const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput");
+      const t=S.stream&&S.stream.getVideoTracks()[0];
+      const cur=t?t.getSettings().deviceId:null;
+      // once, switch to a back/rear camera by id (facingMode is unreliable)
+      if(!S.deviceId && !S.autoCam && devs.length>1){
+        S.autoCam=true;
+        const back=devs.find(d=>/back|rear|environment|world/i.test(d.label||""));
+        if(back && back.deviceId && back.deviceId!==cur){ S.deviceId=back.deviceId; try{await startCamera();}catch(_){} return; }
+      }
+      if(!sel) return;
+      if(devs.length<2){ sel.style.display="none"; return; }
+      sel.innerHTML="";
+      devs.forEach((d,i)=>{ const o=document.createElement("option"); o.value=d.deviceId;
+        o.textContent=d.label||("Camera "+(i+1)); if(d.deviceId===cur) o.selected=true; sel.appendChild(o); });
+      sel.style.display="";
+    }catch(_){}
+  }
+  async function cycleCamera(){
+    try{
+      const cams=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput");
+      if(cams.length<2){ toast("Only one camera available","warn"); return; }
+      const t=S.stream&&S.stream.getVideoTracks()[0]; const cur=t?t.getSettings().deviceId:S.deviceId;
+      let i=cams.findIndex(d=>d.deviceId===cur); i=((i<0?0:i)+1)%cams.length;
+      S.deviceId=cams[i].deviceId; await startCamera();
+      const sel=$("#camSel"); if(sel) sel.value=S.deviceId;
+    }catch(_){ toast("Couldn't switch camera","warn"); }
+  }
+
+  /* ---------- object spotlight overlay ---------- */
+  const ov=$("#ov"), ovx=ov.getContext("2d"), objLabel=$("#objlabel");
+  S.overlay=true; S.subj=null; S.subjRaw=null;
+  function sizeOverlay(){ const vw=video.videoWidth||1280, vh=video.videoHeight||720;
+    const s=Math.min(1,640/vw); ov.width=Math.round(vw*s); ov.height=Math.round(vh*s); }
+  function setSubject(sx,sy,sxx,syy,cnt){
+    if(cnt<40){ S.subjRaw=null; return; }
+    const mx=sx/cnt,my=sy/cnt, vx=Math.max(1,sxx/cnt-mx*mx), vy=Math.max(1,syy/cnt-my*my);
+    const hw=Math.min(AW*0.5,Math.sqrt(vx)*1.7+6), hh=Math.min(AH*0.5,Math.sqrt(vy)*1.7+6);
+    S.subjRaw={cx:mx/AW,cy:my/AH,hw:hw/AW,hh:hh/AH,conf:Math.min(1,cnt/900)}; }
+  function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+  function renderOverlay(a){
+    if(!ov.width) sizeOverlay();
+    const W=ov.width,H=ov.height; ovx.clearRect(0,0,W,H);
+    if(!S.overlay){ objLabel.classList.remove("show"); return; }
+    const raw=S.subjRaw;
+    if(raw){ if(!S.subj) S.subj={cx:raw.cx,cy:raw.cy,hw:raw.hw,hh:raw.hh,conf:raw.conf};
+             else { const k=0.3; for(const key in raw) S.subj[key]+=(raw[key]-S.subj[key])*k; } }
+    else if(S.subj){ S.subj.conf+=(0-S.subj.conf)*0.2; if(S.subj.conf<0.04) S.subj=null; }
+    ovx.fillStyle="rgba(8,11,13,0.5)"; ovx.fillRect(0,0,W,H);
+    // central framing guide — keep the object inside this box (only the box is fingerprinted)
+    (function(){const cw=W*0.6, ch=H*0.6, gx=(W-cw)/2, gy=(H-ch)/2;
+      ovx.save(); ovx.setLineDash&&ovx.setLineDash([Math.max(4,W/90),Math.max(4,W/90)]);
+      ovx.strokeStyle="rgba(236,231,221,0.35)"; ovx.lineWidth=Math.max(1.5,W/420);
+      ovx.strokeRect(gx,gy,cw,ch); ovx.restore();})();
+    const s=S.subj;
+    if(s){
+      const cx=s.cx*W,cy=s.cy*H, rx=Math.max(36,s.hw*W+34), ry=Math.max(36,s.hh*H+34), r=Math.max(rx,ry);
+      ovx.save(); ovx.globalCompositeOperation="destination-out";
+      const g=ovx.createRadialGradient(cx,cy,r*0.5,cx,cy,r);
+      g.addColorStop(0,"rgba(0,0,0,1)"); g.addColorStop(1,"rgba(0,0,0,0)");
+      ovx.fillStyle=g; ovx.beginPath(); ovx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); ovx.fill(); ovx.restore();
+      const hot=a&&(a.worthy||a.hit);
+      ovx.strokeStyle=hot?"rgba(242,180,23,0.95)":"rgba(236,231,221,0.55)"; ovx.lineWidth=Math.max(2,W/300);
+      rr(ovx,cx-rx,cy-ry,rx*2,ry*2,16); ovx.stroke();
+      objLabel.textContent=hot?"Locked on — good angle, capture it":"Object in view";
+      objLabel.classList.add("show");
+    } else { objLabel.textContent="Point at the object and fill the frame"; objLabel.classList.add("show"); }
+  }
+  (function(){ const lb=$("#lensBtn"); if(lb) lb.onclick=()=>{ S.overlay=!S.overlay; lb.classList.toggle("on",S.overlay);
+    if(!S.overlay){ ovx.clearRect(0,0,ov.width,ov.height); objLabel.classList.remove("show"); } }; })();
+  function showInsecureHelp(){ const e=$("#err"); const f=location.protocol==="file:"; const page=(location.pathname.split("/").pop()||"enroll.html");
+    e.innerHTML = f
+      ? "The camera can\u2019t run from a file opened straight off disk \u2014 browsers block it. Serve this folder over http first:<br><br><b>Easiest:</b> double-click <code>serve.command</code> in this folder, then use the tab it opens.<br><br><b>Or</b> in Terminal, from this folder:<br><code>python3 -m http.server 8000</code><br>then open <code>http://localhost:8000/"+page+"</code>"
+      : "The camera needs a secure page \u2014 open this over <code>https://</code> or <code>http://localhost</code>."; }
+
   /* ---------- ui ---------- */
   function refresh(){ $("#total").textContent=S.frames.length; $("#review").disabled=!S.frames.length;
-    $("#filmMeta").textContent=S.frames.length? `${S.frames.length} frames — rating ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]})`:"Nothing captured yet.";
+    const _dc=dominantColor(aggChist(S.frames));
+    $("#filmMeta").innerHTML=S.frames.length? `${S.frames.length} frames — rating ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]})`+(_dc?` · <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${_dc.hex};border:1px solid #0006"></span> ${_dc.name}`:"") :"Nothing captured yet.";
     const g=$("#grid"); g.innerHTML="";
     S.frames.slice().reverse().forEach(f=>{const d=document.createElement("div"); d.className="thumb";
       const tag=f.sharp<SHARP_MIN?"blurry":f.noveltyAtCapture<NOVELTY_MIN?"dup":"kept";
@@ -408,10 +542,14 @@
   function flash(){document.body.animate([{filter:"brightness(2)"},{filter:"brightness(1)"}],{duration:120});}
   function buzz(p){try{navigator.vibrate&&navigator.vibrate(p);}catch(_){}}
 
-  $("#shutter").onclick=()=>capture(true);
+  $("#shutWrap").onclick=()=>capture(true);
   $("#autoBtn").onclick=e=>{S.auto=!S.auto; S.lastAuto=0; e.target.classList.toggle("on",S.auto);
     $("#shutWrap").classList.toggle("auto",S.auto); toast(S.auto?"Auto-capture on":"Auto-capture off");};
-  $("#flipBtn").onclick=async()=>{S.facing=S.facing==="environment"?"user":"environment"; try{await startCamera();}catch(_){toast("Couldn't switch camera","warn");}};
+  $("#flipBtn").onclick=async()=>{ await cycleCamera(); };
+  $("#aiBtn").onclick=async()=>{ S.aiEmbed=!S.aiEmbed; $("#aiBtn").classList.toggle("on",S.aiEmbed); $("#aiBtn").textContent="AI: "+(S.aiEmbed?"on":"off");
+    if(S.aiEmbed){ toast("Loading AI model (first run downloads it)…"); const ok=await getEmbedder();
+      if(ok){ toast("AI on — new shots also get a DINOv2 vector"); } else { toast("AI model failed to load","warn"); S.aiEmbed=false; $("#aiBtn").classList.remove("on"); $("#aiBtn").textContent="AI: off"; } } };
+  $("#camSel").onchange=async(e)=>{ S.deviceId=e.target.value; try{await startCamera();}catch(_){toast("Couldn't switch camera","warn");} };
   $("#review").onclick=()=>$("#film").classList.add("open");
   $("#closeFilm").onclick=()=>$("#film").classList.remove("open");
   $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Delete all captured frames?"))return;
@@ -428,11 +566,12 @@
         device:{ua:navigator.userAgent,resolution:{w:video.videoWidth,h:video.videoHeight}},
         params:{SHARP_MIN,NOVELTY_MIN,COV_TARGET,dhash:"9x8 dHash, [hi,lo] 32-bit ints"},
         note:"Enrollment fingerprint. dhash + detail + coverage per frame let a later capture be matched to this reference.",
+        metadata:{ dominantColor:dominantColor(aggChist(S.frames)), hasEmbeddings:S.frames.some(f=>f.emb) },
         frames:[] };
       for(const f of S.frames){ const name=`frames/${String(f.seq).padStart(3,"0")}.jpg`; zip.file(name,f.blob);
         fp.frames.push({file:name,t:f.t,sector:f.sector,band:f.band,cell:f.cell,
           sharp:+f.sharp.toFixed(1),detail:+f.detail.toFixed(4),
-          dhash:[f.dhash[0],f.dhash[1]],noveltyAtCapture:f.noveltyAtCapture,orientation:f.orientation});}
+          dhash:[f.dhash[0],f.dhash[1]],noveltyAtCapture:f.noveltyAtCapture,chist:f.chist,emb:f.emb||undefined,orientation:f.orientation});}
       zip.file("fingerprint.json",JSON.stringify(fp,null,2));
       const blob=await zip.generateAsync({type:"blob"}), url=URL.createObjectURL(blob), a=document.createElement("a");
       a.href=url; a.download=`glass-fingerprint-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.zip`; a.click();
@@ -443,23 +582,24 @@
   $("#start").onclick=async()=>{
     $("#err").textContent="";
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("#err").textContent="No camera API here. Use Chrome or Safari over https (or localhost)."; return;}
-    if(!window.isSecureContext){$("#err").textContent="The camera needs a secure page (https:// or localhost)."; return;}
-    const btn=$("#start"), label=btn.textContent; btn.disabled=true; btn.textContent="Starting camera…";
+    if(!window.isSecureContext){showInsecureHelp(); return;}
+    const btn=$("#start"), label=btn.textContent; btn.disabled=true; btn.textContent="Starting camera…"; $("#err").textContent="Requesting camera — allow access when prompted.";
     try{await startCamera();}
     catch(err){
       const n=(err&&err.name)||String(err);
       let msg;
-      if(n==="NotAllowedError"||n==="SecurityError") msg="Camera permission was denied. Allow camera access for this site, then reload.";
-      else if(n==="NotReadableError"||n==="TrackStartError"||n==="AbortError") msg="The camera is busy or unavailable — close any other app or browser tab using it (or unplug/replug a webcam) and try again.";
+      if(n==="NotAllowedError"||n==="SecurityError") msg="Camera permission was denied. Allow the camera for this site (address-bar camera icon), and on macOS enable your browser under System Settings → Privacy & Security → Camera. Then tap Enable camera again.";
+      else if(n==="NotReadableError"||n==="TrackStartError"||n==="AbortError") msg="The camera is in use by another app or tab (Zoom, Meet, Photo Booth, FaceTime…). A web page can’t close those for you — quit them, then tap Enable camera again.";
       else if(n==="NotFoundError"||n==="DevicesNotFoundError") msg="No camera was found on this device.";
       else if(n==="OverconstrainedError") msg="This camera can't meet the requested settings.";
+      else if(n==="TimeoutError") msg="The camera didn't respond — it may be blocked or already in use by another app or tab. Close other camera apps, check the camera icon in the address bar, and tap Enable camera again.";
       else msg="Couldn't open the camera ("+n+").";
       $("#err").textContent=msg; btn.disabled=false; btn.textContent=label; return;}
     btn.disabled=false; btn.textContent=label;
     const ok=await enableMotion();
     $("#hint").textContent=ok?"Circle the piece slowly. The shutter ring turns amber when a shot will count.":
       "No compass here — coverage tracks by how different each view looks instead. Move to a new angle for each shot.";
-    $("#gate").hidden=true; $("#hud").hidden=false; paintRing(); updateRating(); refresh(); requestAnimationFrame(loop);
+    $("#gate").hidden=true; $("#gate").style.display="none"; $("#hud").hidden=false; paintRing(); updateRating(); refresh(); requestAnimationFrame(loop);
   };
 
   window.addEventListener("beforeunload",e=>{if(S.frames.length){e.preventDefault(); e.returnValue="";}});

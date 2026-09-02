@@ -170,10 +170,8 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
     if fp_json:
         try:
             from glowtbook import fingerprint as _fp
-            s = _fp.summary(fp_json)
-            manifest["fingerprint"] = {"rating": s.get("rating"), "tier": s.get("tier"),
-                                       "data": _fp._as_obj(fp_json)}
-            fp_assertion = _fp.assertion(fp_json)
+            manifest["fingerprint"] = _fp._as_obj(fp_json)   # raw fingerprint (verify.html loads this)
+            fp_assertion = _fp.assertion(fp_json)             # compact, signed attestation
         except Exception:
             fp_json = None
 

@@ -5,6 +5,12 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Fingerprint apps refreshed** — vendored the latest enroll/verify capture apps
+  (colour-histogram descriptor + center-crop + thumbnail storage + optional in-browser
+  DINOv2). verify.html now loads the reference straight from the registry
+  (verify.html?object=<id> → /api/objects/<id>/fingerprint) so anyone can verify
+  anytime; matching runs in the browser. Enroll requires sign-in; the fingerprint is
+  stored raw and a compact hash-bound attestation is signed into the C2PA credential.
 - **Physical re-identification (object-fingerprint)** — enroll a piece's fingerprint
   in Glowtbook (Fingerprint tab → capture app → import), which rides in the manifest
   and is embedded as a C2PA assertion; verify a physical piece in Explore by matching

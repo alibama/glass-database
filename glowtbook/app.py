@@ -379,15 +379,17 @@ elif page == "Objects":
 
         with tab_fp:
             from glowtbook import fingerprint as _fp
-            st.write("Capture a **re-identification fingerprint** — a set of perceptual "
-                     "hashes over many angles that can later confirm *this is the same "
-                     "physical piece*. It travels with the object's Content Credentials.")
-            if not _fp.available():
-                st.info("Install `object-fingerprint` on the server to enable this.")
+            st.write("Capture a **re-identification fingerprint** — colour + shape descriptors "
+                     "(and, with AI on, a DINOv2 vector) over many angles that can later confirm "
+                     "*this is the same physical piece*. It's stored with the object's Content "
+                     "Credentials so anyone can verify it later.")
+            if is_demo:
+                st.warning("Enrolling a fingerprint requires signing in — it's tied to your "
+                           "identity in the object's Content Credentials.")
             else:
                 st.markdown("**1.** [Open the capture app](/fingerprint/enroll.html) "
-                            "(new tab — it needs the camera). Turn the piece slowly until the "
-                            "strength reads **Strong**, then export the `.zip`.")
+                            "(new tab — it needs the camera). Fill the frame with the piece, turn "
+                            "it slowly until the strength reads **Strong**, then export the `.zip`.")
                 up = st.file_uploader("**2.** Import the fingerprint export (.zip)", type=["zip"],
                                       key=f"fp_up_{oid}")
                 if up and st.button("Save fingerprint", key=f"fp_save_{oid}"):
@@ -397,14 +399,15 @@ elif page == "Objects":
                                      (json.dumps(r["fingerprint"]), oid, uid))
                         conn.commit()
                         st.success(f"Fingerprint saved — {r['rating']}/100 ({r['tier']}), "
-                                   f"{r['n_frames']} views."); st.rerun()
+                                   f"{r['n_frames']} views. It'll be signed into the credential "
+                                   "when you contribute this piece."); st.rerun()
                     else:
                         st.error(f"Couldn't read that export: {r.get('error')}")
                 cur_fp = o["fingerprint_json"] if "fingerprint_json" in o.keys() else None
                 if cur_fp:
                     s = _fp.summary(cur_fp)
-                    st.success(f"On file: **{s['rating']}/100 ({s['tier']})**. "
-                               "It'll be embedded when you contribute this piece.")
+                    extra = " · DINOv2 embeddings included" if s.get("has_embeddings") else ""
+                    st.success(f"On file: **{s['rating']}/100 ({s['tier']})**{extra}.")
 
         with tab_contrib:
             st.write("Publish a **condensed** version of this object and its provenance to the "
