@@ -5,6 +5,10 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Opportunities calendar view** — a month-grid calendar (accessible HTML, brand
+  styled) with month navigation and a Calendar/List toggle; each opportunity sits
+  on its deadline day (amber) or violet for residencies/grants, opening on the
+  nearest upcoming month.
 - **Opportunities calendar + intake** — a public intake form (Explore →
   Opportunities) for open calls / residencies / grants / shows that writes a
   *pending* row through the existing approval gate; once approved they appear on a

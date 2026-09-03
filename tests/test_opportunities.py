@@ -53,3 +53,15 @@ def test_ics_endpoint(demo_db):
     r = TestClient(app).get("/opportunities.ics")
     assert r.status_code == 200 and "text/calendar" in r.headers["content-type"]
     assert "BEGIN:VEVENT" in r.text
+
+
+def test_month_grid_html(demo_db):
+    rows = [{"_row_id": "a", "title": "Open Call", "opp_type": "Open call",
+             "url": "https://x", "deadline": "2026-11-15", "organization": "Org"}]
+    assert O.initial_month(rows) == (2026, 11)
+    h = O.month_grid_html(rows, 2026, 11)
+    assert "November 2026" in h and 'scope="col"' in h
+    assert ">15<" in h and "Open Call" in h
+    # HTML-escapes chip content
+    rows[0]["title"] = "<b>x</b>"
+    assert "<b>x</b>" not in O.month_grid_html(rows, 2026, 11)

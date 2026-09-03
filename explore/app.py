@@ -25,6 +25,32 @@ from central.dbconn import connect  # noqa: E402
 
 PUBLIC_BASE = os.environ.get("PUBLIC_BASE_URL", "https://glassdatabase.org").rstrip("/")
 
+
+def _render_opp_list(rows, _opp):
+    for r in rows:
+        du = _opp.days_until(r.get("deadline"))
+        when = ""
+        if du is not None:
+            when = f"deadline {r['deadline']} · " + (f"{du} days left" if du >= 0 else "closed")
+        st.markdown(f"### {r['title']}")
+        meta = " · ".join(x for x in [r.get("opp_type"), r.get("organization"),
+                                      r.get("location"), when] if x)
+        if meta:
+            st.caption(meta)
+        if r.get("fee"):
+            st.caption(f"Fee: {r['fee']}")
+        if r.get("description"):
+            st.write(r["description"])
+        links = []
+        if r.get("url"):
+            links.append(f"[Details ↗]({r['url']})")
+        g = _opp.gcal_link(r)
+        if g:
+            links.append(f"[Add to Google Calendar]({g})")
+        if links:
+            st.markdown(" · ".join(links))
+        st.divider()
+
 st.set_page_config(page_title="Explore · Glass Database", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
 
 from brand import apply_theme  # noqa: E402
@@ -103,29 +129,24 @@ if mode == "Opportunities":
 
     if not rows:
         st.info("No opportunities published yet — be the first to submit one below.")
-    for r in rows:
-        du = _opp.days_until(r.get("deadline"))
-        when = ""
-        if du is not None:
-            when = f"deadline {r['deadline']} · " + (f"{du} days left" if du >= 0 else "closed")
-        st.markdown(f"### {r['title']}")
-        meta = " · ".join(x for x in [r.get("opp_type"), r.get("organization"),
-                                      r.get("location"), when] if x)
-        if meta:
-            st.caption(meta)
-        if r.get("fee"):
-            st.caption(f"Fee: {r['fee']}")
-        if r.get("description"):
-            st.write(r["description"])
-        links = []
-        if r.get("url"):
-            links.append(f"[Details ↗]({r['url']})")
-        g = _opp.gcal_link(r)
-        if g:
-            links.append(f"[Add to Google Calendar]({g})")
-        if links:
-            st.markdown(" · ".join(links))
-        st.divider()
+    else:
+        view = st.radio("Show", ["Calendar", "List"], horizontal=True, label_visibility="collapsed")
+        if view == "Calendar":
+            import datetime as _dt
+            if "opp_ym" not in st.session_state:
+                st.session_state.opp_ym = list(_opp.initial_month(rows))
+            y, m = st.session_state.opp_ym
+            nav1, nav2, nav3, nav4 = st.columns([1, 1, 4, 1])
+            if nav1.button("◀", help="Previous month"):
+                st.session_state.opp_ym = [y - 1, 12] if m == 1 else [y, m - 1]; st.rerun()
+            if nav2.button("Today"):
+                st.session_state.opp_ym = [_dt.date.today().year, _dt.date.today().month]; st.rerun()
+            if nav4.button("▶", help="Next month"):
+                st.session_state.opp_ym = [y + 1, 1] if m == 12 else [y, m + 1]; st.rerun()
+            st.html(_opp.month_grid_html(rows, y, m))
+            st.caption("Amber = deadlines · violet = residencies/grants. Tap an entry for details.")
+        else:
+            _render_opp_list(rows, _opp)
 
     with st.expander("➕ Submit an opportunity  (reviewed before it appears)"):
         with st.form("opp_intake", clear_on_submit=True):

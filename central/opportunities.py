@@ -163,3 +163,79 @@ def days_until(deadline: str) -> int | None:
     if not d:
         return None
     return (datetime.strptime(d, "%Y%m%d").date() - datetime.now(timezone.utc).date()).days
+
+
+def initial_month(rows: list[dict]):
+    """The month to open the calendar on: the nearest upcoming deadline, else now."""
+    import datetime as _dt
+    today = _dt.date.today()
+    ds = sorted(d for d in (_date(r.get("deadline")) for r in rows) if d)
+    upcoming = [d for d in ds if _dt.datetime.strptime(d, "%Y%m%d").date() >= today]
+    pick = upcoming[0] if upcoming else (ds[-1] if ds else today.strftime("%Y%m%d"))
+    dt = _dt.datetime.strptime(pick, "%Y%m%d").date() if isinstance(pick, str) else pick
+    return dt.year, dt.month
+
+
+_CAL_CSS = """
+<style>
+.gdb-cal{border-collapse:separate;border-spacing:4px;width:100%;table-layout:fixed;font-size:.9rem}
+.gdb-cal caption{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.15rem;
+  text-align:left;margin-bottom:.4rem;color:#0f172a}
+.gdb-cal th{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;
+  font-weight:600;padding:.2rem;text-align:center}
+.gdb-cal td{vertical-align:top;height:88px;border:1px solid #eceaf1;border-radius:10px;
+  padding:.25rem;background:#fff;overflow:hidden}
+.gdb-cal td.out{background:#faf9fb;color:#c4c0cc}
+.gdb-cal td.today{border-color:#ea580c;box-shadow:inset 0 0 0 1px #ea580c}
+.gdb-cal td.past .dn{color:#c4c0cc}
+.gdb-cal .dn{display:block;font-size:.78rem;color:#94a3b8;text-align:right;margin-bottom:2px}
+.gdb-cal td.today .dn{color:#ea580c;font-weight:700}
+.gdb-cal .chip{display:block;text-decoration:none;font-size:.74rem;line-height:1.25;
+  background:linear-gradient(180deg,#fb923c,#ea580c);color:#2a1400;font-weight:600;
+  border-radius:6px;padding:2px 6px;margin-top:3px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.gdb-cal .chip.res{background:linear-gradient(180deg,#a78bfa,#7c3aed);color:#fff}
+</style>
+"""
+
+
+def month_grid_html(rows: list[dict], year: int, month: int) -> str:
+    """An accessible month calendar with each opportunity on its deadline day."""
+    import calendar as _cal
+    import datetime as _dt
+    import html as _html
+    from collections import defaultdict
+    byday = defaultdict(list)
+    for r in rows:
+        d = _date(r.get("deadline"))
+        if d:
+            byday[_dt.datetime.strptime(d, "%Y%m%d").date()].append(r)
+    today = _dt.date.today()
+    dow = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    weeks = _cal.Calendar(firstweekday=6).monthdatescalendar(year, month)
+    out = [_CAL_CSS, '<table class="gdb-cal">',
+           f'<caption>{_cal.month_name[month]} {year}</caption>',
+           "<thead><tr>" + "".join(f'<th scope="col">{d}</th>' for d in dow) + "</tr></thead><tbody>"]
+    for wk in weeks:
+        out.append("<tr>")
+        for day in wk:
+            cls = "day"
+            if day.month != month:
+                cls += " out"
+            if day == today:
+                cls += " today"
+            elif day < today:
+                cls += " past"
+            chips = ""
+            for r in byday.get(day, []):
+                url = r.get("url") or gcal_link(r) or "#"
+                title = r.get("title") or "Opportunity"
+                typ = (r.get("opp_type") or "").lower()
+                chip_cls = "chip res" if ("resid" in typ or "grant" in typ) else "chip"
+                chips += (f'<a class="{chip_cls}" href="{_html.escape(url, True)}" '
+                          f'title="{_html.escape(title)} — deadline {day.isoformat()}">'
+                          f'{_html.escape(title)}</a>')
+            out.append(f'<td class="{cls}"><span class="dn">{day.day}</span>{chips}</td>')
+        out.append("</tr>")
+    out.append("</tbody></table>")
+    return "".join(out)
