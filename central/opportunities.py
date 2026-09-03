@@ -36,6 +36,12 @@ def ensure_opportunities(conn) -> None:
     conn.execute(f'CREATE TABLE IF NOT EXISTS "{TABLE}" ('
                  "_row_id TEXT PRIMARY KEY, _source_file TEXT, _source_sheet TEXT, "
                  f"_imported_at TEXT, {cols})")
+    # A table created by an earlier version may be missing columns — CREATE TABLE
+    # IF NOT EXISTS won't add them, so ALTER any that are absent.
+    have = {r[1] for r in conn.execute(f'PRAGMA table_info("{TABLE}")')}
+    for c, _, _ in COLUMNS:
+        if c not in have:
+            conn.execute(f'ALTER TABLE "{TABLE}" ADD COLUMN "{c}" TEXT')
     now = datetime.now(timezone.utc).isoformat()
     n = conn.execute(f'SELECT COUNT(*) FROM "{TABLE}"').fetchone()[0]
     conn.execute("""INSERT OR REPLACE INTO _datasets
