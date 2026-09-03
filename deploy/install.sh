@@ -154,6 +154,8 @@ PUBLIC_BASE_URL=https://$DOMAIN
 # MINIO_SECRET_KEY=
 # MINIO_BUCKET=glassdb-aip
 # MINIO_SECURE=1
+# --- Discord submission notifications (optional) ---------------------------
+# DISCORD_WEBHOOK_URL=
 # For Turso instead of the local file, set these and \`pip install libsql\`:
 # TURSO_DATABASE_URL=
 # TURSO_AUTH_TOKEN=

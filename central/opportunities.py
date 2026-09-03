@@ -55,7 +55,7 @@ def ensure_opportunities(conn) -> None:
     conn.commit()
 
 
-def submit(conn, fields: dict) -> str:
+def submit(conn, fields: dict, base_url: str = "") -> str:
     """Insert a pending opportunity from the public intake form. Returns row id."""
     ensure_opportunities(conn)
     now = datetime.now(timezone.utc).isoformat()
@@ -67,6 +67,11 @@ def submit(conn, fields: dict) -> str:
     conn.execute(f'INSERT INTO "{TABLE}" ({", ".join(chr(34)+c+chr(34) for c in allc)}) '
                  f'VALUES ({", ".join("?" for _ in allc)})', vals)
     conn.commit()
+    from central import notify
+    notify.notify_submission("opportunity", fields.get("title") or "Opportunity",
+                             {"Type": fields.get("opp_type"), "Org": fields.get("organization"),
+                              "Deadline": fields.get("deadline"), "Link": fields.get("url")},
+                             TABLE, rid, base_url)
     return rid   # pending: no _approvals row yet
 
 

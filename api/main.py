@@ -246,6 +246,32 @@ def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (
                     headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/moderate", summary="One-click approve/reject from a signed link (Discord)")
+def moderate(tbl: str, row: str, action: str, sig: str):
+    from central import notify
+    if action not in notify.ACTIONS:
+        raise HTTPException(400, "bad action")
+    if not notify.verify(tbl, row, sig):
+        raise HTTPException(403, "invalid or expired signature")
+    conn = connect()
+    approvals.ensure_approvals(conn)
+    status = "approved" if action == "approve" else "rejected"
+    approvals.set_status(conn, tbl, [row], status, reviewer="discord")
+    ok = action == "approve"
+    body = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{'Approved' if ok else 'Rejected'}</title>
+<style>body{{font-family:-apple-system,Segoe UI,Roboto,sans-serif;display:grid;place-items:center;
+height:100vh;margin:0;background:{'#052e16' if ok else '#450a0a'};color:#fff;text-align:center;padding:2rem}}
+h1{{font-size:1.6rem;margin:0 0 .4rem}}code{{opacity:.7;font-size:.85rem}}
+a{{color:#fdba74}}</style></head><body><div>
+<h1>{'✅ Approved &amp; published' if ok else '⛔ Rejected'}</h1>
+<p>{'It’s now live.' if ok else 'It won’t appear publicly.'}</p>
+<p><code>{tbl} / {row}</code></p>
+<p><a href="/admin/">Open the admin console</a></p></div></body></html>"""
+    return Response(content=body, media_type="text/html", status_code=200)
+
+
 @app.get("/opportunities.ics", summary="Subscribable calendar of approved opportunities")
 def opportunities_ics():
     from central import opportunities as opp

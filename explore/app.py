@@ -26,6 +26,32 @@ from central.dbconn import connect  # noqa: E402
 PUBLIC_BASE = os.environ.get("PUBLIC_BASE_URL", "https://glassdatabase.org").rstrip("/")
 
 
+def _render_intake(key):
+    from central import intake
+    f = intake.form(key)
+    with st.form(f"intake_{key}", clear_on_submit=True):
+        vals = {}
+        for name, label, kind, req, priv in f["fields"]:
+            lbl = label + (" *" if req else "") + ("  🔒 kept private" if priv else "")
+            if kind == "textarea":
+                vals[name] = st.text_area(lbl)
+            elif kind.startswith("select:"):
+                vals[name] = st.selectbox(lbl, kind.split(":", 1)[1].split(","))
+            elif kind == "date":
+                d = st.date_input(lbl, value=None, format="YYYY-MM-DD")
+                vals[name] = str(d) if d else ""
+            else:
+                vals[name] = st.text_input(lbl)
+        if st.form_submit_button("Submit for review", type="primary"):
+            missing = [label for name, label, kind, req, priv in f["fields"]
+                       if req and not (vals.get(name) or "").strip()]
+            if missing:
+                st.error("Required: " + ", ".join(missing))
+            else:
+                intake.submit(_conn(), key, vals, PUBLIC_BASE)
+                st.success("Thanks — submitted for review. It'll appear once an admin approves it.")
+
+
 def _render_opp_list(rows, _opp):
     for r in rows:
         du = _opp.days_until(r.get("deadline"))
@@ -103,8 +129,22 @@ st.sidebar.caption("Public data from the Glass Database. Play with it, filter it
 if st.sidebar.button("↻ Refresh data"):
     st.cache_data.clear(); st.rerun()
 
-mode = st.sidebar.radio("View", ["Datasets", "Objects (provenance)", "Opportunities"],
+mode = st.sidebar.radio("View", ["Datasets", "Objects (provenance)", "Opportunities", "Submit"],
                         label_visibility="collapsed")
+
+# ===========================================================================
+# SUBMIT — public intake sheets (artist / studio / event) → pending + Discord
+# ===========================================================================
+if mode == "Submit":
+    st.title("Add to the database")
+    st.caption("Submit an artist, studio, or event. Everything is reviewed before it appears "
+               "publicly. Contact details stay private.")
+    labels = {"Artist": "artist", "Studio": "studio", "Event / exhibition": "event"}
+    pick = st.selectbox("What are you submitting?", list(labels))
+    _render_intake(labels[pick])
+    st.caption("Have an open call, residency, or grant with a deadline? "
+               "Use **Opportunities** instead so it lands on the calendar.")
+    st.stop()
 
 # ===========================================================================
 # OPPORTUNITIES — calendar (display + .ics + Google Calendar) and public intake
@@ -171,7 +211,7 @@ if mode == "Opportunities":
                     _opp.submit(_conn(), {"title": title, "organization": org, "opp_type": typ,
                                           "url": url, "location": location, "deadline": str(deadline),
                                           "fee": fee, "eligibility": elig, "description": desc,
-                                          "contact_email": contact, "submitted_by": by})
+                                          "contact_email": contact, "submitted_by": by}, PUBLIC_BASE)
                     st.success("Thanks — submitted for review. It'll appear here once an admin "
                                "approves it.")
     st.stop()

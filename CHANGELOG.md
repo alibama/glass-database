@@ -5,6 +5,12 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Intake sheets + Discord approvals** — public forms (Explore → Submit) for
+  artists, studios, and events that write pending rows through the approval gate
+  (extensible: add a FORMS entry for any type). Each submission posts to a Discord
+  channel (DISCORD_WEBHOOK_URL) with **one-click Approve/Reject links** — signed
+  (HMAC over table+row) and handled by /api/moderate, so an admin approves straight
+  from Discord. Opportunities notify too; contact details stay private.
 - **Opportunities calendar view** — a month-grid calendar (accessible HTML, brand
   styled) with month navigation and a Calendar/List toggle; each opportunity sits
   on its deadline day (amber) or violet for residencies/grants, opening on the
