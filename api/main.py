@@ -255,8 +255,19 @@ def moderate(tbl: str, row: str, action: str, sig: str):
         raise HTTPException(403, "invalid or expired signature")
     conn = connect()
     approvals.ensure_approvals(conn)
-    status = "approved" if action == "approve" else "rejected"
-    approvals.set_status(conn, tbl, [row], status, reviewer="discord")
+    if action == "approve" and tbl == "object_submissions":
+        # objects need promotion (copy row + images into the public registry)
+        try:
+            from glowtbook.contribute import promote_object_submission
+            promote_object_submission(conn, int(row))
+        except Exception as ex:  # noqa: BLE001
+            raise HTTPException(500, f"promotion failed: {ex}")
+    elif tbl == "object_submissions":   # reject
+        conn.execute("UPDATE object_submissions SET status='rejected' WHERE id=?", (row,))
+        conn.commit()
+    else:
+        status = "approved" if action == "approve" else "rejected"
+        approvals.set_status(conn, tbl, [row], status, reviewer="discord")
     ok = action == "approve"
     body = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">

@@ -137,27 +137,8 @@ def ensure_public_objects():
 
 def approve_object_submission(sub):
     """Promote a pending object submission into the public objects + object_images tables."""
-    ensure_public_objects()
-    now = datetime.now(timezone.utc).isoformat()
-    rid = hashlib.sha1(("obj|" + sub["content_hash"]).encode()).hexdigest()[:16]
-    conn.execute("""INSERT OR REPLACE INTO objects
-        (_row_id,_source_file,_source_sheet,_imported_at,title,maker,year,techniques,materials,
-         dimensions,description,contributor,sourcing,value_display,has_credentials,manifest_json,content_hash,published_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        (rid, "glowtbook", "contributions", now, sub["title"], sub["maker"], sub["year"],
-         sub["techniques"], sub["materials"], sub["dimensions"], sub["description"],
-         sub["submitted_by"], sub["sourcing"], sub["value_display"], sub["has_credentials"],
-         sub["manifest_json"], sub["content_hash"], now))
-    conn.execute("DELETE FROM object_images WHERE object_row_id=?", (rid,))
-    for im in conn.execute("SELECT role,caption,image_b64 FROM object_submission_images WHERE submission_id=?",
-                           (sub["id"],)).fetchall():
-        conn.execute("INSERT INTO object_images (object_row_id,role,caption,image_b64) VALUES (?,?,?,?)",
-                     (rid, im["role"], im["caption"], im["image_b64"]))
-    conn.execute("UPDATE _datasets SET row_count=(SELECT COUNT(*) FROM objects) WHERE tbl='objects'")
-    conn.execute("UPDATE object_submissions SET status='approved' WHERE id=?", (sub["id"],))
-    conn.commit()
-    approvals.set_status(conn, "objects", [rid], "approved")   # publish through the gate
-    return rid
+    from glowtbook.contribute import promote_object_submission
+    return promote_object_submission(conn, sub["id"])
 
 
 # ===========================================================================

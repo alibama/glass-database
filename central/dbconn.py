@@ -57,9 +57,49 @@ def connect():
     path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode = WAL;")   # required for `turso db import`
-    conn.execute("PRAGMA foreign_keys = ON;")
+    # Concurrency + speed: WAL lets readers and the writer work at once (4 processes
+    # share this file); NORMAL is safe under WAL; busy_timeout avoids "database is
+    # locked" under contention; the cache/mmap pragmas cut disk I/O.
+    for pragma in ("journal_mode = WAL",          # required for `turso db import` too
+                   "synchronous = NORMAL",
+                   "busy_timeout = 5000",
+                   "foreign_keys = ON",
+                   "temp_store = MEMORY",
+                   "cache_size = -16000",          # ~16 MB page cache
+                   "mmap_size = 134217728"):       # 128 MB memory-mapped I/O
+        try:
+            conn.execute(f"PRAGMA {pragma};")
+        except Exception:  # noqa: BLE001
+            pass
+    _ensure_indexes(conn)
     return conn
+
+
+# Indexes on the paths every page hits: the approval gate join, and image lookups.
+_INDEXES = [
+    ("_approvals", 'CREATE INDEX IF NOT EXISTS ix_appr_tbl_row ON "_approvals"(tbl, row_id)'),
+    ("_approvals", 'CREATE INDEX IF NOT EXISTS ix_appr_status ON "_approvals"(tbl, status)'),
+    ("object_images", 'CREATE INDEX IF NOT EXISTS ix_objimg_row ON "object_images"(object_row_id)'),
+    ("_columns", 'CREATE INDEX IF NOT EXISTS ix_cols_tbl ON "_columns"(tbl)'),
+]
+
+
+def _ensure_indexes(conn) -> None:
+    try:
+        present = {r[0] for r in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'")}
+    except Exception:  # noqa: BLE001
+        return
+    for tbl, ddl in _INDEXES:
+        if tbl in present:
+            try:
+                conn.execute(ddl)
+            except Exception:  # noqa: BLE001
+                pass
+    try:
+        conn.commit()
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def rows_as_dicts(cursor) -> list[dict]:

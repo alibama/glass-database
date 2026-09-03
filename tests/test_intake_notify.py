@@ -66,3 +66,35 @@ def test_moderate_endpoint_requires_valid_signature(demo_db):
 def test_notify_noop_without_webhook(monkeypatch):
     monkeypatch.delenv("DISCORD_WEBHOOK_URL", raising=False)
     assert notify.notify_submission("Artist", "Rae", {"x": "y"}, "t", "r", "") is False
+
+
+def test_object_submission_one_click_promote(demo_db, monkeypatch):
+    import os
+    from pathlib import Path
+
+    from fastapi.testclient import TestClient
+    from PIL import Image
+
+    from api.main import app
+    from central import notify
+    from central.dbconn import connect
+    from glowtbook import contribute
+    os.environ["GLASSDB_ADMIN_TOKEN"] = "s3cret"
+    monkeypatch.setenv("GLASSDB_MODERATION", "1")
+    d = Path("/tmp/_objtest"); d.mkdir(exist_ok=True)
+    Image.new("RGB", (400, 300), (120, 60, 30)).save(d / "p.png")
+    obj = {"title": "Test goblet", "maker": "AP", "year": "2025", "techniques": "",
+           "materials": "cristallo", "dimensions": "", "description": "", "value_amount": "",
+           "value_currency": "USD", "insurer": "", "policy_no": "", "status": ""}
+    contribute.contribute_object("u", "AP", obj, [],
+                                 [{"aip_path": str(d / "p.png"), "role": "primary", "caption": ""}],
+                                 False, sign=False, object_id=1, base_url="https://x")
+    c = connect()
+    sub = c.execute("SELECT id FROM object_submissions WHERE title='Test goblet'").fetchone()
+    assert sub is not None            # staged pending, not yet public
+    assert c.execute("SELECT COUNT(*) FROM objects WHERE title='Test goblet'").fetchone()[0] == 0
+    # one-click approve link promotes it
+    sig = notify.sign("object_submissions", str(sub["id"]))
+    r = TestClient(app).get(f"/moderate?tbl=object_submissions&row={sub['id']}&action=approve&sig={sig}")
+    assert r.status_code == 200 and "Approved" in r.text
+    assert connect().execute("SELECT COUNT(*) FROM objects WHERE title='Test goblet'").fetchone()[0] == 1

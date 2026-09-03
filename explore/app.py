@@ -26,6 +26,15 @@ from central.dbconn import connect  # noqa: E402
 PUBLIC_BASE = os.environ.get("PUBLIC_BASE_URL", "https://glassdatabase.org").rstrip("/")
 
 
+@st.cache_data(ttl=600, show_spinner=False)
+def _read_creds_cached(image_b64: str):
+    """C2PA parsing is expensive; cache it per image so it isn't redone every rerun."""
+    import base64 as _b
+
+    from glowtbook import c2pa_sign
+    return c2pa_sign.read_credentials(_b.b64decode(image_b64))
+
+
 def _render_intake(key):
     from central import intake
     f = intake.form(key)
@@ -300,7 +309,6 @@ if mode == "Opportunities":
 # OBJECTS — render contributed objects with images + provenance timeline
 # ===========================================================================
 if mode == "Objects (provenance)":
-    import base64 as _b64
     import json as _json
 
     from explore.objects_a11y import build_objects_html
@@ -325,8 +333,7 @@ if mode == "Objects (provenance)":
         creds = None
         if ("has_credentials" in o.keys()) and o["has_credentials"] and images:
             try:
-                from glowtbook import c2pa_sign
-                creds = c2pa_sign.read_credentials(_b64.b64decode(images[0][2]))
+                creds = _read_creds_cached(images[0][2])
             except Exception:
                 creds = None
         has_video = any(r == "video-poster" for r, _, _ in images)

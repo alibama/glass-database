@@ -201,7 +201,7 @@ setup_apache() {
     say "Configuring Apache (existing sites left untouched)"
     command -v apache2ctl >/dev/null 2>&1 || apt-get install -y -qq apache2
     apt-get install -y -qq python3-certbot-apache >/dev/null 2>&1 || true
-    a2enmod proxy proxy_http proxy_wstunnel headers ssl >/dev/null
+    a2enmod proxy proxy_http proxy_wstunnel headers ssl deflate expires >/dev/null
     cp "$APP_DIR/deploy/apache-glassdatabase-proxy.conf" /etc/apache2/glassdatabase-proxy.conf
     local site="/etc/apache2/sites-available/glassdatabase.conf"
     sed "s/glassdatabase\.org/$DOMAIN/g" \

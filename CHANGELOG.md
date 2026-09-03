@@ -5,6 +5,16 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Every content addition now pings Discord** — object contributions were the
+  gap: a staged object submission now notifies with a **one-click Approve** that
+  actually *promotes* it into the public registry (shared promotion logic used by
+  both the admin console and /api/moderate), and immediate publishes post an FYI.
+  Intake (artist/studio/event/resource/exchange/job), opportunities, and feedback
+  already notified; objects close the loop.
+- **Performance** — SQLite tuned (WAL + synchronous=NORMAL, busy_timeout, cache/
+  mmap) and indexed on the approval-gate + image paths; Streamlit prod config
+  (file watcher off, no telemetry, fastReruns); Apache gzip + static caching;
+  cached the per-object C2PA read. See deploy/PERFORMANCE.md.
 - **Venetian trait thesaurus (SKOS) + capture-time tagging** — a controlled
   vocabulary of observable style traits for façon-de-Venise glass (70 concepts / 10
   facets), served as SKOS/Turtle + JSON at /api/vocab/glass-traits.{ttl,json} with

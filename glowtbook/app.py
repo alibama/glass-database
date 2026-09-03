@@ -17,6 +17,7 @@ Run:  streamlit run glowtbook/app.py --server.baseUrlPath glowtbook
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 import sys
 from collections.abc import Mapping
@@ -500,7 +501,8 @@ elif page == "Objects":
                         [{"aip_path": im["aip_path"], "role": im["role"], "caption": im["caption"]}
                          for im in imgs if Path(im["aip_path"]).exists()],
                         incl_val, sign=sign, object_id=oid,
-                        archive_aip=archive_aip, push_minio=push_minio)
+                        archive_aip=archive_aip, push_minio=push_minio,
+                        base_url=os.environ.get("PUBLIC_BASE_URL", "https://glassdatabase.org"))
                     conn.execute("INSERT INTO contribution (user_id,object_id,content_hash,manifest_json) VALUES (?,?,?,?)",
                                  (uid, oid, manifest["content_hash"], json.dumps(manifest)))
                     conn.commit()

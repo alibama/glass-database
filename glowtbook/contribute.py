@@ -123,8 +123,43 @@ def ensure_object_staging(c):
         image_b64 TEXT)""")
     c.commit()
 
+
+def promote_object_submission(conn, submission_id) -> str | None:
+    """Promote a pending object submission into the public objects + object_images
+    tables and approve it through the gate. Shared by the admin console and the
+    one-click Discord approve link. Returns the new object row id, or None."""
+    from central import approvals
+    sub = conn.execute("SELECT * FROM object_submissions WHERE id=?", (submission_id,)).fetchone()
+    if not sub:
+        return None
+    sub = dict(sub)
+    ensure_central_objects(conn)
+    now = datetime.now(timezone.utc).isoformat()
+    rid = hashlib.sha1(("obj|" + (sub.get("content_hash") or str(submission_id))).encode()).hexdigest()[:16]
+    conn.execute("""INSERT OR REPLACE INTO objects
+        (_row_id,_source_file,_source_sheet,_imported_at,title,maker,year,techniques,materials,
+         dimensions,description,contributor,sourcing,value_display,has_credentials,manifest_json,content_hash,published_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        (rid, "glowtbook", "contributions", now, sub.get("title"), sub.get("maker"), sub.get("year"),
+         sub.get("techniques"), sub.get("materials"), sub.get("dimensions"), sub.get("description"),
+         sub.get("submitted_by"), sub.get("sourcing"), sub.get("value_display"),
+         sub.get("has_credentials"), sub.get("manifest_json"), sub.get("content_hash"), now))
+    conn.execute("DELETE FROM object_images WHERE object_row_id=?", (rid,))
+    for im in conn.execute("SELECT role,caption,image_b64 FROM object_submission_images WHERE submission_id=?",
+                           (submission_id,)).fetchall():
+        conn.execute("INSERT INTO object_images (object_row_id,role,caption,image_b64) VALUES (?,?,?,?)",
+                     (rid, im["role"], im["caption"], im["image_b64"]))
+    conn.execute("UPDATE object_submissions SET status='approved' WHERE id=?", (submission_id,))
+    try:
+        conn.execute("UPDATE _datasets SET row_count=(SELECT COUNT(*) FROM objects) WHERE tbl='objects'")
+    except Exception:
+        pass
+    conn.commit()
+    approvals.set_status(conn, "objects", [rid], "approved")
+    return rid
+
 def contribute_object(uid, display, obj, events, images, include_value, sign=False,
-                      object_id=None, archive_aip=False, push_minio=False):
+                      object_id=None, archive_aip=False, push_minio=False, base_url=""):
     """Build the DIP (condense images + optional video transcode + manifest,
     optionally C2PA-signed) and publish/stage. Optionally archive a full-fidelity
     BagIt AIP (and push it to MinIO). Returns (manifest, primary_image_bytes)."""
@@ -246,6 +281,15 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
                       (sub_id, role, cap, b64))
         c.commit()
         manifest["_pending"] = True
+        try:
+            from central import notify
+            notify.notify_submission(
+                "object", obj["title"] or "Object",
+                {"Maker": obj["maker"] or display, "Year": obj["year"],
+                 "Techniques": ", ".join(techniques), "Signed": "yes" if do_sign else "no"},
+                "object_submissions", str(sub_id), base_url)
+        except Exception:
+            pass
     else:
         rid = hashlib.sha1(("obj|" + uid + "|" + manifest["content_hash"]).encode()).hexdigest()[:16]
         c.execute("""INSERT OR REPLACE INTO objects
@@ -266,6 +310,13 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
         _appr.ensure_approvals(c)
         _appr.set_status(c, "objects", [rid], "approved")   # immediate publish path
         manifest["_pending"] = False
+        try:
+            from central import notify
+            notify.notify_message(f"🍷 New object published: {obj['title'] or 'Object'}",
+                                  {"Maker": obj["maker"] or display, "Year": obj["year"],
+                                   "View": f"{base_url.rstrip('/')}/explore/" if base_url else ""})
+        except Exception:
+            pass
 
     # Optionally archive the full-fidelity AIP as a BagIt bag (+ MinIO)
     aip_receipt = None
