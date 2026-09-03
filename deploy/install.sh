@@ -183,8 +183,14 @@ for svc in api admin explore glowtbook; do
     cp "$APP_DIR/deploy/glassdb-$svc.service" /etc/systemd/system/
 done
 systemctl daemon-reload
-systemctl enable --now glassdb-api.service glassdb-admin.service \
-                       glassdb-explore.service glassdb-glowtbook.service
+systemctl enable glassdb-api.service glassdb-admin.service \
+                 glassdb-explore.service glassdb-glowtbook.service >/dev/null 2>&1 || true
+# RESTART (not just enable --now): on an update the services are already running,
+# and `enable --now` is a no-op for a running unit — so it would keep the OLD code
+# in memory. Streamlit re-reads the main app.py per rerun but NOT imported modules,
+# so a restart is required for changes to central/, glowtbook/, etc. to take effect.
+systemctl restart glassdb-api.service glassdb-admin.service \
+                  glassdb-explore.service glassdb-glowtbook.service
 
 # --- reverse proxy ---------------------------------------------------------
 CERTBOT_CMD=""
