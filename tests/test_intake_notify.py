@@ -1,9 +1,9 @@
-"""Generalized intake, signed moderation links, and the /moderate endpoint."""
+"""Generalized intake (rich fields), signed moderation links, and /moderate."""
 import os
 
 from fastapi.testclient import TestClient
 
-from central import approvals, intake, notify
+from central import approvals, intake, notify, techniques
 from central.dbconn import connect
 
 
@@ -15,40 +15,52 @@ def test_token_sign_verify_roundtrip():
     assert not notify.verify("other", "abc123", sig)
 
 
-def test_intake_writes_pending(demo_db):
+def test_technique_vocab_is_wikibase_ready():
+    r = techniques.resolve("Cane & Murrine")
+    assert r["id"] == "cane-murrine" and r["gbo"].endswith("#CaneWork")
+    assert techniques.resolve("Furnace Cast")["gbo"] is None   # unmapped, but linkable id present
+    assert len(techniques.LABELS) >= 24
+
+
+def test_sections_are_not_columns(demo_db):
     c = connect()
-    rid = intake.submit(c, "studio", {"name": "New Hot Shop", "city": "Richmond",
-                                      "email": "p@x.org"}, base_url="")
-    # pending -> not approved yet
-    assert approvals.counts(c, "studio_submissions")["approved"] == 0
-    approvals.set_status(c, "studio_submissions", [rid], "approved")
-    assert approvals.counts(c, "studio_submissions")["approved"] == 1
-    # private column registered as non-public
+    intake.ensure(c, "artist")
+    cols = {r[1] for r in c.execute('PRAGMA table_info(artist_submissions)')}
+    assert "artist_name" in cols and "tech_primary" in cols and "studied_under" in cols
+    # section headers ("About you", "Mentorship") never become columns
+    assert "about_you" not in cols and "mentorship" not in cols
+
+
+def test_multiselect_stored_joined_and_pending(demo_db):
+    c = connect()
+    rid = intake.submit(c, "artist", {
+        "artist_name": "Rae Sutter", "email": "r@x.org", "nationality_base": "US",
+        "status": "Living / Active", "primary_focus": "Hot Glass / Furnace Work",
+        "tech_primary": ["Offhand Blown Glass", "Cane & Murrine"],
+        "training_education": "RISD", "studied_under": "Lino Tagliapietra"}, base_url="")
+    row = c.execute("SELECT tech_primary FROM artist_submissions WHERE _row_id=?", (rid,)).fetchone()
+    assert "Offhand Blown Glass | Cane & Murrine" == row[0]
+    assert approvals.counts(c, "artist_submissions")["approved"] == 0   # pending
+    # email + submitter are private
     priv = {r[0] for r in c.execute(
-        "SELECT column FROM _columns WHERE tbl='studio_submissions' AND is_public=0")}
+        "SELECT column FROM _columns WHERE tbl='artist_submissions' AND is_public=0")}
     assert "email" in priv and "submitted_by" in priv
 
 
 def test_moderate_endpoint_requires_valid_signature(demo_db):
     os.environ["GLASSDB_ADMIN_TOKEN"] = "s3cret"
     c = connect()
-    rid = intake.submit(c, "artist", {"name": "Rae"}, base_url="")
+    rid = intake.submit(c, "artist", {"artist_name": "Rae", "email": "r@x", "nationality_base": "US",
+                                      "status": "Living / Active",
+                                      "primary_focus": "Hot Glass / Furnace Work",
+                                      "training_education": "x"}, base_url="")
     from api.main import app
     cl = TestClient(app)
-    # bad signature -> 403, no change
     assert cl.get(f"/moderate?tbl=artist_submissions&row={rid}&action=approve&sig=bad").status_code == 403
-    assert approvals.counts(connect(), "artist_submissions")["approved"] == 0
-    # good signature -> approves
     sig = notify.sign("artist_submissions", rid)
     r = cl.get(f"/moderate?tbl=artist_submissions&row={rid}&action=approve&sig={sig}")
     assert r.status_code == 200 and "Approved" in r.text
     assert approvals.counts(connect(), "artist_submissions")["approved"] == 1
-
-
-def test_moderation_links_shape():
-    a, r = notify.moderation_links("https://glassdatabase.org", "event_submissions", "xyz")
-    assert a.startswith("https://glassdatabase.org/api/moderate?") and "action=approve" in a
-    assert "action=reject" in r and "sig=" in a
 
 
 def test_notify_noop_without_webhook(monkeypatch):

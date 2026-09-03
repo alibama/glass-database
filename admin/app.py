@@ -47,7 +47,8 @@ conn = _c()
 
 st.sidebar.title("🛠️ Admin")
 st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'}**")
-section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue", "🧹 Duplicates"],
+section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue",
+                                       "🧹 Duplicates", "💬 Discord", "📮 Feedback"],
                            label_visibility="collapsed")
 
 
@@ -349,6 +350,54 @@ elif section == "🛡️ Review queue":
                     if r.button("✖ Reject", key=f"rj_{s['id']}"):
                         conn.execute("UPDATE submissions SET status='rejected' WHERE id=?", (s["id"],))
                         conn.commit(); st.rerun()
+
+# ===========================================================================
+# DISCORD
+# ===========================================================================
+elif section == "💬 Discord":
+    import os
+
+    from central import notify, settings
+    st.header("Discord notifications")
+    st.caption("New submissions post to your channel with one-click approve/reject links.")
+    cur = settings.get(conn, "discord_webhook_url", os.environ.get("DISCORD_WEBHOOK_URL", ""))
+    wh = st.text_input("Channel webhook URL", value=cur, type="password",
+                       help="Discord → Server Settings → Integrations → Webhooks → New Webhook")
+    on = st.toggle("Notify on new submissions", value=settings.get(conn, "discord_enabled", "1") != "0")
+    c1, c2 = st.columns(2)
+    if c1.button("Save", type="primary"):
+        settings.set(conn, "discord_webhook_url", wh.strip())
+        settings.set(conn, "discord_enabled", "1" if on else "0")
+        st.success("Saved.")
+    if c2.button("Send test message"):
+        ok, msg = notify.send_test(wh.strip() or cur)
+        (st.success("Test sent — check the channel.") if ok else st.error(f"Failed: {msg}"))
+    st.info("Approve/reject links are signed with your GLASSDB_ADMIN_TOKEN. Anyone who can **see** "
+            "the channel can act on them, so keep it restricted to reviewers. Rotating that token "
+            "invalidates any outstanding links.")
+
+# ===========================================================================
+# FEEDBACK
+# ===========================================================================
+elif section == "📮 Feedback":
+    from central import feedback
+    st.header("Site feedback")
+    items = feedback.open_items(conn)
+    open_n = sum(1 for i in items if not i["resolved"])
+    st.caption(f"{open_n} open · {len(items)} total")
+    if not items:
+        st.info("No feedback yet.")
+    for it in items:
+        with st.container(border=True):
+            head = ("✅ " if it["resolved"] else "") + (it["name"] or it["email"] or "anonymous")
+            st.markdown(f"**{head}** · {it['created_at'][:16].replace('T', ' ')}"
+                        + (f" · {it['page']}" if it["page"] else ""))
+            st.write(it["message"])
+            if it["email"]:
+                st.caption(f"Reply to: {it['email']}")
+            if not it["resolved"]:
+                if st.button("Mark resolved", key=f"fb_{it['id']}"):
+                    feedback.resolve(conn, it["id"]); st.rerun()
 
 # ===========================================================================
 # DUPLICATES

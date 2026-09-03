@@ -5,6 +5,19 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Feedback, community exchange, job board + admin Discord controls** — a
+  sidebar feedback form (private, pings Discord, resolved in Admin → Feedback); a
+  Community view with Exchange (WTS/WTB/WTT, incl. a togglable “open to trade”
+  flag), Jobs, and Resources boards, all submittable via Submit and gated; and an
+  Admin → Discord panel to set the webhook, toggle notifications, and send a test —
+  webhook now lives in a DB setting (env fallback), so no .env edit needed.
+- **Full artist intake + Wikibase-ready techniques + mentorship** — the artist
+  submission form now matches the directory questionnaire (identity, optional
+  demographics, primary discipline, a **mentorship** section, training,
+  recognition), with the technique matrix as three multiselects drawn from a
+  controlled vocabulary (central/techniques.py) whose entries carry a stable id +
+  gbo class — the seam for the upcoming Wikibase section. Intake framework gained
+  section headers, select, and multiselect field types.
 - **Intake sheets + Discord approvals** — public forms (Explore → Submit) for
   artists, studios, and events that write pending rows through the approval gate
   (extensible: add a FORMS entry for any type). Each submission posts to a Discord

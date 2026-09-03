@@ -29,22 +29,38 @@ PUBLIC_BASE = os.environ.get("PUBLIC_BASE_URL", "https://glassdatabase.org").rst
 def _render_intake(key):
     from central import intake
     f = intake.form(key)
+    if f.get("intro"):
+        st.write(f["intro"])
     with st.form(f"intake_{key}", clear_on_submit=True):
         vals = {}
-        for name, label, kind, req, priv in f["fields"]:
-            lbl = label + (" *" if req else "") + ("  🔒 kept private" if priv else "")
+        for fd in f["fields"]:
+            kind = fd["kind"]
+            if kind == "section":
+                st.markdown(f"##### {fd['label']}")
+                continue
+            lbl = fd["label"] + (" *" if fd["required"] else "") + \
+                ("  🔒 kept private" if fd["private"] else "")
+            help_ = fd.get("help")
+            name = fd["name"]
             if kind == "textarea":
-                vals[name] = st.text_area(lbl)
-            elif kind.startswith("select:"):
-                vals[name] = st.selectbox(lbl, kind.split(":", 1)[1].split(","))
+                vals[name] = st.text_area(lbl, help=help_)
+            elif kind == "select":
+                vals[name] = st.selectbox(lbl, ["—", *intake.options_for(fd)], help=help_)
+                if vals[name] == "—":
+                    vals[name] = ""
+            elif kind == "multiselect":
+                vals[name] = st.multiselect(lbl, intake.options_for(fd), help=help_)
+            elif kind == "checkbox":
+                vals[name] = st.checkbox(fd["label"], help=help_)
             elif kind == "date":
-                d = st.date_input(lbl, value=None, format="YYYY-MM-DD")
+                d = st.date_input(lbl, value=None, format="YYYY-MM-DD", help=help_)
                 vals[name] = str(d) if d else ""
             else:
-                vals[name] = st.text_input(lbl)
+                vals[name] = st.text_input(lbl, help=help_)
         if st.form_submit_button("Submit for review", type="primary"):
-            missing = [label for name, label, kind, req, priv in f["fields"]
-                       if req and not (vals.get(name) or "").strip()]
+            missing = [fd["label"] for fd in intake.data_fields(key)
+                       if fd["required"] and not (vals.get(fd["name"]) if isinstance(vals.get(fd["name"]), list)
+                                                  else (vals.get(fd["name"]) or "").strip())]
             if missing:
                 st.error("Required: " + ", ".join(missing))
             else:
@@ -129,21 +145,85 @@ st.sidebar.caption("Public data from the Glass Database. Play with it, filter it
 if st.sidebar.button("↻ Refresh data"):
     st.cache_data.clear(); st.rerun()
 
-mode = st.sidebar.radio("View", ["Datasets", "Objects (provenance)", "Opportunities", "Submit"],
+mode = st.sidebar.radio("View",
+                        ["Datasets", "Objects (provenance)", "Opportunities", "Community", "Submit"],
                         label_visibility="collapsed")
+
+with st.sidebar.expander("💬 Send feedback"):
+    with st.form("site_feedback", clear_on_submit=True):
+        fb_msg = st.text_area("What's on your mind?", label_visibility="collapsed",
+                              placeholder="Bug, idea, correction…")
+        fb_email = st.text_input("Email (optional, if you'd like a reply)")
+        if st.form_submit_button("Send") and fb_msg.strip():
+            from central import feedback as _fb
+            _fb.submit(_conn(), fb_msg, fb_email, page=mode)
+            st.success("Thanks — sent to the team.")
 
 # ===========================================================================
 # SUBMIT — public intake sheets (artist / studio / event) → pending + Discord
 # ===========================================================================
 if mode == "Submit":
     st.title("Add to the database")
-    st.caption("Submit an artist, studio, or event. Everything is reviewed before it appears "
-               "publicly. Contact details stay private.")
-    labels = {"Artist": "artist", "Studio": "studio", "Event / exhibition": "event"}
+    st.caption("Everything is reviewed before it appears publicly. Contact details stay private.")
+    labels = {"Artist": "artist", "Studio": "studio", "Event / exhibition": "event",
+              "Resource (supplier, service, class)": "resource",
+              "Exchange (buy / sell / trade)": "exchange", "Job / gig": "job"}
     pick = st.selectbox("What are you submitting?", list(labels))
     _render_intake(labels[pick])
-    st.caption("Have an open call, residency, or grant with a deadline? "
-               "Use **Opportunities** instead so it lands on the calendar.")
+    st.caption("Open calls, residencies, or grants with a deadline go under **Opportunities** so "
+               "they land on the calendar.")
+    st.stop()
+
+# ===========================================================================
+# COMMUNITY — exchange (buy/sell/trade), jobs, and resources
+# ===========================================================================
+if mode == "Community":
+    from central import approvals as _appr
+    from central import intake as _intake
+    st.title("Community")
+    tab = st.radio("Board", ["Exchange", "Jobs", "Resources"], horizontal=True,
+                   label_visibility="collapsed")
+    key = {"Exchange": "exchange", "Jobs": "job", "Resources": "resource"}[tab]
+    _intake.ensure(_conn(), key)
+    tbl = _intake.form(key)["table"]
+    pub = [f["name"] for f in _intake.data_fields(key) if not f["private"]]
+    collist = ", ".join(f'"{c}"' for c in ["_row_id", *pub])
+    rows = _conn().execute(
+        f'SELECT {collist} FROM "{tbl}" WHERE {_appr.approved_subquery()} '
+        'ORDER BY _imported_at DESC', (tbl,)).fetchall()
+    rows = [dict(r) for r in rows]
+    if not rows:
+        st.info(f"No {tab.lower()} listings yet — post one under **Submit**.")
+    for r in rows:
+        if key == "exchange":
+            badge = r.get("listing_type", "")
+            trade = " · 🤝 open to trade" if r.get("will_accept_trade") else ""
+            st.markdown(f"### {r.get('title', '')}")
+            st.caption(" · ".join(x for x in [badge, r.get("price"), r.get("location")] if x) + trade)
+            if r.get("description"):
+                st.write(r["description"])
+            if r.get("trade_notes"):
+                st.caption("Would trade for: " + r["trade_notes"])
+            if r.get("website"):
+                st.markdown(f"[Photos / link ↗]({r['website']})")
+        elif key == "job":
+            st.markdown(f"### {r.get('title', '')}")
+            st.caption(" · ".join(x for x in [r.get("organization"), r.get("job_type"),
+                                              r.get("location"), r.get("compensation")] if x))
+            if r.get("description"):
+                st.write(r["description"])
+            if r.get("how_to_apply"):
+                st.caption("Apply: " + r["how_to_apply"])
+            if r.get("url"):
+                st.markdown(f"[Details ↗]({r['url']})")
+        else:  # resource
+            st.markdown(f"### {r.get('name', '')}")
+            st.caption(" · ".join(x for x in [r.get("category"), r.get("location")] if x))
+            if r.get("offer"):
+                st.write(r["offer"])
+            if r.get("website"):
+                st.markdown(f"[Visit ↗]({r['website']})")
+        st.divider()
     st.stop()
 
 # ===========================================================================
