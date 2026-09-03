@@ -323,7 +323,8 @@
     const hex="#"+[r,g,b].map(z=>Math.round((z+m)*255).toString(16).padStart(2,"0")).join(""); return {name,hex}; }
   function aggChist(frames){ const g=frames.find(f=>f.chist); if(!g) return null; const n=g.chist.length, acc=new Array(n).fill(0); let c=0;
     for(const f of frames){ if(f.chist){ for(let i=0;i<n;i++) acc[i]+=f.chist[i]; c++; } } if(!c) return null; return acc.map(v=>Math.round(v/c)); }
-  let _embedder=null,_embErr=false; S.aiEmbed=false;
+  let _embedder=null,_embErr=false; S.aiEmbed=false; S.embCount=0;
+  const EMB_CAP=8;   // DINOv2 vectors to sample per enrolment (then it stops)
   function withTimeout(p,ms){ return Promise.race([p, new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),ms))]); }
   async function embedFromBlob(blob){ try{ const img=await createImageBitmap(blob);
     const c=document.createElement("canvas"); c.width=img.width; c.height=img.height; c.getContext("2d").drawImage(img,0,0);
@@ -334,8 +335,15 @@
       _embedder=await withTimeout(m.pipeline("image-feature-extraction","Xenova/dinov2-small"),60000); return _embedder;
     }catch(e){ console.error("DINOv2 load failed",e); _embErr=true; return null; } }
   async function embedCanvas(cnv){ const ext=await getEmbedder(); if(!ext) return null;
-    try{ const out=await ext(cnv.toDataURL("image/jpeg"),{pooling:"mean",normalize:true}); return Array.from(out.data); }
-    catch(e){ console.error("embed failed",e); return null; } }
+    try{ const out=await ext(cnv.toDataURL("image/jpeg"),{pooling:"mean",normalize:true});
+      let v=Array.from(out.data);
+      // Some transformers.js builds return the per-patch token grid (~98k floats)
+      // rather than a pooled vector — mean-pool it down to 384 so exports stay tiny.
+      if(v.length>512 && v.length%384===0){ const D=384,P=v.length/D,m=new Array(D).fill(0);
+        for(let p=0;p<P;p++)for(let i=0;i<D;i++)m[i]+=v[p*D+i];
+        for(let i=0;i<D;i++)m[i]/=P; v=m; }
+      return v.map(x=>Math.round(x*1e4)/1e4);   // 4 dp: keeps match quality, cuts JSON size
+    }catch(e){ console.error("embed failed",e); return null; } }
   function analyze(){
     if(!video.videoWidth) return null;
     actx.drawImage(video,0,0,AW,AH);
@@ -418,7 +426,12 @@
       dhash:a.dhash,noveltyAtCapture:nov,sector:S.here,band,cell:cellOf(S.here,band,a.dhash),
       t:new Date().toISOString(),orientation:S.orient};
     S.frames.push(f);
-    if(S.aiEmbed){ embedFromBlob(f.blob).then(e=>{ if(e) f.emb=e; }).catch(()=>{}); }
+    // DINOv2 is expensive: sample a capped handful of representative views, then
+    // stop — colour + dHash keep running on every frame. This keeps capture fast
+    // and the export small while still giving texture data for verification.
+    if(S.aiEmbed && (S.embCount||0) < EMB_CAP){
+      embedFromBlob(f.blob).then(e=>{ if(e){ f.emb=e; S.embCount=(S.embCount||0)+1;
+        if(S.embCount>=EMB_CAP){ toast("AI samples captured ("+EMB_CAP+" views) — capture speeds up now"); } } }).catch(()=>{}); }
     paintRing(); updateRating(); refresh(); flash();
     if(!manual||nov>=NOVELTY_MIN) buzz(12);
   }
@@ -565,7 +578,7 @@
   $("#flipBtn").onclick=async()=>{ await cycleCamera(); };
   $("#aiBtn").onclick=async()=>{ S.aiEmbed=!S.aiEmbed; $("#aiBtn").classList.toggle("on",S.aiEmbed); $("#aiBtn").textContent="AI: "+(S.aiEmbed?"on":"off");
     if(S.aiEmbed){ toast("Loading AI model (first run downloads it)…"); const ok=await getEmbedder();
-      if(ok){ toast("AI on — new shots also get a DINOv2 vector"); } else { toast("AI model failed to load","warn"); S.aiEmbed=false; $("#aiBtn").classList.remove("on"); $("#aiBtn").textContent="AI: off"; } } };
+      if(ok){ toast("AI on — samples DINOv2 on the next "+EMB_CAP+" views, then stops"); } else { toast("AI model failed to load","warn"); S.aiEmbed=false; $("#aiBtn").classList.remove("on"); $("#aiBtn").textContent="AI: off"; } } };
   $("#camSel").onchange=async(e)=>{ S.deviceId=e.target.value; try{await startCamera();}catch(_){toast("Couldn't switch camera","warn");} };
   $("#review").onclick=()=>$("#film").classList.add("open");
   $("#closeFilm").onclick=()=>$("#film").classList.remove("open");

@@ -35,6 +35,10 @@
     .hero .lede { font-size: clamp(1.05rem, 2.2vw, 1.3rem); color: #d9cfe0;
         max-width: 34rem; margin: 1rem auto 1.9rem; }
     .cta-row { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+    .social { margin: 1.1rem 0 0; color: #cbb8d6; font-size: .98rem; }
+    .social a { color: #fbcfa6; text-decoration: none; font-weight: 600; }
+    .social a:hover { text-decoration: underline; }
+    .social span { margin: 0 .5rem; opacity: .5; }
     .btn { display: inline-block; padding: .8rem 1.4rem; border-radius: 999px;
         font-weight: 600; text-decoration: none; font-size: 1.02rem; }
     .btn.primary { background: linear-gradient(180deg, var(--ember), var(--molten-deep)); color: #2a1400; }
@@ -89,11 +93,16 @@
       <a class="btn primary" href="/explore/">Explore the data</a>
       <a class="btn ghost" href="/glowtbook/">Open Glowtbook</a>
     </div>
+    <p class="social">
+      <a href="https://discord.gg/9ek2UxvPT">Join the Discord</a>
+      <span>·</span>
+      <a href="https://www.instagram.com/glassdatabase/">Instagram @glassdatabase</a>
+    </p>
   </header>
 
   <div class="scope"><div class="wrap">
     <span>What's in it:</span>
-    <b>Studios</b><b>Artists</b><b>Programs &amp; residencies</b><b>Shows &amp; open calls</b><b>Objects</b>
+    <b>Artists</b><b>Studios</b><b>Objects</b><b>Opportunities</b><b>Exchange</b><b>Jobs</b><b>Resources</b>
   </div></div>
 
   <main class="wrap">
@@ -101,7 +110,7 @@
       <h2 class="kicker">See the whole field, then take it with you</h2>
       <p class="sub">Every dataset is browsable the same way — break it down by any column,
          chart it, map the studios, and download what you need. Community data, published
-         openly for anyone to use.</p>
+         openly under CC&nbsp;BY.</p>
       <div class="surfaces">
         <a class="surface explore" href="/explore/">
           <h3>Explorer</h3>
@@ -114,63 +123,108 @@
           <span class="go">Read the docs</span>
         </a>
       </div>
-      <div class="surfaces" style="margin-top:1.25rem">
+    </section>
+
+    <section id="directory">
+      <h2 class="kicker">A directory built by the community</h2>
+      <p class="sub">Add yourself, a friend, a studio, an event, or a resource. Everything is
+         reviewed before it appears, contact details stay private, and anything can be
+         corrected or removed on request.</p>
+      <div class="surfaces">
+        <a class="surface explore" href="/explore/">
+          <h3>Add your name</h3>
+          <p>The artist sheet: practice, techniques, training, mentorship, and links —
+             for early-, mid-, and late-career makers alike.</p>
+          <span class="go">Submit to the directory</span>
+        </a>
+        <a class="surface admin" href="/explore/">
+          <h3>Studios, events &amp; resources</h3>
+          <p>Add a hot shop or access space, an exhibition, or a supplier / service / class.</p>
+          <span class="go">Submit a listing</span>
+        </a>
+      </div>
+    </section>
+
+    <section id="calendar">
+      <h2 class="kicker">Every deadline in one calendar</h2>
+      <p class="sub">Open calls, residencies, and grants — as a month calendar you can browse,
+         or a feed you subscribe to once so new approved listings appear automatically.</p>
+      <div class="surfaces">
         <a class="surface explore" href="/explore/">
           <h3>Opportunities calendar</h3>
-          <p>Open calls, residencies, and grants — subscribe (.ics) or submit one.</p>
+          <p>Browse by month, add a single deadline to Google Calendar, or submit one.</p>
           <span class="go">See what's open</span>
         </a>
         <a class="surface api" href="/api/opportunities.ics">
           <h3>Subscribe (.ics)</h3>
-          <p>Add the opportunities calendar to Apple, Google, or Outlook.</p>
+          <p>Add the whole calendar to Apple, Google, or Outlook and never miss a deadline.</p>
           <span class="go">Get the feed</span>
+        </a>
+      </div>
+    </section>
+
+    <section id="community">
+      <h2 class="kicker">Buy, sell, trade, and hire</h2>
+      <p class="sub">A community exchange and job board for glass — gear and materials, gigs and
+         apprenticeships, studios and services. Listings can be marked
+         <em>open to trade</em>.</p>
+      <div class="surfaces">
+        <a class="surface glow" href="/explore/">
+          <h3>Exchange &amp; job board</h3>
+          <p>Want-to-sell / buy / trade, plus positions and gigs across the community.</p>
+          <span class="go">Browse the board</span>
+        </a>
+        <a class="surface admin" href="/explore/">
+          <h3>Post a listing</h3>
+          <p>List something to sell or trade, or post a job — reviewed, then public.</p>
+          <span class="go">Post something</span>
         </a>
       </div>
     </section>
 
     <section id="glowtbook">
       <h2 class="kicker">Give a piece a history that travels with it</h2>
-      <p class="sub">Glowtbook is a working journal and object registry for makers. Log a
-         piece, photograph it from the bench, and record where it's been.</p>
+      <p class="sub">Glowtbook is a working journal and object registry for makers. Log a piece,
+         photograph it from the bench, and record where it's been.</p>
       <div class="split">
         <div class="surfaces" style="grid-template-columns:1fr">
           <a class="surface glow" href="/glowtbook/">
             <h3>Glowtbook</h3>
-            <p>Objects, provenance timelines, images, and one-tap contribution to the
-               public registry. Installs as an app on your phone.</p>
+            <p>Objects, provenance timelines, images and video, and one-tap contribution
+               to the public registry. Installs as an app on your phone.</p>
             <span class="go">Open Glowtbook</span>
           </a>
         </div>
         <aside class="feature-note">
-          <h3>The master stays yours</h3>
+          <h3>Provenance &amp; a physical fingerprint</h3>
           <p style="margin:.2rem 0 0;color:var(--slate)">When you contribute, the full-quality
              original and any private values stay with you. A condensed, public copy goes to the
              registry, carrying:</p>
           <ul class="flow">
             <li>a preservation-grade archive of the originals (BagIt)</li>
-            <li>a downscaled public rendition — images and video</li>
             <li>Content Credentials (C2PA) signed into the image</li>
+            <li>a re-identification <strong>fingerprint</strong> so a physical piece can be
+                confirmed later — anytime, in the browser</li>
             <li>a review step before anything appears in public</li>
           </ul>
         </aside>
       </div>
     </section>
 
-    <section id="contribute">
-      <h2 class="kicker">Built by the community, corrected by it</h2>
-      <p class="sub">Listings come from makers and organizers. Nothing goes public until it's
-         been reviewed, and anything can be corrected or removed on request.</p>
+    <section id="join">
+      <h2 class="kicker">Come say hi</h2>
+      <p class="sub">This is a community project — corrected, argued over, and grown by the people
+         who use it. Join the conversation, follow along, or tell us what's broken.</p>
       <div class="surfaces">
-        <a class="surface admin" href="/admin/">
-          <h3>Contributor console</h3>
-          <p>Add and edit listings, review submissions, and approve what goes public.
-             (Sign-in required.)</p>
-          <span class="go">Sign in</span>
+        <a class="surface glow" href="https://discord.gg/9ek2UxvPT">
+          <h3>Discord</h3>
+          <p>Introductions, questions, submissions, and where new features get hashed out.</p>
+          <span class="go">Join the Discord</span>
         </a>
-        <a class="surface glow" href="/glowtbook/">
-          <h3>Add your work</h3>
-          <p>Makers can contribute objects and provenance directly through Glowtbook.</p>
-          <span class="go">Contribute a piece</span>
+        <a class="surface admin" href="https://www.instagram.com/glassdatabase/">
+          <h3>Instagram</h3>
+          <p>Follow <strong>@glassdatabase</strong> for pieces, makers, and open calls.</p>
+          <span class="go">Follow along</span>
         </a>
       </div>
     </section>
@@ -178,10 +232,14 @@
 
   <footer><div class="wrap">
     <p class="brand">Glass Database</p>
+    <p><a href="https://discord.gg/9ek2UxvPT">Discord</a> ·
+       <a href="https://www.instagram.com/glassdatabase/">Instagram</a> ·
+       <a href="/explore/">Explore</a> · <a href="/glowtbook/">Glowtbook</a> ·
+       <a href="/api/docs">API</a></p>
     <p>Data and the glass ontology are shared under
        <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a>;
        the software is <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache&nbsp;2.0</a>.
-       To correct or remove a listing, see the Removal &amp; Correction Policy.</p>
+       Nothing is published until it's reviewed; anything can be corrected or removed on request.</p>
   </div></footer>
 </body>
 </html>

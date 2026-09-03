@@ -314,7 +314,12 @@
       _embedder=await withTimeout(m.pipeline("image-feature-extraction","Xenova/dinov2-small"),60000); return _embedder;
     }catch(e){ console.error("DINOv2 load failed",e); _embErr=true; return null; } finally{ _embLoading=false; } }
   async function embedCanvas(cnv){ const ext=await getEmbedder(); if(!ext) return null;
-    try{ const out=await ext(cnv.toDataURL("image/jpeg"),{pooling:"mean",normalize:true}); return Array.from(out.data); }
+    try{ const out=await ext(cnv.toDataURL("image/jpeg"),{pooling:"mean",normalize:true});
+      let v=Array.from(out.data);
+      if(v.length>512 && v.length%384===0){ const D=384,P=v.length/D,m=new Array(D).fill(0);
+        for(let p=0;p<P;p++)for(let i=0;i<D;i++)m[i]+=v[p*D+i];
+        for(let i=0;i<D;i++)m[i]/=P; v=m; }
+      return v.map(x=>Math.round(x*1e4)/1e4); }
     catch(e){ console.error("embed failed",e); return null; } }
   function analyze(){ if(!video.videoWidth) return null;
     actx.drawImage(video,0,0,AW,AH); const d=actx.getImageData(0,0,AW,AH).data, g=new Float32Array(AW*AH);

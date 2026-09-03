@@ -5,6 +5,16 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Homepage refresh** — sections for the directory + intake, opportunities
+  calendar, community exchange/jobs/resources, Glowtbook provenance + physical
+  fingerprint, and a Join section; Discord (discord.gg/9ek2UxvPT) and Instagram
+  (@glassdatabase) linked in the hero, a Join section, and the footer.
+- **DINOv2 sampled, not exhaustive** — embeddings are mean-pooled to 384 dims,
+  quantised, and computed on a capped handful of views (EMB_CAP≈8) then stopped,
+  so AI-enabled fingerprints drop from tens of MB to ~20 KB and capture stays fast.
+- **Fingerprinting protocol published** — docs/FINGERPRINT-PROTOCOL.md (technical
+  spec: descriptor tiers, calibration, thresholds, settings/testing, best
+  practices) + a flowchart (docs/fingerprint-protocol.svg).
 - **Feedback, community exchange, job board + admin Discord controls** — a
   sidebar feedback form (private, pings Discord, resolved in Admin → Feedback); a
   Community view with Exchange (WTS/WTB/WTT, incl. a togglable “open to trade”
