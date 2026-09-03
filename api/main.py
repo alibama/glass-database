@@ -272,6 +272,26 @@ a{{color:#fdba74}}</style></head><body><div>
     return Response(content=body, media_type="text/html", status_code=200)
 
 
+@app.get("/vocab/glass-traits.ttl", summary="Venetian/façon-de-Venise trait thesaurus (SKOS/Turtle)")
+def glass_traits_ttl():
+    from central import glass_traits
+    return Response(content=glass_traits.to_skos(), media_type="text/turtle; charset=utf-8",
+                    headers={"Content-Disposition": 'inline; filename="glass-traits.ttl"',
+                             "Cache-Control": "public, max-age=3600"})
+
+
+@app.get("/vocab/glass-traits.json", summary="Trait thesaurus as JSON (facets + concepts)")
+def glass_traits_json():
+    from central import glass_traits as gt
+    return {"scheme": "https://glassdatabase.org/vocab/glass-traits",
+            "facets": [{"id": f[0], "label": f[1], "definition": f[2],
+                        "concepts": [{"id": c["id"], "label": c["label"],
+                                      "definition": c["definition"], "alt": c["alt"],
+                                      "uri": gt.VOCAB + c["id"]}
+                                     for c in gt.CONCEPTS if c["facet"] == f[0]]}
+                       for f in gt.FACETS]}
+
+
 @app.get("/opportunities.ics", summary="Subscribable calendar of approved opportunities")
 def opportunities_ics():
     from central import opportunities as opp

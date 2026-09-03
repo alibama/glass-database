@@ -108,6 +108,10 @@ and [`deploy/AUTH.md`](deploy/AUTH.md).
 
 Objects can carry a **re-identification fingerprint** (perceptual hashes over many angles, via [object-fingerprint](https://github.com/alibama/object-fingerprint)): enroll a piece in Glowtbook, and anyone can later confirm *this is the same physical object* by matching a fresh camera capture in Explore. The fingerprint is embedded in the object's C2PA credential. Full protocol (descriptors, calibration, thresholds, best practices) + flowchart: [`docs/FINGERPRINT-PROTOCOL.md`](docs/FINGERPRINT-PROTOCOL.md).
 
+## Style traits (Venetian / façon-de-Venise)
+
+A SKOS controlled vocabulary of observable style traits (70 concepts / 10 facets — stem, filigrana, metal, decoration, making evidence…), tagged at capture and linked to Getty AAT / Wikidata / the Corning Glass Dictionary. Served at `/api/vocab/glass-traits.ttl`. Prospectus + diagram: [`docs/GLASS-TRAITS.md`](docs/GLASS-TRAITS.md).
+
 ## Accessibility
 
 The **Explore → Objects** view is built to the [mDLAUG](https://sites.uwm.edu/mdlaug/) mobile digital-library accessibility guidelines — named collection lists, real image alt text, live result counts, per-item position, and provenance as data tables. See [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md).

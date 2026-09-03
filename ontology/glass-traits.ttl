@@ -1,0 +1,531 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix dct:  <http://purl.org/dc/terms/> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix gdt:  <https://glassdatabase.org/vocab/glass-traits#> .
+@prefix aat:  <http://vocab.getty.edu/aat/> .
+@prefix wd:   <http://www.wikidata.org/entity/> .
+
+<https://glassdatabase.org/vocab/glass-traits> a skos:ConceptScheme ;
+  dct:title "Glass Database — Venetian & façon-de-Venise trait thesaurus" ;
+  dct:description "Observable style traits of Renaissance Venetian-style drinking glasses. Traits describe features, not attributions." ;
+  dct:license <https://creativecommons.org/licenses/by/4.0/> .
+
+gdt:facet-form a skos:Collection ;
+  skos:prefLabel "Vessel form" ;
+  skos:definition "Overall type of the drinking vessel." ;
+  skos:member gdt:goblet, gdt:tazza, gdt:flute, gdt:beaker, gdt:tumbler, gdt:ewer .
+
+gdt:facet-bowl a skos:Collection ;
+  skos:prefLabel "Bowl form" ;
+  skos:definition "Shape of the cup/bowl." ;
+  skos:member gdt:bowl-round-funnel, gdt:bowl-conical, gdt:bowl-bucket, gdt:bowl-bell, gdt:bowl-ovoid, gdt:bowl-thistle, gdt:bowl-cup .
+
+gdt:facet-stem a skos:Collection ;
+  skos:prefLabel "Stem type" ;
+  skos:definition "Construction and form of the stem — the most diagnostic feature." ;
+  skos:member gdt:stem-hollow-blown, gdt:stem-solid-drawn, gdt:stem-baluster, gdt:stem-inverted-baluster, gdt:stem-knopped, gdt:stem-ribbed-knop, gdt:stem-figured, gdt:stem-serpent, gdt:stem-winged, gdt:stem-hollow-quatrefoil, gdt:stem-cigar .
+
+gdt:facet-knop a skos:Collection ;
+  skos:prefLabel "Knop / collar" ;
+  skos:definition "Knops, mereses and collars along the stem." ;
+  skos:member gdt:merese, gdt:knop-hollow, gdt:knop-solid, gdt:knop-cushion, gdt:knop-acorn .
+
+gdt:facet-foot a skos:Collection ;
+  skos:prefLabel "Foot & pontil" ;
+  skos:definition "Foot construction and pontil treatment." ;
+  skos:member gdt:foot-folded, gdt:foot-conical, gdt:foot-domed, gdt:foot-spreading, gdt:pontil-rough, gdt:pontil-ground .
+
+gdt:facet-rim a skos:Collection ;
+  skos:prefLabel "Rim" ;
+  skos:definition "Finishing of the rim." ;
+  skos:member gdt:rim-folded-in, gdt:rim-folded-out, gdt:rim-plain, gdt:rim-everted, gdt:rim-tooled .
+
+gdt:facet-metal a skos:Collection ;
+  skos:prefLabel "Metal / body glass" ;
+  skos:definition "The glass itself — colour and composition family." ;
+  skos:member gdt:cristallo, gdt:vitrum-blancum, gdt:calcedonio, gdt:lattimo, gdt:coloured-cobalt, gdt:coloured-manganese, gdt:aventurine-metal .
+
+gdt:facet-filigrana a skos:Collection ;
+  skos:prefLabel "Filigrana decoration" ;
+  skos:definition "White/coloured thread (canework) decoration families." ;
+  skos:member gdt:filigrana, gdt:vetro-a-fili, gdt:vetro-a-retortoli, gdt:vetro-a-reticello, gdt:zanfirico .
+
+gdt:facet-decoration a skos:Collection ;
+  skos:prefLabel "Other decoration" ;
+  skos:definition "Surface and applied decoration beyond filigrana." ;
+  skos:member gdt:mould-ribbing, gdt:wrythen, gdt:ice-glass, gdt:diamond-point, gdt:gilding, gdt:cold-enamel, gdt:applied-trails, gdt:prunts, gdt:pincered-work, gdt:aventurine-dec .
+
+gdt:facet-evidence a skos:Collection ;
+  skos:prefLabel "Making evidence & condition" ;
+  skos:definition "Tooling, wear, and condition features (for study/attribution)." ;
+  skos:member gdt:tool-marks, gdt:straw-marks, gdt:wear-ring, gdt:mould-seams, gdt:internal-bubbles, gdt:weathering, gdt:devitrification, gdt:repair .
+
+gdt:goblet a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Goblet"@en ;
+  skos:altLabel "calice"@en ;
+  skos:definition "Stemmed drinking vessel with a bowl on a footed stem."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:tazza a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Tazza"@en ;
+  skos:definition "Shallow wide bowl on a stemmed foot; a display/drinking form."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:flute a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Flute"@en ;
+  skos:definition "Tall narrow bowl for sparkling or ceremonial drinking."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:beaker a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Beaker"@en ;
+  skos:altLabel "bicchiere"@en ;
+  skos:definition "Footless or low-footed tumbler form."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:tumbler a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Tumbler"@en ;
+  skos:definition "Flat-based drinking vessel without a stem."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:ewer a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Ewer / jug"@en ;
+  skos:definition "Pouring vessel with handle and spout."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:bowl-round-funnel a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Round-funnel bowl"@en ;
+  skos:definition "Rounded base opening into a funnel."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:bowl-conical a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Conical bowl"@en ;
+  skos:definition "Straight-sided cone."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:bowl-bucket a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Bucket bowl"@en ;
+  skos:definition "Cylindrical, flat-based bowl."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:bowl-bell a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Bell bowl"@en ;
+  skos:definition "Bell-shaped, flaring to the rim."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:bowl-ovoid a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Ovoid bowl"@en ;
+  skos:definition "Egg-shaped bowl."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:bowl-thistle a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Thistle bowl"@en ;
+  skos:definition "Bulbous base with a flaring upper section."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:bowl-cup a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Cup-shaped bowl"@en ;
+  skos:definition "Shallow rounded cup."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-hollow-blown a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Hollow blown stem"@en ;
+  skos:definition "Stem blown as a hollow form, often moulded."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-solid-drawn a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Solid drawn stem"@en ;
+  skos:definition "Solid stem drawn from the bowl or foot gather."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-baluster a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Baluster stem"@en ;
+  skos:definition "Vase-profile swelling stem."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-inverted-baluster a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Inverted baluster stem"@en ;
+  skos:definition "Baluster with the swelling uppermost."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-knopped a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Knopped stem"@en ;
+  skos:definition "Stem articulated by one or more knops."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-ribbed-knop a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Mould-blown ribbed knop stem"@en ;
+  skos:altLabel "melon knop"@en ;
+  skos:altLabel "pumpkin knop"@en ;
+  skos:definition "Hollow knop blown in a ribbed mould (the 'flattened pumpkin/melon' knop)."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-figured a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Figured / pincered stem"@en ;
+  skos:altLabel "mereses stem"@en ;
+  skos:definition "Stem worked with pincers into figural or moulded forms (lion masks, etc.)."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-serpent a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Serpent stem"@en ;
+  skos:altLabel "à serpent"@en ;
+  skos:altLabel "vetro a serpenti"@en ;
+  skos:definition "Elaborate pincered/trailed stem of coiled 'serpent' form, often with coloured trails."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-winged a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Winged stem"@en ;
+  skos:altLabel "flügelglas"@en ;
+  skos:altLabel "à ailettes"@en ;
+  skos:altLabel "winged glass"@en ;
+  skos:definition "Stem with applied pincered 'wings', often blue trails (Flügelglas / verre à ailettes)."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-hollow-quatrefoil a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Hollow quatrefoil stem"@en ;
+  skos:definition "Hollow stem pinched into a lobed section."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:stem-cigar a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Cylindrical / cigar stem"@en ;
+  skos:definition "Plain straight cylindrical stem."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:merese a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Merese"@en ;
+  skos:altLabel "wafer"@en ;
+  skos:altLabel "collar"@en ;
+  skos:definition "Flat glass wafer/collar joining bowl, stem, and foot."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:knop-hollow a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Hollow knop"@en ;
+  skos:definition "Blown hollow swelling in the stem."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:knop-solid a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Solid knop"@en ;
+  skos:definition "Solid swelling in the stem."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:knop-cushion a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Cushion knop"@en ;
+  skos:definition "Flattened cushion-shaped knop."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:knop-acorn a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Acorn knop"@en ;
+  skos:definition "Acorn-shaped knop."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:foot-folded a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Folded foot"@en ;
+  skos:altLabel "folded conical foot"@en ;
+  skos:definition "Foot rim folded under for strength."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:foot-conical a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Conical foot"@en ;
+  skos:definition "Cone-shaped spreading foot."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:foot-domed a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Domed foot"@en ;
+  skos:definition "Raised domed foot."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:foot-spreading a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Spreading foot"@en ;
+  skos:definition "Wide low spreading foot."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:pontil-rough a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Rough pontil scar"@en ;
+  skos:altLabel "pontil mark"@en ;
+  skos:definition "Unfinished pontil scar on the foot underside."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:pontil-ground a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Ground/polished pontil"@en ;
+  skos:definition "Pontil scar ground and polished smooth."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:rim-folded-in a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Inward-folded rim"@en ;
+  skos:definition "Rim folded inward."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:rim-folded-out a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Outward-folded rim"@en ;
+  skos:definition "Rim folded outward."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:rim-plain a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Plain fire-polished rim"@en ;
+  skos:definition "Simple rounded fire-polished rim."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:rim-everted a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Everted / flared rim"@en ;
+  skos:definition "Rim turned outward."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:rim-tooled a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Tooled / pinched rim"@en ;
+  skos:definition "Rim worked with tools or pincers."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:cristallo a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Cristallo"@en ;
+  skos:altLabel "colourless"@en ;
+  skos:definition "Very pure near-colourless soda glass developed on Murano, imitating rock crystal."@en ;
+  rdfs:seeAlso <https://www.cmog.org/glass-dictionary/cristallo> ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:vitrum-blancum a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Tinged 'green' metal"@en ;
+  skos:altLabel "verre de fougère"@en ;
+  skos:altLabel "fern glass"@en ;
+  skos:definition "Slightly greenish/greyish or smoky metal (e.g. fern-ash verre de fougère)."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:calcedonio a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Calcedonio"@en ;
+  skos:altLabel "chalcedony glass"@en ;
+  skos:definition "Marbled opaque glass imitating chalcedony/agate."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:lattimo a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Lattimo (opaque white)"@en ;
+  skos:altLabel "milk glass"@en ;
+  skos:definition "Opaque white glass, used as a body or as threads."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:coloured-cobalt a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Cobalt-blue metal"@en ;
+  skos:altLabel "blue"@en ;
+  skos:definition "Deep blue body or trails from cobalt."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:coloured-manganese a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Manganese-purple metal"@en ;
+  skos:definition "Purple/amethyst body from manganese."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:aventurine-metal a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Aventurine metal"@en ;
+  skos:altLabel "avventurina"@en ;
+  skos:definition "Glass with sparkling copper crystals."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:filigrana a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Filigrana (canework)"@en ;
+  skos:altLabel "filigree glass"@en ;
+  skos:altLabel "latticino"@en ;
+  skos:altLabel "latticinio"@en ;
+  skos:definition "Decoration using white or coloured glass canes/threads embedded in clear glass."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:vetro-a-fili a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Vetro a fili"@en ;
+  skos:altLabel "a fili"@en ;
+  skos:altLabel "thread glass"@en ;
+  skos:definition "Parallel straight threads/canes."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:vetro-a-retortoli a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Vetro a retortoli"@en ;
+  skos:altLabel "a retortoli"@en ;
+  skos:altLabel "latticino twist"@en ;
+  skos:definition "Twisted cable canes (spiralled threads)."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:vetro-a-reticello a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Vetro a reticello"@en ;
+  skos:altLabel "reticello"@en ;
+  skos:altLabel "net glass"@en ;
+  skos:definition "Crosshatched 'little net' of canes with a regular grid of trapped air bubbles."@en ;
+  rdfs:seeAlso <https://www.cmog.org/glass-dictionary/reticello> ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:zanfirico a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Zanfirico"@en ;
+  skos:altLabel "zanfirico canes"@en ;
+  skos:definition "Later term for twisted-cane (a retortoli–type) filigrana rods."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:mould-ribbing a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Mould-blown ribbing"@en ;
+  skos:altLabel "optic ribbing"@en ;
+  skos:definition "Vertical ribs from an optic/dip mould."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:wrythen a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Wrythen / twisted ribbing"@en ;
+  skos:altLabel "wrything"@en ;
+  skos:definition "Ribs twisted into a spiral."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:ice-glass a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Ice glass (ghiaccio)"@en ;
+  skos:altLabel "ghiaccio"@en ;
+  skos:altLabel "craquelle"@en ;
+  skos:altLabel "crackle glass"@en ;
+  skos:definition "Crackled frosted surface from thermal shock/marvering in fragments."@en ;
+  rdfs:seeAlso <https://www.cmog.org/glass-dictionary/ice-glass> ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:diamond-point a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Diamond-point engraving"@en ;
+  skos:altLabel "diamond engraving"@en ;
+  skos:definition "Surface scratched with a diamond point."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:gilding a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Gilding"@en ;
+  skos:definition "Applied gold decoration."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:cold-enamel a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Enamel / cold painting"@en ;
+  skos:altLabel "smalti"@en ;
+  skos:altLabel "enamelled"@en ;
+  skos:definition "Painted enamels (smalti), fired or cold."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:applied-trails a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Applied trails"@en ;
+  skos:altLabel "trailing"@en ;
+  skos:definition "Threads of glass trailed onto the surface."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:prunts a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Prunts / raspberry prunts"@en ;
+  skos:altLabel "raspberry prunt"@en ;
+  skos:definition "Applied blobs, often stamped (raspberry)."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:pincered-work a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Pincered work"@en ;
+  skos:altLabel "waffles"@en ;
+  skos:altLabel "pincered trails"@en ;
+  skos:definition "Surface pinched into ridges/'waffles' with pincers."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:aventurine-dec a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Aventurine inclusions"@en ;
+  skos:definition "Sparkling aventurine used decoratively."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:tool-marks a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Tooling marks"@en ;
+  skos:definition "Marks from jacks/pincers, visible in raking light."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:straw-marks a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Straw marks"@en ;
+  skos:definition "Fine surface striations from the annealing tray."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:wear-ring a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Wear ring"@en ;
+  skos:altLabel "base wear"@en ;
+  skos:definition "Ring of fine scratches on the foot from use."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:mould-seams a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Mould seams"@en ;
+  skos:definition "Seam lines from a blowing mould."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:internal-bubbles a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Internal bubbles / seed"@en ;
+  skos:altLabel "seed"@en ;
+  skos:definition "Trapped bubbles characteristic of period metal."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:weathering a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Weathering / iridescence"@en ;
+  skos:altLabel "iridescence"@en ;
+  skos:definition "Surface alteration or iridescent film from burial/age."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:devitrification a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Devitrification"@en ;
+  skos:definition "Crystalline cloudiness in the glass."@en ;
+  skos:note "authority mapping pending alignment" .
+
+gdt:repair a skos:Concept ;
+  skos:inScheme <https://glassdatabase.org/vocab/glass-traits> ;
+  skos:prefLabel "Repair / restoration"@en ;
+  skos:definition "Evidence of repair, fill, or replacement."@en ;
+  skos:note "authority mapping pending alignment" .
+

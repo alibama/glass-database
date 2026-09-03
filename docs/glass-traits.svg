@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 640" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <rect x="0" y="0" width="1080" height="640" rx="18" fill="#ffffff" stroke="#e6e8ec" stroke-width="1.5"/>
+  <text x="40" y="44" font-size="22" font-weight="700" fill="#0f172a">Venetian &amp; façon-de-Venise trait thesaurus</text>
+  <text x="40" y="67" font-size="12.5" fill="#64748b">SKOS concept scheme · 10 facets · 70 concepts · observable features, not attributions · aligns to Getty AAT / Wikidata / Corning Glass Dictionary</text>
+
+  <!-- facet cards -->
+  <!-- row 1 -->
+  <g>
+    <rect x="40" y="92" width="240" height="118" rx="12" fill="#fff7ed" stroke="#fed7aa"/>
+    <text x="56" y="115" font-size="14" font-weight="700" fill="#9a3412">Stem type  ◆ diagnostic</text>
+    <text x="56" y="136" font-size="11" fill="#7c2d12">baluster · knopped · ribbed-knop</text>
+    <text x="56" y="152" font-size="11" fill="#7c2d12">serpent · winged (flügelglas)</text>
+    <text x="56" y="168" font-size="11" fill="#7c2d12">figured/pincered · hollow-blown</text>
+    <text x="56" y="192" font-size="10.5" font-style="italic" fill="#b45309">carries the most attribution weight</text>
+  </g>
+  <g>
+    <rect x="296" y="92" width="240" height="118" rx="12" fill="#f0f9ff" stroke="#bae6fd"/>
+    <text x="312" y="115" font-size="14" font-weight="700" fill="#075985">Filigrana  ◆ diagnostic</text>
+    <text x="312" y="136" font-size="11" fill="#0c4a6e">a fili · a retortoli (latticino)</text>
+    <text x="312" y="152" font-size="11" fill="#0c4a6e">a reticello (net + air traps)</text>
+    <text x="312" y="168" font-size="11" fill="#0c4a6e">zanfirico · lattimo threads</text>
+    <text x="312" y="192" font-size="10.5" font-style="italic" fill="#0369a1">canework families — very learnable by a model</text>
+  </g>
+  <g>
+    <rect x="552" y="92" width="228" height="118" rx="12" fill="#faf5ff" stroke="#e9d5ff"/>
+    <text x="568" y="115" font-size="14" font-weight="700" fill="#6b21a8">Metal / body</text>
+    <text x="568" y="136" font-size="11" fill="#581c87">cristallo · calcedonio</text>
+    <text x="568" y="152" font-size="11" fill="#581c87">lattimo · tinged (fern)</text>
+    <text x="568" y="168" font-size="11" fill="#581c87">cobalt · manganese · aventurine</text>
+    <text x="568" y="192" font-size="10.5" font-style="italic" fill="#7c3aed">composition &amp; colour family</text>
+  </g>
+  <g>
+    <rect x="796" y="92" width="244" height="118" rx="12" fill="#f0fdf4" stroke="#bbf7d0"/>
+    <text x="812" y="115" font-size="14" font-weight="700" fill="#166534">Other decoration</text>
+    <text x="812" y="136" font-size="11" fill="#14532d">ice glass (ghiaccio) · wrythen</text>
+    <text x="812" y="152" font-size="11" fill="#14532d">diamond-point · gilding · enamel</text>
+    <text x="812" y="168" font-size="11" fill="#14532d">trails · prunts · pincered 'waffles'</text>
+    <text x="812" y="192" font-size="10.5" font-style="italic" fill="#15803d">surface &amp; applied ornament</text>
+  </g>
+  <!-- row 2 -->
+  <g>
+    <rect x="40" y="226" width="176" height="104" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="56" y="249" font-size="13" font-weight="700" fill="#334155">Vessel form</text>
+    <text x="56" y="270" font-size="11" fill="#475569">goblet · tazza · flute</text>
+    <text x="56" y="286" font-size="11" fill="#475569">beaker · tumbler · ewer</text>
+  </g>
+  <g>
+    <rect x="232" y="226" width="176" height="104" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="248" y="249" font-size="13" font-weight="700" fill="#334155">Bowl form</text>
+    <text x="248" y="270" font-size="11" fill="#475569">round-funnel · conical</text>
+    <text x="248" y="286" font-size="11" fill="#475569">bucket · bell · thistle</text>
+  </g>
+  <g>
+    <rect x="424" y="226" width="176" height="104" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="440" y="249" font-size="13" font-weight="700" fill="#334155">Knop / collar</text>
+    <text x="440" y="270" font-size="11" fill="#475569">merese (wafer)</text>
+    <text x="440" y="286" font-size="11" fill="#475569">hollow · solid · cushion</text>
+  </g>
+  <g>
+    <rect x="616" y="226" width="176" height="104" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="632" y="249" font-size="13" font-weight="700" fill="#334155">Foot &amp; pontil</text>
+    <text x="632" y="270" font-size="11" fill="#475569">folded · conical · domed</text>
+    <text x="632" y="286" font-size="11" fill="#475569">rough vs. ground pontil</text>
+  </g>
+  <g>
+    <rect x="808" y="226" width="232" height="104" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="824" y="249" font-size="13" font-weight="700" fill="#334155">Rim</text>
+    <text x="824" y="270" font-size="11" fill="#475569">folded-in / -out · plain</text>
+    <text x="824" y="286" font-size="11" fill="#475569">everted · tooled</text>
+  </g>
+
+  <!-- evidence band -->
+  <rect x="40" y="346" width="1000" height="72" rx="12" fill="#fffbeb" stroke="#fcd34d"/>
+  <text x="56" y="369" font-size="13" font-weight="700" fill="#92400e">Making evidence &amp; condition  (for study / attribution)</text>
+  <text x="56" y="392" font-size="11" fill="#78350f">tooling marks · straw marks · wear ring · mould seams · internal seed/bubbles · weathering/iridescence · devitrification · repair</text>
+  <text x="56" y="409" font-size="10.5" font-style="italic" fill="#b45309">read in raking / transmitted light — the same passes the capture rig already shoots</text>
+
+  <!-- pipeline strip -->
+  <rect x="40" y="440" width="1000" height="120" rx="12" fill="#fbf7ff" stroke="#ecd9fb"/>
+  <text x="56" y="463" font-size="13" font-weight="700" fill="#6b21a8">How a trait is captured &amp; used</text>
+  <g font-size="11" fill="#3f3a48">
+    <rect x="56" y="476" width="150" height="66" rx="9" fill="#fff" stroke="#e2ddea"/>
+    <text x="131" y="500" text-anchor="middle" font-weight="600" fill="#1f2430">Tag at capture</text>
+    <text x="131" y="518" text-anchor="middle">faceted pick-lists</text>
+    <text x="131" y="532" text-anchor="middle">(human-authored)</text>
+    <text x="222" y="513" font-size="16" fill="#a78bfa">→</text>
+    <rect x="240" y="476" width="150" height="66" rx="9" fill="#fff" stroke="#e2ddea"/>
+    <text x="315" y="500" text-anchor="middle" font-weight="600" fill="#1f2430">Link to vocab</text>
+    <text x="315" y="518" text-anchor="middle">stable URI + AAT/</text>
+    <text x="315" y="532" text-anchor="middle">Wikidata seam</text>
+    <text x="406" y="513" font-size="16" fill="#a78bfa">→</text>
+    <rect x="424" y="476" width="150" height="66" rx="9" fill="#fff" stroke="#e2ddea"/>
+    <text x="499" y="500" text-anchor="middle" font-weight="600" fill="#1f2430">Bind to object</text>
+    <text x="499" y="518" text-anchor="middle">manifest + C2PA,</text>
+    <text x="499" y="532" text-anchor="middle">reviewed</text>
+    <text x="590" y="513" font-size="16" fill="#a78bfa">→</text>
+    <rect x="608" y="476" width="150" height="66" rx="9" fill="#fff" stroke="#e2ddea"/>
+    <text x="683" y="500" text-anchor="middle" font-weight="600" fill="#1f2430">Query / publish</text>
+    <text x="683" y="518" text-anchor="middle">SKOS · CIDOC-CRM</text>
+    <text x="683" y="532" text-anchor="middle">· LIDO export</text>
+    <text x="774" y="513" font-size="16" fill="#a78bfa">→</text>
+    <rect x="792" y="476" width="240" height="66" rx="9" fill="#f0f9ff" stroke="#bae6fd"/>
+    <text x="912" y="497" text-anchor="middle" font-weight="600" fill="#075985">Later: model suggests</text>
+    <text x="912" y="515" text-anchor="middle" fill="#0369a1">frozen DINOv2 + trained probe →</text>
+    <text x="912" y="530" text-anchor="middle" fill="#0369a1">confidence, expert confirms</text>
+  </g>
+
+  <text x="40" y="590" font-size="10.5" fill="#94a3b8">Traits describe observable features, never a verdict on origin. Attribution (Venice vs. façon de Venise vs. Altare/Hall/Netherlandish) stays with the scholarship.</text>
+  <text x="40" y="612" font-size="10.5" fill="#94a3b8">Authority mappings to Getty AAT / Wikidata are deliberately open — filling them is the joint work with an institutional partner.</text>
+</svg>

@@ -175,6 +175,23 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
         except Exception:
             fp_json = None
 
+    # style traits (linked to the SKOS thesaurus) travel with the piece
+    try:
+        tj = obj["traits_json"]
+    except Exception:
+        tj = None
+    if tj:
+        try:
+            import json as _json
+
+            from central import glass_traits as _gt
+            labels = [x for v in _json.loads(tj).values() for x in v]
+            resolved = _gt.resolve_many(labels)
+            if resolved:
+                manifest["traits"] = resolved
+        except Exception:
+            pass
+
     # Optionally embed Content Credentials (C2PA) in each condensed image
     do_sign = bool(sign) and c2pa_sign.available()
     prov = {"content_hash": manifest["content_hash"], "sourcing": manifest["sourcing"],

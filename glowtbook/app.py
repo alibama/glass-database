@@ -97,7 +97,7 @@ def store() -> sqlite3.Connection:
         dimensions TEXT DEFAULT '', description TEXT DEFAULT '',
         acquired TEXT DEFAULT '', current_location TEXT DEFAULT '',
         value_amount TEXT DEFAULT '', value_currency TEXT DEFAULT 'USD', insured INTEGER DEFAULT 0,
-        status TEXT DEFAULT 'in collection', fingerprint_json TEXT,
+        status TEXT DEFAULT 'in collection', fingerprint_json TEXT, traits_json TEXT,
         created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')));
       CREATE TABLE IF NOT EXISTS object_image (
         id INTEGER PRIMARY KEY, object_id INTEGER, user_id TEXT, role TEXT DEFAULT 'photo',
@@ -126,7 +126,7 @@ _EXPECTED_COLUMNS = {
     "object": [("acquired", "TEXT DEFAULT ''"), ("current_location", "TEXT DEFAULT ''"),
                ("value_amount", "TEXT DEFAULT ''"), ("value_currency", "TEXT DEFAULT 'USD'"),
                ("insured", "INTEGER DEFAULT 0"), ("status", "TEXT DEFAULT 'in collection'"),
-               ("updated_at", "TEXT"), ("fingerprint_json", "TEXT")],
+               ("updated_at", "TEXT"), ("fingerprint_json", "TEXT"), ("traits_json", "TEXT")],
     "object_image": [("role", "TEXT DEFAULT 'photo'"), ("caption", "TEXT DEFAULT ''")],
     "prov_event": [("location", "TEXT DEFAULT ''"), ("note", "TEXT DEFAULT ''"),
                    ("value_amount", "TEXT DEFAULT ''"), ("value_currency", "TEXT DEFAULT ''")],
@@ -307,8 +307,8 @@ elif page == "Objects":
         oid = st.selectbox("Open object", [o["id"] for o in objs], format_func=lambda i: labels[i])
         o = conn.execute("SELECT * FROM object WHERE id=? AND user_id=?", (oid, uid)).fetchone()
 
-        tab_meta, tab_media, tab_prov, tab_fp, tab_contrib = st.tabs(
-            ["Details", "Images", "Provenance", "Fingerprint", "Contribute"])
+        tab_meta, tab_media, tab_prov, tab_fp, tab_style, tab_contrib = st.tabs(
+            ["Details", "Images", "Provenance", "Fingerprint", "Style", "Contribute"])
 
         with tab_meta:
             title = st.text_input("Title", value=o["title"])
@@ -418,6 +418,34 @@ elif page == "Objects":
                     s = _fp.summary(cur_fp)
                     extra = " · DINOv2 embeddings included" if s.get("has_embeddings") else ""
                     st.success(f"On file: **{s['rating']}/100 ({s['tier']})**{extra}.")
+
+        with tab_style:
+            import json as _json2
+
+            from central import glass_traits as _gt
+            st.write("Tag observable **style traits** from the Venetian / façon-de-Venise "
+                     "thesaurus. These describe *features*, not an attribution of origin.")
+            cur = {}
+            try:
+                cur = _json2.loads(o["traits_json"]) if ("traits_json" in o.keys() and o["traits_json"]) else {}
+            except Exception:
+                cur = {}
+            picked = {}
+            for fid, flabel, _fdef in _gt.FACETS:
+                opts = _gt.labels_by_facet(fid)
+                picked[fid] = st.multiselect(flabel, opts, default=[x for x in cur.get(fid, []) if x in opts],
+                                             key=f"tr_{fid}_{oid}")
+            if st.button("Save traits", key=f"tr_save_{oid}"):
+                traits = {k: v for k, v in picked.items() if v}
+                conn.execute("UPDATE object SET traits_json=? WHERE id=? AND user_id=?",
+                             (_json2.dumps(traits), oid, uid))
+                conn.commit()
+                n = sum(len(v) for v in traits.values())
+                st.success(f"Saved {n} trait(s). They travel with the piece to the registry, "
+                           "linked to the SKOS vocabulary."); st.rerun()
+            st.caption("Vocabulary: [SKOS/Turtle](/api/vocab/glass-traits.ttl) · "
+                       "[JSON](/api/vocab/glass-traits.json) — aligns to Getty AAT / Wikidata / "
+                       "the Corning Glass Dictionary.")
 
         with tab_contrib:
             st.write("Publish a **condensed** version of this object and its provenance to the "

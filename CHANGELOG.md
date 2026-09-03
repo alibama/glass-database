@@ -5,6 +5,13 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Venetian trait thesaurus (SKOS) + capture-time tagging** — a controlled
+  vocabulary of observable style traits for façon-de-Venise glass (70 concepts / 10
+  facets), served as SKOS/Turtle + JSON at /api/vocab/glass-traits.{ttl,json} with
+  authority-mapping seams to Getty AAT / Wikidata / the Corning Glass Dictionary. A
+  Style tab tags traits on an object; they travel into the manifest linked to the
+  vocabulary. Prospectus (docs/GLASS-TRAITS.md) + facet diagram for institutional
+  alignment; traits describe features, never attributions.
 - **Homepage refresh** — sections for the directory + intake, opportunities
   calendar, community exchange/jobs/resources, Glowtbook provenance + physical
   fingerprint, and a Join section; Discord (discord.gg/9ek2UxvPT) and Instagram
