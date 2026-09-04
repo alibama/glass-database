@@ -81,3 +81,40 @@ def apply_theme(active: str = "") -> None:
         col.link_button(label, href, use_container_width=True,
                         type="primary" if key == active else "secondary")
     st.html('<div class="gdb-rule"></div>')
+
+
+def _client_ip() -> str:
+    """Best-effort client IP from the proxy headers (used only to derive a rotating
+    daily hash — never stored)."""
+    try:
+        import streamlit as st
+        h = st.context.headers
+        return (h.get("X-Forwarded-For") or h.get("X-Real-Ip") or "").split(",")[0].strip()
+    except Exception:
+        return ""
+
+
+def _dnt() -> bool:
+    try:
+        import streamlit as st
+        return st.context.headers.get("DNT") == "1"
+    except Exception:
+        return False
+
+
+def track(surface: str, view: str = "") -> None:
+    """Log one view per session per (surface, view) change. No-op on Do-Not-Track."""
+    try:
+        import streamlit as st
+        if _dnt():
+            return
+        key = f"{surface}:{view}"
+        if st.session_state.get("_gdb_seen") == key:
+            return
+        st.session_state["_gdb_seen"] = key
+        from central import analytics
+        from central.dbconn import connect
+        ip = _client_ip()
+        analytics.log(connect(), surface, view, "view", ip=ip, country=analytics.country_for(ip))
+    except Exception:
+        pass

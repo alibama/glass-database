@@ -27,6 +27,11 @@ def submit(conn, message: str, email: str = "", page: str = "", name: str = "") 
     conn.execute("INSERT INTO feedback (id,message,email,page,name,created_at) VALUES (?,?,?,?,?,?)",
                  (fid, message.strip(), email.strip(), page, name.strip(), now))
     conn.commit()
+    try:
+        from central import analytics
+        analytics.log(conn, "feedback", "", "feedback")
+    except Exception:
+        pass
     notify.notify_message("💬 New site feedback",
                           {"From": name or email or "anonymous", "Page": page or "—",
                            "Message": message[:1000]})

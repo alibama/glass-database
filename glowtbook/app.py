@@ -64,6 +64,9 @@ st.set_page_config(page_title="Glowtbook", page_icon="🔥", layout="centered")
 from brand import apply_theme  # noqa: E402
 
 apply_theme("glowtbook")
+from brand import track as _track
+
+_track("glowtbook")
 
 # Mobile polish: tighter padding, comfortable tap targets when installed as a PWA.
 st.html("""<style>

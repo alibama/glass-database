@@ -5,6 +5,11 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Analytics (privacy-first, self-hosted)** — Admin → 📊 Analytics shows page
+  views, approximate visitors, which surfaces/views are used, submissions, and
+  (optional) country. No cookies, no third parties, no raw IPs stored (visitors are
+  a per-day rotating hash), Do-Not-Track honoured. Optional GeoLite2 country lookup;
+  deploy/ANALYTICS.md covers that plus GoAccess (log-based geo) and Umami/Plausible.
 - **Every content addition now pings Discord** — object contributions were the
   gap: a staged object submission now notifies with a **one-click Approve** that
   actually *promotes* it into the public registry (shared promotion logic used by

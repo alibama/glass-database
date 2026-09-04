@@ -67,6 +67,11 @@ def submit(conn, fields: dict, base_url: str = "") -> str:
     conn.execute(f'INSERT INTO "{TABLE}" ({", ".join(chr(34)+c+chr(34) for c in allc)}) '
                  f'VALUES ({", ".join("?" for _ in allc)})', vals)
     conn.commit()
+    try:
+        from central import analytics
+        analytics.log(conn, "opportunities", "", "submit:opportunity")
+    except Exception:
+        pass
     from central import notify
     notify.notify_submission("opportunity", fields.get("title") or "Opportunity",
                              {"Type": fields.get("opp_type"), "Org": fields.get("organization"),

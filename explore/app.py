@@ -157,6 +157,9 @@ if st.sidebar.button("↻ Refresh data"):
 mode = st.sidebar.radio("View",
                         ["Datasets", "Objects (provenance)", "Opportunities", "Community", "Submit"],
                         label_visibility="collapsed")
+from brand import track as _track
+
+_track("explore", mode)
 
 with st.sidebar.expander("💬 Send feedback"):
     with st.form("site_feedback", clear_on_submit=True):

@@ -48,8 +48,11 @@ conn = _c()
 st.sidebar.title("🛠️ Admin")
 st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'}**")
 section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue",
-                                       "🧹 Duplicates", "💬 Discord", "📮 Feedback"],
+                                       "🧹 Duplicates", "💬 Discord", "📮 Feedback", "📊 Analytics"],
                            label_visibility="collapsed")
+from brand import track as _track
+
+_track("admin", section)
 
 
 def datasets(vis_all=True):
@@ -379,6 +382,52 @@ elif section == "📮 Feedback":
             if not it["resolved"]:
                 if st.button("Mark resolved", key=f"fb_{it['id']}"):
                     feedback.resolve(conn, it["id"]); st.rerun()
+
+# ===========================================================================
+# ANALYTICS
+# ===========================================================================
+elif section == "📊 Analytics":
+    import pandas as _pd
+
+    from central import analytics
+    st.header("Usage analytics")
+    st.caption("Self-hosted, cookieless, no raw IPs stored. Views are counted once per "
+               "session; visitors are a per-day rotating hash. Do-Not-Track is honoured.")
+    days = st.radio("Window", [7, 30, 90], index=1, horizontal=True, format_func=lambda d: f"{d} days")
+    s = analytics.summary(conn, days)
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Page views", f"{s['views']:,}")
+    m2.metric("Visitors (approx.)", f"{s['visitors']:,}")
+    m3.metric("Submissions", f"{sum(n for e, n in s['by_event'] if str(e).startswith('submit')):,}")
+
+    if s["by_day"]:
+        df = _pd.DataFrame(s["by_day"], columns=["day", "views", "visitors"]).set_index("day")
+        st.line_chart(df)
+    else:
+        st.info("No analytics yet — data appears as people use the site.")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.subheader("By surface")
+        if s["by_surface"]:
+            st.dataframe(_pd.DataFrame(s["by_surface"], columns=["surface", "views", "visitors"]),
+                         hide_index=True, use_container_width=True)
+        st.subheader("Most-used views")
+        if s["by_view"]:
+            st.dataframe(_pd.DataFrame(s["by_view"], columns=["view", "views"]),
+                         hide_index=True, use_container_width=True)
+    with c2:
+        st.subheader("Events")
+        if s["by_event"]:
+            st.dataframe(_pd.DataFrame(s["by_event"], columns=["event", "count"]),
+                         hide_index=True, use_container_width=True)
+        st.subheader("Countries")
+        if s["by_country"]:
+            st.dataframe(_pd.DataFrame(s["by_country"], columns=["country", "visitors"]),
+                         hide_index=True, use_container_width=True)
+        else:
+            st.caption("Country needs a GeoLite2 DB (set GEOIP_DB) — or use GoAccess on the "
+                       "Apache logs for rich geo. See deploy/ANALYTICS.md.")
 
 # ===========================================================================
 # DUPLICATES

@@ -215,6 +215,11 @@ def submit(conn, key: str, values: dict, base_url: str = "") -> str:
     public = {fd["label"]: _flatten(fd, values.get(fd["name"]))
               for fd in dfs if not fd["private"]}
     title = str(values.get(dfs[0]["name"]) or f["title"]).strip()
+    try:
+        from central import analytics
+        analytics.log(conn, "intake", key, f"submit:{key}")
+    except Exception:
+        pass
     notify.notify_submission(f["title"], title,
                              {k: v for k, v in public.items() if v}, f["table"], rid, base_url)
     return rid
