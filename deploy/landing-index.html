@@ -46,21 +46,26 @@
     .signup button { padding: .7rem 1.2rem; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700;
       background: linear-gradient(180deg,#fb923c,#ea580c); color: #2a1400; font-size: 1rem; }
     .signup-msg { color: #fbcfa6; font-size: .92rem; min-height: 1.2rem; margin: .5rem 0 0; }
-    .shots { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin: 1.6rem 0 0; }
-    .shots figure { margin: 0; max-width: 240px; text-align: center; }
-    .shots img { width: 100%; height: 300px; object-fit: cover; border-radius: 16px;
-      border: 1px solid #e6e2ea; box-shadow: 0 10px 30px rgba(28,18,34,.14); background:#faf7fb; }
+    .shots { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin: 1.6rem 0 0; align-items: flex-start; }
+    .shots figure { margin: 0; max-width: 250px; text-align: center; }
+    .shots img { width: 100%; height: 480px; object-fit: contain; border-radius: 16px;
+      border: 1px solid #e6e2ea; box-shadow: 0 10px 30px rgba(28,18,34,.14); background:#0f0b13; }
     .shots figcaption { margin-top: .5rem; color: var(--slate); font-size: .86rem; }
+    .shots figcaption a { color: var(--ember); }
     .btn { display: inline-block; padding: .8rem 1.4rem; border-radius: 999px;
         font-weight: 600; text-decoration: none; font-size: 1.02rem; }
     .btn.primary { background: linear-gradient(180deg, var(--ember), var(--molten-deep)); color: #2a1400; }
     .btn.primary:hover { filter: brightness(1.06); }
     .btn.ghost { color: #f6eef2; border: 1px solid rgba(246,238,242,.35); }
     .btn.ghost:hover { border-color: #f6eef2; }
+    .feature-note .btn.ghost { color: var(--ink); border-color: var(--line); }
+    .feature-note .btn.ghost:hover { border-color: var(--ember); color: var(--ember); }
     .scope { border-bottom: 1px solid var(--line); }
     .scope .wrap { display: flex; flex-wrap: wrap; gap: 1rem 2.2rem;
         padding-top: 1.4rem; padding-bottom: 1.4rem; align-items: baseline; }
-    .scope b { font-family: var(--display); font-weight: 600; font-size: 1.15rem; color: var(--ink); }
+    .scope b, .scope a { font-family: var(--display); font-weight: 600; font-size: 1.15rem; color: var(--ink); }
+    .scope a { text-decoration: none; border-bottom: 2px solid transparent; }
+    .scope a:hover { border-bottom-color: var(--ember); }
     .scope span { color: var(--slate); }
     section { padding: 4rem 0; border-bottom: 1px solid var(--line); }
     .kicker { font-family: var(--display); font-weight: 600; font-size: clamp(1.7rem,3.6vw,2.4rem);
@@ -119,7 +124,7 @@
 
   <div class="scope"><div class="wrap">
     <span>What's in it:</span>
-    <b>Artists</b><b>Studios</b><b>Objects</b><b>Opportunities</b><b>Exchange</b><b>Jobs</b><b>Resources</b>
+    <a href="/explore/?view=datasets">Artists</a><a href="/explore/?view=datasets">Studios</a><a href="/explore/?view=objects">Objects</a><a href="/explore/?view=opportunities">Opportunities</a><a href="/explore/?view=community">Exchange</a><a href="/explore/?view=community">Jobs</a><a href="/explore/?view=community">Resources</a>
   </div></div>
 
   <main class="wrap">
@@ -250,7 +255,8 @@
           piece on the barcode mat, coverage at 100."><figcaption>Capture — orbit the piece until
           coverage reads 100.</figcaption></figure>
         <figure><img src="/barcoding/piece.jpg" alt="A blue and green glass paperweight on the
-          printed ArUco + colour-checker mat."><figcaption>The mat gives true scale and colour.</figcaption></figure>
+          printed ArUco + colour-checker mat."><figcaption>The <a href="/fingerprint/capture-mat.pdf">printable
+          mat</a> gives true scale and colour.</figcaption></figure>
         <figure><img src="/barcoding/review.jpg" alt="A grid of kept frames from many angles, with
           an Export fingerprint button."><figcaption>Every angle becomes one exportable barcode.</figcaption></figure>
       </div>

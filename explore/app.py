@@ -154,9 +154,15 @@ st.sidebar.caption("Public data from the Glass Database. Play with it, filter it
 if st.sidebar.button("↻ Refresh data"):
     st.cache_data.clear(); st.rerun()
 
-mode = st.sidebar.radio("View",
-                        ["Datasets", "Objects (provenance)", "Opportunities", "Community", "Submit"],
-                        label_visibility="collapsed")
+_VIEWS = ["Datasets", "Objects (provenance)", "Opportunities", "Community", "Submit"]
+_VALIAS = {"datasets": "Datasets", "objects": "Objects (provenance)",
+           "opportunities": "Opportunities", "community": "Community", "submit": "Submit"}
+try:
+    _qp = (st.query_params.get("view") or "").lower()
+except Exception:
+    _qp = ""
+_vdefault = _VIEWS.index(_VALIAS[_qp]) if _qp in _VALIAS else 0
+mode = st.sidebar.radio("View", _VIEWS, index=_vdefault, label_visibility="collapsed")
 from brand import track as _track
 
 _track("explore", mode)
