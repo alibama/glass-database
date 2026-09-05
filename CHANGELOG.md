@@ -5,6 +5,25 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Homepage: 'digital barcoding' section** — brands the re-identification fingerprint as a
+  barcode you read off the object, with real capture screenshots, the C2PA provenance tie-in,
+  a clear *experimental* label, and Try-the-app / Print-the-mat CTAs.
+- **Admin bulk-set + undo** — Batch tools gains a column bulk-set ('set region=Virginia
+  where city=Crozet', with a live match count) and an automatic snapshot before every
+  batch op (CSV import, find/replace, bulk-set) with one-click Restore
+  (central/snapshots.py, last 8 kept per table).
+- **Newsletter signup** — prominent homepage form → POST /api/subscribe (stored, deduped,
+  Discord-pinged); admin sees subscriber count + CSV export. Homepage refreshed with a
+  Join/subscribe section and framing (from the hot shop to the archive; residencies;
+  museum-grade cataloging aligned to Getty AAT/Wikidata; accessibility).
+- **Editable tables + batch tools for admins** — Admin → Datasets gains an ✏️ Edit
+  grid (edit cells, add rows, tick-to-delete; admin edits publish on save) and a ⚙️
+  Batch tools tab: CSV export/import round-trip (upsert by _row_id) and column
+  find & replace (whole-cell or substring).
+- **Admin roles by Google login + login ledger** — every Google sign-in is
+  recorded (name + email, Admin → 👥 Users); admins are set via GLASSDB_ADMIN_EMAILS
+  (bootstrap) or promoted in the UI. Opt-in GLASSDB_ADMIN_OIDC=1 gates the console on
+  Google admin role. See deploy/ADMIN-ROLES.md.
 - **Analytics (privacy-first, self-hosted)** — Admin → 📊 Analytics shows page
   views, approximate visitors, which surfaces/views are used, submissions, and
   (optional) country. No cookies, no third parties, no raw IPs stored (visitors are

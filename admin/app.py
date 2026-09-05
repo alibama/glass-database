@@ -18,6 +18,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from difflib import SequenceMatcher
@@ -45,10 +46,36 @@ def _c():
 
 conn = _c()
 
+# Optional Google-role gate: set GLASSDB_ADMIN_OIDC=1 (once the admin URL is a
+# registered OAuth redirect) to gate the console on Google admins instead of / in
+# addition to the proxy's basic auth. Default off, so existing setups keep working.
+if os.environ.get("GLASSDB_ADMIN_OIDC") == "1":
+    from central import users
+    try:
+        logged_in = st.user.is_logged_in
+    except Exception:
+        logged_in = False
+    if not logged_in:
+        st.title("🛠️ Admin")
+        st.write("Sign in with Google to continue.")
+        if st.button("Log in", type="primary"):
+            st.login()
+        st.stop()
+    _email = getattr(st.user, "email", "") or ""
+    users.record_login(conn, _email, getattr(st.user, "name", "") or "")
+    if not users.is_admin(conn, _email):
+        st.title("🛠️ Admin")
+        st.error(f"You're signed in as **{_email}**, but you're not an administrator. "
+                 "Ask an existing admin to promote you (Admin → Users), then reload.")
+        if st.button("Log out"):
+            st.logout()
+        st.stop()
+
 st.sidebar.title("🛠️ Admin")
 st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'}**")
 section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue",
-                                       "🧹 Duplicates", "💬 Discord", "📮 Feedback", "📊 Analytics"],
+                                       "🧹 Duplicates", "💬 Discord", "📮 Feedback", "📊 Analytics",
+                                       "👥 Users"],
                            label_visibility="collapsed")
 from brand import track as _track
 
@@ -66,6 +93,85 @@ def columns(tbl):
     return conn.execute(
         "SELECT column, label, is_public FROM _columns WHERE tbl=? ORDER BY ordinal", (tbl,)
     ).fetchall()
+
+
+def _cell(v):
+    import pandas as _pd
+    return "" if v is None or (isinstance(v, float) and _pd.isna(v)) else str(v)
+
+
+def _apply_edits(tbl, orig_df, edited_df):
+    """Diff the editor grid against what was loaded and write updates/inserts/deletes.
+    Admin edits publish immediately (approved through the gate)."""
+    editable = [c for c in orig_df.columns if c != "_row_id"]
+    orig_ids = {str(x) for x in orig_df["_row_id"].dropna().tolist()}
+    edited_ids = {str(x) for x in edited_df["_row_id"].dropna().tolist() if str(x).strip()}
+    now = datetime.now(timezone.utc).isoformat()
+    updated = added = deleted = 0
+    for rid in orig_ids - edited_ids:          # deletions
+        conn.execute(f'DELETE FROM "{tbl}" WHERE _row_id=?', (rid,))
+        try:
+            conn.execute('DELETE FROM _approvals WHERE tbl=? AND row_id=?', (tbl, rid))
+        except Exception:
+            pass
+        deleted += 1
+    omap = {str(r["_row_id"]): r for _, r in orig_df.iterrows()}
+    for _, r in edited_df.iterrows():
+        rid = r.get("_row_id")
+        if rid is None or str(rid).strip() == "" or str(rid) == "nan":
+            vals = {c: _cell(r[c]) for c in editable}
+            if not any(v.strip() for v in vals.values()):
+                continue
+            nid = hashlib.sha1((tbl + "|edit|" + json.dumps(vals, sort_keys=True) + now
+                                + str(added)).encode()).hexdigest()[:16]
+            allc = ["_row_id", "_source_file", "_source_sheet", "_imported_at", *editable]
+            conn.execute(f'INSERT INTO "{tbl}" ({", ".join(chr(34)+x+chr(34) for x in allc)}) '
+                         f'VALUES ({", ".join("?" for _ in allc)})',
+                         [nid, "admin-ui", "admin-ui", now, *[vals[c] for c in editable]])
+            approvals.set_status(conn, tbl, [nid], "approved")
+            added += 1
+        else:
+            rid = str(rid); o = omap.get(rid)
+            if o is None:
+                continue
+            changed = {c: _cell(r[c]) for c in editable if _cell(o[c]) != _cell(r[c])}
+            if changed:
+                sets = ", ".join(f'"{c}"=?' for c in changed)
+                conn.execute(f'UPDATE "{tbl}" SET {sets} WHERE _row_id=?', [*changed.values(), rid])
+                approvals.set_status(conn, tbl, [rid], "approved")
+                updated += 1
+    conn.execute(f'UPDATE _datasets SET row_count=(SELECT COUNT(*) FROM "{tbl}") WHERE tbl=?', (tbl,))
+    conn.commit()
+    return {"updated": updated, "added": added, "deleted": deleted}
+
+
+def _import_csv(tbl, df):
+    """Upsert rows from a CSV. Rows with an existing _row_id update in place; rows
+    without one are inserted (with a fresh id) and published."""
+    have = {r[1] for r in conn.execute(f'PRAGMA table_info("{tbl}")')}
+    data_cols = [c for c in df.columns if c in have and c != "_row_id"]
+    now = datetime.now(timezone.utc).isoformat()
+    updated = added = 0
+    for _, r in df.iterrows():
+        rid = _cell(r["_row_id"]) if "_row_id" in df.columns else ""
+        vals = {c: _cell(r[c]) for c in data_cols}
+        if rid and conn.execute(f'SELECT 1 FROM "{tbl}" WHERE _row_id=?', (rid,)).fetchone():
+            sets = ", ".join(f'"{c}"=?' for c in data_cols)
+            conn.execute(f'UPDATE "{tbl}" SET {sets} WHERE _row_id=?', [*vals.values(), rid])
+            approvals.set_status(conn, tbl, [rid], "approved"); updated += 1
+        else:
+            if not any(v.strip() for v in vals.values()):
+                continue
+            nid = rid or hashlib.sha1((tbl + "|csv|" + json.dumps(vals, sort_keys=True)
+                                       + now + str(added)).encode()).hexdigest()[:16]
+            allc = ["_row_id", "_source_file", "_source_sheet", "_imported_at", *data_cols]
+            conn.execute(f'INSERT INTO "{tbl}" ({", ".join(chr(34)+x+chr(34) for x in allc)}) '
+                         f'VALUES ({", ".join("?" for _ in allc)})',
+                         [nid, "csv-import", "csv-import", now, *[vals[c] for c in data_cols]])
+            approvals.set_status(conn, tbl, [nid], "approved"); added += 1
+    conn.execute(f'UPDATE _datasets SET row_count=(SELECT COUNT(*) FROM "{tbl}") WHERE tbl=?', (tbl,))
+    conn.commit()
+    return {"updated": updated, "added": added}
 
 
 def ensure_submissions():
@@ -155,11 +261,27 @@ if section == "📋 Datasets":
     d = ds[i]; tbl = d["tbl"]; cols = columns(tbl)
     st.header(tbl)
     st.caption(f"{d['description']}  ·  {d['domain']}  ·  {d['visibility']}")
-    t_browse, t_add = st.tabs(["Browse", "➕ Add a row"])
+    t_browse, t_edit, t_add, t_batch = st.tabs(
+        ["Browse", "✏️ Edit", "➕ Add a row", "⚙️ Batch tools"])
     with t_browse:
         n = st.slider("Rows", 5, 200, 25)
         st.dataframe(pd.read_sql_query(f'SELECT * FROM "{tbl}" LIMIT {n}', conn),
                      width="stretch", hide_index=True)
+
+    with t_edit:
+        st.caption("Edit cells directly, add rows (＋ at the bottom), or tick rows and press "
+                   "delete. Saving publishes admin edits immediately.")
+        n2 = st.slider("Rows to load", 10, 1000, 200, key=f"editn_{tbl}")
+        orig = pd.read_sql_query(f'SELECT * FROM "{tbl}" LIMIT {n2}', conn)
+        internal = [c for c in orig.columns if c.startswith("_") and c != "_row_id"]
+        show = orig.drop(columns=internal)
+        edited = st.data_editor(show, num_rows="dynamic", width="stretch", hide_index=True,
+                                disabled=["_row_id"], key=f"editor_{tbl}")
+        if st.button("💾 Save changes", type="primary", key=f"save_{tbl}"):
+            res = _apply_edits(tbl, show, edited)
+            st.success(f"Saved — {res['updated']} updated, {res['added']} added, "
+                       f"{res['deleted']} deleted."); st.rerun()
+
     with t_add:
         with st.form("add", clear_on_submit=True):
             vals, grid = {}, st.columns(2)
@@ -181,6 +303,84 @@ if section == "📋 Datasets":
                     st.success(f"Added {rid} (published).")
                 else:
                     st.error("Fill at least one field.")
+
+    with t_batch:
+        from central import snapshots
+        st.subheader("CSV round-trip")
+        st.caption("Export, edit in a spreadsheet, re-import. Keep the `_row_id` column to update "
+                   "existing rows; blank it (or add new rows) to insert. Imports publish.")
+        full = pd.read_sql_query(f'SELECT * FROM "{tbl}"', conn)
+        st.download_button("⬇ Export CSV", full.to_csv(index=False),
+                           file_name=f"{tbl}.csv", mime="text/csv", key=f"exp_{tbl}")
+        up = st.file_uploader("Import CSV", type=["csv"], key=f"imp_{tbl}")
+        if up and st.button("Import CSV", type="primary", key=f"impbtn_{tbl}"):
+            snapshots.snapshot(conn, tbl, "before CSV import")
+            newdf = pd.read_csv(up, dtype=str).fillna("")
+            res = _import_csv(tbl, newdf)
+            st.success(f"Imported — {res['updated']} updated, {res['added']} added. "
+                       "A snapshot was saved (Undo below)."); st.rerun()
+
+        st.divider()
+        st.subheader("Find & replace in a column")
+        colnames = [c["column"] for c in cols] or [c for c in full.columns if not c.startswith("_")]
+        fr_col = st.selectbox("Column", colnames, key=f"frc_{tbl}")
+        a, b = st.columns(2)
+        find = a.text_input("Find", key=f"frf_{tbl}")
+        repl = b.text_input("Replace with", key=f"frr_{tbl}")
+        sub = st.checkbox("Substring (replace within cells, not whole-cell match)", key=f"frs_{tbl}")
+        if st.button("Apply replace", key=f"frg_{tbl}", disabled=not find):
+            snapshots.snapshot(conn, tbl, f"before replace in {fr_col}")
+            if sub:
+                cur = conn.execute(f'UPDATE "{tbl}" SET "{fr_col}"=REPLACE("{fr_col}",?,?) '
+                                   f'WHERE "{fr_col}" LIKE ?', (find, repl, f"%{find}%"))
+            else:
+                cur = conn.execute(f'UPDATE "{tbl}" SET "{fr_col}"=? WHERE "{fr_col}"=?', (repl, find))
+            conn.commit(); st.success(f"Replaced in {cur.rowcount} row(s). Snapshot saved (Undo below).")
+
+        st.divider()
+        st.subheader("Bulk set a column")
+        st.caption("Set a column to a value for rows matching a condition — e.g. set "
+                   "*region* = 'Virginia' where *city* = 'Crozet'.")
+        s1, s2 = st.columns(2)
+        set_col = s1.selectbox("Set column", colnames, key=f"bsc_{tbl}")
+        set_val = s2.text_input("to value", key=f"bsv_{tbl}")
+        w1, w2, w3 = st.columns(3)
+        where_col = w1.selectbox("where", ["(all rows)"] + colnames, key=f"bwc_{tbl}")
+        match = w2.selectbox("", ["equals", "contains", "is blank"], key=f"bwm_{tbl}",
+                             label_visibility="collapsed")
+        where_val = w3.text_input("value", key=f"bwv_{tbl}", disabled=(match == "is blank"))
+        # live preview of how many rows match
+        if where_col == "(all rows)":
+            clause, args = "1=1", []
+        elif match == "equals":
+            clause, args = f'"{where_col}"=?', [where_val]
+        elif match == "contains":
+            clause, args = f'"{where_col}" LIKE ?', [f"%{where_val}%"]
+        else:
+            clause, args = f'("{where_col}" IS NULL OR "{where_col}"="")', []
+        try:
+            n_match = conn.execute(f'SELECT COUNT(*) FROM "{tbl}" WHERE {clause}', args).fetchone()[0]
+        except Exception:
+            n_match = 0
+        st.caption(f"Matches **{n_match}** row(s).")
+        if st.button(f"Set {set_col} = “{set_val}” on {n_match} row(s)", key=f"bsgo_{tbl}",
+                     disabled=n_match == 0):
+            snapshots.snapshot(conn, tbl, f"before bulk set {set_col}")
+            cur = conn.execute(f'UPDATE "{tbl}" SET "{set_col}"=? WHERE {clause}', [set_val, *args])
+            conn.commit(); st.success(f"Set {cur.rowcount} row(s). Snapshot saved (Undo below).")
+
+        st.divider()
+        st.subheader("↩️ Undo / snapshots")
+        snaps = snapshots.list_snapshots(conn, tbl)
+        if not snaps:
+            st.caption("Snapshots are saved automatically before each batch operation.")
+        for sp in snaps:
+            cc1, cc2 = st.columns([3, 1])
+            cc1.caption(f"{sp['created_at'][:16].replace('T', ' ')} · {sp['rows']} rows · {sp['note']}")
+            if cc2.button("Restore", key=f"rest_{sp['id']}"):
+                snapshots.snapshot(conn, tbl, "before restore")   # so restore is itself undoable
+                r = snapshots.restore(conn, sp["id"])
+                st.success(f"Restored {r['rows']} rows." if r else "Restore failed."); st.rerun()
 
 # ===========================================================================
 # APPROVALS — the publication gate (nothing is public until approved)
@@ -400,6 +600,18 @@ elif section == "📊 Analytics":
     m2.metric("Visitors (approx.)", f"{s['visitors']:,}")
     m3.metric("Submissions", f"{sum(n for e, n in s['by_event'] if str(e).startswith('submit')):,}")
 
+    conn.execute("CREATE TABLE IF NOT EXISTS newsletter "
+                 "(email TEXT PRIMARY KEY, name TEXT, created_at TEXT, source TEXT)")
+    subs = conn.execute("SELECT email,name,created_at,source FROM newsletter ORDER BY created_at DESC").fetchall()
+    sc1, sc2 = st.columns([1, 3])
+    sc1.metric("Newsletter subscribers", f"{len(subs):,}")
+    if subs:
+        sc2.download_button("⬇ Export subscribers (CSV)",
+                            "email,name,created_at,source\n" + "\n".join(
+                                f'{r["email"]},{(r["name"] or "")},{r["created_at"]},{r["source"]}'
+                                for r in subs),
+                            file_name="subscribers.csv", mime="text/csv")
+
     if s["by_day"]:
         df = _pd.DataFrame(s["by_day"], columns=["day", "views", "visitors"]).set_index("day")
         st.line_chart(df)
@@ -428,6 +640,46 @@ elif section == "📊 Analytics":
         else:
             st.caption("Country needs a GeoLite2 DB (set GEOIP_DB) — or use GoAccess on the "
                        "Apache logs for rich geo. See deploy/ANALYTICS.md.")
+
+# ===========================================================================
+# USERS
+# ===========================================================================
+elif section == "👥 Users":
+    import os
+
+    from central import users
+    st.header("Users & administrators")
+    st.caption("Everyone who's signed in with Google (name + email only). Promote "
+               "someone to administrator, or add an admin by email before their first login.")
+    ppl = users.list_users(conn)
+    st.metric("Signed-in users", len(ppl))
+
+    with st.expander("➕ Grant admin by email (e.g. before they've logged in)"):
+        em = st.text_input("Email")
+        if st.button("Make administrator", disabled=not em.strip()):
+            users.set_admin(conn, em, True); st.success(f"{em.strip().lower()} is now an admin."); st.rerun()
+
+    for u in ppl:
+        with st.container(border=True):
+            c1, c2 = st.columns([3, 1])
+            role = "🛡️ admin (via config)" if u["via_config"] else ("🛡️ admin" if u["is_admin"] else "member")
+            c1.markdown(f"**{u['name'] or u['email']}** — {u['email']}  ·  {role}")
+            c1.caption(f"{u['logins']} logins · last {u['last_seen'][:16].replace('T', ' ')} · "
+                       f"since {u['first_seen'][:10]}")
+            if u["via_config"]:
+                c2.caption("set in GLASSDB_ADMIN_EMAILS")
+            elif u["is_admin"]:
+                if c2.button("Revoke admin", key=f"rv_{u['email']}"):
+                    users.set_admin(conn, u["email"], False); st.rerun()
+            else:
+                if c2.button("Make admin", key=f"mk_{u['email']}", type="primary"):
+                    users.set_admin(conn, u["email"], True); st.rerun()
+
+    if os.environ.get("GLASSDB_ADMIN_OIDC") != "1":
+        st.info("Admin access is currently gated by the proxy's basic auth. To gate it by "
+                "Google admin role instead, register the admin URL as an OAuth redirect and set "
+                "`GLASSDB_ADMIN_OIDC=1` (keep at least one email in `GLASSDB_ADMIN_EMAILS` so you "
+                "can't lock yourself out). See deploy/ADMIN-ROLES.md.")
 
 # ===========================================================================
 # DUPLICATES

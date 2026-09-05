@@ -98,3 +98,17 @@ def test_object_submission_one_click_promote(demo_db, monkeypatch):
     r = TestClient(app).get(f"/moderate?tbl=object_submissions&row={sub['id']}&action=approve&sig={sig}")
     assert r.status_code == 200 and "Approved" in r.text
     assert connect().execute("SELECT COUNT(*) FROM objects WHERE title='Test goblet'").fetchone()[0] == 1
+
+
+def test_newsletter_subscribe(demo_db):
+    import os
+    os.environ["GLASSDB_ADMIN_TOKEN"] = "k"
+    from fastapi.testclient import TestClient
+
+    from api.main import app
+    cl = TestClient(app)
+    assert cl.post("/subscribe", json={"email": "x@y.com"}).json()["new"] is True
+    assert cl.post("/subscribe", json={"email": "x@y.com"}).json()["new"] is False   # dedup
+    assert cl.post("/subscribe", json={"email": "bad"}).status_code == 400
+    assert cl.get("/subscribers.csv", headers={"X-API-Key": "k"}).status_code == 200
+    assert cl.get("/subscribers.csv").status_code == 403

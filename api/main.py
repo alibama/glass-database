@@ -26,7 +26,7 @@ import os
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query, Request, Response
+from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -244,6 +244,45 @@ def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (
         raise HTTPException(500, "Image could not be decoded")
     return Response(content=raw, media_type="image/jpeg",
                     headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.post("/subscribe", summary="Newsletter / notifications signup")
+def subscribe(payload: dict):
+    email = (payload.get("email") or "").strip().lower()
+    name = (payload.get("name") or "").strip()
+    if "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(400, "a valid email is required")
+    conn = connect()
+    conn.execute("CREATE TABLE IF NOT EXISTS newsletter "
+                 "(email TEXT PRIMARY KEY, name TEXT, created_at TEXT, source TEXT)")
+    fresh = conn.execute("SELECT 1 FROM newsletter WHERE email=?", (email,)).fetchone() is None
+    conn.execute("INSERT OR IGNORE INTO newsletter (email,name,created_at,source) "
+                 "VALUES (?,?,datetime('now'),?)", (email, name, payload.get("source") or "site"))
+    conn.commit()
+    if fresh:
+        try:
+            from central import analytics, notify
+            notify.notify_message("📫 New newsletter signup", {"Email": email, "Name": name or "—"})
+            analytics.log(conn, "site", "", "subscribe")
+        except Exception:
+            pass
+    return {"ok": True, "new": fresh}
+
+
+@app.get("/subscribers.csv", summary="Export newsletter subscribers (admin key)")
+def subscribers_csv(x_api_key: str = Header(default="")):
+    admin_key = os.environ.get("GLASSDB_ADMIN_TOKEN", "") or ADMIN_KEY
+    if not admin_key or x_api_key != admin_key:
+        raise HTTPException(403, "admin key required")
+    conn = connect()
+    conn.execute("CREATE TABLE IF NOT EXISTS newsletter "
+                 "(email TEXT PRIMARY KEY, name TEXT, created_at TEXT, source TEXT)")
+    rows = conn.execute("SELECT email,name,created_at,source FROM newsletter ORDER BY created_at DESC").fetchall()
+    out = "email,name,created_at,source\r\n" + "".join(
+        f'{r["email"]},"{(r["name"] or "").replace(chr(34), "")}",{r["created_at"]},{r["source"]}\r\n'
+        for r in rows)
+    return Response(out, media_type="text/csv",
+                    headers={"Content-Disposition": 'attachment; filename="subscribers.csv"'})
 
 
 @app.get("/moderate", summary="One-click approve/reject from a signed link (Discord)")

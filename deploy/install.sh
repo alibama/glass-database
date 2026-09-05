@@ -98,6 +98,11 @@ rsync -a --delete \
     "$SRC/" "$APP_DIR/"
 cp "$SRC/deploy/landing-index.html" "$APP_DIR/public/index.html"
 cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
+# Homepage 'digital barcoding' screenshots
+if [ -d "$SRC/deploy/barcoding" ]; then
+    mkdir -p "$APP_DIR/public/barcoding"
+    cp "$SRC/deploy/barcoding/"*.jpg "$APP_DIR/public/barcoding/" 2>/dev/null || true
+fi
 
 # Serve the object-fingerprint capture apps (they need the camera, so they run as
 # standalone browser pages, not inside the Streamlit iframe). Prefer the copies

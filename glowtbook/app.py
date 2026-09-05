@@ -212,6 +212,14 @@ def resolve_user():
         st.stop()
     uid = getattr(st.user, "sub", None) or getattr(st.user, "email", None) or "user"
     display = getattr(st.user, "name", None) or getattr(st.user, "email", None) or "you"
+    email = getattr(st.user, "email", None) or ""
+    if email and not st.session_state.get("_gdb_login_logged"):
+        st.session_state["_gdb_login_logged"] = True
+        try:
+            from central import users
+            users.record_login(store(), email, getattr(st.user, "name", "") or "")
+        except Exception:
+            pass
     return uid, display, False
 
 

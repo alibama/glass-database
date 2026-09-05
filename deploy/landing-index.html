@@ -39,6 +39,18 @@
     .social a { color: #fbcfa6; text-decoration: none; font-weight: 600; }
     .social a:hover { text-decoration: underline; }
     .social span { margin: 0 .5rem; opacity: .5; }
+    .signup { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; margin: 1.1rem auto 0; max-width: 30rem; }
+    .signup input { flex: 1 1 14rem; padding: .7rem .9rem; border-radius: 10px; border: 1px solid #6b4a63;
+      background: rgba(255,255,255,.06); color: #fff; font-size: 1rem; }
+    .signup input::placeholder { color: #c8b2c0; }
+    .signup button { padding: .7rem 1.2rem; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700;
+      background: linear-gradient(180deg,#fb923c,#ea580c); color: #2a1400; font-size: 1rem; }
+    .signup-msg { color: #fbcfa6; font-size: .92rem; min-height: 1.2rem; margin: .5rem 0 0; }
+    .shots { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin: 1.6rem 0 0; }
+    .shots figure { margin: 0; max-width: 240px; text-align: center; }
+    .shots img { width: 100%; height: 300px; object-fit: cover; border-radius: 16px;
+      border: 1px solid #e6e2ea; box-shadow: 0 10px 30px rgba(28,18,34,.14); background:#faf7fb; }
+    .shots figcaption { margin-top: .5rem; color: var(--slate); font-size: .86rem; }
     .btn { display: inline-block; padding: .8rem 1.4rem; border-radius: 999px;
         font-weight: 600; text-decoration: none; font-size: 1.02rem; }
     .btn.primary { background: linear-gradient(180deg, var(--ember), var(--molten-deep)); color: #2a1400; }
@@ -98,6 +110,11 @@
       <span>·</span>
       <a href="https://www.instagram.com/glassdatabase/">Instagram @glassdatabase</a>
     </p>
+    <form class="signup" onsubmit="return gdbSubscribe(event)">
+      <input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required>
+      <button type="submit">Get the newsletter</button>
+    </form>
+    <p class="signup-msg" id="signupMsg" role="status" aria-live="polite"></p>
   </header>
 
   <div class="scope"><div class="wrap">
@@ -147,8 +164,9 @@
 
     <section id="calendar">
       <h2 class="kicker">Every deadline in one calendar</h2>
-      <p class="sub">Open calls, residencies, and grants — as a month calendar you can browse,
-         or a feed you subscribe to once so new approved listings appear automatically.</p>
+      <p class="sub">Open calls, <strong>residencies</strong>, and grants — the chances to make
+         new work somewhere new. Browse them as a month calendar, or subscribe once so new
+         approved listings appear in your own calendar automatically.</p>
       <div class="surfaces">
         <a class="surface explore" href="/explore/">
           <h3>Opportunities calendar</h3>
@@ -183,9 +201,10 @@
     </section>
 
     <section id="glowtbook">
-      <h2 class="kicker">Give a piece a history that travels with it</h2>
-      <p class="sub">Glowtbook is a working journal and object registry for makers. Log a piece,
-         photograph it from the bench, and record where it's been.</p>
+      <h2 class="kicker">From the hot shop to the archive</h2>
+      <p class="sub">The making is live and fleeting; the record shouldn't be. Glowtbook is a
+         working bench journal and object registry for makers — log a piece, photograph it off
+         the pipe, and record where it's been.</p>
       <div class="split">
         <div class="surfaces" style="grid-template-columns:1fr">
           <a class="surface glow" href="/glowtbook/">
@@ -196,25 +215,75 @@
           </a>
         </div>
         <aside class="feature-note">
-          <h3>Provenance &amp; a physical fingerprint</h3>
+          <h3>Museum-grade cataloging, for everyone</h3>
           <p style="margin:.2rem 0 0;color:var(--slate)">When you contribute, the full-quality
              original and any private values stay with you. A condensed, public copy goes to the
              registry, carrying:</p>
           <ul class="flow">
-            <li>a preservation-grade archive of the originals (BagIt)</li>
+            <li>a preservation-grade archive of the originals (BagIt / OAIS)</li>
             <li>Content Credentials (C2PA) signed into the image</li>
-            <li>a re-identification <strong>fingerprint</strong> so a physical piece can be
-                confirmed later — anytime, in the browser</li>
-            <li>a review step before anything appears in public</li>
+            <li>a re-identification <strong>fingerprint</strong> to confirm a physical piece later</li>
+            <li>structured <strong>style traits</strong> aligned to Getty AAT &amp; Wikidata</li>
+            <li>a listing built to be <strong>screen-reader accessible</strong> from the start</li>
           </ul>
+          <p style="margin:.7rem 0 0;color:var(--slate);font-size:.92rem">Standards museums use
+             (SKOS, CIDOC-CRM, C2PA) — so a studio, a school, or a collection can all speak the
+             same language.</p>
         </aside>
       </div>
     </section>
 
+    <section id="barcoding">
+      <p style="text-align:center;margin:0 0 .3rem;color:var(--ember);font-weight:700;
+         letter-spacing:.06em;text-transform:uppercase;font-size:.8rem">Experimental</p>
+      <h2 class="kicker" style="text-align:center">A digital barcode for one-of-a-kind glass</h2>
+      <p class="sub" style="text-align:center;margin-left:auto;margin-right:auto">
+         Every mass-produced thing has a barcode. A handmade piece has none — so it can't be
+         told apart from a copy, or reunited with its record if it's sold, lent, or lost. We're
+         changing that: shoot a piece from every angle on a printed mat and the app turns it into
+         a <strong>fingerprint unique to that physical object</strong> — a barcode you don't print,
+         you <em>read off the glass</em>. Anyone can later confirm <em>this is the same piece</em>,
+         right in a browser.</p>
+
+      <div class="shots">
+        <figure><img src="/barcoding/capture.jpg" alt="The capture app reading a blue-green glass
+          piece on the barcode mat, coverage at 100."><figcaption>Capture — orbit the piece until
+          coverage reads 100.</figcaption></figure>
+        <figure><img src="/barcoding/piece.jpg" alt="A blue and green glass paperweight on the
+          printed ArUco + colour-checker mat."><figcaption>The mat gives true scale and colour.</figcaption></figure>
+        <figure><img src="/barcoding/review.jpg" alt="A grid of kept frames from many angles, with
+          an Export fingerprint button."><figcaption>Every angle becomes one exportable barcode.</figcaption></figure>
+      </div>
+
+      <aside class="feature-note" style="max-width:52rem;margin:1.5rem auto 0">
+        <h3>Backed by Content Credentials (C2PA)</h3>
+        <p style="margin:.2rem 0 0;color:var(--slate)">The barcode is bound to tamper-evident
+           provenance: a compact attestation — rating, colour, and a hash of the fingerprint — is
+           signed into the piece's <strong>C2PA Content Credentials</strong>, the same standard used
+           to prove where a photo came from. So a verified match isn't just "looks alike"; it's
+           anchored to a signed record of what the piece is and when it was enrolled.</p>
+        <p style="margin:.8rem 0 0;color:var(--slate);font-size:.92rem">
+           <strong>This is experimental.</strong> It works today — you can enrol a piece and verify
+           it — and it's strongest on pieces with distinctive colour and detail; clear glass and
+           precise measurement are still being refined. Treat a result as strong evidence, not
+           forensic proof. Turn on the optional on-device AI (DINOv2) to tell similar-coloured
+           pieces apart.</p>
+        <p style="margin:.9rem 0 0">
+           <a class="btn primary" href="/fingerprint/enroll.html">Try the capture app</a>
+           <a class="btn ghost" href="/fingerprint/capture-mat.pdf">Print the mat</a>
+        </p>
+      </aside>
+    </section>
+
     <section id="join">
-      <h2 class="kicker">Come say hi</h2>
+      <h2 class="kicker">Come say hi — and stay in the loop</h2>
       <p class="sub">This is a community project — corrected, argued over, and grown by the people
-         who use it. Join the conversation, follow along, or tell us what's broken.</p>
+         who use it. Get open calls and new features in your inbox, join the conversation, or
+         follow along.</p>
+      <form class="signup" style="max-width:34rem;margin-bottom:1.4rem" onsubmit="return gdbSubscribe(event)">
+        <input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required>
+        <button type="submit">Subscribe to the newsletter</button>
+      </form>
       <div class="surfaces">
         <a class="surface glow" href="https://discord.gg/9ek2UxvPT">
           <h3>Discord</h3>
@@ -241,5 +310,22 @@
        the software is <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache&nbsp;2.0</a>.
        Nothing is published until it's reviewed; anything can be corrected or removed on request.</p>
   </div></footer>
+
+  <script>
+    async function gdbSubscribe(e){
+      e.preventDefault();
+      const f = e.target, email = f.email.value.trim();
+      const msg = document.getElementById('signupMsg') || (() => {
+        const p = document.createElement('p'); p.className='signup-msg'; f.after(p); return p; })();
+      try {
+        const r = await fetch('/api/subscribe', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({email, source:'homepage'}) });
+        if (r.ok) { msg.textContent = "You're on the list — thanks!"; f.reset(); }
+        else { const j = await r.json().catch(()=>({})); msg.textContent = j.detail || "That didn't work — try again?"; }
+      } catch (_) { msg.textContent = "Network error — please try again."; }
+      return false;
+    }
+  </script>
 </body>
 </html>
