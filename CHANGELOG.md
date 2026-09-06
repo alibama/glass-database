@@ -5,6 +5,12 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Relationship graph (light)** — a client-side network of artists · techniques ·
+  studios · mentors built from existing data (central/graph.py → /api/graph.json),
+  drawn with cytoscape.js at /graph.html (search, click-to-focus a neighbourhood).
+  No graph database. Mentor edges come from matching studied_under text to directory
+  artists.
+- **Batch-tool examples** for new admins, and a GitHub link on the homepage + admin.
 - **Homepage: 'digital barcoding' section** — brands the re-identification fingerprint as a
   barcode you read off the object, with real capture screenshots, the C2PA provenance tie-in,
   a clear *experimental* label, and Try-the-app / Print-the-mat CTAs.

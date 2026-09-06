@@ -73,6 +73,7 @@ if os.environ.get("GLASSDB_ADMIN_OIDC") == "1":
 
 st.sidebar.title("🛠️ Admin")
 st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'}**")
+st.sidebar.caption("[GitHub repo](https://github.com/alibama/glass-database)")
 section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue",
                                        "🧹 Duplicates", "💬 Discord", "📮 Feedback", "📊 Analytics",
                                        "👥 Users"],
@@ -306,6 +307,17 @@ if section == "📋 Datasets":
 
     with t_batch:
         from central import snapshots
+        st.info("**New here?** Batch tools change many rows at once — every one saves a snapshot "
+                "first, so you can Undo at the bottom. Examples:\n\n"
+                "- **Fix a typo everywhere** → Find & replace: find `Charlotesville`, replace "
+                "`Charlottesville` (substring on).\n"
+                "- **Standardize a value** → Find & replace on `country`: find `USA`, replace "
+                "`United States` (whole-cell).\n"
+                "- **Fill a blank column for a group** → Bulk set: set `region` = `Virginia` "
+                "where `city` `equals` `Crozet`.\n"
+                "- **Tag a batch** → Bulk set: set `status` = `active` where `status` `is blank`.\n"
+                "- **Bulk edit offline** → Export CSV, edit in a spreadsheet (keep the `_row_id` "
+                "column!), re-import.")
         st.subheader("CSV round-trip")
         st.caption("Export, edit in a spreadsheet, re-import. Keep the `_row_id` column to update "
                    "existing rows; blank it (or add new rows) to insert. Imports publish.")

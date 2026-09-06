@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glass Database — relationship graph</title>
+<style>
+  :root { --ink:#1c1222; --ember:#ea580c; }
+  * { box-sizing: border-box; }
+  html,body { margin:0; height:100%; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink); }
+  #bar { position:fixed; top:0; left:0; right:0; height:52px; display:flex; align-items:center; gap:.8rem;
+    padding:0 1rem; background:#160e1c; color:#fff; z-index:10; }
+  #bar b { font-weight:800; }
+  #bar input { flex:1; max-width:320px; padding:.45rem .7rem; border-radius:8px; border:1px solid #4b3a57;
+    background:#241830; color:#fff; }
+  #bar .legend { margin-left:auto; display:flex; gap:1rem; font-size:.82rem; align-items:center; flex-wrap:wrap; }
+  #bar .dot { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+  #cy { position:absolute; top:52px; left:0; right:0; bottom:0; background:
+    radial-gradient(1200px 600px at 30% -10%, #fbeee1, #fff); }
+  #tip { position:fixed; bottom:14px; left:14px; background:#160e1c; color:#fff; padding:.5rem .8rem;
+    border-radius:10px; font-size:.85rem; max-width:min(360px,90vw); display:none; }
+  a { color:#fdba74; }
+</style>
+</head>
+<body>
+  <div id="bar">
+    <b>Glass Database</b> <span style="opacity:.7">· relationship graph</span>
+    <input id="q" placeholder="Search a name / technique…" aria-label="Search">
+    <span class="legend">
+      <span><span class="dot" style="background:#ea580c"></span>Artist</span>
+      <span><span class="dot" style="background:#0ea5e9"></span>Technique</span>
+      <span><span class="dot" style="background:#a78bfa"></span>Studio</span>
+      <span style="opacity:.7">— <span id="counts">loading…</span></span>
+    </span>
+  </div>
+  <div id="cy"></div>
+  <div id="tip"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+  <script>
+  const COLOR = { artist:"#ea580c", technique:"#0ea5e9", studio:"#a78bfa" };
+  async function main(){
+    let data;
+    try { data = await (await fetch("/api/graph.json")).json(); }
+    catch(e){ document.getElementById("counts").textContent = "couldn't load data"; return; }
+    const c = data.counts || {};
+    document.getElementById("counts").textContent =
+      `${c.artists||0} artists · ${c.techniques||0} techniques · ${c.edges||0} links`;
+    if(!(data.nodes||[]).length){ document.getElementById("counts").textContent =
+      "no relationships yet — add artists with techniques & mentors"; return; }
+
+    const els = [
+      ...data.nodes.map(n => ({ data:{ id:n.id, label:n.label, type:n.type } })),
+      ...data.edges.map(e => ({ data:{ source:e.source, target:e.target, type:e.type } })),
+    ];
+    const cy = cytoscape({
+      container: document.getElementById("cy"),
+      elements: els,
+      style: [
+        { selector:"node", style:{
+            "background-color": ele => COLOR[ele.data("type")] || "#94a3b8",
+            "label":"data(label)", "font-size": ele => ele.data("type")==="artist" ? 11 : 9,
+            "color":"#1c1222", "text-wrap":"wrap", "text-max-width":90,
+            "width": ele => ele.data("type")==="artist" ? 22 : 14,
+            "height": ele => ele.data("type")==="artist" ? 22 : 14,
+            "text-valign":"bottom", "text-margin-y":3, "min-zoomed-font-size":7 } },
+        { selector:"edge", style:{ "width":1.2, "line-color":"#d8c6d6", "curve-style":"haystack",
+            "opacity":0.6 } },
+        { selector:"edge[type='studied_under']", style:{ "line-color":"#ea580c", "width":2, "opacity":0.9,
+            "target-arrow-shape":"triangle", "target-arrow-color":"#ea580c", "curve-style":"bezier" } },
+        { selector:".faded", style:{ "opacity":0.12 } },
+        { selector:".hi", style:{ "opacity":1 } },
+      ],
+      layout: { name:"cose", animate:false, nodeRepulsion:9000, idealEdgeLength:70, padding:40 },
+      wheelSensitivity:0.25,
+    });
+
+    function focus(node){
+      const hood = node.closedNeighborhood();
+      cy.elements().addClass("faded");
+      hood.removeClass("faded").addClass("hi");
+      const kinds = {};
+      node.connectedEdges().forEach(e => { kinds[e.data("type")] = (kinds[e.data("type")]||0)+1; });
+      const tip = document.getElementById("tip");
+      tip.style.display="block";
+      tip.innerHTML = `<b>${node.data("label")}</b> — ${node.data("type")}<br>`+
+        Object.entries(kinds).map(([k,v])=>`${v} ${k.replace('_',' ')}`).join(" · ");
+    }
+    cy.on("tap","node", e => focus(e.target));
+    cy.on("tap", e => { if(e.target === cy){ cy.elements().removeClass("faded hi");
+      document.getElementById("tip").style.display="none"; } });
+
+    document.getElementById("q").addEventListener("input", ev => {
+      const q = ev.target.value.trim().toLowerCase();
+      if(!q){ cy.elements().removeClass("faded hi"); return; }
+      const match = cy.nodes().filter(n => n.data("label").toLowerCase().includes(q));
+      cy.elements().addClass("faded");
+      match.forEach(n => n.closedNeighborhood().removeClass("faded").addClass("hi"));
+    });
+  }
+  main();
+  </script>
+</body>
+</html>

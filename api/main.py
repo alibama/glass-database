@@ -246,6 +246,16 @@ def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (
                     headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/graph.json", summary="Relationship graph (artists · techniques · studios · mentors)")
+def graph_json():
+    from central import graph
+    conn = connect()
+    try:
+        return graph.build(conn)
+    except Exception:
+        return {"nodes": [], "edges": [], "counts": {}}
+
+
 @app.post("/subscribe", summary="Newsletter / notifications signup")
 def subscribe(payload: dict):
     email = (payload.get("email") or "").strip().lower()

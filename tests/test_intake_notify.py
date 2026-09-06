@@ -3,7 +3,7 @@ import os
 
 from fastapi.testclient import TestClient
 
-from central import approvals, intake, notify, techniques
+from central import intake, notify, techniques
 from central.dbconn import connect
 
 
@@ -40,7 +40,8 @@ def test_multiselect_stored_joined_and_pending(demo_db):
         "training_education": "RISD", "studied_under": "Lino Tagliapietra"}, base_url="")
     row = c.execute("SELECT tech_primary FROM artist_submissions WHERE _row_id=?", (rid,)).fetchone()
     assert "Offhand Blown Glass | Cane & Murrine" == row[0]
-    assert approvals.counts(c, "artist_submissions")["approved"] == 0   # pending
+    appr = {r[0] for r in c.execute("SELECT row_id FROM _approvals WHERE tbl='artist_submissions' AND status='approved'")}
+    assert rid not in appr   # this row is pending
     # email + submitter are private
     priv = {r[0] for r in c.execute(
         "SELECT column FROM _columns WHERE tbl='artist_submissions' AND is_public=0")}
@@ -60,7 +61,8 @@ def test_moderate_endpoint_requires_valid_signature(demo_db):
     sig = notify.sign("artist_submissions", rid)
     r = cl.get(f"/moderate?tbl=artist_submissions&row={rid}&action=approve&sig={sig}")
     assert r.status_code == 200 and "Approved" in r.text
-    assert approvals.counts(connect(), "artist_submissions")["approved"] == 1
+    appr = {x[0] for x in connect().execute("SELECT row_id FROM _approvals WHERE tbl='artist_submissions' AND status='approved'")}
+    assert rid in appr   # this row is now approved
 
 
 def test_notify_noop_without_webhook(monkeypatch):
