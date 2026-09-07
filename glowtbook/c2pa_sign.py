@@ -53,7 +53,11 @@ def available() -> bool:
 
 
 def ensure_test_cert() -> tuple[bytes, bytes]:
-    """Return (cert_pem, key_pem), generating a self-signed ES256 test cert if absent."""
+    """Return (cert_pem, key_pem), generating a self-signed ES256 test cert if absent.
+    In Vault mode the private key lives in Vault, so we return the cert with an empty
+    key and never generate a local private key."""
+    if os.environ.get("C2PA_SIGNER") == "vault" and CERT_PATH.exists():
+        return CERT_PATH.read_bytes(), b""
     if CERT_PATH.exists() and KEY_PATH.exists():
         return CERT_PATH.read_bytes(), KEY_PATH.read_bytes()
     from cryptography import x509
@@ -91,6 +95,17 @@ def ensure_test_cert() -> tuple[bytes, bytes]:
 
 def _signer(cert_pem: bytes, key_pem: bytes):
     c2pa, hashes, serialization, ec, decode_dss_signature = _libs()
+    tsa = os.environ.get("C2PA_TSA_URL") or None   # RFC 3161 time-stamp (recommended)
+
+    # Prefer a Vault-held key when configured — the private key never touches disk.
+    try:
+        from glowtbook import vault_signer
+        if vault_signer.available():
+            return c2pa.Signer.from_callback(vault_signer.sign_callback,
+                                             c2pa.C2paSigningAlg.ES256, cert_pem.decode(), tsa)
+    except Exception:
+        pass
+
     key = serialization.load_pem_private_key(key_pem, password=None)
 
     def cb(data: bytes) -> bytes:
@@ -98,7 +113,7 @@ def _signer(cert_pem: bytes, key_pem: bytes):
         r, s = decode_dss_signature(der)
         return r.to_bytes(32, "big") + s.to_bytes(32, "big")   # COSE wants raw R||S
 
-    return c2pa.Signer.from_callback(cb, c2pa.C2paSigningAlg.ES256, cert_pem.decode(), None)
+    return c2pa.Signer.from_callback(cb, c2pa.C2paSigningAlg.ES256, cert_pem.decode(), tsa)
 
 
 _EXT = {"image/jpeg": "jpg", "image/png": "png"}

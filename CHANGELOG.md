@@ -7,6 +7,13 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Signing-key custody via HashiCorp Vault** — glowtbook/vault_signer.py signs C2PA
+  claims through Vault's Transit engine (key non-exportable, never on the app host);
+  enabled with C2PA_SIGNER=vault. Adds deploy/vault-setup.sh, deploy/vault_provision.py
+  (BYOK import + cert), deploy/VAULT.md. Also wires an optional RFC 3161 time-stamp
+  (C2PA_TSA_URL) — closing that readiness gap.
+- **Host hardening** — deploy/harden.sh (ufw, SSH key-only, fail2ban, bind app ports to
+  localhost, secret perms, sysctl) + deploy/HARDENING.md checklist.
 - **Fingerprint ↔ C2PA verification** — the whole multi-view fingerprint is hashed and
   that hash is signed into the credential; new verify_binding() + GET
   /api/objects/<id>/fingerprint/verify recompute it and confirm the served fingerprint
