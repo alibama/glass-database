@@ -519,6 +519,12 @@ elif page == "Objects":
                     conn.commit()
                     signed = manifest.get("_signed")
                     cred = " · Content Credentials embedded 🔐" if signed else ""
+                    if manifest.get("_sign_error"):
+                        st.error("⚠ Content Credentials were **not** attached — signing failed and "
+                                 "the image was published unsigned.\n\n"
+                                 f"Reason: `{manifest['_sign_error']}`\n\n"
+                                 "Check that Vault is unsealed and the token is valid, and that "
+                                 "`C2PA_TSA_URL` is reachable, then re-contribute this piece.")
                     if manifest.get("_pending"):
                         st.success(f"Submitted for review (ref {manifest['content_hash']}){cred}. "
                                    "An admin will approve it before it appears publicly.")

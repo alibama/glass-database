@@ -374,7 +374,7 @@ if mode == "Objects (provenance)":
         for o in with_fp:
             fp = o["fingerprint"]
             st.markdown(f'- **{o["title"]}** — {o["maker"] or "?"} · {fp["rating"]}/100 '
-                        f'({fp["tier"]}) · [Verify this piece](/fingerprint/verify.html?object={o["_row_id"]}) '
+                        f'({fp["tier"]}) · [Verify this piece](/fingerprint/verify.html?object={o["id"]}) '
                         "(opens the camera capture app)")
     st.stop()
 

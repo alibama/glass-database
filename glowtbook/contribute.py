@@ -229,6 +229,7 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
 
     # Optionally embed Content Credentials (C2PA) in each condensed image
     do_sign = bool(sign) and c2pa_sign.available()
+    sign_error = ""
     prov = {"content_hash": manifest["content_hash"], "sourcing": manifest["sourcing"],
             "contributor": display,
             "events": next((a["data"] for a in manifest["assertions"]
@@ -244,13 +245,16 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
                                           parent_format=parent_fmt or "image/jpeg",
                                           year=obj["year"],
                                           extra_assertions=[fp_assertion] if fp_assertion else None)
-            except Exception:
+            except Exception as ex:  # noqa: BLE001
                 do_sign = False  # fall back to unsigned for the whole batch
+                sign_error = str(ex)
                 out = dip
         if primary_bytes is None or role in ("primary", "video-poster"):
             primary_bytes = out
         condensed.append((role, cap, base64.b64encode(out).decode()))
     manifest["signature"] = "c2pa:es256 (self-signed test cert)" if do_sign else None
+    if sign and not do_sign and sign_error:
+        manifest["_sign_error"] = sign_error   # surfaced to the UI — do not publish silently
     manifest["has_video"] = video_mp4 is not None
 
     # write the transcoded DIP video keyed by content hash (served after approval)
