@@ -58,7 +58,7 @@ def test_events_are_a_real_table_with_header_scope():
 
 def test_accessible_file_links_with_format_size_and_newtab_warning():
     html = build_objects_html(_sample(1))
-    assert "download=" in html and "(JSON," in html and "(JPEG," in html        # ACC1
+    assert "download" in html and "/api/objects/" in html and "(JPEG," in html    # ACC1 (API URLs)
     assert 'target="_blank" rel="noopener"' in html
     assert "opens in a new browser tab" in html
 

@@ -63,7 +63,13 @@ if [ -d "$D" ]; then
   chown -R glassdb:glassdb "$D/data" 2>/dev/null || true
   chmod 700 "$D/data/c2pa" 2>/dev/null || true
   chmod 600 "$D/data/c2pa/"*.pem 2>/dev/null || true
-  chmod 600 "$D/.env" "$D/.htpasswd" "$D/.streamlit/secrets.toml" 2>/dev/null || true
+  # .env and secrets.toml are read by the app (runs as glassdb) — 600 is right.
+  chmod 600 "$D/.env" "$D/.streamlit/secrets.toml" 2>/dev/null || true
+  # .htpasswd is read by APACHE (www-data), NOT the app — it must stay readable by
+  # the web server or /admin returns 500 ("could not open password file").
+  if [ -f "$D/.htpasswd" ]; then
+    chown root:www-data "$D/.htpasswd" && chmod 640 "$D/.htpasswd"
+  fi
 fi
 
 echo "==> Kernel/network sysctl hardening"

@@ -10,8 +10,9 @@ items below. Everything is scoped to the single Ubuntu host.
 - **SSH**: key-only, no password auth, no root password login, MaxAuthTries 3.
 - **fail2ban** on SSH.
 - **Bind app services to 127.0.0.1** (so only the Apache proxy reaches them).
-- **Secrets/signing-material permissions** (`data/c2pa` 700, `*.pem`/.env/.htpasswd/
-  secrets.toml 600).
+- **Secrets/signing-material permissions** — `data/c2pa` 700, `*.pem`/.env/
+  secrets.toml 600 (read by the app as `glassdb`). **`.htpasswd` is 640, group
+  `www-data`** — it's read by Apache, not the app; 600 would break /admin with a 500.
 - **sysctl** network/kernel hardening.
 
 ## Do these by hand

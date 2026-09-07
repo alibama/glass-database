@@ -336,7 +336,8 @@ if mode == "Objects (provenance)":
         try:
             man = _json.loads(o["manifest_json"] or "{}")
             events = next((a["data"] for a in man.get("assertions", [])
-                           if a["label"] == "org.glassdatabase.provenance.events"), [])
+                           if a["label"] in ("org.glassdatabase.provenance.events",
+                                              "glassdb.provenance.events")), [])
         except Exception:
             man, events = {}, []
         creds = None

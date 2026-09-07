@@ -387,6 +387,25 @@ def opportunities_ics():
                              "Cache-Control": "public, max-age=1800"})
 
 
+@app.get("/objects/{row_id}/manifest.json", summary="Provenance manifest of a public object")
+def object_manifest(row_id: str):
+    import json as _json
+    conn = connect()
+    try:
+        row = conn.execute("SELECT manifest_json FROM objects WHERE _row_id=?", (row_id,)).fetchone()
+    except Exception:
+        raise HTTPException(404, "No such object")
+    if not row or not row["manifest_json"]:
+        raise HTTPException(404, "No manifest")
+    try:
+        man = _json.loads(row["manifest_json"])
+    except Exception:
+        man = {}
+    return Response(_json.dumps(man, indent=2, ensure_ascii=False),
+                    media_type="application/json",
+                    headers={"Content-Disposition": f'attachment; filename="{row_id}.manifest.json"'})
+
+
 @app.get("/objects/{row_id}/fingerprint/verify",
          summary="Verify the object's fingerprint is the one signed into its C2PA credential")
 def object_fingerprint_verify(row_id: str):

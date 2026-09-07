@@ -179,20 +179,18 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
                        + '</dl><p>Self-signed test certificate — reads as untrusted until a '
                        'C2PA Trust-List certificate is installed.</p></section>')
 
-        # ACC1: file links named with format + size, external links warn of new tab
+        # ACC1: file links named with format + size, external links warn of new tab.
+        # Use API URLs (not data: URIs — st.html's sanitizer strips data: on <a href>).
         files = []
+        base = (verify_base or "").rstrip("/")
         primary = next((im for im in o.get("images", []) if im[0] == "primary"), None) \
             or (o.get("images") or [None])[0]
         if primary:
-            b64 = primary[2]
-            fname = _esc((o.get("content_hash") or o["id"]))
-            files.append(f'<li><a href="data:image/jpeg;base64,{b64}" download="{fname}.jpg">'
-                         f'Download the signed image (JPEG, {_kb(b64)} KB)</a></li>')
+            files.append(f'<li><a href="{base}/api/objects/{_esc(o["id"])}/image" download>'
+                         f'Download the signed image (JPEG, {_kb(primary[2])} KB)</a></li>')
         if o.get("manifest_json"):
-            mb64 = base64.b64encode(o["manifest_json"].encode()).decode()
-            files.append(f'<li><a href="data:application/json;base64,{mb64}" '
-                         f'download="{_esc(o.get("content_hash") or o["id"])}.manifest.json">'
-                         f'Download the provenance manifest (JSON, {_kb(mb64)} KB)</a></li>')
+            files.append(f'<li><a href="{base}/api/objects/{_esc(o["id"])}/manifest.json" download>'
+                         'Download the provenance manifest (JSON)</a></li>')
         if o.get("verify_url"):
             files.append(f'<li><a href="{_esc(o["verify_url"])}" target="_blank" rel="noopener">'
                          'Verify on Content Credentials<span class="visually-hidden"> '
