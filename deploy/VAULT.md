@@ -20,15 +20,14 @@ vault write -f transit/keys/glassdb-c2pa type=ecdsa-p256 exportable=false
 vault policy write glassdb-c2pa - <<'POL'
 path "transit/sign/glassdb-c2pa"        { capabilities = ["update"] }
 path "transit/keys/glassdb-c2pa"        { capabilities = ["read"] }
-path "transit/keys/glassdb-c2pa/import" { capabilities = ["update"] }
-path "transit/wrapping_key"             { capabilities = ["read"] }
 POL
 vault token create -policy=glassdb-c2pa -period=768h -orphan   # save this app token
 ```
 
-## 2. Provision the key + certificate
-Generates an ES256 keypair + self-signed test cert, BYOK-imports the **private key**
-into Vault (non-exportable), writes the cert, and shreds the local key:
+## 2. Provision the certificate for the Vault key
+Reads Vault's public key, builds a self-signed test cert whose public key **is** the
+Vault key, signs the cert via Vault, and writes it — so cert and key are guaranteed
+to match (a mismatch is what causes `COSE signature invalid` at sign time):
 ```bash
 VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN=<app-token> \
 python /opt/glassdatabase/deploy/vault_provision.py --org "<Your Legal Org>"

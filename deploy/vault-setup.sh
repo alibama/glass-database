@@ -45,8 +45,6 @@ ideally split among trusted holders, NOT on this box):
   vault policy write glassdb-c2pa - <<POL
   path "transit/sign/glassdb-c2pa"      { capabilities = ["update"] }
   path "transit/keys/glassdb-c2pa"      { capabilities = ["read"] }
-  path "transit/keys/glassdb-c2pa/import" { capabilities = ["update"] }
-  path "transit/wrapping_key"           { capabilities = ["read"] }
   POL
   vault token create -policy=glassdb-c2pa -period=768h -orphan   # save this token for the app
 
