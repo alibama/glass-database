@@ -362,20 +362,6 @@ if mode == "Objects (provenance)":
         })
 
     st.html(build_objects_html(objects, verify_base=PUBLIC_BASE))
-
-    with_fp = [o for o in objects if o.get("fingerprint")
-               and o["fingerprint"].get("rating") is not None]
-    if with_fp:
-        st.divider()
-        st.subheader("Verify a physical piece")
-        st.caption("Confirm a physical object is the same one registered here — the fingerprint "
-                   "loads from the registry and matching runs in your browser (camera capture, "
-                   "colour + optional DINOv2). No upload of your capture leaves the device.")
-        for o in with_fp:
-            fp = o["fingerprint"]
-            st.markdown(f'- **{o["title"]}** — {o["maker"] or "?"} · {fp["rating"]}/100 '
-                        f'({fp["tier"]}) · [Verify this piece](/fingerprint/verify.html?object={o["id"]}) '
-                        "(opens the camera capture app)")
     st.stop()
 
 # ===========================================================================

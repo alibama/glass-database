@@ -71,9 +71,17 @@ def test_user_content_is_escaped():
     assert "&lt;script&gt;" in html
 
 
-def test_contents_jumplinks_present():
+def test_grid_layout_and_verify_callout():
     html = build_objects_html(_sample(2))
-    assert 'aria-label="Objects on this page"' in html and 'href="#obj-row0"' in html  # NAV4
+    assert "gdb-grid" in html                                  # grid, not a long list
+    assert 'aria-label="Verify a physical piece"' in html      # verify surfaced up top
+    assert "Have a physical piece?" in html
+    assert "Objects on this page" not in html                  # old Contents list is gone
+
+
+def test_details_disclosure_holds_the_heavy_content():
+    html = build_objects_html(_sample(1))
+    assert "<details>" in html and "<summary>" in html         # scannable cards + disclosure
 
 
 def test_fingerprint_line_present():
