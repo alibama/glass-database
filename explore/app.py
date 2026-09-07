@@ -13,9 +13,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from urllib.parse import quote
 
-import altair as alt
 import pandas as pd
 import streamlit as st
 
@@ -355,144 +353,9 @@ if mode == "Objects (provenance)":
             "has_credentials": bool(o["has_credentials"]) if "has_credentials" in o.keys() else False,
             "manifest_json": _json.dumps(man, ensure_ascii=False) if man else "",
             "images": images, "events": events, "creds": creds,
-            "verify_url": ("https://contentcredentials.org/verify?source="
-                           + quote(f"{PUBLIC_BASE}/api/objects/{o['_row_id']}/image", safe="")),
             "video_url": f"{PUBLIC_BASE}/api/objects/{o['_row_id']}/video" if has_video else None,
             "fingerprint": man.get("fingerprint"),
         })
 
     st.html(build_objects_html(objects, verify_base=PUBLIC_BASE))
     st.stop()
-
-# ===========================================================================
-# DATASETS (default)
-# ===========================================================================
-if not reg:
-    # nothing has been approved yet — explain, and show whether data exists but is pending
-    c = _conn()
-    pub = c.execute("SELECT COUNT(*) FROM _datasets WHERE visibility='public'").fetchone()[0]
-    try:
-        appr = c.execute("SELECT COUNT(*) FROM _approvals WHERE status='approved'").fetchone()[0]
-    except Exception:
-        appr = 0
-    st.title("Glass Database — explore the data")
-    st.info("No published datasets yet. Everything stays private until it's approved.")
-    st.markdown("**To publish:** open the admin console → **✅ Approvals** → "
-                "**“Approve ALL pending content”** (or approve per dataset), then hit "
-                "**↻ Refresh data** here.")
-    st.caption(f"{pub} public dataset(s) configured · {appr} row(s) approved in this database so far. "
-               "If that says 0 after you approved, the admin and this app may be pointing at "
-               "different database files (check GLASSDB_PATH).")
-    st.stop()
-
-by_domain: dict[str, list[dict]] = {}
-for d in reg:
-    by_domain.setdefault(d["domain"], []).append(d)
-domain = st.sidebar.selectbox("Category", sorted(by_domain))
-ds = st.sidebar.selectbox(
-    "Dataset", by_domain[domain],
-    format_func=lambda d: f"{d['tbl']} ({d['row_count']})",
-)
-tbl = ds["tbl"]
-
-# --- header metrics --------------------------------------------------------
-total_rows = sum(d["row_count"] for d in reg)
-st.title("Glass Database — explore the data")
-m1, m2, m3 = st.columns(3)
-m1.metric("Public datasets", len(reg))
-m2.metric("Total public rows", f"{total_rows:,}")
-m3.metric("This dataset", f"{ds['row_count']:,} rows")
-st.caption(ds["description"])
-
-cols = public_columns(tbl)
-labels = {c: lbl for c, lbl in cols}
-try:
-    df = load(tbl, tuple(c for c, _ in cols)).copy()
-    cats, nums = classify(df)
-except Exception as ex:  # noqa: BLE001
-    st.error(f"Couldn't load this dataset: {ex}")
-    st.stop()
-
-# --- filters ---------------------------------------------------------------
-with st.expander("Filters", expanded=False):
-    fcols = st.multiselect("Filter by", cats, format_func=lambda c: labels.get(c, c),
-                           max_selections=3)
-    for fc in fcols:
-        vals = sorted(v for v in df[fc].replace("", pd.NA).dropna().unique())
-        chosen = st.multiselect(labels.get(fc, fc), vals, key=f"flt_{fc}")
-        if chosen:
-            df = df[df[fc].isin(chosen)]
-st.caption(f"Showing {len(df):,} rows after filters.")
-
-# --- break-down (categorical) ---------------------------------------------
-left, right = st.columns(2)
-with left:
-    st.subheader("Break it down")
-    try:
-        if cats:
-            gb = st.selectbox("Count by", cats, format_func=lambda c: labels.get(c, c), key="gb")
-            counts = (df[gb].replace("", pd.NA).dropna().value_counts()
-                      .head(25).rename_axis(gb).reset_index(name="count"))
-            chart = (alt.Chart(counts)
-                     .mark_bar(color="#e2571e")
-                     .encode(x=alt.X("count:Q", title="count"),
-                             y=alt.Y(f"{gb}:N", sort="-x", title=labels.get(gb, gb)),
-                             tooltip=[alt.Tooltip(f"{gb}:N", title=labels.get(gb, gb)), "count:Q"])
-                     .properties(width="container", height=430))
-            st.altair_chart(chart)
-        else:
-            st.info("No good categorical column to group by in this dataset.")
-    except Exception as ex:  # noqa: BLE001
-        st.warning(f"Couldn't draw the breakdown: {ex}")
-
-# --- distribution (numeric) -----------------------------------------------
-with right:
-    st.subheader("Distribution")
-    try:
-        if nums:
-            nb = st.selectbox("Of", nums, format_func=lambda c: labels.get(c, c), key="nb")
-            series, is_year = clean_numeric(df[nb])
-            if len(series):
-                if is_year:
-                    binspec = alt.Bin(step=10)          # decade bins, no giant gaps
-                    xfield = alt.X(f"{nb}:Q", bin=binspec, title=labels.get(nb, nb),
-                                   axis=alt.Axis(format="d"))
-                else:
-                    xfield = alt.X(f"{nb}:Q", bin=alt.Bin(maxbins=30), title=labels.get(nb, nb))
-                hist = (alt.Chart(pd.DataFrame({nb: series}))
-                        .mark_bar(color="#3b7dd8")
-                        .encode(x=xfield, y=alt.Y("count():Q", title="count"),
-                                tooltip=[alt.Tooltip(f"{nb}:Q", bin=True, title=labels.get(nb, nb)),
-                                         "count():Q"])
-                        .properties(width="container", height=430))
-                st.altair_chart(hist)
-                if is_year:
-                    st.caption("Decade bins; implausible years trimmed.")
-            else:
-                st.info("No usable numeric values after cleaning.")
-        else:
-            st.info("No numeric column to chart in this dataset.")
-    except Exception as ex:  # noqa: BLE001
-        st.warning(f"Couldn't draw the distribution: {ex}")
-
-# --- map (if geocoded) -----------------------------------------------------
-if {"lat", "lng"}.issubset(df.columns):
-    st.subheader("Map")
-    try:
-        geo = df.copy()
-        geo["lat"] = pd.to_numeric(geo["lat"], errors="coerce")
-        geo["lng"] = pd.to_numeric(geo["lng"], errors="coerce")
-        geo = geo.dropna(subset=["lat", "lng"]).rename(columns={"lat": "latitude", "lng": "longitude"})
-        if len(geo):
-            st.map(geo[["latitude", "longitude"]], size=30)
-    except Exception as ex:  # noqa: BLE001
-        st.warning(f"Couldn't draw the map: {ex}")
-
-# --- table + download ------------------------------------------------------
-st.subheader("Rows")
-pretty = df.rename(columns=labels)
-st.dataframe(pretty, width="stretch", hide_index=True)
-st.download_button("⬇ Download this view (CSV)", pretty.to_csv(index=False),
-                   file_name=f"{tbl}.csv", mime="text/csv")
-st.caption("Data is published under a Creative Commons license. "
-           "To correct or remove a listing, see the Removal & Correction Policy.")

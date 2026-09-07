@@ -69,6 +69,8 @@ _CSS = """
 .gdb-a11y .gdb-card figure{margin:0}
 .gdb-a11y .gdb-card figure img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;background:#faf7fb}
 .gdb-a11y .gdb-card figcaption{padding:.2rem .9rem 0;color:#5b5666;font-size:.82rem}
+.gdb-a11y .gdb-more{display:flex;gap:.3rem;flex-wrap:wrap;padding:.4rem .9rem 0}
+.gdb-a11y .gdb-more img{width:46px;height:46px;object-fit:cover;border-radius:6px;border:1px solid #ece8ef;background:#faf7fb}
 .gdb-a11y .gdb-body{padding:.7rem .9rem .9rem;display:flex;flex-direction:column;gap:.4rem}
 .gdb-a11y .gdb-card h3{margin:.1rem 0 0;font-size:1.05rem;line-height:1.2}
 .gdb-a11y .gdb-sub{color:#5b5666;font-size:.88rem}
@@ -136,6 +138,15 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
             alt = _alt(title, o.get("maker"), o.get("year"), o.get("materials"), role, caption)
             out.append(f'<figure data-mdlaug-ok="ACC2"><img src="data:image/jpeg;base64,{b64}" '
                        f'alt="{alt}" loading="lazy"></figure>')
+        # Additional views of the SAME object stay on this one card (not new cards)
+        extra = [im for im in o.get("images", []) if im is not primary]
+        if extra:
+            strip = "".join(
+                f'<img src="data:image/jpeg;base64,{eb}" loading="lazy" '
+                f'alt="{_alt(title, o.get("maker"), o.get("year"), o.get("materials"), er, ec)}">'
+                for er, ec, eb in extra)
+            out.append(f'<div class="gdb-more" aria-label="{len(extra)} more view'
+                       f'{"s" if len(extra) != 1 else ""} of {_esc(title)}">{strip}</div>')
 
         out.append('<div class="gdb-body">')
         out.append(f'<h3 id="obj-{oid}-h">{_esc(title)}</h3>')
@@ -209,10 +220,13 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
         if o.get("manifest_json"):
             files.append(f'<li><a href="{base}/api/objects/{oid}/manifest.json" download>'
                          'Download the provenance manifest (JSON)</a></li>')
-        if o.get("verify_url"):
-            files.append(f'<li><a href="{_esc(o["verify_url"])}" target="_blank" rel="noopener">'
-                         'Verify on Content Credentials<span class="visually-hidden"> '
-                         '(opens in a new browser tab)</span></a></li>')
+        if o.get("has_credentials"):
+            files.append('<li>Verify the Content Credentials — download the image above, then drop '
+                         'it into <a href="https://verify.contentauthenticity.org/" target="_blank" '
+                         'rel="noopener">Content Authenticity Verify<span class="visually-hidden"> '
+                         '(opens in a new browser tab)</span></a> or '
+                         '<a href="https://c2paviewer.com/" target="_blank" rel="noopener">C2PA Viewer'
+                         '<span class="visually-hidden"> (opens in a new browser tab)</span></a>.</li>')
         if files:
             det.append(f'<ul class="gdb-files" aria-label="Downloads and verification for {_esc(title)}" '
                        f'data-mdlaug-ok="ACC1">{"".join(files)}</ul>')

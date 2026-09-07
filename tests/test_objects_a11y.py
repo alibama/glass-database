@@ -63,6 +63,21 @@ def test_accessible_file_links_with_format_size_and_newtab_warning():
     assert "opens in a new browser tab" in html
 
 
+def test_verify_links_are_chooseable_tools():
+    html = build_objects_html(_sample(1))
+    assert "verify.contentauthenticity.org" in html and "c2paviewer.com" in html
+    assert "contentcredentials.org/verify?source=" not in html   # the broken one is gone
+
+
+def test_multiple_images_stay_on_one_card():
+    objs = _sample(1)
+    objs[0]["images"] = [("primary", "front", _IMG), ("detail", "signature", _IMG),
+                         ("detail", "base", _IMG)]
+    html = build_objects_html(objs)
+    assert html.count("<article") == 1                 # one object -> one card
+    assert "gdb-more" in html and "more views of" in html.lower()
+
+
 def test_user_content_is_escaped():
     objs = _sample(1)
     objs[0]["title"] = '<script>alert(1)</script>'
