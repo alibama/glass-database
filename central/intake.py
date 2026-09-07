@@ -40,6 +40,8 @@ def options_for(field: dict) -> list[str]:
         return techniques.ETHNICITY
     if o == "@status":
         return techniques.STATUS
+    if o == "@roles":
+        return techniques.ROLES
     return list(o or [])
 
 
@@ -63,6 +65,8 @@ FORMS = {
             _f("ethnicity", "Ethnicity (optional)", "select", options="@ethnicity"),
             _f("gender", "Gender (optional)"),
             _sec("Practice"),
+            _f("roles", "Your role(s) in the glass field", "multiselect", options="@roles"),
+            _f("role_other", "Other role (if you picked ‘Other’)"),
             _f("primary_focus", "Primary discipline (50%+ of your work)", "select",
                required=True, options="@primary_focus"),
             _f("tech_primary", "Primary techniques", "multiselect", options="@techniques"),
@@ -79,6 +83,11 @@ FORMS = {
             _f("notable_collections", "Notable collections (museums, collectors)", "textarea"),
             _f("awards", "Awards / honors", "textarea"),
             _f("career_highlights", "Career highlights — what you're most proud of", "textarea"),
+            _sec("Sharing & permissions"),
+            _f("harvest_consent", "Let Glass Database feature glass-related content from my website "
+               "/ social — you stay the owner, and nothing is published without my approval of each "
+               "item", "checkbox"),
+            _f("instagram", "Instagram / social handle or URL (to feature, with your OK)"),
             _f("submitted_by", "Your name or email (if submitting for someone else)",
                private=True),
         ],

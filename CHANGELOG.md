@@ -1,10 +1,31 @@
 # Changelog
 
+## [1.0.0] — C2PA conformance readiness
+
 All notable changes are documented here. This project distinguishes
 proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Fingerprint ↔ C2PA verification** — the whole multi-view fingerprint is hashed and
+  that hash is signed into the credential; new verify_binding() + GET
+  /api/objects/<id>/fingerprint/verify recompute it and confirm the served fingerprint
+  is the signed one (bound true/false + signer + validation state). Shown in verify.html.
+- **1.0.0** — product name/version centralized (central/version.py); C2PA claim
+  generator now signs as **Glass Database / 1.0.0** to match the Conformance record.
+  GPSA security-architecture doc drafted (docs/GPSA-glass-database.md).
+- **C2PA: PNG in scope** — signing generalized to sign_image() supporting image/jpeg
+  *and* image/png (format-aware dc:format + container), matching the Conformance
+  Program assertion; both validate as Valid. sign_jpeg() kept as a wrapper. Adds
+  deploy/c2pa_evidence.py to build the X-sample/X-ingredient evidence package.
+- **Roles vocabulary** — a 'your role(s) in the glass field' multiselect on the artist
+  form (30 categories + Other), editable in one place (central/techniques.ROLES).
+- **Consent-gated content harvesting** — artists opt in on the form; central/harvest.py
+  re-checks consent, signs C2PA provenance asserting the ARTIST as owner, and stores
+  each item as pending. Nothing is published without per-item approval in Admin →
+  Harvest; approved images served C2PA-intact at /api/harvest/<id>/image. Playwright/
+  Instagram-API runner (deploy/harvest_runner.py) + deploy/HARVEST.md (uses the IG API,
+  not scraping; respects robots.txt; consent revocable).
 - **Relationship graph (light)** — a client-side network of artists · techniques ·
   studios · mentors built from existing data (central/graph.py → /api/graph.json),
   drawn with cytoscape.js at /graph.html (search, click-to-focus a neighbourhood).

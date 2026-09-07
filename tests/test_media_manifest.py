@@ -22,6 +22,6 @@ def test_manifest_has_c2pa_shape():
     m = media.build_manifest(obj, events, ingredients, ["Cane / murrine"],
                              include_value=False, contributor="AP")
     labels = {a["label"] for a in m["assertions"]}
-    assert "glassdb.object.metadata" in labels
-    assert "glassdb.provenance.events" in labels
+    assert "org.glassdatabase.object" in labels
+    assert "org.glassdatabase.provenance.events" in labels
     assert m["content_hash"] and m["ingredients"]

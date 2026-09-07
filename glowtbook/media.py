@@ -92,9 +92,9 @@ def build_manifest(obj: dict, events: list[dict], ingredients: list[dict],
         "contributor": contributor,
         "sourcing": sourcing,                       # provenance is self-reported until verified
         "assertions": [
-            {"label": "glassdb.object.metadata", "data": meta},
-            {"label": "glassdb.provenance.events", "data": ev},
-            {"label": "glassdb.technique.ontology", "data": technique_links(techniques)},
+            {"label": "org.glassdatabase.object", "data": meta},
+            {"label": "org.glassdatabase.provenance.events", "data": ev},
+            {"label": "org.glassdatabase.technique", "data": technique_links(techniques)},
         ],
         "ingredients": ingredients,                 # the condensed images, by hash
         "signature": None,                          # reserved for C2PA signing (roadmap)

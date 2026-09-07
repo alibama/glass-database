@@ -160,6 +160,12 @@ false-accept / false-reject and set the threshold from data, not guesswork.
   certain.
 
 ## 10. Provenance binding (C2PA)
+## 10a. Binding the multi-view fingerprint to C2PA
+
+A fingerprint is computed from *many* frames. Rather than sign each frame, the whole fingerprint (every frame's descriptors, in one canonical JSON) is hashed with **SHA-256**, and that hash is what's signed into the object's Content Credentials as `fingerprint_sha256` inside the `glassdb.fingerprint` assertion. So the credential commits to the entire multi-image aggregate: change any one frame's contribution and the hash — and therefore the match — breaks.
+
+**Verification** (`/api/objects/<id>/fingerprint/verify`, and shown in verify.html) recomputes the hash over the fingerprint the registry serves and compares it to the signed value, returning `bound: true/false` plus the signer and validation state. This proves the served fingerprint is the one that was signed — not that each source frame was independently signed (the frames live in the AIP, not the public record).
+
 
 On contribution the fingerprint is written into the object's manifest and a
 **compact attestation** is signed into the C2PA credential: `rating`, `tier`,

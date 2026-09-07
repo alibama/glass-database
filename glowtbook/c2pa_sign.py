@@ -23,6 +23,12 @@ import io
 import json
 import os
 import tempfile
+
+try:
+    from central.version import PRODUCT as _PRODUCT
+    from central.version import VERSION as _VERSION
+except Exception:
+    _PRODUCT, _VERSION = "Glass Database", "1.0.0"
 from pathlib import Path
 
 DATA = Path(__file__).resolve().parent.parent / "data"
@@ -95,44 +101,62 @@ def _signer(cert_pem: bytes, key_pem: bytes):
     return c2pa.Signer.from_callback(cb, c2pa.C2paSigningAlg.ES256, cert_pem.decode(), None)
 
 
+_EXT = {"image/jpeg": "jpg", "image/png": "png"}
+
+
 def sign_jpeg(src_jpeg: bytes, title: str, author: str, provenance: dict,
               parent_bytes: bytes | None = None, parent_format: str = "image/jpeg",
               year: str = "", extra_assertions: list | None = None) -> bytes:
-    """Embed a C2PA manifest into a JPEG and return the signed bytes.
+    """Back-compat wrapper — sign a JPEG. New code should call sign_image()."""
+    return sign_image(src_jpeg, title, author, provenance, mime="image/jpeg",
+                      parent_bytes=parent_bytes, parent_format=parent_format,
+                      year=year, extra_assertions=extra_assertions)
+
+
+def sign_image(src_bytes: bytes, title: str, author: str, provenance: dict,
+               mime: str = "image/jpeg", parent_bytes: bytes | None = None,
+               parent_format: str = "image/jpeg", year: str = "",
+               extra_assertions: list | None = None) -> bytes:
+    """Embed a C2PA manifest into an image (image/jpeg or image/png) and return the
+    signed bytes.
 
     When the source this was derived from is supplied as ``parent_bytes``, it's
     recorded as a ``parentOf`` ingredient under the **edit** intent — so the first
     action is ``c2pa.opened`` (required by the spec) followed by resized/converted.
     Creator/description ride in a **CAWG metadata** assertion (the successor to the
     deprecated schema.org CreativeWork assertion). Our domain provenance stays in a
-    custom ``glassdb.provenance`` assertion.
+    custom ``org.glassdatabase.provenance`` assertion.
     """
     c2pa, *_ = _libs()
+    if mime not in _EXT:
+        raise ValueError(f"unsupported image type: {mime}")
     cert_pem, key_pem = ensure_test_cert()
     meta = {
         "@context": {"dc": "http://purl.org/dc/elements/1.1/",
                      "xmp": "http://ns.adobe.com/xap/1.0/"},
         "dc:creator": [author or "unknown"],
         "dc:title": title or "Glass object",
-        "dc:format": "image/jpeg",
+        "dc:format": mime,
     }
     if year:
         meta["xmp:CreateDate"] = str(year)
     manifest = {
-        "claim_generator_info": [{"name": "Glowtbook", "version": "0.1"}],
+        "claim_generator_info": [{"name": _PRODUCT, "version": _VERSION}],
         "title": title or "Glass object",
+        "format": mime,
         "assertions": [
             {"label": "cawg.metadata", "data": meta},
-            {"label": "glassdb.provenance", "data": provenance},
+            {"label": "org.glassdatabase.provenance", "data": provenance},
         ],
     }
     for a in (extra_assertions or []):
         if a:
             manifest["assertions"].append(a)
     signer = _signer(cert_pem, key_pem)
+    ext = _EXT[mime]
     with tempfile.TemporaryDirectory() as d:
-        s, o = os.path.join(d, "s.jpg"), os.path.join(d, "o.jpg")
-        Path(s).write_bytes(src_jpeg)
+        s, o = os.path.join(d, f"s.{ext}"), os.path.join(d, f"o.{ext}")
+        Path(s).write_bytes(src_bytes)
         builder = c2pa.Builder(json.dumps(manifest))
         if parent_bytes:
             builder.set_intent(c2pa.C2paBuilderIntent.EDIT)   # first action -> c2pa.opened
@@ -147,6 +171,24 @@ def sign_jpeg(src_jpeg: bytes, title: str, author: str, provenance: dict,
                                c2pa.C2paDigitalSourceType.DIGITAL_CAPTURE)
         builder.sign_file(s, o, signer)
         return Path(o).read_bytes()
+
+
+def read_assertion(image_bytes: bytes, label: str) -> dict | None:
+    """Return the signed *data* of a specific assertion from the active manifest
+    (e.g. 'io.github.object_fingerprint.fingerprint'), or None."""
+    c2pa, *_ = _libs()
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, "i.bin"); Path(p).write_bytes(image_bytes)
+            data = json.loads(c2pa.Reader(p).json())
+    except Exception:
+        return None
+    am = data.get("active_manifest")
+    active = data.get("manifests", {}).get(am, {}) if am else {}
+    for a in active.get("assertions", []):
+        if a.get("label") == label:
+            return a.get("data")
+    return None
 
 
 def read_credentials(image_bytes: bytes) -> dict | None:

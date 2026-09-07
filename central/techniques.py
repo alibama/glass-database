@@ -21,6 +21,19 @@ PRIMARY_FOCUS = [
 
 STATUS = ["Living / Active", "Deceased"]
 
+# Roles people play in the glass field. Edit this list to change the dropdown —
+# it's the single source for the "roles" multiselect on the artist form.
+ROLES = [
+    "Artist or Maker", "Studio or Shop Employee", "Studio Assistant", "Technician",
+    "Fabricator", "Teacher or Instructor", "Professor or Faculty", "Student",
+    "Studio Owner", "Gallery Owner or Dealer", "Curator", "Conservator",
+    "Museum Educator", "Registrar or Collections Staff", "Art Handler", "Director",
+    "Administrator", "Researcher or Historian", "Writer, Critic, or Journalist",
+    "Photographer or Documentarian", "Scientist", "Supplier or Equipment Maker",
+    "Appraiser", "Collector", "Docent", "Volunteer", "Hobbyist",
+    "Supporter or Enthusiast", "Retired from the field", "Other (specify below)",
+]
+
 ETHNICITY = [
     "Hispanic or Latino", "American Indian or Alaska Native", "Asian",
     "Black or African American", "Native Hawaiian or Other Pacific Islander", "White",

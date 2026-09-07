@@ -609,6 +609,13 @@
       const res=await fetch("/api/objects/"+encodeURIComponent(objId)+"/fingerprint");
       if(!res.ok) throw new Error("no fingerprint registered for this object");
       applyRef(await res.json());
+      try{
+        const v = await (await fetch("/api/objects/"+encodeURIComponent(objId)+"/fingerprint/verify")).json();
+        if(v.bound){ toast("✓ Fingerprint verified against Content Credentials — "+
+          (v.views||"?")+" views, signed by "+(v.signer||"the issuer"), "ok"); }
+        else if(v.signed_sha256){ toast("⚠ This fingerprint does NOT match the signed one"+
+          (v.reason? " ("+v.reason+")":""), "warn"); }
+      }catch(_){}
     }catch(err){ $("#err").textContent="Couldn't load the registered fingerprint: "+(err.message||err); }
   })();
 

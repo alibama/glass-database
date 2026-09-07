@@ -232,7 +232,7 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
     prov = {"content_hash": manifest["content_hash"], "sourcing": manifest["sourcing"],
             "contributor": display,
             "events": next((a["data"] for a in manifest["assertions"]
-                            if a["label"] == "glassdb.provenance.events"), [])}
+                            if a["label"] == "org.glassdatabase.provenance.events"), [])}
     condensed = []          # (role, caption, b64)
     primary_bytes = None     # for optional Bluesky post / receipts
     for role, cap, dip, parent_bytes, parent_fmt in conds:

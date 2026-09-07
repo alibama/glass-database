@@ -76,7 +76,7 @@ st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'
 st.sidebar.caption("[GitHub repo](https://github.com/alibama/glass-database)")
 section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue",
                                        "🧹 Duplicates", "💬 Discord", "📮 Feedback", "📊 Analytics",
-                                       "👥 Users"],
+                                       "👥 Users", "🌾 Harvest"],
                            label_visibility="collapsed")
 from brand import track as _track
 
@@ -692,6 +692,41 @@ elif section == "👥 Users":
                 "Google admin role instead, register the admin URL as an OAuth redirect and set "
                 "`GLASSDB_ADMIN_OIDC=1` (keep at least one email in `GLASSDB_ADMIN_EMAILS` so you "
                 "can't lock yourself out). See deploy/ADMIN-ROLES.md.")
+
+# ===========================================================================
+# HARVEST
+# ===========================================================================
+elif section == "🌾 Harvest":
+    import os
+
+    from central import harvest
+    st.header("Harvested content — review")
+    st.caption("Content pulled from consenting artists' own sites/socials. The artist stays the "
+               "owner (asserted in each image's C2PA credential); nothing is public until you "
+               "approve it here, item by item.")
+    cts = harvest.counts(conn)
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Pending", cts.get("pending", 0)); m2.metric("Approved", cts.get("approved", 0))
+    m3.metric("Rejected", cts.get("rejected", 0))
+    base = os.environ.get("PUBLIC_BASE_URL", "")
+    items = harvest.list_items(conn, "pending")
+    if not items:
+        st.info("No pending harvested items. They appear here after the harvest runner pulls "
+                "content for consenting artists (see deploy/HARVEST.md).")
+    for it in items:
+        with st.container(border=True):
+            cA, cB = st.columns([1, 2])
+            b = harvest.image_bytes(conn, it["id"])
+            if b:
+                cA.image(b, width=180)
+            cB.markdown(f"**{it['artist_name']}** · via {it['source']}")
+            cB.caption(f"{it.get('caption') or ''}\n\n{it['source_url']}")
+            cB.caption("© the artist · C2PA owner-asserted")
+            b1, b2 = cB.columns(2)
+            if b1.button("✅ Approve", key=f"ha_{it['id']}", type="primary"):
+                harvest.set_status(conn, it["id"], "approved"); st.rerun()
+            if b2.button("⛔ Reject", key=f"hr_{it['id']}"):
+                harvest.set_status(conn, it["id"], "rejected"); st.rerun()
 
 # ===========================================================================
 # DUPLICATES

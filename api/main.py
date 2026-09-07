@@ -35,6 +35,13 @@ from central import approvals  # noqa: E402
 from central.dbconn import connect  # noqa: E402
 
 ADMIN_KEY = os.environ.get("GLASSDB_ADMIN_TOKEN", "")
+
+
+def _table_exists(conn, name):
+    try:
+        return conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (name,)).fetchone() is not None
+    except Exception:
+        return False
 MAX_LIMIT = 200
 DIP_MEDIA = Path(__file__).resolve().parent.parent / "data" / "dip_media"
 
@@ -246,6 +253,20 @@ def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (
                     headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/harvest/{item_id}/image", summary="A harvested image (C2PA-signed, owner-asserted)")
+def harvest_image(item_id: int):
+    from central import harvest
+    conn = connect()
+    row = conn.execute("SELECT status FROM harvested_items WHERE id=?", (item_id,)).fetchone() \
+        if _table_exists(conn, "harvested_items") else None
+    if not row or row["status"] != "approved":
+        raise HTTPException(404, "not found or not approved")
+    b = harvest.image_bytes(conn, item_id)
+    if not b:
+        raise HTTPException(404, "no image")
+    return Response(b, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=3600"})
+
+
 @app.get("/graph.json", summary="Relationship graph (artists · techniques · studios · mentors)")
 def graph_json():
     from central import graph
@@ -364,6 +385,31 @@ def opportunities_ics():
     return Response(content=ics, media_type="text/calendar; charset=utf-8",
                     headers={"Content-Disposition": 'inline; filename="glass-opportunities.ics"',
                              "Cache-Control": "public, max-age=1800"})
+
+
+@app.get("/objects/{row_id}/fingerprint/verify",
+         summary="Verify the object's fingerprint is the one signed into its C2PA credential")
+def object_fingerprint_verify(row_id: str):
+    """Recompute the hash over the whole (multi-view) fingerprint and check it
+    against the fingerprint_sha256 signed into the object's Content Credentials."""
+    import json as _json
+    conn = connect()
+    try:
+        row = conn.execute("SELECT manifest_json FROM objects WHERE _row_id=?", (row_id,)).fetchone()
+        img = conn.execute(
+            "SELECT image_b64 FROM object_images WHERE object_row_id=? ORDER BY "
+            "CASE role WHEN 'primary' THEN 0 ELSE 1 END, id LIMIT 1", (row_id,)).fetchone()
+    except Exception:
+        raise HTTPException(404, "No such object")
+    if not row or not img:
+        raise HTTPException(404, "No such object or image")
+    fp = (_json.loads(row["manifest_json"] or "{}")).get("fingerprint")
+    if not fp:
+        raise HTTPException(404, "No fingerprint for this object")
+    import base64 as _b64
+
+    from glowtbook import fingerprint as _fp
+    return _fp.verify_binding(_b64.b64decode(img["image_b64"]), fp)
 
 
 @app.get("/objects/{row_id}/fingerprint", summary="Re-identification fingerprint of a public object")

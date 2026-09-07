@@ -84,6 +84,35 @@ def assertion(reference) -> dict | None:
     }}
 
 
+def verify_binding(image_bytes: bytes, reference) -> dict:
+    """Prove the fingerprint served for an object is the exact one signed into its
+    C2PA credential: recompute the SHA-256 over the whole fingerprint (all views)
+    and compare it to the fingerprint_sha256 in the signed `glassdb.fingerprint`
+    assertion. Also surfaces the signer and validation state."""
+    out = {"bound": False, "computed_sha256": None, "signed_sha256": None,
+           "views": None, "validation_state": None, "signer": None, "reason": ""}
+    try:
+        out["computed_sha256"] = fingerprint_hash(reference)
+        out["views"] = len(_as_obj(reference).get("frames") or [])
+    except Exception as ex:  # noqa: BLE001
+        out["reason"] = f"bad fingerprint: {ex}"; return out
+    try:
+        from glowtbook import c2pa_sign
+        data = c2pa_sign.read_assertion(image_bytes, FP_LABEL)
+        creds = c2pa_sign.read_credentials(image_bytes) or {}
+        out["validation_state"] = creds.get("validation_state")
+        out["signer"] = creds.get("issuer")
+        if not data:
+            out["reason"] = "no fingerprint assertion in the credential"; return out
+        out["signed_sha256"] = data.get("fingerprint_sha256")
+        out["bound"] = bool(out["signed_sha256"]) and out["signed_sha256"] == out["computed_sha256"]
+        if not out["bound"] and out["signed_sha256"]:
+            out["reason"] = "hash mismatch — the served fingerprint is not the one that was signed"
+    except Exception as ex:  # noqa: BLE001
+        out["reason"] = f"couldn't read credential: {ex}"
+    return out
+
+
 # --- helpers --------------------------------------------------------------
 def _read_export(data: bytes):
     if data[:2] == b"PK":  # a zip

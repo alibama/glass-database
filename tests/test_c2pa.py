@@ -17,7 +17,7 @@ def test_sign_then_read(tmp_path, sample_image_bytes, monkeypatch):
                                  year="2025")
     assert len(signed) > 0
     creds = c2pa_sign.read_credentials(signed)
-    assert creds and "glassdb.provenance" in creds["assertions"]
+    assert creds and "org.glassdatabase.provenance" in creds["assertions"]
     # CAWG metadata replaces schema.org CreativeWork, and carries the creator
     assert "cawg.metadata" in creds["assertions"]
     assert "stds.schema-org.CreativeWork" not in creds["assertions"]
