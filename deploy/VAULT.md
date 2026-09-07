@@ -64,3 +64,19 @@ once `C2PA_SIGNER=vault` and no key.pem is present).
   version; re-issue the cert for the new public key.
 - **Assurance:** a Vault-held key satisfies "non-exportable software key." For a
   FIPS-140 hardware level, back Vault with an HSM seal or use a cloud HSM KMS.
+
+## Troubleshooting
+
+- **`connection refused` on 8200** — Vault isn't running. `systemctl status vault` +
+  `journalctl -u vault -n 50`.
+- **Killed on start (`signal=KILL`, restart loop)** — almost always the kernel
+  **OOM-killer** on a memory-tight box. Confirm: `journalctl -k | grep -i oom`,
+  `free -h`. Fixes: set `disable_mlock = true` in `/etc/vault.d/vault.hcl`, add swap
+  (`fallocate -l 2G /swapfile …`), then `systemctl reset-failed vault && systemctl
+  restart vault`. If the host is genuinely out of RAM (WordPress + MySQL + Streamlit
+  + Apache already resident), a **managed cloud KMS** (AWS/GCP, ~$1/mo, no local
+  process) or a larger instance is the better home for the signing key than
+  self-hosted Vault.
+- **Re-seals on every restart/reboot** — unseal (`vault operator unseal` ×3). With
+  `C2PA_SIGNER=vault` and no local key, signing stays broken until unsealed — plan a
+  reboot runbook or keep the local-key signer for the test phase.

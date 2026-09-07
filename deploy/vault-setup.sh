@@ -22,10 +22,17 @@ listener "tcp" {
   address     = "127.0.0.1:8200"
   tls_disable = true          # local-only; Apache/host firewall is the boundary
 }
-disable_mlock = false
+disable_mlock = true          # avoids mlock/CAP_IPC_LOCK startup failures on VPS/containers
 HCL
 chown vault:vault /etc/vault.d/vault.hcl
 systemctl enable --now vault
+sleep 2
+if ! systemctl is-active --quiet vault; then
+  echo "!! Vault failed to start. Check: journalctl -u vault -n 50"
+  echo "   If it mentions mlock/memlock, set disable_mlock=true in /etc/vault.d/vault.hcl and retry."
+  exit 1
+fi
+echo "Vault is running. 'vault status' should now show Sealed: true."
 
 cat <<'NEXT'
 
