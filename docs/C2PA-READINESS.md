@@ -66,9 +66,10 @@ numbers reference the technical spec.*
   carry none, per the exception list).
 - **§2.5 no digitalSourceType on c2pa.opened** — **done**.
 - **Format preserved** — PNG in → PNG out, JPEG in → JPEG out (was JPEG-only).
-- **§2.3 crJSON validation harness** — **[TODO]** a test harness that takes (asset,
+- **§2.3 crJSON validation harness** — **done** (deploy/crjson_harness.py): takes (asset,
   test trust list, test TSA trust list, validation time) and emits crJSON. The program
-  provides the inputs during assessment; build/point this at c2pa-rs validation output.
+  test trust list, TSA trust list, RFC-3339 time), emits crJSON (c2pa-rs validation
+  report). Confirm the settings key names against the pinned c2pa-rs at assessment.
 - **SCA/SBOM** — `deploy/sca-scan.sh` (pip-audit + CycloneDX) — **[enable in pipeline]**.
 
 

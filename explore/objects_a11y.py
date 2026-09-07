@@ -215,8 +215,13 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
         base = (verify_base or "").rstrip("/")
         files = []
         if primary:
+            import base64 as _b64
+            try:
+                _fmt = "PNG" if _b64.b64decode(primary[2])[:4] == b"\x89PNG" else "JPEG"
+            except Exception:
+                _fmt = "JPEG"
             files.append(f'<li><a href="{base}/api/objects/{oid}/image" download>'
-                         f'Download the signed image (JPEG, {_kb(primary[2])} KB)</a></li>')
+                         f'Download the signed image ({_fmt}, {_kb(primary[2])} KB)</a></li>')
         if o.get("manifest_json"):
             files.append(f'<li><a href="{base}/api/objects/{oid}/manifest.json" download>'
                          'Download the provenance manifest (JSON)</a></li>')

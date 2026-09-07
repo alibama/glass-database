@@ -7,6 +7,12 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Serve the real image format** — the object image endpoint now sends image/png vs
+  image/jpeg (and a matching filename) based on the actual bytes, instead of always
+  image/jpeg; the Explore download label shows PNG or JPEG correctly.
+- **deploy/reset_objects.py** — wipe published objects + submissions (keep artists,
+  studios, users, etc.). **deploy/crjson_harness.py** — §2.3 validation test harness
+  (asset + trust lists + time -> crJSON).
 - **Format preservation** — condense_image now keeps PNG as PNG (was JPEG-only);
   signing preserves the format end-to-end (PNG→PNG, JPEG→JPEG).
 - **C2PA Conformance v0.2 manifest fields** — every manifest now sets

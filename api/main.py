@@ -249,8 +249,12 @@ def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (
         raw = _b64.b64decode(rows[i]["image_b64"])
     except Exception:
         raise HTTPException(500, "Image could not be decoded")
-    return Response(content=raw, media_type="image/jpeg",
-                    headers={"Cache-Control": "public, max-age=3600"})
+    is_png = raw[:4] == b"\x89PNG"
+    mime = "image/png" if is_png else "image/jpeg"
+    ext = "png" if is_png else "jpg"
+    return Response(content=raw, media_type=mime,
+                    headers={"Cache-Control": "public, max-age=3600",
+                             "Content-Disposition": f'inline; filename="{row_id}.{ext}"'})
 
 
 @app.get("/harvest/{item_id}/image", summary="A harvested image (C2PA-signed, owner-asserted)")
