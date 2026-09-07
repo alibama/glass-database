@@ -57,6 +57,20 @@ numbers reference the technical spec.*
    through it and clear all but the untrusted-cert flag.
 
 ## Optional, more spec-native improvements
+## v0.2 Additional Requirements — status
+
+- **§2.1 specVersion** in claim_generator_info — **done** (`2.2`).
+- **§2.2 allActionsIncluded** in actions-map-v2 — **done** (`true`, all manifests).
+- **§2.4 digitalSourceType** on non-excepted created-assertion actions — **done**
+  (`c2pa.created` carries digitalCapture; `opened`/`resized.proportional`/`converted`
+  carry none, per the exception list).
+- **§2.5 no digitalSourceType on c2pa.opened** — **done**.
+- **Format preserved** — PNG in → PNG out, JPEG in → JPEG out (was JPEG-only).
+- **§2.3 crJSON validation harness** — **[TODO]** a test harness that takes (asset,
+  test trust list, test TSA trust list, validation time) and emits crJSON. The program
+  provides the inputs during assessment; build/point this at c2pa-rs validation output.
+- **SCA/SBOM** — `deploy/sca-scan.sh` (pip-audit + CycloneDX) — **[enable in pipeline]**.
+
 
 - **Bind the full fingerprint as external data (§17.8 Cloud Data / hashed_ext_uri).**
   Today we embed a compact assertion carrying a SHA-256 of the fingerprint that the

@@ -10,11 +10,11 @@ def test_sign_then_read(tmp_path, sample_image_bytes, monkeypatch):
     monkeypatch.setattr(c2pa_sign, "CERT_PATH", tmp_path / "c2pa" / "cert.pem")
     monkeypatch.setattr(c2pa_sign, "KEY_PATH", tmp_path / "c2pa" / "key.pem")
     from glowtbook import media
-    dip = media.condense_image(sample_image_bytes)
-    signed = c2pa_sign.sign_jpeg(dip, "Reticello vase", "A. Parker",
-                                 {"content_hash": "abc123", "sourcing": "self-reported"},
-                                 parent_bytes=sample_image_bytes, parent_format="image/png",
-                                 year="2025")
+    dip, dip_mime = media.condense_image(sample_image_bytes)
+    signed = c2pa_sign.sign_image(dip, "Reticello vase", "A. Parker",
+                                  {"content_hash": "abc123", "sourcing": "self-reported"},
+                                  mime=dip_mime, parent_bytes=sample_image_bytes,
+                                  parent_format="image/png", year="2025")
     assert len(signed) > 0
     creds = c2pa_sign.read_credentials(signed)
     assert creds and "org.glassdatabase.provenance" in creds["assertions"]
@@ -34,7 +34,7 @@ def test_sign_created_when_no_parent(tmp_path, sample_image_bytes, monkeypatch):
     monkeypatch.setattr(c2pa_sign, "CERT_PATH", tmp_path / "c2pa" / "cert.pem")
     monkeypatch.setattr(c2pa_sign, "KEY_PATH", tmp_path / "c2pa" / "key.pem")
     from glowtbook import media
-    dip = media.condense_image(sample_image_bytes)
-    signed = c2pa_sign.sign_jpeg(dip, "Frame", "AP", {"content_hash": "x"})  # no parent
+    dip, dip_mime = media.condense_image(sample_image_bytes)
+    signed = c2pa_sign.sign_image(dip, "Frame", "AP", {"content_hash": "x"}, mime=dip_mime)  # no parent
     creds = c2pa_sign.read_credentials(signed)
     assert creds["actions"] and creds["actions"][0] == "c2pa.created"

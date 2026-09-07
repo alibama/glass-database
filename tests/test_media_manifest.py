@@ -3,7 +3,7 @@ from glowtbook import media
 
 
 def test_condense_shrinks_image(sample_image_bytes):
-    dip = media.condense_image(sample_image_bytes)
+    dip, _dm = media.condense_image(sample_image_bytes)
     assert isinstance(dip, bytes) and 0 < len(dip) < len(sample_image_bytes)
 
 

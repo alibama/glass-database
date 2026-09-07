@@ -47,17 +47,26 @@ def technique_links(labels: list[str]) -> list[dict]:
     return out
 
 
-def condense_image(data: bytes, max_px: int = 1200, quality: int = 80) -> bytes:
-    """Downscale to fit max_px on the long edge, honor EXIF orientation, emit JPEG.
-    This is the DIP rendition; the original stays untouched as the AIP."""
+def condense_image(data: bytes, max_px: int = 1200, quality: int = 80) -> tuple[bytes, str]:
+    """Downscale to fit max_px on the long edge, honor EXIF orientation, and
+    **preserve the source format**: PNG stays PNG, everything else becomes JPEG.
+    Returns (bytes, mime). This is the DIP rendition; the original stays untouched
+    as the AIP."""
     im = Image.open(io.BytesIO(data))
+    is_png = (im.format or "").upper() == "PNG"
     im = ImageOps.exif_transpose(im)            # bake in rotation, then drop EXIF
+    buf = io.BytesIO()
+    if is_png:
+        if im.mode not in ("RGB", "RGBA", "L", "LA", "P"):
+            im = im.convert("RGBA")
+        im.thumbnail((max_px, max_px))
+        im.save(buf, format="PNG", optimize=True)
+        return buf.getvalue(), "image/png"
     if im.mode not in ("RGB", "L"):
         im = im.convert("RGB")
     im.thumbnail((max_px, max_px))
-    buf = io.BytesIO()
     im.save(buf, format="JPEG", quality=quality, optimize=True)
-    return buf.getvalue()
+    return buf.getvalue(), "image/jpeg"
 
 
 def sha256_hex(data: bytes) -> str:

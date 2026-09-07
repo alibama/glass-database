@@ -178,20 +178,23 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
                 try:
                     mp4, poster, _ = video.transcode(p)
                     video_mp4 = mp4
-                    pcond = media.condense_image(poster)   # poster is a DIP image
+                    pcond, _ = media.condense_image(poster)   # poster is a DIP image (JPEG)
                     ingredients.append({"title": p.name + ".poster.jpg",
                                         "hash": media.sha256_hex(pcond), "role": "video-poster"})
                     # a poster is a freshly extracted frame -> no parent (created)
                     conds.append(("video-poster", im.get("caption", "") or "video still",
-                                  pcond, None, None))
+                                  pcond, None, None, "image/jpeg"))
                 except Exception:
                     pass  # transcode failed -> this video stays AIP-only
             continue
         raw = p.read_bytes()
-        dip = media.condense_image(raw)
-        fmt = "image/png" if p.suffix.lower() == ".png" else "image/jpeg"
+        dip, dip_mime = media.condense_image(raw)   # PNG stays PNG, else JPEG
+        parent_fmt = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+                      ".gif": "image/gif", ".webp": "image/webp",
+                      ".tif": "image/tiff", ".tiff": "image/tiff",
+                      ".heic": "image/heic", ".heif": "image/heif"}.get(p.suffix.lower(), "image/jpeg")
         ingredients.append({"title": p.name, "hash": media.sha256_hex(dip), "role": im["role"]})
-        conds.append((im["role"], im.get("caption", ""), dip, raw, fmt))   # raw = parent original
+        conds.append((im["role"], im.get("caption", ""), dip, raw, parent_fmt, dip_mime))
     manifest = media.build_manifest(dict(obj), [dict(e) for e in events], ingredients,
                                     techniques, include_value, contributor=display)
 
@@ -236,15 +239,15 @@ def contribute_object(uid, display, obj, events, images, include_value, sign=Fal
                             if a["label"] == "org.glassdatabase.provenance.events"), [])}
     condensed = []          # (role, caption, b64)
     primary_bytes = None     # for optional Bluesky post / receipts
-    for role, cap, dip, parent_bytes, parent_fmt in conds:
+    for role, cap, dip, parent_bytes, parent_fmt, dip_mime in conds:
         out = dip
         if do_sign:
             try:
-                out = c2pa_sign.sign_jpeg(dip, obj["title"], obj["maker"] or display, prov,
-                                          parent_bytes=parent_bytes,
-                                          parent_format=parent_fmt or "image/jpeg",
-                                          year=obj["year"],
-                                          extra_assertions=[fp_assertion] if fp_assertion else None)
+                out = c2pa_sign.sign_image(dip, obj["title"], obj["maker"] or display, prov,
+                                           mime=dip_mime, parent_bytes=parent_bytes,
+                                           parent_format=parent_fmt or "image/jpeg",
+                                           year=obj["year"],
+                                           extra_assertions=[fp_assertion] if fp_assertion else None)
             except Exception as ex:  # noqa: BLE001
                 do_sign = False  # fall back to unsigned for the whole batch
                 sign_error = str(ex)

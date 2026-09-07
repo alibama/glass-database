@@ -118,6 +118,11 @@ def _signer(cert_pem: bytes, key_pem: bytes):
 
 _EXT = {"image/jpeg": "jpg", "image/png": "png"}
 
+# C2PA Content Credentials Spec version this generator asserts (matches the CPL record).
+SPEC_VERSION = "2.2"
+# IPTC DigitalSourceType for a real photograph of a physical object.
+_DST_CAPTURE = "http://cv.iptc.org/newscodes/digitalsourcetype/digitalCapture"
+
 
 def sign_jpeg(src_jpeg: bytes, title: str, author: str, provenance: dict,
               parent_bytes: bytes | None = None, parent_format: str = "image/jpeg",
@@ -133,14 +138,16 @@ def sign_image(src_bytes: bytes, title: str, author: str, provenance: dict,
                parent_format: str = "image/jpeg", year: str = "",
                extra_assertions: list | None = None) -> bytes:
     """Embed a C2PA manifest into an image (image/jpeg or image/png) and return the
-    signed bytes.
+    signed bytes, preserving the given format.
 
-    When the source this was derived from is supplied as ``parent_bytes``, it's
-    recorded as a ``parentOf`` ingredient under the **edit** intent — so the first
-    action is ``c2pa.opened`` (required by the spec) followed by resized/converted.
-    Creator/description ride in a **CAWG metadata** assertion (the successor to the
-    deprecated schema.org CreativeWork assertion). Our domain provenance stays in a
-    custom ``org.glassdatabase.provenance`` assertion.
+    Actions are produced by the builder's intent API (so ingredients are correctly
+    linked): a first-party capture yields ``c2pa.created`` with a digitalCapture
+    ``digitalSourceType``; a derived rendition yields ``c2pa.opened`` (linked to the
+    parentOf ingredient) + ``c2pa.resized.proportional`` (+ ``c2pa.converted`` if the
+    format changed). We seed the manifest with a ``c2pa.actions.v2`` assertion
+    carrying ``allActionsIncluded: true`` — c2pa-rs merges it into the generated
+    actions. Both fields are mandatory under C2PA Conformance v0.2 (§2.2/§2.4);
+    the excepted actions correctly carry no digitalSourceType (§2.4/§2.5).
     """
     c2pa, *_ = _libs()
     if mime not in _EXT:
@@ -156,10 +163,12 @@ def sign_image(src_bytes: bytes, title: str, author: str, provenance: dict,
     if year:
         meta["xmp:CreateDate"] = str(year)
     manifest = {
-        "claim_generator_info": [{"name": _PRODUCT, "version": _VERSION}],
+        "claim_generator_info": [{"name": _PRODUCT, "version": _VERSION, "specVersion": SPEC_VERSION}],
         "title": title or "Glass object",
         "format": mime,
         "assertions": [
+            # seed: c2pa-rs merges allActionsIncluded into the intent-generated actions
+            {"label": "c2pa.actions.v2", "data": {"actions": [], "allActionsIncluded": True}},
             {"label": "cawg.metadata", "data": meta},
             {"label": "org.glassdatabase.provenance", "data": provenance},
         ],
@@ -174,15 +183,15 @@ def sign_image(src_bytes: bytes, title: str, author: str, provenance: dict,
         Path(s).write_bytes(src_bytes)
         builder = c2pa.Builder(json.dumps(manifest))
         if parent_bytes:
-            builder.set_intent(c2pa.C2paBuilderIntent.EDIT)   # first action -> c2pa.opened
+            builder.set_intent(c2pa.C2paBuilderIntent.EDIT)     # -> c2pa.opened (linked)
             builder.add_ingredient(
                 json.dumps({"title": "original", "relationship": "parentOf"}),
                 parent_format, io.BytesIO(parent_bytes))
-            builder.add_action(json.dumps({"action": "c2pa.resized"}))
-            builder.add_action(json.dumps({"action": "c2pa.converted"}))
+            builder.add_action(json.dumps({"action": "c2pa.resized.proportional"}))
+            if parent_format and parent_format != mime:
+                builder.add_action(json.dumps({"action": "c2pa.converted"}))
         else:
-            # a first-party capture with no prior version: first action -> c2pa.created
-            builder.set_intent(c2pa.C2paBuilderIntent.CREATE,
+            builder.set_intent(c2pa.C2paBuilderIntent.CREATE,     # -> c2pa.created + DST
                                c2pa.C2paDigitalSourceType.DIGITAL_CAPTURE)
         builder.sign_file(s, o, signer)
         return Path(o).read_bytes()

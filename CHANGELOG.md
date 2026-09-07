@@ -7,6 +7,13 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Format preservation** — condense_image now keeps PNG as PNG (was JPEG-only);
+  signing preserves the format end-to-end (PNG→PNG, JPEG→JPEG).
+- **C2PA Conformance v0.2 manifest fields** — every manifest now sets
+  claim_generator_info.specVersion (2.2, §2.1), c2pa.actions.v2 allActionsIncluded
+  (§2.2), and digitalSourceType on c2pa.created but not on the excepted
+  opened/resized.proportional/converted actions (§2.4/§2.5). GPSA rewritten to the
+  Appendix C template; deploy/sca-scan.sh (pip-audit + CycloneDX SBOM).
 - **Signing-key custody via HashiCorp Vault** — glowtbook/vault_signer.py signs C2PA
   claims through Vault's Transit engine (key non-exportable, never on the app host);
   enabled with C2PA_SIGNER=vault. Adds deploy/vault-setup.sh, deploy/vault_provision.py
