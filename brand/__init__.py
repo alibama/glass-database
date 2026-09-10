@@ -82,20 +82,39 @@ code, pre, [data-testid="stCode"] { font-family:var(--fd-mono); color:var(--fd-t
   background:transparent !important; color:var(--fd-bone) !important; border:1px solid var(--fd-rule-soft) !important; }
 .stButton>button:hover, [data-testid="stLinkButton"] a:hover { border-color:var(--fd-amber) !important; }
 
-/* inputs */
-input, textarea, [data-baseweb="input"], [data-baseweb="textarea"], [data-baseweb="select"]>div,
-.stTextInput input, .stNumberInput input, .stDateInput input {
-  background:rgba(238,231,219,.05) !important; color:var(--fd-bone) !important;
-  border-color:var(--fd-rule-soft) !important; }
+/* inputs — force solid dark bg so light text is readable regardless of theme base */
+.stTextInput input, .stTextArea textarea, .stNumberInput input, .stDateInput input,
+[data-baseweb="input"], [data-baseweb="textarea"], [data-baseweb="base-input"] {
+  background:#1D1712 !important; color:var(--fd-bone) !important; border-color:var(--fd-rule-soft) !important; }
+.stTextInput input::placeholder, .stTextArea textarea::placeholder { color:var(--fd-faint) !important; }
+/* selectbox / multiselect — closed control + its inner text */
+[data-baseweb="select"] > div, [data-baseweb="select"] div[role="button"] {
+  background:#1D1712 !important; border-color:var(--fd-rule-soft) !important; }
+[data-baseweb="select"] div, [data-baseweb="select"] span, [data-baseweb="select"] input {
+  color:var(--fd-bone) !important; }
+/* the dropdown popover + its options (was white-on-white) */
+[data-baseweb="popover"] [role="listbox"], [data-baseweb="menu"], ul[role="listbox"] {
+  background:#16130F !important; border:1px solid var(--fd-rule) !important; }
+[role="option"] { background:transparent !important; color:var(--fd-bone) !important; }
+[role="option"]:hover, [role="option"][aria-selected="true"] { background:rgba(232,164,74,.16) !important; }
+/* multiselect chosen tags + file uploader dropzone */
+[data-baseweb="tag"] { background:var(--fd-amber) !important; color:#0A0D11 !important; }
+[data-testid="stFileUploaderDropzone"], [data-testid="stFileUploader"] section {
+  background:#1D1712 !important; border:1px dashed var(--fd-rule-soft) !important; color:var(--fd-dim) !important; }
 [data-baseweb="tab"] { font-family:var(--fd-mono); text-transform:uppercase; letter-spacing:.06em; font-size:.8rem; }
-/* st.pills / segmented_control -> Field Data chips */
-[data-testid="stPills"] button, [data-testid="stButtonGroup"] button {
+
+/* st.pills / segmented_control -> Field Data chips (readable selected state) */
+[data-testid="stPills"] button, [data-testid="stButtonGroup"] button,
+[data-baseweb="button-group"] button {
   border-radius:999px !important; font-family:var(--fd-mono) !important; text-transform:uppercase;
   letter-spacing:.05em; font-size:.75rem !important; border:1px solid var(--fd-rule-soft) !important;
-  color:var(--fd-dim) !important; background:transparent !important; }
-[data-testid="stPills"] button[aria-checked="true"], [data-testid="stPills"] button[kind="primary"],
-[data-testid="stButtonGroup"] button[aria-checked="true"] {
-  background:var(--fd-amber) !important; color:var(--fd-bg-top) !important; border-color:var(--fd-amber) !important; }
+  color:var(--fd-bone) !important; background:#1D1712 !important; }
+[data-testid="stPills"] button[aria-checked="true"], [data-testid="stPills"] button[aria-pressed="true"],
+[data-testid="stPills"] button[kind="primary"],
+[data-testid="stButtonGroup"] button[aria-checked="true"], [data-testid="stButtonGroup"] button[aria-pressed="true"],
+[data-baseweb="button-group"] button[aria-pressed="true"] {
+  background:var(--fd-amber) !important; color:#0A0D11 !important; border-color:var(--fd-amber) !important;
+  font-weight:600 !important; }
 
 /* captions / metrics */
 [data-testid="stCaptionContainer"], .stCaption, small { color:var(--fd-faint) !important; }

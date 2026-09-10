@@ -10,7 +10,15 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   html,body{margin:0;height:100%;font-family:"Archivo",system-ui,sans-serif;}
-  #app{position:fixed;inset:0;display:flex;background:var(--fd-bg-top);color:var(--fd-bone);}
+  #topnav{position:fixed;top:0;left:0;right:0;height:48px;display:flex;align-items:center;gap:1rem;
+    padding:0 1rem;background:#0A0D11;border-bottom:1px solid var(--fd-rule);z-index:900;overflow-x:auto;}
+  #topnav .brand{font-family:"IBM Plex Mono",monospace;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--fd-bone);font-size:12px;white-space:nowrap;}
+  #topnav a{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--fd-dim);text-decoration:none;white-space:nowrap;}
+  #topnav a:hover{color:var(--fd-amber);}
+  #topnav .sp{margin-left:auto;}
+  #app{position:fixed;inset:48px 0 0 0;display:flex;background:var(--fd-bg-top);color:var(--fd-bone);}
   #panel{width:min(340px,86vw);flex:0 0 auto;padding:1.4rem 1.3rem;overflow:auto;
     border-right:1px solid var(--fd-rule);background:linear-gradient(180deg,#0E0B09,#12100E);z-index:500;}
   #map{flex:1;background:#0A0D11;}
@@ -55,6 +63,15 @@
 </style>
 </head>
 <body class="fd-ground">
+<nav id="topnav">
+  <a class="brand" href="/">Glass&nbsp;Database</a>
+  <a href="/explore/">Explore</a>
+  <a href="/glowtbook/">Glowtbook</a>
+  <a href="/studios.html" style="color:var(--fd-amber)">Map</a>
+  <a href="/graph.html">Graph</a>
+  <a href="/api/docs">API</a>
+  <a class="sp" href="https://discord.gg/9ek2UxvPT">Discord</a>
+</nav>
 <div id="app">
   <aside id="panel">
     <p class="eyebrow">The Glass Database</p>

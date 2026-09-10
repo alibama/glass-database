@@ -7,6 +7,12 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Readability fixes** — dark, high-contrast inputs, selectboxes, dropdown popovers,
+  multiselect tags, file-uploader, and pills (selected = dark text on amber) so nothing
+  renders light-on-white; robust to the theme base. Explore's 'What are you submitting?'
+  dropdown is now button pills.
+- **Site nav on the map & graph** — /studios.html gets a top nav bar and /graph.html
+  gets site links, so those full-screen pages link back to Explore/Glowtbook/API/etc.
 - **Button-pill forms** — intake select/multiselect fields (and Glowtbook techniques/
   role) render as tappable st.pills chips instead of dropdowns, styled to Field Data.
 - **Studios world map** — /studios.html: a dark Leaflet/CARTO map of studios with

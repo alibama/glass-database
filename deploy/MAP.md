@@ -15,17 +15,21 @@ Then restart the API: `sudo systemctl restart glassdb-api`. With no `MAP_TILES_U
 set, the map falls back to CARTO's keyless dark basemap.
 
 ## Where the key goes — paste your provider's exact tile URL
-Use the raster `{z}/{x}/{y}` URL your dashboard gives you. Drop-in dark styles:
+Use the raster `{z}/{x}/{y}` URL your dashboard gives you. **The key must match the
+provider** — a CARTO key on a Stadia URL returns 401.
 
-- **Stadia Maps** (Alidade Smooth Dark — closest to the current look):
+- **CARTO** (dark; requires the key as `?key=`, get one at carto.com/basemaps/apikey):
+  `https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key=YOUR_CARTO_KEY`
+- **Stadia Maps** (Alidade Smooth Dark):
   `https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=YOUR_KEY`
 - **MapTiler**:
   `https://api.maptiler.com/maps/streets-v2-dark/{z}/{x}/{y}.png?key=YOUR_KEY`
 - **Mapbox**:
   `https://api.mapbox.com/styles/v1/mapbox/dark-v11/tiles/{z}/{x}/{y}?access_token=YOUR_KEY`
-- **CARTO (keyed):** paste the raster tile URL from your CARTO dashboard. If CARTO
-  only offers a *vector* style (not a raster `{z}/{x}/{y}` URL), use Stadia or
-  MapTiler above — both give a simple keyed raster URL and look nearly identical.
+Note: CARTO's raster basemaps are officially in a **legacy/retiring** state — they
+work today with a key, but if CARTO discontinues them, switch to another raster
+provider above (or a MapLibre vector style). The tile URL is a one-line `.env`
+change either way.
 
 ## Important: a map-tile key is not a secret
 It ships to the browser in the tile requests — that's normal and unavoidable for

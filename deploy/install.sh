@@ -168,9 +168,9 @@ PUBLIC_BASE_URL=https://$DOMAIN
 # TURSO_DATABASE_URL=
 # TURSO_AUTH_TOKEN=
 # Studios-map basemap tiles (client-side key; lock it to your domain in the
-# provider dashboard). Paste the tile URL from your provider, key included:
-#MAP_TILES_URL=https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png?api_key=YOUR_KEY
-#MAP_TILES_ATTRIBUTION=&copy; Stadia Maps &copy; OpenStreetMap &middot; The Glass Database
+# provider dashboard). CARTO dark, keyed (get a key at carto.com/basemaps/apikey):
+#MAP_TILES_URL=https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key=YOUR_CARTO_KEY
+#MAP_TILES_ATTRIBUTION=&copy; OpenStreetMap &copy; CARTO &middot; The Glass Database
 
 EOF
     say "Wrote $ENV_FILE with a fresh API admin token (X-API-Key)"

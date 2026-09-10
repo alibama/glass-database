@@ -194,7 +194,9 @@ if mode == "Submit":
     labels = {"Artist": "artist", "Studio": "studio", "Event / exhibition": "event",
               "Resource (supplier, service, class)": "resource",
               "Exchange (buy / sell / trade)": "exchange", "Job / gig": "job"}
-    pick = st.selectbox("What are you submitting?", list(labels))
+    st.markdown("**What are you submitting?**")
+    pick = st.pills("What are you submitting?", list(labels), selection_mode="single",
+                    default="Artist", label_visibility="collapsed", key="submit_kind") or "Artist"
     _render_intake(labels[pick])
     st.caption("Open calls, residencies, or grants with a deadline go under **Opportunities** so "
                "they land on the calendar.")
