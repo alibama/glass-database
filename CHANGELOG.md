@@ -7,6 +7,24 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Button-pill forms** — intake select/multiselect fields (and Glowtbook techniques/
+  role) render as tappable st.pills chips instead of dropdowns, styled to Field Data.
+- **Studios world map** — /studios.html: a dark Leaflet/CARTO map of studios with
+  type-filter pills, search, and Field Data popups, fed by GET /api/studios.geojson.
+  Linked from the homepage.
+- **Confidential-but-assertable pricing (prototype)** — central/price_commit.py: hash
+  commitments (selective disclosure) + Pedersen commitments (homomorphic — prove a
+  portfolio total without revealing individual prices). docs/PRICING-COMMITMENTS.md.
+- **Whole-site Field Data consistency** — the Streamlit apps (Explore, Glowtbook,
+  Admin) now share the homepage identity: dark reheat-glow ground, Fraunces headings
+  (explicit axis order, weight-300 fallback), Archivo body, IBM Plex Mono labels/pills,
+  amber/teal/violet accents (brand theme + Streamlit dark base). The Explore objects
+  grid and the relationship graph are recoloured to the Field Data palette.
+- **Homepage remodeled to the Field Data house style** — dark editorial ground, Fraunces
+  headlines with amber italic accents, Archivo body, IBM Plex Mono eyebrows/labels/CTAs,
+  the teal→amber→molten palette, filament motif, index rows, glowing-node lists, and the
+  capture→fingerprint→verify step chain. All links/sections/newsletter preserved.
+  deploy/field-data.css served at /field-data.css.
 - **Serve the real image format** — the object image endpoint now sends image/png vs
   image/jpeg (and a matching filename) based on the actual bytes, instead of always
   image/jpeg; the Explore download label shows PNG or JPEG correctly.

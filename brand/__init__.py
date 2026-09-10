@@ -38,34 +38,81 @@ _NAV = [
 
 _CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap');
 :root {
-  --molten:#fb923c; --molten-deep:#ea580c; --ember:#f59e0b;
-  --purple:#7c3aed; --furnace:#1c1222; --furnace-2:#2a1a30; --ink:#23202a;
+  --fd-bg-top:#0A0D11; --fd-bg-base:#1A140F; --fd-rule:#24221F; --fd-rule-soft:#2A2824;
+  --fd-amber:#E8A44A; --fd-teal:#5EC8BD; --fd-molten:#E25836; --fd-violet:#967AD2;
+  --fd-bone:#EEE7DB; --fd-dim:#A8A29A; --fd-faint:#6E665C;
+  --fd-serif:"Fraunces",Georgia,serif; --fd-sans:"Archivo",system-ui,sans-serif;
+  --fd-mono:"IBM Plex Mono",ui-monospace,monospace;
 }
-h1, h2, h3, h4, [data-testid="stHeading"] {
-  font-family:'Fraunces', Georgia, serif !important; letter-spacing:-.01em; }
-/* NOTE: do NOT hide header[data-testid="stHeader"] — on mobile it holds the
-   control that opens the sidebar. And do NOT shrink the block-container top
-   padding: Streamlit uses it to clear the fixed header, so reducing it slides
-   content (the nav) under the header, where it can't be clicked. */
+/* ground */
+.stApp { background-color:var(--fd-bg-top);
+  background-image:
+    radial-gradient(115% 62% at 22% 100%, rgba(232,164,74,.08) 0%, rgba(232,164,74,0) 60%),
+    linear-gradient(180deg, var(--fd-bg-top) 0%, #12100E 60%, var(--fd-bg-base) 100%);
+  background-attachment:fixed; }
+[data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stHeader"] { background:transparent; }
+body, .stApp, .stMarkdown, p, li, label, [data-testid="stMarkdownContainer"] {
+  font-family:var(--fd-sans); color:var(--fd-dim); }
 
-/* brand lockup */
-.gdb-brand { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none;
-  color:var(--ink); font-family:'Fraunces', Georgia, serif; font-weight:900; font-size:1.35rem;
-  margin:0 0 .5rem; }
-.gdb-brand svg { width:26px; height:30px; }
-.gdb-rule { height:3px; margin:.25rem 0 1.1rem;
-  background:linear-gradient(90deg, var(--ember), var(--molten-deep) 45%, transparent);
-  border-radius:2px; }
+/* headings — Fraunces, explicit axis order; weight 300 fallback if the font fails */
+h1,h2,h3,h4,[data-testid="stHeading"] {
+  font-family:var(--fd-serif) !important;
+  font-variation-settings:"opsz" 44,"wght" 340,"SOFT" 0,"WONK" 0;
+  font-weight:300 !important; color:var(--fd-bone) !important; letter-spacing:-.005em; }
 
-/* nav + form primary buttons: molten pill */
-[data-testid="stLinkButton"] a { border-radius:999px !important; font-weight:600 !important; }
+/* NOTE: never hide header[data-testid="stHeader"] (mobile sidebar toggle lives there);
+   never shrink block-container top padding (content would slide under the header). */
+[data-testid="stSidebar"] { background:#0E0B09; border-right:1px solid var(--fd-rule); }
+[data-testid="stSidebar"] * { color:var(--fd-dim); }
+
+a, a:visited { color:var(--fd-amber); }
+a:hover { color:var(--fd-teal); }
+code, pre, [data-testid="stCode"] { font-family:var(--fd-mono); color:var(--fd-teal); }
+
+/* buttons — mono pills; primary = amber, secondary = outline */
+.stButton>button, .stDownloadButton>button, .stFormSubmitButton>button, [data-testid="stLinkButton"] a {
+  border-radius:999px !important; font-family:var(--fd-mono) !important; font-weight:500 !important;
+  text-transform:uppercase; letter-spacing:.08em; font-size:.8rem !important; }
 .stButton>button[kind="primary"], .stDownloadButton>button[kind="primary"],
-.stFormSubmitButton>button[kind="primary"] {
-  background:linear-gradient(180deg, var(--ember), var(--molten-deep));
-  border:0; color:#2a1400; font-weight:600; }
-a { color:var(--molten-deep); }
+.stFormSubmitButton>button[kind="primary"], [data-testid="stLinkButton"] a[kind="primary"] {
+  background:var(--fd-amber) !important; border:0 !important; color:var(--fd-bg-top) !important; }
+.stButton>button[kind="secondary"], [data-testid="stLinkButton"] a[kind="secondary"] {
+  background:transparent !important; color:var(--fd-bone) !important; border:1px solid var(--fd-rule-soft) !important; }
+.stButton>button:hover, [data-testid="stLinkButton"] a:hover { border-color:var(--fd-amber) !important; }
+
+/* inputs */
+input, textarea, [data-baseweb="input"], [data-baseweb="textarea"], [data-baseweb="select"]>div,
+.stTextInput input, .stNumberInput input, .stDateInput input {
+  background:rgba(238,231,219,.05) !important; color:var(--fd-bone) !important;
+  border-color:var(--fd-rule-soft) !important; }
+[data-baseweb="tab"] { font-family:var(--fd-mono); text-transform:uppercase; letter-spacing:.06em; font-size:.8rem; }
+/* st.pills / segmented_control -> Field Data chips */
+[data-testid="stPills"] button, [data-testid="stButtonGroup"] button {
+  border-radius:999px !important; font-family:var(--fd-mono) !important; text-transform:uppercase;
+  letter-spacing:.05em; font-size:.75rem !important; border:1px solid var(--fd-rule-soft) !important;
+  color:var(--fd-dim) !important; background:transparent !important; }
+[data-testid="stPills"] button[aria-checked="true"], [data-testid="stPills"] button[kind="primary"],
+[data-testid="stButtonGroup"] button[aria-checked="true"] {
+  background:var(--fd-amber) !important; color:var(--fd-bg-top) !important; border-color:var(--fd-amber) !important; }
+
+/* captions / metrics */
+[data-testid="stCaptionContainer"], .stCaption, small { color:var(--fd-faint) !important; }
+[data-testid="stMetricValue"] { font-family:var(--fd-serif); color:var(--fd-bone); font-variation-settings:"opsz" 40,"wght" 380; }
+[data-testid="stMetricLabel"] { font-family:var(--fd-mono); text-transform:uppercase; letter-spacing:.08em; color:var(--fd-faint); }
+[data-testid="stDataFrame"], [data-testid="stTable"], [data-testid="stExpander"] {
+  border:1px solid var(--fd-rule); border-radius:10px; }
+[data-testid="stAlert"] { border-radius:10px; }
+
+/* brand lockup + rule */
+.gdb-brand { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none;
+  color:var(--fd-bone); font-family:var(--fd-mono); font-weight:500; letter-spacing:.14em;
+  text-transform:uppercase; font-size:.95rem; margin:0 0 .5rem; }
+.gdb-brand svg { width:22px; height:26px; }
+.gdb-rule { height:1px; margin:.25rem 0 1.1rem;
+  background:linear-gradient(90deg, var(--fd-amber), var(--fd-rule-soft) 45%, transparent);
+  border-radius:2px; }
 </style>
 """
 

@@ -53,11 +53,20 @@ def _render_intake(key):
             if kind == "textarea":
                 vals[name] = st.text_area(lbl, help=help_)
             elif kind == "select":
-                vals[name] = st.selectbox(lbl, ["—", *intake.options_for(fd)], help=help_)
-                if vals[name] == "—":
-                    vals[name] = ""
+                # button pills instead of a dropdown (single choice)
+                if help_:
+                    st.caption(f"**{lbl}**  \n{help_}")
+                else:
+                    st.caption(f"**{lbl}**")
+                vals[name] = st.pills(lbl, intake.options_for(fd), selection_mode="single",
+                                      label_visibility="collapsed", key=f"pill_{key}_{name}") or ""
             elif kind == "multiselect":
-                vals[name] = st.multiselect(lbl, intake.options_for(fd), help=help_)
+                if help_:
+                    st.caption(f"**{lbl}**  \n{help_}")
+                else:
+                    st.caption(f"**{lbl}**")
+                vals[name] = st.pills(lbl, intake.options_for(fd), selection_mode="multi",
+                                      label_visibility="collapsed", key=f"pill_{key}_{name}") or []
             elif kind == "checkbox":
                 vals[name] = st.checkbox(fd["label"], help=help_)
             elif kind == "date":

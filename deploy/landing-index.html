@@ -1,342 +1,338 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Glass Database — an open registry for studio glass</title>
-  <meta name="description" content="A community registry of glass studios, artists, programs, and events — with a provenance archive for individual objects. Open data, verifiable history.">
-  <meta name="theme-color" content="#1c1222">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,900&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --furnace: #1c1222; --furnace-2: #2a1a30;
-      --molten: #fb923c; --molten-deep: #ea580c; --ember: #f59e0b;
-      --purple: #7c3aed; --ink: #23202a; --slate: #5b5666;
-      --paper: #ffffff; --line: #ece8ef;
-      --display: "Fraunces", Georgia, serif;
-      --body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body { margin: 0; font-family: var(--body); color: var(--ink);
-           background: var(--paper); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-    a { color: var(--molten-deep); }
-    .wrap { max-width: 68rem; margin: 0 auto; padding: 0 1.5rem; }
-    .hero { background:
-        radial-gradient(60% 70% at 50% 78%, rgba(251,146,60,.28), rgba(234,88,12,0) 70%),
-        linear-gradient(180deg, var(--furnace) 0%, var(--furnace-2) 100%);
-        color: #f6eef2; text-align: center; padding: 4.5rem 1.5rem 4rem; }
-    .hero img { width: 132px; height: auto; margin: 0 auto .5rem; display: block; }
-    .hero h1 { font-family: var(--display); font-weight: 900;
-        font-size: clamp(2.6rem, 6vw, 4.4rem); line-height: .98; letter-spacing: -.01em;
-        margin: .2rem 0 .1rem; }
-    .hero .lede { font-size: clamp(1.05rem, 2.2vw, 1.3rem); color: #d9cfe0;
-        max-width: 34rem; margin: 1rem auto 1.9rem; }
-    .cta-row { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
-    .social { margin: 1.1rem 0 0; color: #cbb8d6; font-size: .98rem; }
-    .social a { color: #fbcfa6; text-decoration: none; font-weight: 600; }
-    .social a:hover { text-decoration: underline; }
-    .social span { margin: 0 .5rem; opacity: .5; }
-    .signup { display: flex; gap: .5rem; justify-content: center; flex-wrap: wrap; margin: 1.1rem auto 0; max-width: 30rem; }
-    .signup input { flex: 1 1 14rem; padding: .7rem .9rem; border-radius: 10px; border: 1px solid #6b4a63;
-      background: rgba(255,255,255,.06); color: #fff; font-size: 1rem; }
-    .signup input::placeholder { color: #c8b2c0; }
-    .signup button { padding: .7rem 1.2rem; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700;
-      background: linear-gradient(180deg,#fb923c,#ea580c); color: #2a1400; font-size: 1rem; }
-    .signup-msg { color: #fbcfa6; font-size: .92rem; min-height: 1.2rem; margin: .5rem 0 0; }
-    .shots { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin: 1.6rem 0 0; align-items: flex-start; }
-    .shots figure { margin: 0; max-width: 250px; text-align: center; }
-    .shots img { width: 100%; height: 480px; object-fit: contain; border-radius: 16px;
-      border: 1px solid #e6e2ea; box-shadow: 0 10px 30px rgba(28,18,34,.14); background:#0f0b13; }
-    .shots figcaption { margin-top: .5rem; color: var(--slate); font-size: .86rem; }
-    .shots figcaption a { color: var(--ember); }
-    .btn { display: inline-block; padding: .8rem 1.4rem; border-radius: 999px;
-        font-weight: 600; text-decoration: none; font-size: 1.02rem; }
-    .btn.primary { background: linear-gradient(180deg, var(--ember), var(--molten-deep)); color: #2a1400; }
-    .btn.primary:hover { filter: brightness(1.06); }
-    .btn.ghost { color: #f6eef2; border: 1px solid rgba(246,238,242,.35); }
-    .btn.ghost:hover { border-color: #f6eef2; }
-    .feature-note .btn.ghost { color: var(--ink); border-color: var(--line); }
-    .feature-note .btn.ghost:hover { border-color: var(--ember); color: var(--ember); }
-    .scope { border-bottom: 1px solid var(--line); }
-    .scope .wrap { display: flex; flex-wrap: wrap; gap: 1rem 2.2rem;
-        padding-top: 1.4rem; padding-bottom: 1.4rem; align-items: baseline; }
-    .scope b, .scope a { font-family: var(--display); font-weight: 600; font-size: 1.15rem; color: var(--ink); }
-    .scope a { text-decoration: none; border-bottom: 2px solid transparent; }
-    .scope a:hover { border-bottom-color: var(--ember); }
-    .scope span { color: var(--slate); }
-    section { padding: 4rem 0; border-bottom: 1px solid var(--line); }
-    .kicker { font-family: var(--display); font-weight: 600; font-size: clamp(1.7rem,3.6vw,2.4rem);
-        letter-spacing: -.01em; margin: 0 0 .6rem; }
-    .sub { color: var(--slate); max-width: 40rem; margin: 0 0 2rem; font-size: 1.08rem; }
-    .split { display: grid; grid-template-columns: 1.1fr .9fr; gap: 2.5rem; align-items: center; }
-    .feature-note { background: linear-gradient(180deg,#fbf6ff,#f6eefc);
-        border: 1px solid #ecd9fb; border-radius: 16px; padding: 1.6rem 1.5rem; }
-    .feature-note h3 { font-family: var(--display); margin: 0 0 .4rem; color: var(--purple); }
-    .flow { list-style: none; padding: 0; margin: 1rem 0 0; }
-    .flow li { padding: .55rem 0 .55rem 1.6rem; position: relative; }
-    .flow li::before { content: ""; position: absolute; left: 0; top: .95rem;
-        width: 9px; height: 9px; border-radius: 2px; background: var(--purple); }
-    .surfaces { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
-    .surface { border: 1px solid var(--line); border-radius: 14px; padding: 1.5rem;
-        text-decoration: none; color: inherit; display: block; transition: border-color .15s; }
-    .surface:hover { border-color: var(--molten); }
-    .surface h3 { font-family: var(--display); font-size: 1.35rem; margin: 0 0 .3rem; }
-    .surface p { margin: 0; color: var(--slate); }
-    .surface .go { display: inline-block; margin-top: .9rem; font-weight: 600; color: var(--molten-deep); }
-    .surface.explore h3 { color: #166534; } .surface.explore:hover { border-color: #22c55e; }
-    .surface.glow h3 { color: var(--purple); } .surface.glow:hover { border-color: var(--purple); }
-    .surface.api h3 { color: #1e40af; } .surface.api:hover { border-color: #3b82f6; }
-    .surface.admin h3 { color: #9d174d; } .surface.admin:hover { border-color: #db2777; }
-    code { background: #f3eef7; padding: .12rem .4rem; border-radius: 5px; font-size: .92em; }
-    footer { padding: 3rem 0 4rem; color: var(--slate); font-size: .95rem; }
-    footer a { color: var(--slate); text-decoration: underline; text-underline-offset: 2px; }
-    footer .brand { font-family: var(--display); color: var(--ink); font-size: 1.1rem; }
-    @media (max-width: 720px) { .split { grid-template-columns: 1fr; gap: 1.5rem; }
-      .surfaces { grid-template-columns: 1fr; } }
-    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Glass Database — a shared record for glass</title>
+<meta name="description" content="An open, community-built registry for glass — makers, studios, objects, opportunities, and a physical fingerprint that travels with the work.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/field-data.css">
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin: 0; }
+  .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 7rem; }
+  .fd-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 1.4rem 0 1.1rem; flex-wrap: wrap; border-bottom: 1px solid var(--fd-rule); }
+  .fd-nav__brand { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--fd-bone); font-size: clamp(13px,1.5vw,15px); }
+  .fd-nav__links { display: flex; gap: clamp(.9rem, 2.2vw, 1.8rem); flex-wrap: wrap; }
+  .fd-nav__links a { font-family: var(--fd-mono); font-size: clamp(12px,1.3vw,14px);
+    letter-spacing: .1em; text-transform: uppercase; color: var(--fd-dim); text-decoration: none; }
+  .fd-nav__links a:hover { color: var(--fd-amber); }
+  section.fd-sec { position: relative; padding: clamp(4rem, 9vw, 7.5rem) 0 0; }
+  .fd-sec__head { max-width: 62ch; }
+  .fd-sec .fd-eyebrow { display: inline-block; border-bottom: none; padding-bottom: 0; }
+  .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.8rem; max-width: 62ch; }
+  .fd-hero .fd-headline { max-width: 20ch; }
+  .fd-hero__cta { display: flex; gap: .9rem 1rem; flex-wrap: wrap; margin-top: 2rem; }
+  .fd-social { font-family: var(--fd-mono); font-size: clamp(12px,1.3vw,14px); letter-spacing: .08em;
+    color: var(--fd-faint); margin-top: 2rem; }
+  .fd-social a { color: var(--fd-dim); text-decoration: none; }
+  .fd-social a:hover { color: var(--fd-amber); }
+  .fd-social span { opacity: .4; margin: 0 .6rem; }
+  .fd-signup { display: flex; gap: .6rem; flex-wrap: wrap; max-width: 34rem; margin-top: 1.6rem; }
+  .fd-signup input { flex: 1 1 15rem; padding: .8rem 1rem; border-radius: 999px;
+    border: 1.5px solid var(--fd-rule-soft); background: rgba(238,231,219,.04); color: var(--fd-bone);
+    font-family: var(--fd-sans); font-size: 1rem; }
+  .fd-signup input::placeholder { color: var(--fd-faint); }
+  .fd-signup button { font-family: var(--fd-mono); font-weight: 500; letter-spacing: var(--fd-track);
+    text-transform: uppercase; font-size: clamp(12px,1.4vw,14px); cursor: pointer;
+    padding: 0 1.4rem; border-radius: 999px; border: 0; background: var(--fd-amber); color: var(--fd-bg-top); }
+  .fd-signup-msg { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .06em;
+    color: var(--fd-amber); min-height: 1.2rem; margin: .6rem 0 0; }
+  .fd-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.1rem; margin-top: 2.2rem; }
+  .fd-card { display: block; text-decoration: none; padding: 1.6rem 1.5rem; border-radius: 16px;
+    border: 1px solid var(--fd-rule); background: linear-gradient(180deg, rgba(238,231,219,.03), rgba(238,231,219,0));
+    transition: border-color .18s ease, transform .18s ease; }
+  .fd-card:hover { border-color: var(--fd-amber); transform: translateY(-2px); }
+  .fd-card h3 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 380;
+    font-weight: 400; color: var(--fd-bone); font-size: clamp(21px, 2.6vw, 27px); margin: 0 0 .5rem; }
+  .fd-card p { font-family: var(--fd-sans); color: var(--fd-dim); font-size: clamp(15px,1.7vw,17px);
+    line-height: 1.55; margin: 0 0 1rem; }
+  .fd-card code { font-family: var(--fd-mono); font-size: .9em; color: var(--fd-teal); }
+  .fd-card .fd-go { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .12em;
+    text-transform: uppercase; color: var(--fd-amber); }
+  .fd-card--teal:hover { border-color: var(--fd-teal); } .fd-card--teal .fd-go { color: var(--fd-teal); }
+  .fd-card--violet:hover { border-color: var(--fd-violet); } .fd-card--violet .fd-go { color: var(--fd-violet); }
+  .fd-scope { display: flex; flex-wrap: wrap; gap: .5rem .4rem; margin-top: 2rem; }
+  .fd-scope a { font-family: var(--fd-mono); font-size: clamp(11px,1.3vw,13px); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--fd-dim); text-decoration: none; padding: .5rem .9rem;
+    border: 1px solid var(--fd-rule); border-radius: 999px; }
+  .fd-scope a:hover { color: var(--fd-amber); border-color: var(--fd-amber); }
+  .fd-shots { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2.2rem; align-items: flex-start; }
+  .fd-shots figure { margin: 0; flex: 1 1 220px; max-width: 260px; }
+  .fd-shots img { width: 100%; height: clamp(360px, 46vw, 460px); object-fit: contain;
+    border-radius: 14px; border: 1px solid var(--fd-rule); background: #05070a; }
+  .fd-shots figcaption { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px);
+    letter-spacing: .05em; color: var(--fd-faint); margin-top: .6rem; }
+  .fd-shots figcaption a { color: var(--fd-amber); }
+  .fd-two { display: grid; grid-template-columns: 1fr; gap: 2.4rem; margin-top: 0; }
+  @media (min-width: 860px){ .fd-two { grid-template-columns: 1.1fr .9fr; align-items: start; } }
+  .fd-footer { margin-top: clamp(5rem, 10vw, 8rem); padding-top: 2rem; border-top: 1px solid var(--fd-rule);
+    display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: baseline; justify-content: space-between; }
+  .fd-footer p { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .06em;
+    color: var(--fd-faint); margin: .3rem 0; }
+  .fd-footer a { color: var(--fd-dim); text-decoration: none; }
+  .fd-footer a:hover { color: var(--fd-amber); }
+  .fd-hero-wrap { position: relative; }
+  .fd-filaments { position: absolute; inset: -2rem -10vw auto; height: 130%; z-index: 0; }
+  .fd-hero-wrap > *:not(.fd-filaments) { position: relative; z-index: 1; }
+</style>
 </head>
-<body>
-  <header class="hero">
-    <!-- swap public/logo.svg with your own logo -->
-    <img src="logo.svg" alt="Glass Database">
-    <h1>Glass Database</h1>
-    <p class="lede">An open registry for studio glass — the studios, the makers, the
-       programs and shows — and a place to give a single piece a verifiable history.</p>
-    <div class="cta-row">
-      <a class="btn primary" href="/explore/">Explore the data</a>
-      <a class="btn ghost" href="/glowtbook/">Open Glowtbook</a>
+<body class="fd-ground">
+<div class="fd-page">
+
+  <nav class="fd-nav">
+    <span class="fd-nav__brand">Glass&nbsp;Database</span>
+    <div class="fd-nav__links">
+      <a href="/explore/">Explore</a>
+      <a href="/glowtbook/">Glowtbook</a>
+      <a href="#barcoding">Barcoding</a>
+      <a href="/studios.html">Map</a>
+      <a href="/graph.html">Graph</a>
+      <a href="/api/docs">API</a>
+      <a href="https://discord.gg/9ek2UxvPT">Discord</a>
     </div>
-    <p class="social">
-      <a href="https://discord.gg/9ek2UxvPT">Join the Discord</a>
-      <span>·</span>
-      <a href="https://www.instagram.com/glassdatabase/">Instagram @glassdatabase</a>
-    </p>
-    <form class="signup" onsubmit="return gdbSubscribe(event)">
-      <input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required>
-      <button type="submit">Get the newsletter</button>
-    </form>
-    <p class="signup-msg" id="signupMsg" role="status" aria-live="polite"></p>
+  </nav>
+
+  <header class="fd-hero-wrap">
+    <svg class="fd-filaments" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <path d="M-40 640 C 300 560, 520 520, 900 250"/>
+      <path d="M-40 700 C 360 600, 640 460, 902 252"/>
+      <path d="M120 700 C 420 560, 700 380, 902 252"/>
+      <path d="M1240 620 C 1050 520, 1010 380, 902 252"/>
+      <path d="M1240 700 C 1080 560, 980 360, 902 252"/>
+      <circle cx="902" cy="252" r="6"/>
+    </svg>
+    <section class="fd-hero fd-sec" style="padding-top:2.4rem">
+      <p class="fd-eyebrow">The open record for glass</p>
+      <h1 class="fd-headline fd-headline--cover" style="margin-top:1.6rem">
+        Every piece has a story.<br><em>Give it one that lasts.</em>
+      </h1>
+      <p class="fd-body fd-lede" style="margin-top:1.6rem">
+        A shared, open registry for glass — the makers, the studios, the objects, and the
+        opportunities that move the field forward.
+      </p>
+      <p class="fd-body" style="margin-top:1rem">
+        Corrected, argued over, and grown by the people who use it. Data under
+        <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a>; the software is
+        <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache&nbsp;2.0</a>.
+      </p>
+      <div class="fd-hero__cta">
+        <a class="fd-cta" href="/explore/">Explore the data</a>
+        <a class="fd-cta" href="/glowtbook/" style="color:var(--fd-teal);border-color:var(--fd-teal)">Open Glowtbook</a>
+      </div>
+      <form class="fd-signup" onsubmit="return gdbSubscribe(event)">
+        <input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required>
+        <button type="submit">Get the newsletter</button>
+      </form>
+      <p class="fd-signup-msg" id="signupMsg" role="status" aria-live="polite"></p>
+      <p class="fd-social">
+        <a href="https://discord.gg/9ek2UxvPT">Join the Discord</a><span>·</span>
+        <a href="https://www.instagram.com/glassdatabase/">Instagram @glassdatabase</a>
+      </p>
+      <div class="fd-scope" aria-label="What's in the database">
+        <a href="/explore/?view=datasets">Artists</a>
+        <a href="/explore/?view=datasets">Studios</a>
+        <a href="/explore/?view=objects">Objects</a>
+        <a href="/explore/?view=opportunities">Opportunities</a>
+        <a href="/explore/?view=community">Exchange</a>
+        <a href="/explore/?view=community">Jobs</a>
+        <a href="/explore/?view=community">Resources</a>
+      </div>
+    </section>
   </header>
 
-  <div class="scope"><div class="wrap">
-    <span>What's in it:</span>
-    <a href="/explore/?view=datasets">Artists</a><a href="/explore/?view=datasets">Studios</a><a href="/explore/?view=objects">Objects</a><a href="/explore/?view=opportunities">Opportunities</a><a href="/explore/?view=community">Exchange</a><a href="/explore/?view=community">Jobs</a><a href="/explore/?view=community">Resources</a>
-  </div></div>
+  <section class="fd-sec" id="explore">
+    <div class="fd-sec__head">
+      <p class="fd-eyebrow">Open data</p>
+      <div class="fd-kicker-rule"></div>
+      <h2 class="fd-headline">See the whole field, then <em>take it with you.</em></h2>
+      <p class="fd-body" style="margin-top:1.2rem">Browse and filter the registry, pull it through a
+        read-only API, or explore how makers, mentors, techniques, and studios connect.</p>
+    </div>
+    <div class="fd-cards">
+      <a class="fd-card" href="/explore/">
+        <h3>Explore</h3>
+        <p>Filterable tables of artists, studios, objects, and more — export any view.</p>
+        <span class="fd-go">Open the explorer &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--teal" href="/api/docs">
+        <h3>Developer API</h3>
+        <p>A read-only, self-documenting API. Try <code>/api/datasets</code>.</p>
+        <span class="fd-go">Read the docs &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--teal" href="/studios.html">
+        <h3>Studios worldwide</h3>
+        <p>Every studio on a dark world map — filter by type, search by city or country.</p>
+        <span class="fd-go">Open the map &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--violet" href="/graph.html">
+        <h3>Relationship graph</h3>
+        <p>Artists, mentors, techniques, and studios as a living network you can explore.</p>
+        <span class="fd-go">Open the graph &rarr;</span>
+      </a>
+    </div>
+  </section>
 
-  <main class="wrap">
-    <section id="explore">
-      <h2 class="kicker">See the whole field, then take it with you</h2>
-      <p class="sub">Every dataset is browsable the same way — break it down by any column,
-         chart it, map the studios, and download what you need. Community data, published
-         openly under CC&nbsp;BY.</p>
-      <div class="surfaces">
-        <a class="surface explore" href="/explore/">
-          <h3>Explorer</h3>
-          <p>Charts, filters, and a studio map across every published dataset.</p>
-          <span class="go">Start exploring</span>
-        </a>
-        <a class="surface api" href="/api/docs">
-          <h3>Developer API</h3>
-          <p>A read-only, self-documenting API. Try <code>/api/datasets</code>.</p>
-          <span class="go">Read the docs</span>
-        </a>
-        <a class="surface glow" href="/graph.html">
-          <h3>Relationship graph</h3>
-          <p>Artists, mentors, techniques, and studios as a living network you can explore.</p>
-          <span class="go">Open the graph</span>
-        </a>
+  <section class="fd-sec" id="calendar">
+    <div class="fd-sec__head">
+      <p class="fd-eyebrow">Opportunities</p>
+      <div class="fd-kicker-rule"></div>
+      <h2 class="fd-headline">Every deadline in <em>one calendar.</em></h2>
+      <p class="fd-body" style="margin-top:1.2rem">Open calls, <strong>residencies</strong>, and grants —
+        the chances to make new work somewhere new. Browse them as a month calendar, or subscribe once so
+        new approved listings land in your own calendar automatically.</p>
+    </div>
+    <div class="fd-hero__cta">
+      <a class="fd-cta" href="/explore/?view=opportunities">Browse the calendar</a>
+      <a class="fd-cta" href="/api/opportunities.ics" style="color:var(--fd-teal);border-color:var(--fd-teal)">Subscribe (ICS)</a>
+    </div>
+  </section>
+
+  <section class="fd-sec" id="community">
+    <div class="fd-sec__head">
+      <p class="fd-eyebrow">Community boards</p>
+      <div class="fd-kicker-rule"></div>
+      <h2 class="fd-headline">Buy, sell, trade, and <em class="fd-accent--teal">hire.</em></h2>
+    </div>
+    <div class="fd-rows" style="margin-top:2.2rem">
+      <div class="fd-row"><span class="fd-label">Exchange</span>
+        <p>List work to sell, want, or trade — with a place for makers who'll swap rather than sell.</p></div>
+      <div class="fd-row"><span class="fd-label">Jobs</span>
+        <p>Gaffer, assistant, teaching, and studio-tech openings across the field.</p></div>
+      <div class="fd-row"><span class="fd-label">Resources</span>
+        <p>Suppliers, equipment, and the shared know-how that keeps a shop running.</p></div>
+    </div>
+    <div class="fd-hero__cta"><a class="fd-cta" href="/explore/?view=community">Open the boards</a></div>
+  </section>
+
+  <section class="fd-sec" id="glowtbook">
+    <div class="fd-two">
+      <div>
+        <p class="fd-eyebrow">Provenance</p>
+        <div class="fd-kicker-rule"></div>
+        <h2 class="fd-headline">From the hot shop <em>to the archive.</em></h2>
+        <p class="fd-body" style="margin-top:1.2rem">The making is live and fleeting; the record shouldn't
+          be. Glowtbook is a working bench journal and object registry — log a piece, photograph it off the
+          pipe, and record where it's been. Installs as an app on your phone.</p>
+        <div class="fd-hero__cta"><a class="fd-cta" href="/glowtbook/">Open Glowtbook</a></div>
       </div>
-    </section>
-
-    <section id="directory">
-      <h2 class="kicker">A directory built by the community</h2>
-      <p class="sub">Add yourself, a friend, a studio, an event, or a resource. Everything is
-         reviewed before it appears, contact details stay private, and anything can be
-         corrected or removed on request.</p>
-      <div class="surfaces">
-        <a class="surface explore" href="/explore/">
-          <h3>Add your name</h3>
-          <p>The artist sheet: practice, techniques, training, mentorship, and links —
-             for early-, mid-, and late-career makers alike.</p>
-          <span class="go">Submit to the directory</span>
-        </a>
-        <a class="surface admin" href="/explore/">
-          <h3>Studios, events &amp; resources</h3>
-          <p>Add a hot shop or access space, an exhibition, or a supplier / service / class.</p>
-          <span class="go">Submit a listing</span>
-        </a>
+      <div>
+        <p class="fd-label" style="color:var(--fd-violet)">What travels with a piece</p>
+        <ul class="fd-list" style="margin-top:1.2rem">
+          <li>A preservation-grade archive of the originals <strong>(BagIt / OAIS)</strong></li>
+          <li>Content Credentials <strong>(C2PA)</strong> signed into the image</li>
+          <li>A re-identification <strong>fingerprint</strong> to confirm a physical piece later</li>
+          <li>Structured <strong>style traits</strong> aligned to Getty&nbsp;AAT &amp; Wikidata</li>
+          <li>A listing built to be <strong>screen-reader accessible</strong> from the start</li>
+        </ul>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <section id="calendar">
-      <h2 class="kicker">Every deadline in one calendar</h2>
-      <p class="sub">Open calls, <strong>residencies</strong>, and grants — the chances to make
-         new work somewhere new. Browse them as a month calendar, or subscribe once so new
-         approved listings appear in your own calendar automatically.</p>
-      <div class="surfaces">
-        <a class="surface explore" href="/explore/">
-          <h3>Opportunities calendar</h3>
-          <p>Browse by month, add a single deadline to Google Calendar, or submit one.</p>
-          <span class="go">See what's open</span>
-        </a>
-        <a class="surface api" href="/api/opportunities.ics">
-          <h3>Subscribe (.ics)</h3>
-          <p>Add the whole calendar to Apple, Google, or Outlook and never miss a deadline.</p>
-          <span class="go">Get the feed</span>
-        </a>
-      </div>
-    </section>
+  <section class="fd-sec" id="barcoding">
+    <div class="fd-sec__head">
+      <p class="fd-eyebrow" style="color:var(--fd-molten)">Experimental</p>
+      <div class="fd-kicker-rule"></div>
+      <h2 class="fd-headline">A <em class="fd-accent--molten">digital barcode</em> for one-of-a-kind glass.</h2>
+      <p class="fd-body" style="margin-top:1.2rem">Every mass-produced thing has a barcode; a handmade piece
+        has none — so it can't be told from a copy, or reunited with its record if it's sold, lent, or lost.
+        Shoot a piece from every angle on a printed mat and the app turns it into a
+        <strong>fingerprint unique to that physical object</strong> — a barcode you don't print, you
+        <em>read off the glass.</em> Anyone can later confirm <em>this is the same piece</em>, in a browser.</p>
+    </div>
 
-    <section id="community">
-      <h2 class="kicker">Buy, sell, trade, and hire</h2>
-      <p class="sub">A community exchange and job board for glass — gear and materials, gigs and
-         apprenticeships, studios and services. Listings can be marked
-         <em>open to trade</em>.</p>
-      <div class="surfaces">
-        <a class="surface glow" href="/explore/">
-          <h3>Exchange &amp; job board</h3>
-          <p>Want-to-sell / buy / trade, plus positions and gigs across the community.</p>
-          <span class="go">Browse the board</span>
-        </a>
-        <a class="surface admin" href="/explore/">
-          <h3>Post a listing</h3>
-          <p>List something to sell or trade, or post a job — reviewed, then public.</p>
-          <span class="go">Post something</span>
-        </a>
-      </div>
-    </section>
+    <div class="fd-shots">
+      <figure><img src="/barcoding/capture.jpg" alt="The capture app reading a blue-green glass piece on the barcode mat, coverage at 100.">
+        <figcaption>Capture &mdash; orbit the piece until coverage reads 100.</figcaption></figure>
+      <figure><img src="/barcoding/piece.jpg" alt="A blue and green glass paperweight on the printed ArUco and colour-checker mat.">
+        <figcaption>The <a href="/fingerprint/capture-mat.pdf">printable mat</a> gives true scale and colour.</figcaption></figure>
+      <figure><img src="/barcoding/review.jpg" alt="A grid of kept frames from many angles, with an Export fingerprint button.">
+        <figcaption>Every angle becomes one exportable barcode.</figcaption></figure>
+    </div>
 
-    <section id="glowtbook">
-      <h2 class="kicker">From the hot shop to the archive</h2>
-      <p class="sub">The making is live and fleeting; the record shouldn't be. Glowtbook is a
-         working bench journal and object registry for makers — log a piece, photograph it off
-         the pipe, and record where it's been.</p>
-      <div class="split">
-        <div class="surfaces" style="grid-template-columns:1fr">
-          <a class="surface glow" href="/glowtbook/">
-            <h3>Glowtbook</h3>
-            <p>Objects, provenance timelines, images and video, and one-tap contribution
-               to the public registry. Installs as an app on your phone.</p>
-            <span class="go">Open Glowtbook</span>
-          </a>
-        </div>
-        <aside class="feature-note">
-          <h3>Museum-grade cataloging, for everyone</h3>
-          <p style="margin:.2rem 0 0;color:var(--slate)">When you contribute, the full-quality
-             original and any private values stay with you. A condensed, public copy goes to the
-             registry, carrying:</p>
-          <ul class="flow">
-            <li>a preservation-grade archive of the originals (BagIt / OAIS)</li>
-            <li>Content Credentials (C2PA) signed into the image</li>
-            <li>a re-identification <strong>fingerprint</strong> to confirm a physical piece later</li>
-            <li>structured <strong>style traits</strong> aligned to Getty AAT &amp; Wikidata</li>
-            <li>a listing built to be <strong>screen-reader accessible</strong> from the start</li>
-          </ul>
-          <p style="margin:.7rem 0 0;color:var(--slate);font-size:.92rem">Standards museums use
-             (SKOS, CIDOC-CRM, C2PA) — so a studio, a school, or a collection can all speak the
-             same language.</p>
-        </aside>
-      </div>
-    </section>
+    <div class="fd-steps" style="margin-top:2.6rem">
+      <span class="fd-step fd-step--1"><span class="fd-label">Capture</span></span><hr>
+      <span class="fd-step fd-step--2"><span class="fd-label">Fingerprint</span></span><hr>
+      <span class="fd-step fd-step--3"><span class="fd-label">Verify</span></span>
+    </div>
 
-    <section id="barcoding">
-      <p style="text-align:center;margin:0 0 .3rem;color:var(--ember);font-weight:700;
-         letter-spacing:.06em;text-transform:uppercase;font-size:.8rem">Experimental</p>
-      <h2 class="kicker" style="text-align:center">A digital barcode for one-of-a-kind glass</h2>
-      <p class="sub" style="text-align:center;margin-left:auto;margin-right:auto">
-         Every mass-produced thing has a barcode. A handmade piece has none — so it can't be
-         told apart from a copy, or reunited with its record if it's sold, lent, or lost. We're
-         changing that: shoot a piece from every angle on a printed mat and the app turns it into
-         a <strong>fingerprint unique to that physical object</strong> — a barcode you don't print,
-         you <em>read off the glass</em>. Anyone can later confirm <em>this is the same piece</em>,
-         right in a browser.</p>
+    <div class="fd-mark" style="margin-top:2.6rem;max-width:70ch">
+      <span class="fd-label">Backed by Content Credentials (C2PA)</span>
+      <p>The barcode is bound to tamper-evident provenance — a compact attestation, signed into the piece's
+        C2PA Content Credentials — so a verified match isn't just "looks alike"; it's anchored to a signed
+        record of what the piece is and when it was enrolled. <strong>This is experimental:</strong> it works
+        today for enrol and verify, and it's strongest on pieces with distinctive colour and detail. Treat a
+        result as strong evidence, not forensic proof.</p>
+    </div>
+    <div class="fd-hero__cta">
+      <a class="fd-cta" href="/fingerprint/enroll.html">Try the capture app</a>
+      <a class="fd-cta" href="/fingerprint/capture-mat.pdf" style="color:var(--fd-dim);border-color:var(--fd-rule-soft)">Print the mat</a>
+    </div>
+  </section>
 
-      <div class="shots">
-        <figure><img src="/barcoding/capture.jpg" alt="The capture app reading a blue-green glass
-          piece on the barcode mat, coverage at 100."><figcaption>Capture — orbit the piece until
-          coverage reads 100.</figcaption></figure>
-        <figure><img src="/barcoding/piece.jpg" alt="A blue and green glass paperweight on the
-          printed ArUco + colour-checker mat."><figcaption>The <a href="/fingerprint/capture-mat.pdf">printable
-          mat</a> gives true scale and colour.</figcaption></figure>
-        <figure><img src="/barcoding/review.jpg" alt="A grid of kept frames from many angles, with
-          an Export fingerprint button."><figcaption>Every angle becomes one exportable barcode.</figcaption></figure>
-      </div>
+  <section class="fd-sec" id="join">
+    <div class="fd-sec__head">
+      <p class="fd-eyebrow">Come say hi</p>
+      <div class="fd-kicker-rule"></div>
+      <h2 class="fd-headline">A record kept <em>by the field, for the field.</em></h2>
+      <p class="fd-body" style="margin-top:1.2rem">Get open calls and new features in your inbox, join the
+        conversation, or follow along. Nothing is published until it's reviewed; anything can be corrected or
+        removed on request.</p>
+    </div>
+    <form class="fd-signup" onsubmit="return gdbSubscribe(event)">
+      <input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required>
+      <button type="submit">Subscribe</button>
+    </form>
+    <div class="fd-cards">
+      <a class="fd-card" href="https://discord.gg/9ek2UxvPT">
+        <h3>Discord</h3>
+        <p>Introductions, questions, submissions, and where new features get hashed out.</p>
+        <span class="fd-go">Join the Discord &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--violet" href="https://www.instagram.com/glassdatabase/">
+        <h3>Instagram</h3>
+        <p>Follow <strong>@glassdatabase</strong> for pieces, makers, and open calls.</p>
+        <span class="fd-go">Follow along &rarr;</span>
+      </a>
+    </div>
+  </section>
 
-      <aside class="feature-note" style="max-width:52rem;margin:1.5rem auto 0">
-        <h3>Backed by Content Credentials (C2PA)</h3>
-        <p style="margin:.2rem 0 0;color:var(--slate)">The barcode is bound to tamper-evident
-           provenance: a compact attestation — rating, colour, and a hash of the fingerprint — is
-           signed into the piece's <strong>C2PA Content Credentials</strong>, the same standard used
-           to prove where a photo came from. So a verified match isn't just "looks alike"; it's
-           anchored to a signed record of what the piece is and when it was enrolled.</p>
-        <p style="margin:.8rem 0 0;color:var(--slate);font-size:.92rem">
-           <strong>This is experimental.</strong> It works today — you can enrol a piece and verify
-           it — and it's strongest on pieces with distinctive colour and detail; clear glass and
-           precise measurement are still being refined. Treat a result as strong evidence, not
-           forensic proof. Turn on the optional on-device AI (DINOv2) to tell similar-coloured
-           pieces apart.</p>
-        <p style="margin:.9rem 0 0">
-           <a class="btn primary" href="/fingerprint/enroll.html">Try the capture app</a>
-           <a class="btn ghost" href="/fingerprint/capture-mat.pdf">Print the mat</a>
-        </p>
-      </aside>
-    </section>
+  <footer class="fd-footer">
+    <div>
+      <p style="color:var(--fd-bone);font-size:14px;letter-spacing:.1em">GLASS&nbsp;DATABASE</p>
+      <p>Data &amp; ontology under <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a> &middot;
+         software <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache&nbsp;2.0</a></p>
+    </div>
+    <p>
+      <a href="https://discord.gg/9ek2UxvPT">Discord</a> &middot;
+      <a href="https://www.instagram.com/glassdatabase/">Instagram</a> &middot;
+      <a href="/explore/">Explore</a> &middot; <a href="/glowtbook/">Glowtbook</a> &middot;
+      <a href="/api/docs">API</a> &middot;
+      <a class="fd-handle" href="https://github.com/alibama/glass-database">github.com/alibama/glass-database</a>
+    </p>
+  </footer>
 
-    <section id="join">
-      <h2 class="kicker">Come say hi — and stay in the loop</h2>
-      <p class="sub">This is a community project — corrected, argued over, and grown by the people
-         who use it. Get open calls and new features in your inbox, join the conversation, or
-         follow along.</p>
-      <form class="signup" style="max-width:34rem;margin-bottom:1.4rem" onsubmit="return gdbSubscribe(event)">
-        <input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required>
-        <button type="submit">Subscribe to the newsletter</button>
-      </form>
-      <div class="surfaces">
-        <a class="surface glow" href="https://discord.gg/9ek2UxvPT">
-          <h3>Discord</h3>
-          <p>Introductions, questions, submissions, and where new features get hashed out.</p>
-          <span class="go">Join the Discord</span>
-        </a>
-        <a class="surface admin" href="https://www.instagram.com/glassdatabase/">
-          <h3>Instagram</h3>
-          <p>Follow <strong>@glassdatabase</strong> for pieces, makers, and open calls.</p>
-          <span class="go">Follow along</span>
-        </a>
-      </div>
-    </section>
-  </main>
+</div>
 
-  <footer><div class="wrap">
-    <p class="brand">Glass Database</p>
-    <p><a href="https://discord.gg/9ek2UxvPT">Discord</a> ·
-       <a href="https://www.instagram.com/glassdatabase/">Instagram</a> ·
-       <a href="/explore/">Explore</a> · <a href="/glowtbook/">Glowtbook</a> ·
-       <a href="/api/docs">API</a> · <a href="https://github.com/alibama/glass-database">GitHub</a></p>
-    <p>Data and the glass ontology are shared under
-       <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a>;
-       the software is <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache&nbsp;2.0</a>.
-       Nothing is published until it's reviewed; anything can be corrected or removed on request.</p>
-  </div></footer>
-
-  <script>
-    async function gdbSubscribe(e){
-      e.preventDefault();
-      const f = e.target, email = f.email.value.trim();
-      const msg = document.getElementById('signupMsg') || (() => {
-        const p = document.createElement('p'); p.className='signup-msg'; f.after(p); return p; })();
-      try {
-        const r = await fetch('/api/subscribe', {
-          method:'POST', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({email, source:'homepage'}) });
-        if (r.ok) { msg.textContent = "You're on the list — thanks!"; f.reset(); }
-        else { const j = await r.json().catch(()=>({})); msg.textContent = j.detail || "That didn't work — try again?"; }
-      } catch (_) { msg.textContent = "Network error — please try again."; }
-      return false;
-    }
-  </script>
+<script>
+  async function gdbSubscribe(e){
+    e.preventDefault();
+    const f = e.target, email = f.email.value.trim();
+    const msg = document.getElementById('signupMsg') || (function(){
+      const p = document.createElement('p'); p.className='fd-signup-msg'; f.after(p); return p; })();
+    try {
+      const r = await fetch('/api/subscribe', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email: email, source:'homepage'}) });
+      if (r.ok) { msg.textContent = "You're on the list — thanks."; f.reset(); }
+      else { const j = await r.json().catch(function(){return {};}); msg.textContent = j.detail || "That didn't work — try again?"; }
+    } catch (_) { msg.textContent = "Network error — please try again."; }
+    return false;
+  }
+</script>
 </body>
 </html>

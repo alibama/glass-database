@@ -98,6 +98,7 @@ rsync -a --delete \
     "$SRC/" "$APP_DIR/"
 cp "$SRC/deploy/landing-index.html" "$APP_DIR/public/index.html"
 cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
+[ -f "$SRC/deploy/field-data.css" ] && cp "$SRC/deploy/field-data.css" "$APP_DIR/public/field-data.css"
 # Homepage 'digital barcoding' screenshots
 if [ -d "$SRC/deploy/barcoding" ]; then
     mkdir -p "$APP_DIR/public/barcoding"
@@ -112,6 +113,7 @@ if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     cp "$SRC/deploy/fingerprint-web/enroll.html" "$APP_DIR/public/fingerprint/enroll.html"
     cp "$SRC/deploy/fingerprint-web/verify.html" "$APP_DIR/public/fingerprint/verify.html"
     [ -f "$SRC/deploy/graph.html" ] && cp "$SRC/deploy/graph.html" "$APP_DIR/public/graph.html"
+    [ -f "$SRC/deploy/studios.html" ] && cp "$SRC/deploy/studios.html" "$APP_DIR/public/studios.html"
     [ -f "$SRC/deploy/fingerprint-web/capture-mat.pdf" ] && \
         cp "$SRC/deploy/fingerprint-web/capture-mat.pdf" "$APP_DIR/public/fingerprint/capture-mat.pdf"
     echo "  installed vendored fingerprint capture apps"

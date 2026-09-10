@@ -300,7 +300,9 @@ elif page == "Objects":
             c1, c2 = st.columns(2)
             maker = c1.text_input("Maker")
             year = c2.text_input("Year")
-            techs = st.multiselect("Techniques", TECHNIQUES)
+            st.caption("**Techniques**")
+            techs = st.pills("Techniques", TECHNIQUES, selection_mode="multi",
+                             label_visibility="collapsed", key="nt_techs") or []
             c3, c4 = st.columns(2)
             materials = c3.text_input("Materials")
             dims = c4.text_input("Dimensions")
@@ -327,8 +329,10 @@ elif page == "Objects":
             c1, c2 = st.columns(2)
             maker = c1.text_input("Maker", value=o["maker"])
             year = c2.text_input("Year", value=o["year"])
-            techs = st.multiselect("Techniques", TECHNIQUES,
-                                   default=[t for t in (o["techniques"] or "").split("|") if t])
+            st.caption("**Techniques**")
+            techs = st.pills("Techniques", TECHNIQUES, selection_mode="multi",
+                             default=[t for t in (o["techniques"] or "").split("|") if t],
+                             label_visibility="collapsed", key=f"et_techs_{oid}") or []
             materials = st.text_input("Materials", value=o["materials"])
             dims = st.text_input("Dimensions", value=o["dimensions"])
             desc = st.text_area("Description", value=o["description"])
@@ -347,7 +351,8 @@ elif page == "Objects":
             ups = st.file_uploader("Add images (originals kept local as the archival copy)",
                                    type=["jpg", "jpeg", "png"], accept_multiple_files=True)
             st.caption("On a phone, the file picker offers **Take Photo** directly.")
-            role = st.selectbox("Role", ["primary", "photo", "detail"])
+            role = st.pills("Role", ["primary", "photo", "detail"], selection_mode="single",
+                            default="primary", key="img_role") or "primary"
             cap = st.text_input("Caption")
             if st.button("Save images", disabled=not ups):
                 d = aip_dir(uid, oid)

@@ -5,21 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Glass Database — relationship graph</title>
 <style>
-  :root { --ink:#1c1222; --ember:#ea580c; }
+  :root { --ink:#EEE7DB; --ember:#E8A44A; }
   * { box-sizing: border-box; }
-  html,body { margin:0; height:100%; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink); }
+  html,body { margin:0; height:100%; font-family:'Archivo',system-ui,sans-serif; color:var(--ink); }
   #bar { position:fixed; top:0; left:0; right:0; height:52px; display:flex; align-items:center; gap:.8rem;
-    padding:0 1rem; background:#160e1c; color:#fff; z-index:10; }
+    padding:0 1rem; background:#0A0D11; color:#EEE7DB; border-bottom:1px solid #24221F; z-index:10; }
   #bar b { font-weight:800; }
   #bar input { flex:1; max-width:320px; padding:.45rem .7rem; border-radius:8px; border:1px solid #4b3a57;
-    background:#241830; color:#fff; }
+    background:#1A140F; color:#EEE7DB; }
   #bar .legend { margin-left:auto; display:flex; gap:1rem; font-size:.82rem; align-items:center; flex-wrap:wrap; }
   #bar .dot { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:5px; vertical-align:middle; }
   #cy { position:absolute; top:52px; left:0; right:0; bottom:0; background:
-    radial-gradient(1200px 600px at 30% -10%, #fbeee1, #fff); }
-  #tip { position:fixed; bottom:14px; left:14px; background:#160e1c; color:#fff; padding:.5rem .8rem;
+    radial-gradient(1200px 600px at 30% -10%, #12100E, #1A140F); }
+  #tip { position:fixed; bottom:14px; left:14px; background:#0A0D11; color:#EEE7DB; border-bottom:1px solid #24221F; padding:.5rem .8rem;
     border-radius:10px; font-size:.85rem; max-width:min(360px,90vw); display:none; }
-  a { color:#fdba74; }
+  a { color:#E8A44A; }
 </style>
 </head>
 <body>
@@ -27,9 +27,9 @@
     <b>Glass Database</b> <span style="opacity:.7">· relationship graph</span>
     <input id="q" placeholder="Search a name / technique…" aria-label="Search">
     <span class="legend">
-      <span><span class="dot" style="background:#ea580c"></span>Artist</span>
-      <span><span class="dot" style="background:#0ea5e9"></span>Technique</span>
-      <span><span class="dot" style="background:#a78bfa"></span>Studio</span>
+      <span><span class="dot" style="background:#E8A44A"></span>Artist</span>
+      <span><span class="dot" style="background:#5EC8BD"></span>Technique</span>
+      <span><span class="dot" style="background:#967AD2"></span>Studio</span>
       <span style="opacity:.7">— <span id="counts">loading…</span></span>
     </span>
   </div>
@@ -38,7 +38,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
   <script>
-  const COLOR = { artist:"#ea580c", technique:"#0ea5e9", studio:"#a78bfa" };
+  const COLOR = { artist:"#E8A44A", technique:"#5EC8BD", studio:"#967AD2" };
   async function main(){
     let data;
     try { data = await (await fetch("/api/graph.json")).json(); }
@@ -58,13 +58,13 @@
       elements: els,
       style: [
         { selector:"node", style:{
-            "background-color": ele => COLOR[ele.data("type")] || "#94a3b8",
+            "background-color": ele => COLOR[ele.data("type")] || "#6E665C",
             "label":"data(label)", "font-size": ele => ele.data("type")==="artist" ? 11 : 9,
-            "color":"#1c1222", "text-wrap":"wrap", "text-max-width":90,
+            "color":"#EEE7DB", "text-wrap":"wrap", "text-max-width":90,
             "width": ele => ele.data("type")==="artist" ? 22 : 14,
             "height": ele => ele.data("type")==="artist" ? 22 : 14,
             "text-valign":"bottom", "text-margin-y":3, "min-zoomed-font-size":7 } },
-        { selector:"edge", style:{ "width":1.2, "line-color":"#d8c6d6", "curve-style":"haystack",
+        { selector:"edge", style:{ "width":1.2, "line-color":"#3A342F", "curve-style":"haystack",
             "opacity":0.6 } },
         { selector:"edge[type='studied_under']", style:{ "line-color":"#ea580c", "width":2, "opacity":0.9,
             "target-arrow-shape":"triangle", "target-arrow-color":"#ea580c", "curve-style":"bezier" } },

@@ -271,6 +271,34 @@ def harvest_image(item_id: int):
     return Response(b, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/studios.geojson", summary="Studios with coordinates, as GeoJSON (for the map)")
+def studios_geojson():
+    conn = connect()
+    if not _table_exists(conn, "studios"):
+        return {"type": "FeatureCollection", "features": []}
+    cols = [r[1] for r in conn.execute("PRAGMA table_info(studios)")]
+    try:
+        from central import approvals
+        rows = conn.execute(f'SELECT * FROM studios WHERE {approvals.approved_subquery()}',
+                            ("studios",)).fetchall()
+    except Exception:
+        rows = conn.execute("SELECT * FROM studios").fetchall()
+    feats = []
+    for r in rows:
+        d = dict(r)
+        try:
+            lat = float(str(d.get("lat") or "").strip()); lng = float(str(d.get("lng") or "").strip())
+        except Exception:
+            continue
+        if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+            continue
+        props = {k: d.get(k) for k in ("name", "city", "region", "country", "type", "founded",
+                                       "website", "led_by", "notes") if k in cols}
+        feats.append({"type": "Feature", "geometry": {"type": "Point", "coordinates": [lng, lat]},
+                      "properties": props})
+    return {"type": "FeatureCollection", "features": feats}
+
+
 @app.get("/graph.json", summary="Relationship graph (artists · techniques · studios · mentors)")
 def graph_json():
     from central import graph
