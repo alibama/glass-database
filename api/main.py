@@ -271,6 +271,23 @@ def harvest_image(item_id: int):
     return Response(b, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/map-config.json", summary="Basemap tile config for the studios map (reads env)")
+def map_config():
+    """Serves the tile-layer config to the static map. Set MAP_TILES_URL (with your
+    key) in /opt/glassdatabase/.env to use a keyed provider; falls back to CARTO's
+    keyless dark basemap. NOTE: a map-tile key is a *client-side* key — it appears in
+    the browser's tile requests. Lock it to your domain in the provider dashboard;
+    never put a real secret here."""
+    default = "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+    return {
+        "url": os.environ.get("MAP_TILES_URL") or default,
+        "attribution": os.environ.get("MAP_TILES_ATTRIBUTION")
+        or "&copy; OpenStreetMap &copy; CARTO &middot; The Glass Database",
+        "subdomains": os.environ.get("MAP_TILES_SUBDOMAINS", "abcd"),
+        "maxZoom": int(os.environ.get("MAP_TILES_MAXZOOM", "19") or "19"),
+    }
+
+
 @app.get("/studios.geojson", summary="Studios with coordinates, as GeoJSON (for the map)")
 def studios_geojson():
     conn = connect()

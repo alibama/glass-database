@@ -78,9 +78,13 @@
 <script>
 const RAMP = ["#E8A44A","#5EC8BD","#967AD2","#E25836","#EEE7DB","#A8A29A"];
 const map = L.map("map",{zoomControl:true,worldCopyJump:true}).setView([25,10],2);
-L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",{
-  subdomains:"abcd", maxZoom:19,
-  attribution:'&copy; OpenStreetMap &copy; CARTO · The Glass Database'}).addTo(map);
+function addTiles(cfg){
+  L.tileLayer(cfg.url, {subdomains:cfg.subdomains||"abcd", maxZoom:cfg.maxZoom||19,
+    attribution:cfg.attribution||"&copy; OpenStreetMap &copy; CARTO"}).addTo(map);
+}
+fetch("/api/map-config.json").then(r=>r.json()).then(addTiles).catch(()=>addTiles({
+  url:"https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  attribution:"&copy; OpenStreetMap &copy; CARTO &middot; The Glass Database"}));
 
 let ALL=[], TYPES=[], onTypes=new Set(), layer=L.layerGroup().addTo(map), colorOf={};
 const $ = s => document.querySelector(s);
