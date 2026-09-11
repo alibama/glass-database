@@ -271,6 +271,74 @@ def harvest_image(item_id: int):
     return Response(b, media_type="image/jpeg", headers={"Cache-Control": "public, max-age=3600"})
 
 
+_STUDIO_CACHE: dict = {"at": 0.0, "data": None}
+_STUDIO_TTL = 900   # 15 minutes — the kiln API is polled at most once per window
+
+
+@app.get("/studio-data.json", summary="Open operating data from partner studios (15-min cache each)")
+def studio_data():
+    """Aggregates every approved studio data source (each polled at most once per 15
+    min) plus the optional STUDIO_DATA_URL env source. Returns per-source data + totals."""
+    import time
+
+    from central import studio_sources
+    verify = os.environ.get("STUDIO_DATA_VERIFY", "1") != "0"
+    conn = connect()
+    sources = studio_sources.aggregate(conn, verify=verify)
+
+    env_base = (os.environ.get("STUDIO_DATA_URL") or "").rstrip("/")
+    if env_base and not any(s.get("source", "").rstrip("/") == env_base for s in sources):
+        now = time.time()
+        if _STUDIO_CACHE["data"] and now - _STUDIO_CACHE["at"] < _STUDIO_TTL:
+            sources.insert(0, {**_STUDIO_CACHE["data"], "cached": True})
+        else:
+            import httpx
+            e = {"ok": False, "source": env_base,
+                 "name": os.environ.get("STUDIO_DATA_NAME", "Raging Buffalo Glass Studio"),
+                 "attribution": os.environ.get("STUDIO_DATA_ATTRIBUTION",
+                                                "Raging Buffalo Glass Studio (CC-BY-4.0)")}
+            try:
+                with httpx.Client(timeout=8, verify=verify, follow_redirects=True) as c:
+                    r = c.get(f"{env_base}/summary"); r.raise_for_status(); e["summary"] = r.json()
+                e["ok"] = True; _STUDIO_CACHE["data"] = e; _STUDIO_CACHE["at"] = now
+            except Exception as ex:  # noqa: BLE001
+                e["error"] = str(ex)
+            sources.insert(0, e)
+
+    def num(s, *keys):
+        for k in keys:
+            v = (s.get("summary") or {}).get(k)
+            if isinstance(v, (int, float)):
+                return v
+        return 0
+    totals = {"firings": sum(num(s, "firings", "count", "firings_logged", "n") for s in sources),
+              "energy_kwh": sum(num(s, "energy_kwh", "kwh", "energy") for s in sources),
+              "cost_usd": sum(num(s, "cost_usd", "cost") for s in sources)}
+    return {"ok": True, "count": len(sources), "sources": sources, "totals": totals}
+
+
+@app.post("/studio-sources", summary="Submit a studio's open-data API (pending review)")
+def add_studio_source(payload: dict):
+    from central import studio_sources
+    conn = connect()
+    sid, err = studio_sources.add(
+        conn, name=(payload.get("name") or ""), api_url=(payload.get("api_url") or ""),
+        lat=payload.get("lat", ""), lng=payload.get("lng", ""),
+        city=payload.get("city", ""), region=payload.get("region", ""),
+        country=payload.get("country", ""), attribution=payload.get("attribution", ""),
+        submitted_by=payload.get("submitted_by", ""))
+    if not sid:
+        raise HTTPException(400, err or "could not add source")
+    try:
+        from central import notify
+        notify.notify_message("🛰 New studio data source (pending review)",
+                              {"Studio": payload.get("name"), "API": payload.get("api_url")})
+    except Exception:
+        pass
+    return {"ok": True, "pending": True,
+            "note": "Thanks — it'll appear once an admin reviews it."}
+
+
 @app.get("/map-config.json", summary="Basemap tile config for the studios map (reads env)")
 def map_config():
     """Serves the tile-layer config to the static map. Set MAP_TILES_URL (with your

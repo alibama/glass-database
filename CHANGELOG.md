@@ -7,6 +7,19 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Studio open-data registry (multi-studio)** — a front-end 'Publish your studio's
+  data' form on the studios map submits a studio's open-API URL (POST /api/studio-
+  sources); it lands **pending** and is only polled after admin approval (SSRF-safe:
+  https-only + reject private/loopback hosts). GET /api/studio-data.json aggregates
+  every approved source (15-min cache each) + the env source, with totals; the map
+  shows live-data studios with a glowing marker + firings/energy popup. Admin gets a
+  '🛰 Studio data' approve/reject section. docs/STUDIO-DATA-CONTRACT.md defines the
+  API a studio app must expose.
+- **Live open data from a partner studio** — GET /api/studio-data.json proxies a
+  studio's open kiln/furnace API (STUDIO_DATA_URL in .env) with a **15-minute cache**
+  (polls the studio at most once per window; serves last-good on failure). Homepage
+  gets a 'Live from a working studio' section showing firings / energy / cost with
+  CC-BY attribution + source link, feeding the cost estimator.
 - **Operating-cost estimator** — /shop-costs.html: a client-side calculator that
   estimates monthly running cost from each device's power, hours, operating temp, and
   duty cycle, against editable utility rates; device presets (furnace/glory hole/

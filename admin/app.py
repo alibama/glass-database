@@ -76,7 +76,7 @@ st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'
 st.sidebar.caption("[GitHub repo](https://github.com/alibama/glass-database)")
 section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue",
                                        "🧹 Duplicates", "💬 Discord", "📮 Feedback", "📊 Analytics",
-                                       "👥 Users", "🌾 Harvest"],
+                                       "👥 Users", "🌾 Harvest", "🛰 Studio data"],
                            label_visibility="collapsed")
 from brand import track as _track
 
@@ -727,6 +727,38 @@ elif section == "🌾 Harvest":
                 harvest.set_status(conn, it["id"], "approved"); st.rerun()
             if b2.button("⛔ Reject", key=f"hr_{it['id']}"):
                 harvest.set_status(conn, it["id"], "rejected"); st.rerun()
+
+# ===========================================================================
+# STUDIO DATA SOURCES
+# ===========================================================================
+elif section == "🛰 Studio data":
+    from central import studio_sources
+    st.header("Studio open-data sources")
+    st.caption("Studios that publish open kiln/furnace data via an API. Pending sources are "
+               "NOT polled until you approve them — review the URL before approving.")
+    pend = studio_sources.list_sources(conn, "pending")
+    if not pend:
+        st.info("No pending studio data sources.")
+    for s in pend:
+        with st.container(border=True):
+            st.markdown(f"**{s['name']}** — {s.get('city') or ''} {s.get('country') or ''}")
+            st.caption(f"API: {s['api_url']}  ·  lat {s.get('lat')}, lng {s.get('lng')}  ·  "
+                       f"by {s.get('submitted_by') or '—'}")
+            ok, why = studio_sources.url_ok(s["api_url"])
+            st.caption(("✅ URL passes the safety check" if ok else f"⚠ {why}"))
+            b1, b2 = st.columns(2)
+            if b1.button("✅ Approve & poll", key=f"sok_{s['id']}", type="primary"):
+                studio_sources.set_status(conn, s["id"], "approved"); st.rerun()
+            if b2.button("⛔ Reject", key=f"sno_{s['id']}"):
+                studio_sources.set_status(conn, s["id"], "rejected"); st.rerun()
+    st.divider()
+    appr = studio_sources.list_sources(conn, "approved")
+    st.subheader(f"Approved ({len(appr)})")
+    for s in appr:
+        c1, c2 = st.columns([4, 1])
+        c1.caption(f"**{s['name']}** · {s['api_url']}")
+        if c2.button("Remove", key=f"srm_{s['id']}"):
+            studio_sources.set_status(conn, s["id"], "rejected"); st.rerun()
 
 # ===========================================================================
 # DUPLICATES

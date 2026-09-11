@@ -87,6 +87,23 @@
       <button id="resetBtn">Reset view</button>
     </div>
     <a class="handle" href="/">← glassdatabase.org</a>
+    <details style="margin-top:1.4rem">
+      <summary style="cursor:pointer;font-family:var(--fd-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fd-amber)">+ Publish your studio's data</summary>
+      <p style="font-size:.82rem;color:var(--fd-faint);margin:.7rem 0">Runs an open kiln/furnace
+        data API (CC-BY)? Add it — reviewed before it appears. See the
+        <a href="/shop.html" style="color:var(--fd-amber)">contract</a>.</p>
+      <div id="addForm" style="display:flex;flex-direction:column;gap:.5rem">
+        <input id="asName" placeholder="Studio name" aria-label="Studio name">
+        <input id="asUrl" placeholder="Open API base (https://…)" aria-label="API URL">
+        <div style="display:flex;gap:.5rem">
+          <input id="asLat" placeholder="Lat" style="width:50%" aria-label="Latitude">
+          <input id="asLng" placeholder="Lng" style="width:50%" aria-label="Longitude">
+        </div>
+        <input id="asCity" placeholder="City, Country" aria-label="Location">
+        <button id="asSubmit" style="font-family:var(--fd-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fd-bg-top);background:var(--fd-amber);border:0;border-radius:999px;padding:.6rem;cursor:pointer">Submit for review</button>
+        <p id="asMsg" style="font-size:.8rem;color:var(--fd-amber);min-height:1rem;margin:0"></p>
+      </div>
+    </details>
   </aside>
   <div id="map"></div>
 </div>
@@ -159,6 +176,40 @@ fetch("/api/studios.geojson").then(r=>r.json()).then(gj=>{
   if(ALL.length){ try{ const b=L.latLngBounds(ALL.map(f=>[f.geometry.coordinates[1],f.geometry.coordinates[0]]));
     map.fitBounds(b.pad(0.2)); }catch(e){} }
 }).catch(()=>{ $("#count").textContent="couldn't load studios"; });
+
+// live open-data studios — a distinct glowing marker + firings/energy popup
+const liveLayer = L.layerGroup().addTo(map);
+fetch("/api/studio-data.json").then(r=>r.json()).then(d=>{
+  (d.sources||[]).forEach(s=>{
+    const lat=parseFloat(s.lat), lng=parseFloat(s.lng);
+    if(!isFinite(lat)||!isFinite(lng)) return;
+    const su=s.summary||{};
+    const firings = su.firings ?? su.count ?? "—";
+    const kwh = su.energy_kwh ?? su.kwh ?? null;
+    const m=L.circleMarker([lat,lng],{radius:9,color:"#E8A44A",weight:3,fillColor:"#E8A44A",fillOpacity:.7});
+    m.bindPopup(`<p class="pop-name">${s.name||"Studio"}</p>`+
+      `<span class="pop-type" style="color:#E8A44A;border-color:#E8A44A">Live open data</span>`+
+      `<p style="margin:.6rem 0 0;color:var(--fd-dim)"><strong style="color:var(--fd-bone)">${firings}</strong> firings`+
+      (kwh!=null?` · ${Math.round(kwh).toLocaleString()} kWh`:``)+`</p>`+
+      (s.attribution?`<p class="pop-loc" style="margin-top:.5rem">${s.attribution}</p>`:``)+
+      (s.source?`<a class="pop-web" href="${s.source}" target="_blank" rel="noopener">Open API →</a>`:``));
+    liveLayer.addLayer(m);
+  });
+}).catch(()=>{});
+
+// submit a new open-data studio (pending review)
+const $$=id=>document.getElementById(id);
+if($$("asSubmit")) $$("asSubmit").onclick=async ()=>{
+  const body={name:$$("asName").value.trim(), api_url:$$("asUrl").value.trim(),
+    lat:$$("asLat").value.trim(), lng:$$("asLng").value.trim(), city:$$("asCity").value.trim()};
+  if(!body.name||!body.api_url){ $$("asMsg").textContent="Name and API URL are required."; return; }
+  try{
+    const r=await fetch("/api/studio-sources",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const j=await r.json().catch(()=>({}));
+    $$("asMsg").textContent = r.ok ? "Thanks — pending review." : (j.detail||"That didn't work.");
+    if(r.ok){ ["asName","asUrl","asLat","asLng","asCity"].forEach(i=>$$(i).value=""); }
+  }catch(_){ $$("asMsg").textContent="Network error."; }
+};
 </script>
 </body>
 </html>
