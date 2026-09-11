@@ -7,6 +7,16 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Operating-cost estimator** — /shop-costs.html: a client-side calculator that
+  estimates monthly running cost from each device's power, hours, operating temp, and
+  duty cycle, against editable utility rates; device presets (furnace/glory hole/
+  annealer/…), per-utility breakdown, all in-browser. Linked from the shop hub + nav.
+- **Open shop documentation** — a /shop.html hub with the worked-example diagrams
+  (electrical one-line + P&ID) shown as blueprints-on-paper, copy-paste AI prompts
+  (scene, one-line, P&ID, BOM), and a parts reference. A **Shop** submission type
+  (Explore → Add → Shop) lets people publish their shop (description, diagram SVGs,
+  BOM, safety notes). Homepage gets a shop section highlighting the one-line SVG.
+  deploy/shop-prompts.md + deploy/SHOP-PARTS.md + the diagram generator vendored.
 - **Readability fixes** — dark, high-contrast inputs, selectboxes, dropdown popovers,
   multiselect tags, file-uploader, and pills (selected = dark text on amber) so nothing
   renders light-on-white; robust to the theme base. Explore's 'What are you submitting?'

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Operating cost estimator — Glass Database</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/field-data.css">
+<style>
+  body{margin:0;}
+  .wrap{max-width:1080px;margin-inline:auto;padding:0 clamp(18px,4vw,56px) 6rem;}
+  nav.top{display:flex;gap:1rem;align-items:center;padding:1.2rem 0;border-bottom:1px solid var(--fd-rule);overflow-x:auto;}
+  nav.top .brand{font-family:var(--fd-mono);font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--fd-bone);font-size:12px;white-space:nowrap;}
+  nav.top a{font-family:var(--fd-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fd-dim);text-decoration:none;white-space:nowrap;}
+  nav.top a:hover{color:var(--fd-amber);} nav.top .sp{margin-left:auto;}
+  .eyebrow{font-family:var(--fd-mono);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--fd-amber);font-size:12px;margin-top:2.4rem;}
+  h1{font-family:var(--fd-serif);font-weight:300;font-variation-settings:"opsz" 44,"wght" 340;font-size:clamp(30px,6vw,50px);color:var(--fd-bone);margin:.5rem 0 .5rem;line-height:1.08;}
+  h1 em{font-style:italic;color:var(--fd-amber);}
+  p{font-family:var(--fd-sans);color:var(--fd-dim);font-size:clamp(15px,1.8vw,18px);line-height:1.6;max-width:72ch;}
+  .note{border-left:3px solid var(--fd-molten);padding:.2rem 0 .2rem 1rem;margin:1.2rem 0;color:#d9a38f;font-size:.95rem;}
+  .lbl{font-family:var(--fd-mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fd-faint);margin:1.8rem 0 .7rem;}
+  .rates{display:flex;flex-wrap:wrap;gap:1rem;}
+  .rate{display:flex;flex-direction:column;gap:.3rem;}
+  .rate span{font-family:var(--fd-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fd-dim);}
+  input,select{font-family:var(--fd-sans);background:#1D1712;color:var(--fd-bone);border:1px solid var(--fd-rule-soft);border-radius:8px;padding:.5rem .6rem;font-size:.95rem;}
+  input:focus,select:focus{outline:2px solid var(--fd-amber);outline-offset:1px;}
+  .rate input{width:7rem;}
+  table{width:100%;border-collapse:collapse;margin-top:.6rem;font-family:var(--fd-sans);}
+  th{font-family:var(--fd-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--fd-faint);text-align:left;padding:.4rem .5rem;border-bottom:1px solid var(--fd-rule);}
+  td{padding:.35rem .5rem;border-bottom:1px solid var(--fd-rule);vertical-align:middle;}
+  td input{width:100%;box-sizing:border-box;} td.pwr input,td.hrs input,td.duty input,td.temp input{width:5.5rem;}
+  td.name input{min-width:9rem;} .cost{font-family:var(--fd-mono);color:var(--fd-bone);text-align:right;white-space:nowrap;}
+  .fuel-electric{color:var(--fd-amber);} .fuel-gas{color:var(--fd-teal);} .fuel-propane{color:var(--fd-violet);}
+  .x{background:transparent;border:0;color:var(--fd-faint);cursor:pointer;font-size:1.1rem;}
+  .x:hover{color:var(--fd-molten);}
+  .add{font-family:var(--fd-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fd-amber);background:transparent;border:1px solid var(--fd-rule-soft);border-radius:999px;padding:.5rem .9rem;cursor:pointer;margin-top:1rem;}
+  .add:hover{border-color:var(--fd-amber);}
+  .presets{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.8rem;}
+  .preset{font-family:var(--fd-mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--fd-dim);background:#1D1712;border:1px solid var(--fd-rule-soft);border-radius:999px;padding:.4rem .7rem;cursor:pointer;}
+  .preset:hover{border-color:var(--fd-amber);color:var(--fd-amber);}
+  .totals{display:flex;flex-wrap:wrap;gap:1.4rem;margin-top:2rem;align-items:flex-end;}
+  .grand{font-family:var(--fd-serif);font-variation-settings:"opsz" 40,"wght" 400;font-size:clamp(32px,6vw,52px);color:var(--fd-bone);}
+  .grand small{font-family:var(--fd-mono);font-size:12px;letter-spacing:.1em;color:var(--fd-faint);display:block;text-transform:uppercase;}
+  .bars{flex:1;min-width:240px;}
+  .bar{display:flex;align-items:center;gap:.6rem;margin:.3rem 0;font-family:var(--fd-mono);font-size:12px;color:var(--fd-dim);}
+  .bar i{height:10px;border-radius:3px;display:inline-block;}
+  .cta{display:inline-block;font-family:var(--fd-mono);font-weight:500;letter-spacing:.1em;text-transform:uppercase;font-size:12px;color:var(--fd-amber);text-decoration:none;padding:.6rem 1.1rem;border:1.5px solid var(--fd-amber);border-radius:999px;margin-top:1.6rem;}
+  .cta:hover{background:var(--fd-amber);color:var(--fd-bg-top);}
+  a{color:var(--fd-amber);}
+</style>
+</head>
+<body class="fd-ground">
+<div class="wrap">
+  <nav class="top">
+    <a class="brand" href="/">Glass&nbsp;Database</a>
+    <a href="/explore/">Explore</a><a href="/glowtbook/">Glowtbook</a>
+    <a href="/studios.html">Map</a><a href="/shop.html">Shops</a>
+    <a href="/shop-costs.html" style="color:var(--fd-amber)">Costs</a>
+    <a class="sp" href="https://discord.gg/9ek2UxvPT">Discord</a>
+  </nav>
+
+  <p class="eyebrow">Shop tools</p>
+  <h1>What does it cost to <em>run the shop?</em></h1>
+  <p>A rough monthly estimate from how you actually use the equipment: enter each device's
+     power, the hours it runs, and a duty cycle (the share of that time the elements or burner
+     are firing to hold temperature). Start from the presets, then tune to your bill. Nothing
+     is sent anywhere — this runs entirely in your browser.</p>
+  <p class="note"><strong>These are ballpark estimates.</strong> Real draw depends on
+     insulation, ambient temperature, and how hard you're working the glass. Use your actual
+     utility bill to calibrate the duty cycles until the total matches, then trust the mix.</p>
+
+  <p class="lbl">Utility rates (from your bill)</p>
+  <div class="rates">
+    <label class="rate"><span>Electricity $/kWh</span><input id="rElec" type="number" step="0.001" value="0.14"></label>
+    <label class="rate"><span>Natural gas $/therm</span><input id="rGas" type="number" step="0.01" value="1.30"></label>
+    <label class="rate"><span>Propane $/gal</span><input id="rProp" type="number" step="0.01" value="3.20"></label>
+  </div>
+
+  <p class="lbl">Equipment</p>
+  <div class="presets" id="presets"></div>
+  <table>
+    <thead><tr>
+      <th>Device</th><th>Fuel</th><th title="Electric: kW · Gas: 1000s of BTU/hr (kBTU)">Power</th>
+      <th title="Informational; higher temp → higher hold duty">Temp °F</th>
+      <th>Hrs / mo</th><th title="Share of running time the elements/burner actually fire">Duty %</th>
+      <th style="text-align:right">$ / mo</th><th></th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <button class="add" onclick="addRow()">+ Add device</button>
+
+  <div class="totals">
+    <div class="grand"><small>Estimated monthly total</small><span id="grand">$0</span></div>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <a class="cta" href="/shop.html">← Back to shop documentation</a>
+  <p style="margin-top:1.4rem;font-size:.9rem">Documenting your shop's <a href="/shop.html">components and part numbers</a>
+     makes these numbers easy to fill in — the power draw is on the nameplate.</p>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const money = n => "$" + Math.round(n).toLocaleString();
+// preset: [name, fuel, power(kW or kBTU/hr), tempF, hrs/mo, duty%]
+const PRESETS = [
+  ["Electric furnace (SiC)","electric",24,2150,300,32],
+  ["Gas furnace","gas",350,2200,300,45],
+  ["Glory hole (gas)","gas",300,2100,120,50],
+  ["Glory hole (electric)","electric",18,2100,120,45],
+  ["Annealer / kiln (large)","electric",14,960,200,22],
+  ["Studio kiln","electric",8,1450,80,30],
+  ["Bench torch (O₂/propane)","propane",0.6,0,60,60],
+  ["Air compressor","electric",2.2,0,80,25],
+  ["Combustion / exhaust blower","electric",1.5,0,300,90],
+  ["Lighting & misc.","electric",1.2,0,300,100],
+];
+let rows = [];
+function fuelClass(f){ return f==="electric"?"fuel-electric":f==="gas"?"fuel-gas":"fuel-propane"; }
+function powerLabel(f){ return f==="gas" ? "kBTU/hr" : (f==="propane" ? "gal/hr" : "kW"); }
+
+function rowCost(r){
+  const hrs = +r.hrs||0, duty=(+r.duty||0)/100, p=+r.pwr||0;
+  if(r.fuel==="electric"){ const kwh = p*hrs*duty; return {kwh, cost: kwh*(+$("#rElec").value||0), util:"electric"}; }
+  if(r.fuel==="gas"){ const therms = (p*1000*hrs*duty)/100000; return {cost: therms*(+$("#rGas").value||0), util:"gas"}; }
+  // propane in gal/hr
+  const gal = p*hrs*duty; return {cost: gal*(+$("#rProp").value||0), util:"propane"};
+}
+function render(){
+  const tb=$("#rows"); tb.innerHTML="";
+  const byUtil={electric:0,gas:0,propane:0}; let total=0;
+  rows.forEach((r,i)=>{
+    const c=rowCost(r); byUtil[c.util]+=c.cost; total+=c.cost;
+    const tr=document.createElement("tr");
+    tr.innerHTML=
+      `<td class="name"><input value="${r.name.replace(/"/g,'&quot;')}" oninput="upd(${i},'name',this.value)"></td>`+
+      `<td><select onchange="upd(${i},'fuel',this.value)" class="${fuelClass(r.fuel)}">`+
+        ["electric","gas","propane"].map(f=>`<option value="${f}" ${f===r.fuel?"selected":""}>${f}</option>`).join("")+`</select></td>`+
+      `<td class="pwr"><input type="number" step="0.1" value="${r.pwr}" oninput="upd(${i},'pwr',this.value)" title="${powerLabel(r.fuel)}"></td>`+
+      `<td class="temp"><input type="number" step="10" value="${r.temp}" oninput="upd(${i},'temp',this.value)"></td>`+
+      `<td class="hrs"><input type="number" step="1" value="${r.hrs}" oninput="upd(${i},'hrs',this.value)"></td>`+
+      `<td class="duty"><input type="number" step="1" value="${r.duty}" oninput="upd(${i},'duty',this.value)"></td>`+
+      `<td class="cost">${money(c.cost)}</td>`+
+      `<td><button class="x" onclick="del(${i})" title="remove">×</button></td>`;
+    tb.appendChild(tr);
+  });
+  $("#grand").textContent = money(total);
+  const colors={electric:"#E8A44A",gas:"#5EC8BD",propane:"#967AD2"};
+  $("#bars").innerHTML = Object.entries(byUtil).filter(([,v])=>v>0).map(([k,v])=>{
+    const pct = total? Math.round(v/total*100):0;
+    return `<div class="bar"><i style="width:${Math.max(6,pct*1.6)}px;background:${colors[k]}"></i>${k} · ${money(v)} · ${pct}%</div>`;
+  }).join("") || '<div class="bar" style="color:var(--fd-faint)">add a device to see the breakdown</div>';
+}
+function upd(i,k,v){ rows[i][k] = (k==="name"||k==="fuel")? v : v; if(k==="fuel"){} render(); }
+function del(i){ rows.splice(i,1); render(); }
+function addRow(p){ const d = p || ["New device","electric",10,0,100,50];
+  rows.push({name:d[0],fuel:d[1],pwr:d[2],temp:d[3],hrs:d[4],duty:d[5]}); render(); }
+// preset chips
+$("#presets").innerHTML = PRESETS.map((p,i)=>`<button class="preset" onclick="addRow(PRESETS[${i}])">+ ${p[0]}</button>`).join("");
+["rElec","rGas","rProp"].forEach(id=>$("#"+id).addEventListener("input",render));
+// seed a typical small electric shop
+addRow(PRESETS[0]); addRow(PRESETS[4]); addRow(PRESETS[8]); addRow(PRESETS[9]);
+</script>
+</body>
+</html>

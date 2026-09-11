@@ -114,6 +114,11 @@ if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     cp "$SRC/deploy/fingerprint-web/verify.html" "$APP_DIR/public/fingerprint/verify.html"
     [ -f "$SRC/deploy/graph.html" ] && cp "$SRC/deploy/graph.html" "$APP_DIR/public/graph.html"
     [ -f "$SRC/deploy/studios.html" ] && cp "$SRC/deploy/studios.html" "$APP_DIR/public/studios.html"
+    [ -f "$SRC/deploy/shop.html" ] && cp "$SRC/deploy/shop.html" "$APP_DIR/public/shop.html"
+    [ -f "$SRC/deploy/shop-costs.html" ] && cp "$SRC/deploy/shop-costs.html" "$APP_DIR/public/shop-costs.html"
+    [ -f "$SRC/deploy/shop-prompts.md" ] && cp "$SRC/deploy/shop-prompts.md" "$APP_DIR/public/shop-prompts.md"
+    [ -f "$SRC/deploy/SHOP-PARTS.md" ] && cp "$SRC/deploy/SHOP-PARTS.md" "$APP_DIR/public/SHOP-PARTS.md"
+    if [ -d "$SRC/deploy/shop-diagrams" ]; then mkdir -p "$APP_DIR/public/shop-diagrams"; cp "$SRC/deploy/shop-diagrams/"* "$APP_DIR/public/shop-diagrams/" 2>/dev/null || true; fi
     [ -f "$SRC/deploy/fingerprint-web/capture-mat.pdf" ] && \
         cp "$SRC/deploy/fingerprint-web/capture-mat.pdf" "$APP_DIR/public/fingerprint/capture-mat.pdf"
     echo "  installed vendored fingerprint capture apps"

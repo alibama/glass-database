@@ -162,6 +162,33 @@ FORMS = {
             _f("submitted_by", "Your name", private=True),
         ],
     },
+    "shop": {
+        "title": "Shop", "table": "shop_submissions", "domain": "shops",
+        "desc": "Open shop documentation — how a glass studio is built (pending review)",
+        "intro": "Document your hot shop so the next person can fix, order, insure, or "
+                 "build one. Most people generate the description, diagrams, and parts list "
+                 "by asking an AI — see the Document-your-shop prompts, then paste the results "
+                 "here. Schematic only; gas/electrical work must be designed and inspected by "
+                 "licensed professionals.",
+        "fields": [
+            _sec("The shop"),
+            _f("shop_name", "Shop / studio name", required=True),
+            _f("city", "City"), _f("region", "State / region"), _f("country", "Country"),
+            _f("dimensions", "Overall size (e.g. 24 × 24 ft)"),
+            _f("website", "Website or social", "url"),
+            _sec("How it's built"),
+            _f("description", "Description of the space & systems (the scene)", "textarea",
+               required=True, help="Paste your plain-language description — the one you fed the AI."),
+            _f("oneline_svg", "Electrical one-line diagram (paste SVG or a link)", "textarea",
+               help="Paste the full <svg>…</svg> or a URL to it."),
+            _f("pid_svg", "Piping & instrumentation (P&ID) diagram (paste SVG or a link)", "textarea"),
+            _f("bom", "Bill of materials — component · manufacturer · part number · source", "textarea",
+               help="Read part numbers off the nameplates. Don't guess."),
+            _sec("Safety & sourcing"),
+            _f("safety_notes", "Safety notes, interlocks, code caveats", "textarea"),
+            _f("submitted_by", "Your name or email", private=True),
+        ],
+    },
 }
 
 

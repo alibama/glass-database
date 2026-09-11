@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document your shop — Glass Database</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/field-data.css">
+<style>
+  body{margin:0;}
+  .wrap{max-width:1040px;margin-inline:auto;padding:0 clamp(20px,5vw,64px) 6rem;}
+  nav.top{display:flex;gap:1rem;align-items:center;padding:1.2rem 0;border-bottom:1px solid var(--fd-rule);overflow-x:auto;}
+  nav.top .brand{font-family:var(--fd-mono);font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--fd-bone);font-size:12px;white-space:nowrap;}
+  nav.top a{font-family:var(--fd-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fd-dim);text-decoration:none;white-space:nowrap;}
+  nav.top a:hover{color:var(--fd-amber);} nav.top .sp{margin-left:auto;}
+  .eyebrow{font-family:var(--fd-mono);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--fd-amber);font-size:12px;margin-top:2.4rem;}
+  h1{font-family:var(--fd-serif);font-weight:300;font-variation-settings:"opsz" 44,"wght" 340;font-size:clamp(30px,6vw,52px);color:var(--fd-bone);margin:.5rem 0 .6rem;line-height:1.08;}
+  h1 em{font-style:italic;color:var(--fd-amber);}
+  h2{font-family:var(--fd-serif);font-weight:300;font-variation-settings:"opsz" 44,"wght" 340;font-size:clamp(22px,3.4vw,30px);color:var(--fd-bone);margin:2.8rem 0 .4rem;}
+  p{font-family:var(--fd-sans);color:var(--fd-dim);font-size:clamp(16px,1.9vw,19px);line-height:1.6;max-width:70ch;}
+  .safety{border-left:3px solid var(--fd-molten);padding:.2rem 0 .2rem 1rem;margin:1.4rem 0;color:#d9a38f;}
+  .paper{background:#F4F2EC;border-radius:14px;padding:1rem;margin:1.4rem 0;border:1px solid var(--fd-rule);overflow:auto;}
+  .paper img{display:block;width:100%;height:auto;}
+  .paper figcaption{font-family:var(--fd-mono);font-size:11px;letter-spacing:.06em;color:#555;margin-top:.5rem;padding:0 .3rem;}
+  .prompt{font-family:var(--fd-mono);font-size:13px;line-height:1.6;color:var(--fd-bone);background:#16130F;border:1px solid var(--fd-rule);border-radius:12px;padding:1rem 1.1rem;white-space:pre-wrap;position:relative;}
+  .prompt .lbl{font-family:var(--fd-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fd-amber);display:block;margin-bottom:.5rem;}
+  .copy{position:absolute;top:.7rem;right:.7rem;font-family:var(--fd-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fd-dim);background:transparent;border:1px solid var(--fd-rule-soft);border-radius:999px;padding:.3rem .7rem;cursor:pointer;}
+  .copy:hover{color:var(--fd-amber);border-color:var(--fd-amber);}
+  .cta{display:inline-block;font-family:var(--fd-mono);font-weight:500;letter-spacing:.1em;text-transform:uppercase;font-size:13px;color:var(--fd-amber);text-decoration:none;padding:.7rem 1.3rem;border:2px solid var(--fd-amber);border-radius:999px;margin-top:1rem;}
+  .cta:hover{background:var(--fd-amber);color:var(--fd-bg-top);}
+  .links a{color:var(--fd-amber);}
+</style>
+</head>
+<body class="fd-ground">
+<div class="wrap">
+  <nav class="top">
+    <a class="brand" href="/">Glass&nbsp;Database</a>
+    <a href="/explore/">Explore</a><a href="/glowtbook/">Glowtbook</a>
+    <a href="/studios.html">Map</a><a href="/graph.html">Graph</a>
+    <a href="/shop.html" style="color:var(--fd-amber)">Shops</a>
+    <a class="sp" href="https://discord.gg/9ek2UxvPT">Discord</a>
+  </nav>
+
+  <p class="eyebrow">Open shop documentation</p>
+  <h1>Describe a shop through its <em>components.</em></h1>
+  <p>A hot shop is a system — gas, air, power, heat, exhaust, and the controls that tie
+     it together. Documenting yours as a scene sketch, an electrical one-line, a piping
+     &amp; instrumentation (P&amp;ID) diagram, and a <strong>bill of materials with real
+     part numbers</strong> makes it far easier to fix, order, insure, and teach. You
+     don't draw any of it by hand: describe your shop to an AI and have it render the
+     diagrams and the parts list. Then publish it here so the next person can find the
+     part in one search.</p>
+  <p class="safety"><strong>Safety first.</strong> These are schematic documentation,
+     not engineering drawings. Gas and high-current electrical work must be designed,
+     installed, and inspected by licensed professionals to your local code. Mark
+     anything uncertain as <strong>TBD</strong> — the examples do.</p>
+
+  <a class="cta" href="/explore/?view=submit">Publish your shop →</a>
+  <a class="cta" href="/shop-costs.html" style="color:var(--fd-teal);border-color:var(--fd-teal)">Estimate running costs →</a>
+
+  <h2>Worked example — Raging Buffalo Glass</h2>
+  <p>Generated from a plain-language description (below). Schematic, not to scale;
+     unknown pressures/ampacities marked TBD.</p>
+  <figure class="paper"><img src="/shop-diagrams/example-oneline.svg" alt="Electrical one-line diagram of a glass studio: main breaker, panelboard, annealer branches, and a furnace feeder to an SCR and SiC elements.">
+    <figcaption>Electrical one-line — service → panel → annealers + furnace (SCR → SiC).</figcaption></figure>
+  <figure class="paper"><img src="/shop-diagrams/example-pid.svg" alt="Piping and instrumentation diagram: natural gas, propane, oxygen, air, combustion air, and exhaust runs with valves and instruments.">
+    <figcaption>P&amp;ID — gas / air / exhaust with valves, regulators, and instruments.</figcaption></figure>
+
+  <h2>Prompts to get you started</h2>
+  <p>Copy a prompt, fill in the bracketed parts for your shop, and paste it into your
+     AI of choice. Start with the scene, then the diagrams, then the parts list.</p>
+
+  <div class="prompt"><span class="lbl">1 · Describe the space</span><button class="copy" onclick="cp(this)">Copy</button>Draw a schematic top-down floor plan (not to scale) of my glass studio. The space is [24 × 24 ft]. The glory hole is in [one corner], with forced/combustion air along [the back wall] from a [squirrel-cage blower] in [a closet outside], plus [natural gas from the city]. The furnace is [to the right of the glory hole], with [4 × SiC elements] wired through breakers to an [SCR] controlled by a [Novus PID] with a [K-type thermocouple]; [160 lb] crucible; crucible access via a [pneumatic lift] fed by [a small quiet compressor in the opposite corner]. To the right are [three annealers: a 40″ coil unit on a 60 A breaker and two Paragons on 60 A breakers with mercury 60 A relays, all on one Novus controller]. Ventilation above the hot equipment is a [large exhaust motor behind the utility wall]. The bench is [between glory hole and furnace, facing the equipment]; the marver is [3′×2′, ~5′ right of the bench]; viewing area [~8′ back at the wall]. Label each device; show gas / air / power / exhaust in different colors; mark unknowns TBD. Output one clean SVG.</div>
+
+  <div class="prompt"><span class="lbl">2 · Electrical one-line</span><button class="copy" onclick="cp(this)">Copy</button>From the scene above, produce an electrical one-line diagram as an SVG: service and main breaker, panelboard, each annealer branch (breaker → mercury contactor → coils), and the furnace feeder ([100 A] feeder → subpanel → two [60 A] breakers → SCR → door interlock → SiC elements). Put amperages on each run; label unknown ampacities/wire sizes as "TBD, verify with an electrician." Include a legend.</div>
+
+  <div class="prompt"><span class="lbl">3 · Piping &amp; instrumentation (P&amp;ID)</span><button class="copy" onclick="cp(this)">Copy</button>Produce a P&ID as an SVG for the fuel/air/exhaust systems: natural gas (city → meter → regulator → shutoff → glory hole & furnace burners), propane and oxygen if present (tanks → regulators → torch station), compressed air, combustion/forced air (blower → burners), and exhaust (hoods → duct → exhaust motor → outside). Use valve/regulator/instrument symbols; color each medium; mark pressures TBD where unknown; include a legend.</div>
+
+  <div class="prompt"><span class="lbl">4 · Bill of materials (real part numbers)</span><button class="copy" onclick="cp(this)">Copy</button>Build a bill of materials table with columns: System · Component · Manufacturer · Part number · Spec · Where to buy · Notes. Include controls (PID, SCR, thermocouples, relays/contactors), heating elements, blowers/motors, gas regulators and valves, and safety interlocks. Use the REAL manufacturer part numbers I give you (read off the nameplates); where I don't have one, leave it blank and note what to check. Do not invent part numbers.</div>
+
+  <p class="links" style="margin-top:1.6rem">Reference: <a href="/SHOP-PARTS.md">common hot-shop parts &amp; where to find real numbers</a> ·
+     <a href="/shop-prompts.md">these prompts as plain text</a> ·
+     <a href="/shop-diagrams/diagram_generator.py">the SVG generator</a>.</p>
+
+  <h2>Publish it</h2>
+  <p>Got a description, diagrams, and a BOM? Add them under
+     <a href="/explore/?view=submit" class="links">Explore → Add to the database → Shop</a>.
+     Everything is reviewed before it appears; contact details stay private. The goal is
+     a shared, open library of how glass shops are actually built.</p>
+  <a class="cta" href="/explore/?view=submit">Publish your shop →</a>
+</div>
+<script>
+  function cp(btn){ const t=btn.parentElement.childNodes; let s="";
+    btn.parentElement.querySelectorAll(".lbl,.copy").forEach(e=>e.dataset.skip="1");
+    s=btn.parentElement.innerText.replace(/^\s*\d.*\n?/,"").replace(/Copy\s*/,"").trim();
+    navigator.clipboard.writeText(s).then(()=>{btn.textContent="Copied";setTimeout(()=>btn.textContent="Copy",1200);});
+  }
+</script>
+</body>
+</html>
