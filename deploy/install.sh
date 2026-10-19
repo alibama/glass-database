@@ -96,6 +96,13 @@ rsync -a --delete \
     --exclude '.streamlit/secrets.toml' \
     --exclude 'public' \
     "$SRC/" "$APP_DIR/"
+# Blog: render blog/posts/*.md -> deploy/blog/ and refresh the homepage's "From the blog"
+# block (stdlib only, so any python3 works; the committed output is the fallback).
+( cd "$SRC" && python3 -m scripts.build_blog >/dev/null 2>&1 ) || warn "blog build skipped (python3 missing?) — using committed deploy/blog/"
+if [ -d "$SRC/deploy/blog" ]; then
+    mkdir -p "$APP_DIR/public/blog"
+    cp "$SRC/deploy/blog/"* "$APP_DIR/public/blog/" 2>/dev/null || true
+fi
 cp "$SRC/deploy/landing-index.html" "$APP_DIR/public/index.html"
 cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
 [ -f "$SRC/deploy/field-data.css" ] && cp "$SRC/deploy/field-data.css" "$APP_DIR/public/field-data.css"

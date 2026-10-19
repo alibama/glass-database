@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Field notes — Glass Database</title>
+<meta name="description" content="Studies, essays and updates from the open record for glass.">
+<link rel="canonical" href="https://glassdatabase.org/blog/">
+<link rel="alternate" type="application/rss+xml" title="Glass Database — Field notes" href="/blog/feed.xml">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/field-data.css">
+<style>
+  html { scroll-behavior: smooth; } body { margin: 0; }
+  .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 7rem; }
+  .fd-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: 1.4rem 0 1.1rem; flex-wrap: wrap; border-bottom: 1px solid var(--fd-rule); }
+  .fd-nav__brand { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--fd-bone); font-size: clamp(13px,1.5vw,15px); text-decoration: none; }
+  .fd-nav__links { display: flex; gap: clamp(.9rem, 2.2vw, 1.8rem); flex-wrap: wrap; }
+  .fd-nav__links a { font-family: var(--fd-mono); font-size: clamp(12px,1.3vw,14px); letter-spacing: .1em;
+    text-transform: uppercase; color: var(--fd-dim); text-decoration: none; }
+  .fd-nav__links a:hover, .fd-nav__links a.on { color: var(--fd-amber); }
+  .fd-sec { padding: clamp(3rem, 7vw, 5.5rem) 0 0; }
+  .fd-sec .fd-eyebrow { display: inline-block; border-bottom: none; padding-bottom: 0; }
+  .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.8rem; max-width: 62ch; }
+  .meta { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--fd-faint); display: flex; gap: .4rem 1rem; flex-wrap: wrap; margin: 1rem 0 0; }
+  .meta b { color: var(--fd-amber); font-weight: 500; }
+  .lede { font-family: var(--fd-sans); font-variation-settings: "wght" 500; color: var(--fd-bone);
+    font-size: clamp(18px,2vw,22px); line-height: 1.5; max-width: 62ch; margin: 1.4rem 0 0; }
+  article.post { max-width: 76ch; margin-top: 2.6rem; font-family: var(--fd-sans); color: var(--fd-dim);
+    font-size: clamp(16px,1.75vw,18.5px); line-height: 1.62; }
+  article.post p { margin: 0 0 1.15em; }
+  article.post h2 { font-family: var(--fd-serif); font-variation-settings: "opsz" 44, "wght" 340; font-weight: 300;
+    color: var(--fd-bone); font-size: clamp(28px,3.4vw,38px); line-height: 1.15; margin: 2.6em 0 .6em; letter-spacing: -.005em; }
+  article.post h3 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 400; font-weight: 400;
+    color: var(--fd-bone); font-size: clamp(22px,2.4vw,26px); margin: 2em 0 .5em; }
+  article.post h2:first-child { margin-top: 0; }
+  article.post strong { color: var(--fd-bone); font-weight: 600; }
+  article.post em { font-style: italic; color: var(--fd-bone); }
+  article.post a { color: var(--fd-amber); } article.post a:hover { color: var(--fd-teal); }
+  article.post code { font-family: var(--fd-mono); font-size: .9em; color: var(--fd-teal); }
+  article.post ul, article.post ol { padding-left: 1.3rem; margin: 0 0 1.2em; }
+  article.post li { margin: .35em 0; }
+  article.post li::marker { color: var(--fd-amber); font-family: var(--fd-mono); }
+  article.post blockquote { border-left: 2px solid var(--fd-amber); margin: 1.4em 0; padding: .2em 0 .2em 1.1em;
+    color: var(--fd-bone); font-variation-settings: "wght" 420; }
+  article.post hr { border: 0; height: 1px; background: var(--fd-rule); margin: 2.4em 0; }
+  .tbl { overflow-x: auto; margin: 1.4em 0 1.8em; border: 1px solid var(--fd-rule); border-radius: 14px;
+    background: linear-gradient(180deg, rgba(238,231,219,.025), rgba(238,231,219,0)); }
+  .tbl table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: .92em; line-height: 1.45; }
+  .tbl th { font-family: var(--fd-mono); font-weight: 500; font-size: .74em; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--fd-amber); text-align: left; padding: .9rem 1rem .7rem; border-bottom: 1px solid var(--fd-rule-soft);
+    background: rgba(10,13,17,.5); white-space: nowrap; }
+  .tbl td { padding: .75rem 1rem; vertical-align: top; border-bottom: 1px solid var(--fd-rule); color: var(--fd-dim); }
+  .tbl tr:last-child td { border-bottom: 0; }
+  .tbl td:first-child { color: var(--fd-bone); font-variation-settings: "wght" 520; }
+  .tbl td strong { color: var(--fd-bone); }
+  .post-foot { max-width: 76ch; margin-top: 3.5rem; padding-top: 1.6rem; border-top: 1px solid var(--fd-rule); }
+  .post-nav { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1.2rem; }
+  .post-nav a { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .1em; text-transform: uppercase;
+    color: var(--fd-dim); text-decoration: none; } .post-nav a:hover { color: var(--fd-amber); }
+  .fd-signup { display: flex; gap: .6rem; flex-wrap: wrap; max-width: 34rem; margin-top: 1.2rem; }
+  .fd-signup input { flex: 1 1 15rem; padding: .8rem 1rem; border-radius: 999px; border: 1.5px solid var(--fd-rule-soft);
+    background: rgba(238,231,219,.04); color: var(--fd-bone); font-family: var(--fd-sans); font-size: 1rem; }
+  .fd-signup button { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .16em; text-transform: uppercase;
+    font-size: clamp(12px,1.4vw,14px); cursor: pointer; padding: 0 1.4rem; border-radius: 999px; border: 0;
+    background: var(--fd-amber); color: var(--fd-bg-top); }
+  .fd-signup-msg { font-family: var(--fd-mono); font-size: 12px; letter-spacing: .06em; color: var(--fd-amber); min-height: 1.2rem; margin: .6rem 0 0; }
+  .posts { display: grid; gap: 1.1rem; margin-top: 2.2rem; }
+  .post-card { display: block; text-decoration: none; padding: 1.7rem 1.6rem; border-radius: 16px; border: 1px solid var(--fd-rule);
+    background: linear-gradient(180deg, rgba(238,231,219,.03), rgba(238,231,219,0)); transition: border-color .18s, transform .18s; }
+  .post-card:hover { border-color: var(--fd-amber); transform: translateY(-2px); }
+  .post-card h2 { font-family: var(--fd-serif); font-variation-settings: "opsz" 44, "wght" 340; font-weight: 300; color: var(--fd-bone);
+    font-size: clamp(26px,3.2vw,36px); margin: .5rem 0 .6rem; line-height: 1.15; }
+  .post-card p { font-family: var(--fd-sans); color: var(--fd-dim); font-size: clamp(15px,1.7vw,17.5px); line-height: 1.55; margin: 0 0 1rem; max-width: 70ch; }
+  .post-card .fd-go { font-family: var(--fd-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--fd-amber); }
+  .fd-footer { margin-top: clamp(4rem, 9vw, 7rem); padding-top: 2rem; border-top: 1px solid var(--fd-rule); display: flex; flex-wrap: wrap;
+    gap: 1rem 2rem; justify-content: space-between; font-family: var(--fd-mono); font-size: 12px; letter-spacing: .06em; color: var(--fd-faint); }
+  .fd-footer a { color: var(--fd-dim); text-decoration: none; } .fd-footer a:hover { color: var(--fd-amber); }
+</style>
+</head>
+<body class="fd-ground">
+<div class="fd-page">
+<nav class="fd-nav"><a class="fd-nav__brand" href="/">Glass&nbsp;Database</a><div class="fd-nav__links"><a href="/explore/">Explore</a><a href="/blog/" class=on>Blog</a><a href="/glowtbook/">Glowtbook</a><a href="/#barcoding">Barcoding</a><a href="/studios.html">Map</a><a href="/shop.html">Shops</a><a href="/shop-costs.html">Costs</a><a href="/graph.html">Graph</a><a href="/games.html">Seasons</a><a href="/api/docs">API</a><a href="https://discord.gg/9ek2UxvPT">Discord</a></div></nav>
+
+  <section class="fd-sec" style="padding-top:2.4rem">
+    <p class="fd-eyebrow">Blog</p>
+    <div class="fd-kicker-rule"></div>
+    <h1 class="fd-headline">Field notes on the <em>business of glass.</em></h1>
+    <p class="fd-body fd-lede" style="margin-top:1.4rem;max-width:62ch">Studies, essays and updates from the open record for glass.</p>
+    <p class="fd-body" style="margin-top:1rem;max-width:62ch">What a hot shop costs to build and run, where the buyers are,
+      what the registry's data says, and the tools we're building along the way. Everything under CC BY 4.0.</p>
+    <p class="fd-label" style="color:var(--fd-amber)">Get new studies by email</p><form class="fd-signup" onsubmit="return gdbSubscribe(event)"><input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required><button type="submit">Subscribe</button></form><p class="fd-signup-msg" role="status" aria-live="polite"></p>
+  </section>
+  <div class="posts"><a class="post-card" href="/blog/blowing-glass-in-lima.html"><span class="fd-label" style="color:var(--fd-amber)">Latest · Theoretical studies · Oct 17, 2026 · 21 min</span><h2>Blowing Glass in Lima</h2><p>Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.</p><span class="fd-go">Read &rarr;</span></a></div>
+<footer class="fd-footer"><p>Writing under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> · <a href="/blog/feed.xml">RSS</a></p><p><a href="/">Home</a> · <a href="/explore/">Explore</a> · <a href="/glowtbook/">Glowtbook</a> · <a href="/games.html">Seasons</a> · <a href="https://github.com/alibama/glass-database">GitHub</a></p></footer>
+</div>
+<script>
+  async function gdbSubscribe(e){
+    e.preventDefault();
+    const f = e.target, email = f.email.value.trim();
+    const msg = f.nextElementSibling;
+    try {
+      const r = await fetch('/api/subscribe', { method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email: email, source:'blog'}) });
+      if (r.ok) { msg.textContent = "You're on the list — thanks."; f.reset(); }
+      else { const j = await r.json().catch(function(){return {};}); msg.textContent = j.detail || "That didn't work — try again?"; }
+    } catch (_) { msg.textContent = "Network error — please try again."; }
+    return false;
+  }
+</script>
+</body>
+</html>

@@ -29,3 +29,6 @@ run-glowtbook:  ## Serve Glowtbook at :8503
 
 run-site:  ## Serve the static pages + API together at :8080 (what the proxy does in prod)
 	python -m scripts.dev_site
+
+build-blog:  ## Render blog/posts/*.md -> deploy/blog/ and refresh the homepage block (no deps)
+	python -m scripts.build_blog

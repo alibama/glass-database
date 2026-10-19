@@ -115,6 +115,7 @@ The capture app is **signed in and piece-aware**: sign in with Google or pair yo
 - **Seasons** — friendly, time-boxed calls for pieces (pumpkins in October, ornaments in December…): makers enter a published, fingerprinted piece; collectors scan what they bought to claim it; everyone votes. Leaderboards, collector cards and badges at `/games.html`. Design: [`docs/SEASONS.md`](docs/SEASONS.md).
 - **Relationship graph** — artists, techniques, studios, *objects*, structured lineage (who taught whom), and `similar_to` edges derived from the fingerprint embeddings, with a path finder and a JSON-LD export: [`docs/GRAPH.md`](docs/GRAPH.md).
 - **Seeing glass** — a staged plan for a local, glass-aware vision model (Ollama), a zero-shot trait-suggestion adapter in Glowtbook, and a training-corpus exporter: [`docs/GLASS-VISION.md`](docs/GLASS-VISION.md).
+- **Blog** — studies and essays on the business of glass, written in Markdown under `blog/posts/` and rendered to `/blog/` (with RSS) by a dependency-free generator; the latest post is featured on the homepage. See [`blog/README.md`](blog/README.md).
 
 ## Style traits (Venetian / façon-de-Venise)
 

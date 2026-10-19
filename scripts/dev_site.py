@@ -61,6 +61,8 @@ for sub in ("fingerprint-web", "barcoding", "shop-diagrams", "pwa"):
     if (DEPLOY / sub).exists():
         mount = "/fingerprint" if sub == "fingerprint-web" else f"/{sub}"
         routes.append(Mount(mount, app=StaticFiles(directory=DEPLOY / sub)))
+if (DEPLOY / "blog").exists():   # html=True: /blog/ serves index.html like the proxy does
+    routes.append(Mount("/blog", app=StaticFiles(directory=DEPLOY / "blog", html=True)))
 for name in STREAMLIT:
     routes.append(Route(f"/{name}/", _redirect(name)))
     routes.append(Route(f"/{name}/{{tail:path}}", _redirect(name)))
