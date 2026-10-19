@@ -7,6 +7,70 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **The capture app is now part of the site** — it knows who you are and which piece
+  you're on. Sign in with Google (`/api/auth/login`, same OAuth client as Glowtbook, one extra
+  redirect URI) or **pair your phone** from Glowtbook → Objects → Fingerprint with a QR code
+  (a 2-hour token in the URL fragment; no second login). A 1-2-3 gate (who / which piece /
+  capture), a *Save to «piece»* button that writes the fingerprint straight onto the object
+  (`POST /api/me/objects/{id}/fingerprint`, mat dimensions copied across), an unsaved-draft
+  safety net in IndexedDB with Resume/Discard, and a receipt with next steps (verify, open
+  in Glowtbook, enter the season). Verify gets the same sign-in, a *my pieces* picker, and
+  post-verdict actions: *record verification* on your piece or *claim* a public piece for
+  your collection. Glowtbook adds a pieces-at-a-glance dashboard, deep links
+  (`?page=objects&object=12`), a *Colour rods / sources* field, a Seasons tab and an
+  AI-suggest-traits hook. Under the hood: `central/sessions.py` (signed tokens),
+  `api/auth.py` + `api/me.py`, `glowtbook/store.py` (the per-user store, shared with the
+  API), `deploy/site.js` (client helper), `scripts/dev_site.py` (`make run-site`: pages +
+  API together, as the proxy serves them). Docs: `docs/FINGERPRINT-WORKFLOW.md`,
+  `deploy/AUTH.md`.
+- **The relationship graph does something now** — `central/graph.py` links the whole
+  registry: artists, techniques, studios, **published pieces** and **collectors**, with
+  `made_by`, `uses`, `based_at`, structured `studied_under` (a new **Lineage** intake form,
+  Explore → Submit → Lineage, reviewed like everything else; free-text mentions stay as a
+  `text-match` fallback), `similar_to` (DINOv2 fingerprint centroids, cosine ≥ 0.85) and
+  `collected_by` (verified season claims). Only approved rows take part. New endpoints:
+  `GET /api/graph.jsonld` (JSON-LD knowledge-graph export), `/api/graph/neighbors`,
+  `/api/graph/path` (120 s cache). `/graph.html` is now a Field Data page: legend, type/edge
+  toggles, Lineage mode, "How are they connected?" path finder, a node panel with image
+  thumbnails and grouped neighbours, `?focus=`. docs/GRAPH.md.
+- **Local vision model ("seeing glass")** — `glowtbook/vision.py` asks a local Ollama
+  vision-language model (default `qwen2.5vl:7b`, set OLLAMA_URL / GLASS_VISION_MODEL) to
+  suggest techniques, SKOS style traits, colour and construction (cane / murrine / incalmo)
+  for an object photo, strictly from the registry's closed vocabularies — *features, not
+  verdicts*: no maker, origin or value, unknown labels go to `unmapped`, confidences clamped,
+  never raises; falls back to the fingerprint's own colour/size metadata when no model is
+  configured, and `knn_suggest` votes labels from nearest DINOv2 fingerprint centroids (the
+  first "Stage 1 probe"). `python -m scripts.export_vision_corpus` writes approved objects
+  + images as a CC-BY corpus (`corpus.jsonl`, optional ShareGPT `train.jsonl` for an
+  Unsloth / LLaMA-Factory LoRA). Design, staged plan, data/ethics and hardware notes in
+  docs/GLASS-VISION.md.
+- **Stage 1 of "seeing glass" is real: suggestions from look-alike pieces, no model needed** —
+  `central/vision_index.py` builds an in-memory k-NN index over the approved registry's DINOv2
+  fingerprint centroids (cached five minutes, numpy when present, pure python otherwise) and
+  `suggest_for_fingerprint()` votes techniques and SKOS traits by facet from the nearest public
+  pieces, with support counts and the neighbours themselves. Glowtbook → Objects → Style gets
+  *Suggest from similar pieces* for any fingerprint with embeddings — thumbnails of the
+  neighbours, the voted labels, and *Apply majority traits* into the pick-lists (the Apply flow
+  now stages labels for the rerun, which also fixes the Ollama path's apply). The promised
+  measurement exists: `python -m scripts.eval_vision_probe` runs leave-one-out over the registry
+  (or a `corpus.jsonl`) and prints + writes per-label precision/recall/F1/support for techniques
+  and every trait facet. Tests: `tests/test_vision_index.py`.
+- **Seasons — seasonal games for makers and collectors** — themed calls for artists
+  ("Pumpkin Patch 2026") where makers enter pieces they've published through Glowtbook,
+  collectors scan them with Verify and **claim** them (fingerprint match ≥70 verifies on the
+  spot), signed-in visitors cast a handful of votes, and it all rolls up into leaderboards
+  (people's choice, most collected, studios, collectors) and badges. New `central/seasons.py`
+  (tables seasons / season_entries / season_votes / season_claims / season_badges), API
+  routes under /api/seasons + POST /api/claims + GET /api/me/collection + a 1080×1350
+  share-card PNG with QR per entry, the public /games.html page, a '🎃 Seasons' admin
+  section, demo objects + season in the seed, and docs/SEASONS.md (game design + runbook).
+- **The claim loop closes on the maker's side** — Glowtbook → Objects → Seasons lists the
+  claims on a piece (collector, scan confidence, date, status) with **Confirm / Reject** for
+  the pending ones, owner-only (`seasons.confirm_claim`, same publisher check as entering);
+  the Home dashboard gets a *Claims* column and a "confirm N claim(s)" next step. New
+  `GET /api/me/claims` (the maker's inbox, for the capture/verify pages). Best-effort
+  Discord nudges from `central.seasons` when a claim lands and when a season opens or
+  starts voting (never fatal).
 - **Studio open-data registry (multi-studio)** — a front-end 'Publish your studio's
   data' form on the studios map submits a studio's open-API URL (POST /api/studio-
   sources); it lands **pending** and is only polled after admin approval (SSRF-safe:

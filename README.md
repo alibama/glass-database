@@ -108,6 +108,14 @@ and [`deploy/AUTH.md`](deploy/AUTH.md).
 
 Objects can carry a **re-identification fingerprint** (perceptual hashes over many angles, via [object-fingerprint](https://github.com/alibama/object-fingerprint)): enroll a piece in Glowtbook, and anyone can later confirm *this is the same physical object* by matching a fresh camera capture in Explore. The fingerprint is embedded in the object's C2PA credential. Full protocol (descriptors, calibration, thresholds, best practices) + flowchart: [`docs/FINGERPRINT-PROTOCOL.md`](docs/FINGERPRINT-PROTOCOL.md).
 
+The capture app is **signed in and piece-aware**: sign in with Google or pair your phone from Glowtbook with a QR code, pick the piece, capture, and *Save* writes the fingerprint straight onto it (unsaved sessions are kept on the device). Verify can then record the check in the piece's provenance, or let a collector **claim** a public piece. The process end to end: [`docs/FINGERPRINT-WORKFLOW.md`](docs/FINGERPRINT-WORKFLOW.md).
+
+## Seasons, the graph, and a glass-aware model
+
+- **Seasons** — friendly, time-boxed calls for pieces (pumpkins in October, ornaments in December…): makers enter a published, fingerprinted piece; collectors scan what they bought to claim it; everyone votes. Leaderboards, collector cards and badges at `/games.html`. Design: [`docs/SEASONS.md`](docs/SEASONS.md).
+- **Relationship graph** — artists, techniques, studios, *objects*, structured lineage (who taught whom), and `similar_to` edges derived from the fingerprint embeddings, with a path finder and a JSON-LD export: [`docs/GRAPH.md`](docs/GRAPH.md).
+- **Seeing glass** — a staged plan for a local, glass-aware vision model (Ollama), a zero-shot trait-suggestion adapter in Glowtbook, and a training-corpus exporter: [`docs/GLASS-VISION.md`](docs/GLASS-VISION.md).
+
 ## Style traits (Venetian / façon-de-Venise)
 
 A SKOS controlled vocabulary of observable style traits (70 concepts / 10 facets — stem, filigrana, metal, decoration, making evidence…), tagged at capture and linked to Getty AAT / Wikidata / the Corning Glass Dictionary. Served at `/api/vocab/glass-traits.ttl`. Prospectus + diagram: [`docs/GLASS-TRAITS.md`](docs/GLASS-TRAITS.md).

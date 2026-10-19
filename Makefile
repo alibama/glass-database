@@ -1,4 +1,4 @@
-.PHONY: help install seed test lint run-api run-explore run-admin run-glowtbook
+.PHONY: help install seed test lint run-api run-explore run-admin run-glowtbook run-site
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
 
@@ -26,3 +26,6 @@ run-admin:  ## Serve the admin console at :8501
 
 run-glowtbook:  ## Serve Glowtbook at :8503
 	streamlit run glowtbook/app.py --server.port 8503 --server.baseUrlPath glowtbook
+
+run-site:  ## Serve the static pages + API together at :8080 (what the proxy does in prod)
+	python -m scripts.dev_site

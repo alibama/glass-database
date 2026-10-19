@@ -52,11 +52,49 @@ all of it. You only change `secrets.toml` to point at the broker's
 Configure your social connections once in the broker's dashboard; register one
 redirect URI (`https://glassdatabase.org/glowtbook/oauth2callback`); done.
 
+## Sign-in for the static pages (capture app, verify, Seasons, graph)
+
+`st.login()` only exists inside a Streamlit app. The plain pages talk to the API,
+so the API carries its own session (`central/sessions.py`, `api/auth.py`):
+a signed token in the `gdb_session` cookie or an `Authorization: Bearer` header.
+It reuses the **same** `[auth.google]` client as Glowtbook — just register one
+more redirect URI in Google Cloud Console:
+
+```
+https://glassdatabase.org/api/auth/callback
+```
+
+Then `/api/auth/login?next=/fingerprint/enroll.html` runs the authorization-code
++ PKCE flow and drops the cookie for the whole origin. `GET /api/auth/providers`
+tells the pages whether this is configured. A broker (Option B) works the same
+way — the API reads `server_metadata_url` from the first configured provider.
+
+Two settings in `.env`:
+
+- `GLASSDB_SESSION_SECRET` — the HMAC key for session and pairing tokens. If
+  unset it falls back to `[auth].cookie_secret`, then `GLASSDB_ADMIN_TOKEN`. Set it
+  explicitly in production (`openssl rand -hex 32`), and keep it stable or
+  everyone is signed out.
+- `GLASSDB_DEV_LOGIN=1` — **local development only**: enables
+  `/api/auth/dev-login`, a fake sign-in so the flows can be clicked through
+  without a Google client. Never set this on a public server.
+
+**Pairing (no second login on the phone).** Glowtbook → Objects → Fingerprint
+shows a QR / link of the form `…/fingerprint/enroll.html#token=…&object=12`: a
+2-hour token minted for the signed-in user, carried in the URL fragment (never
+sent to the server, never logged). The page stores it locally and sends it as a
+Bearer header, so the phone is signed in as you with that piece chosen. This
+works even when the API's Google sign-in isn't configured — the Glowtbook
+session is the source of truth.
+
+Record of who signed in is the same `users` ledger either way (`Admin → 👥 Users`).
+
 ## Notes
 
 - `secrets.toml` lives at `/opt/glassdatabase/.streamlit/secrets.toml` and is read
   by all the Streamlit apps, but only **Glowtbook** calls `st.login()`, so the
-  public explorer stays open and admin stays on basic auth.
+  public explorer stays open and admin stays on basic auth. The API reads the
+  same file (read-only) for the static-page sign-in above.
 - Streamlit's `[auth]` allows a single `redirect_uri`. Since only Glowtbook uses
   OIDC today, that's fine. If you later OIDC-gate a second app, give it its own
   working directory / secrets, or move auth to the proxy (mod_auth_openidc /

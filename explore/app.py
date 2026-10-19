@@ -192,6 +192,7 @@ if mode == "Submit":
     st.title("Add to the database")
     st.caption("Everything is reviewed before it appears publicly. Contact details stay private.")
     labels = {"Artist": "artist", "Studio": "studio", "Event / exhibition": "event",
+              "Lineage (who taught whom)": "lineage",
               "Resource (supplier, service, class)": "resource",
               "Exchange (buy / sell / trade)": "exchange", "Job / gig": "job",
               "Shop (document your studio)": "shop"}

@@ -34,3 +34,6 @@ data/c2pa/            # self-signed test cert + PRIVATE signing key
 *.swp
 .idea/
 .vscode/
+
+# Local editor/agent launch configs
+.claude/

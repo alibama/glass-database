@@ -3,29 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>Glass Verify</title>
+<title>Glass Verify — confirm a piece</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@300..700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="/site.js"></script>
 <style>
   :root{
-    --bg:#0e1316; --bg-lift:#161e22; --line:#26333a;
-    --ink:#ece7dd; --ink-dim:#8b989e;
-    --hot:#f2b417; --cool:#3fb6c9; --danger:#e2564d; --ok:#5fd08a;
+    --bg:#0A0D11; --bg-lift:#16130F; --line:#2A2824; --rule:#24221F;
+    --ink:#EEE7DB; --ink-dim:#A8A29A; --ink-faint:#6E665C;
+    --hot:#E8A44A; --cool:#5EC8BD; --danger:#E25836; --ok:#5EC8BD; --violet:#967AD2;
+    --mono:"IBM Plex Mono",ui-monospace,monospace; --sans:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     font-synthesis:none;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{height:100%}
-  body{margin:0; background:var(--bg); color:var(--ink); overflow:hidden;
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  body{margin:0; background:var(--bg); color:var(--ink); overflow:hidden; font-family:var(--sans);
     font-variant-numeric:tabular-nums; -webkit-user-select:none; user-select:none}
+  button{font-family:inherit}
 
   #stage{position:fixed; inset:0; background:#000; display:flex; align-items:center; justify-content:center}
   video{width:100%; height:100%; object-fit:cover; background:#000}
   #ov{position:absolute; inset:0; display:block; width:100%; height:100%; object-fit:cover; pointer-events:none}
   #objlabel{position:absolute; left:50%; top:11%; transform:translateX(-50%); z-index:4; pointer-events:none;
-    background:#0c1114cc; border:1px solid var(--line); color:var(--ink); font-size:11.5px; font-weight:600;
+    background:#0A0D11cc; border:1px solid var(--line); color:var(--ink); font-size:11.5px; font-weight:600;
     padding:5px 12px; border-radius:999px; backdrop-filter:blur(8px); opacity:0; transition:opacity .25s; white-space:nowrap}
   #objlabel.show{opacity:1}
-  #err code{background:#0c1114; border:1px solid var(--line); padding:1px 5px; border-radius:5px; font-size:12px}
+  #err code{background:#0A0D11; border:1px solid var(--line); padding:1px 5px; border-radius:5px; font-size:12px}
   canvas{display:none}
 
   .hud{position:fixed; inset:0; pointer-events:none}
@@ -53,14 +57,16 @@
 
   #subs{position:absolute; top:max(14px,env(safe-area-inset-top)); left:14px; display:flex; flex-direction:column; gap:10px}
   .sub{width:96px}
-  .sub label{display:block; font-size:10.5px; color:var(--ink-dim); margin-bottom:4px; font-weight:600}
+  .sub label{display:block; font-size:10px; color:var(--ink-dim); margin-bottom:4px; font-family:var(--mono); letter-spacing:.08em; text-transform:uppercase}
   .track{height:5px; border-radius:3px; background:#ffffff14; overflow:hidden}
   .fill{height:100%; width:0; background:var(--ok); border-radius:3px; transition:width .5s cubic-bezier(.2,.8,.2,1)}
 
-  #rail{position:absolute; top:max(14px,env(safe-area-inset-top)); right:14px; display:flex; flex-direction:column; align-items:flex-end; gap:8px}
-  .chip{background:#0c1114cc; border:1px solid var(--line); border-radius:11px; padding:8px 11px; font-size:12px; font-weight:600; backdrop-filter:blur(8px); text-align:right; line-height:1.3}
+  #rail{position:absolute; top:max(14px,env(safe-area-inset-top)); right:14px; display:flex; flex-direction:column; align-items:flex-end; gap:8px; max-width:46vw}
+  .chip{background:#0A0D11cc; border:1px solid var(--line); border-radius:11px; padding:8px 11px; font-size:12px; font-weight:600; backdrop-filter:blur(8px); text-align:right; line-height:1.3}
   .chip b{color:var(--ok)}
-  .icon-btn{background:#0c1114cc; border:1px solid var(--line); color:var(--ink); border-radius:11px; padding:9px 12px; font-size:13px; font-weight:600; backdrop-filter:blur(8px); cursor:pointer}
+  .chip.target{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left}
+  .chip.target b{color:var(--hot); text-transform:none; letter-spacing:0; font-size:12px}
+  .icon-btn{background:#0A0D11cc; border:1px solid var(--line); color:var(--ink); border-radius:11px; padding:9px 12px; font-size:13px; font-weight:600; backdrop-filter:blur(8px); cursor:pointer}
   .icon-btn:disabled{opacity:.4}
 
   #reticle{position:absolute; top:56%; left:50%; width:66px; height:66px; margin:-33px 0 0 -33px; border:1.5px solid #ffffff4d; border-radius:10px; opacity:.55}
@@ -81,15 +87,15 @@
   #shutWrap.hit #shutter{background:var(--ok)}
   #shutter:active{transform:scale(.9)}
   #shutWrap.auto #shutter{background:var(--bg)}
-  #shutWrap.auto #shutter::after{content:"AUTO"; display:grid; place-items:center; height:100%; font-size:10px; font-weight:700; color:var(--hot); letter-spacing:.5px}
+  #shutWrap.auto #shutter::after{content:"AUTO"; display:grid; place-items:center; height:100%; font-size:10px; font-weight:700; color:var(--hot); letter-spacing:.5px; font-family:var(--mono)}
   #tools{flex:1; display:flex; gap:9px; justify-content:flex-end; flex-wrap:wrap}
-  .tool{background:#0c1114cc; border:1px solid var(--line); color:var(--ink); border-radius:11px; padding:9px 11px; font-size:12px; font-weight:600; backdrop-filter:blur(8px); cursor:pointer}
+  .tool{background:#0A0D11cc; border:1px solid var(--line); color:var(--ink); border-radius:11px; padding:9px 11px; font-size:11px; font-weight:500; backdrop-filter:blur(8px); cursor:pointer; font-family:var(--mono); letter-spacing:.05em; text-transform:uppercase}
   .tool.on{border-color:var(--hot); color:var(--hot)}
 
   /* pairs drawer */
   #film{position:absolute; left:0; right:0; bottom:0; transform:translateY(100%); transition:transform .28s cubic-bezier(.2,.8,.2,1);
     background:#0b0f12f4; border-top:1px solid var(--line); backdrop-filter:blur(12px);
-    padding:14px 14px calc(14px + env(safe-area-inset-bottom)); max-height:70vh; overflow:auto}
+    padding:14px 14px calc(14px + env(safe-area-inset-bottom)); max-height:74vh; overflow:auto}
   #film.open{transform:translateY(0)}
   #film h2{margin:0 0 4px; font-size:15px}
   #film p{margin:0 0 12px; font-size:12.5px; color:var(--ink-dim)}
@@ -97,41 +103,78 @@
   .pair .imgs{display:flex; gap:6px}
   .pair .imgs div{position:relative; width:60px; height:60px; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--line)}
   .pair .imgs img{width:100%; height:100%; object-fit:cover; display:block}
-  .pair .imgs .tag{position:absolute; left:0; top:0; font-size:8px; padding:1px 4px; background:#000000bb; border-bottom-right-radius:6px}
+  .pair .imgs .tag{position:absolute; left:0; top:0; font-size:8px; padding:1px 4px; background:#000000bb; border-bottom-right-radius:6px; font-family:var(--mono)}
   .pair .meta{flex:1}
   .pair .barrow{height:6px; border-radius:3px; background:#ffffff14; overflow:hidden; margin-top:5px}
   .pair .barrow i{display:block; height:100%; border-radius:3px}
   .pair .pct{font-size:14px; font-weight:700}
   .pair small{color:var(--ink-dim); font-size:11px}
   .filmbtns{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
-  .filmbtns button{flex:1; min-width:120px; border-radius:11px; padding:12px; font-size:13.5px; font-weight:600; cursor:pointer; border:1px solid var(--line)}
+  .filmbtns button, .filmbtns a{flex:1; min-width:120px; border-radius:11px; padding:12px; font-size:13.5px; font-weight:600; cursor:pointer;
+    border:1px solid var(--line); text-align:center; text-decoration:none; display:block}
   .primary{background:var(--hot); color:#191100; border-color:var(--hot)!important}
   .ghost{background:transparent; color:var(--ink)}
   .ghost.warn{color:var(--danger); border-color:#5a2b28!important}
+  .ghost.teal{color:var(--cool); border-color:#2f5a56!important}
+  button:disabled{opacity:.5; cursor:default}
+  #actions{border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin:4px 0 10px;
+    background:linear-gradient(180deg,rgba(94,200,189,.08),rgba(94,200,189,.02))}
+  #actions.nomatch{background:linear-gradient(180deg,rgba(226,88,54,.08),rgba(226,88,54,.02))}
+  #actions h3{margin:0 0 4px; font-size:14px}
+  #actions p{margin:0 0 8px}
+  #actions .fine{font-size:12px; color:var(--ink-faint)}
+  #actions .fine a{color:var(--hot)}
 
   /* gate */
-  #gate{position:fixed; inset:0; background:var(--bg); z-index:20; display:flex; flex-direction:column; padding:26px 22px calc(26px + env(safe-area-inset-bottom)); overflow:auto}
-  #gate .wrap{max-width:520px; margin:auto; width:100%}
-  #gate .mark{width:44px; height:44px; margin-bottom:20px}
-  #gate h1{font-size:26px; margin:0 0 6px; letter-spacing:-.02em; line-height:1.1}
-  #gate .lede{font-size:14.5px; color:var(--ink-dim); margin:0 0 22px; line-height:1.5; max-width:46ch}
-  .drop{border:1.5px dashed var(--line); border-radius:14px; padding:22px; text-align:center; cursor:pointer; transition:border-color .2s}
+  #gate{position:fixed; inset:0; background:var(--bg); z-index:20; display:flex; flex-direction:column; padding:18px 22px calc(26px + env(safe-area-inset-bottom)); overflow:auto;
+    background-image:radial-gradient(115% 62% at 22% 100%, rgba(94,200,189,.07) 0%, rgba(94,200,189,0) 60%)}
+  #gate .wrap{max-width:560px; margin:auto; width:100%}
+  .gate-top{display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:22px}
+  .gate-top a.back{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-dim); text-decoration:none}
+  .gate-top a.back:hover{color:var(--hot)}
+  #gate .mark{width:40px; height:40px; margin-bottom:14px}
+  #gate .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--cool); margin:0 0 8px}
+  #gate h1{font-size:26px; margin:0 0 6px; letter-spacing:-.02em; line-height:1.1; font-weight:500}
+  #gate .lede{font-size:14.5px; color:var(--ink-dim); margin:0 0 20px; line-height:1.5; max-width:50ch}
+  .src{border-top:1px solid var(--rule); padding:14px 0}
+  .src-h{display:flex; gap:12px; align-items:baseline; margin-bottom:8px}
+  .src-h .n{color:var(--cool); font-weight:700; font-size:12px; font-family:var(--mono); width:18px; flex:none}
+  .src-h b{font-size:15px; font-weight:600}
+  .src p{margin:0 0 .5rem; font-size:13px; color:var(--ink-dim); line-height:1.5}
+  .src p.fine{font-size:12px; color:var(--ink-faint)}
+  .src p.fine a{color:var(--hot)}
+  .drop{border:1.5px dashed var(--line); border-radius:14px; padding:18px; text-align:center; cursor:pointer; transition:border-color .2s; display:block}
   .drop:hover{border-color:var(--hot)}
-  .drop b{display:block; font-size:14.5px; margin-bottom:3px}
+  .drop b{display:block; font-size:14px; margin-bottom:3px}
   .drop span{font-size:12.5px; color:var(--ink-dim)}
-  #refCard{margin-top:16px; border:1px solid var(--line); border-radius:13px; padding:15px; display:none}
+  .pieces{display:grid; gap:8px; margin:6px 0 4px}
+  .piece{display:flex; gap:10px; align-items:center; text-align:left; width:100%; background:#12100E; border:1px solid var(--line);
+    border-radius:12px; padding:10px 12px; color:var(--ink); cursor:pointer; transition:border-color .15s}
+  .piece:hover{border-color:var(--ink-faint)}
+  .piece.sel{border-color:var(--cool); box-shadow:0 0 0 1px var(--cool) inset}
+  .piece .t{font-size:14px; font-weight:600; flex:1; min-width:0}
+  .piece .t small{display:block; font-weight:400; color:var(--ink-dim); font-size:12px; margin-top:2px}
+  .tag{font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; padding:3px 7px; border-radius:999px; border:1px solid var(--line); color:var(--ink-dim); white-space:nowrap}
+  .tag.fp{border-color:#5a4521; color:var(--hot)}
+  .tag.pub{border-color:#2f5a56; color:var(--cool)}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:999px; padding:11px 18px;
+    font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; cursor:pointer;
+    text-decoration:none; border:1px solid var(--line); color:var(--ink); background:transparent}
+  .btn.primary{background:var(--hot); color:#191100; border-color:var(--hot)}
+  #refCard{margin-top:14px; border:1px solid #2f5a56; border-radius:13px; padding:14px; display:none; background:rgba(94,200,189,.05)}
   #refCard.show{display:block}
-  #refCard .rt{font-size:14px; font-weight:600; margin-bottom:8px}
-  #refCard .row{display:flex; justify-content:space-between; font-size:12.8px; color:var(--ink-dim); padding:3px 0}
-  #refCard .row b{color:var(--ink); font-weight:600}
-  #start{width:100%; margin-top:18px; background:var(--hot); color:#191100; border:none; border-radius:13px; padding:15px; font-size:15.5px; font-weight:700; cursor:pointer; display:none}
+  #refCard .rt{font-size:14px; font-weight:600; margin-bottom:8px; color:var(--cool)}
+  #refCard .row{display:flex; justify-content:space-between; font-size:12.8px; color:var(--ink-dim); padding:3px 0; gap:1rem}
+  #refCard .row b{color:var(--ink); font-weight:600; text-align:right}
+  #start{width:100%; margin-top:18px; background:var(--hot); color:#191100; border:none; border-radius:13px; padding:15px; font-size:14px; font-weight:700; cursor:pointer; display:none;
+    font-family:var(--mono); letter-spacing:.08em; text-transform:uppercase}
   #start.show{display:block}
   #err{color:var(--danger); font-size:13px; margin-top:14px; min-height:1em}
 
-  .toast{position:fixed; left:50%; bottom:120px; transform:translateX(-50%) translateY(12px); background:#0c1114ee; border:1px solid var(--line); color:var(--ink); padding:9px 15px; border-radius:11px; font-size:13px; font-weight:600; opacity:0; transition:.22s; pointer-events:none; z-index:15}
+  .toast{position:fixed; left:50%; bottom:120px; transform:translateX(-50%) translateY(12px); background:#0A0D11ee; border:1px solid var(--line); color:var(--ink); padding:9px 15px; border-radius:11px; font-size:13px; font-weight:600; opacity:0; transition:.22s; pointer-events:none; z-index:30; max-width:92vw; text-align:center}
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
   .toast.warn{border-color:#5a2b28; color:var(--danger)}
-  .toast.ok{border-color:#2f5a41; color:var(--ok)}
+  .toast.ok{border-color:#2f5a56; color:var(--ok)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
   @media (max-width:430px){#hint{display:none} #tools{flex:none}}
 </style>
@@ -158,6 +201,7 @@
   </div>
 
   <div id="rail">
+    <div class="chip target" id="targetChip">Against <b>reference</b></div>
     <div class="chip">Shots <b id="total">0</b><br><span id="matched">0 matched</span></div>
     <button class="icon-btn" id="review" disabled>Pairs</button>
   </div>
@@ -166,7 +210,7 @@
   <div id="objlabel"></div>
 
   <div id="bar">
-    <div id="hint">Circle the piece. The shutter turns green when your view lines up with a reference shot — those are the frames that decide it.</div>
+    <div id="hint">Circle the piece. The shutter turns teal when your view lines up with a reference shot — those are the frames that decide it.</div>
     <div id="shutWrap">
       <svg id="shutRing" viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="fg" cx="50" cy="50" r="45"/></svg>
       <div id="shutter" role="button" aria-label="capture"></div>
@@ -183,9 +227,10 @@
   <div id="film">
     <h2>Matched pairs</h2>
     <p id="filmMeta">No shots yet.</p>
+    <div id="actions" hidden></div>
     <div id="pairs"></div>
     <div class="filmbtns">
-      <button class="primary" id="exportBtn">Export result (.json)</button>
+      <button class="ghost" id="exportBtn">Export result (.json)</button>
       <button class="ghost" id="closeFilm">Keep capturing</button>
       <button class="ghost warn" id="clearBtn">Reset shots</button>
     </div>
@@ -194,24 +239,47 @@
 
 <div id="gate">
   <div class="wrap">
-    <svg class="mark" viewBox="0 0 44 44" fill="none">
-      <path d="M22 3C15 14 15 30 22 41C29 30 29 14 22 3Z" stroke="#f2b417" stroke-width="2.2" stroke-linejoin="round"/>
-      <ellipse cx="22" cy="22" rx="19" ry="8" stroke="#3fb6c9" stroke-width="1.6" opacity=".8"/>
-    </svg>
-    <h1>Verify a piece</h1>
-    <p class="lede">Load a piece's enrolled fingerprint, then capture the piece in front of you. Each shot is matched against the reference — the confidence score rises as your angles line up with ones on file.</p>
-    <label class="drop" id="drop">
-      <b>Load reference fingerprint</b>
-      <span>The <code>glass-fingerprint-….zip</code> from enrollment (or its fingerprint.json)</span>
-      <input id="file" type="file" accept=".zip,.json,application/zip,application/json" hidden>
-    </label>
-    <div id="refCard">
-      <div class="rt" id="refTitle">Reference loaded</div>
-      <div class="row"><span>Enrolled</span><b id="refDate">—</b></div>
-      <div class="row"><span>Reference strength</span><b id="refRating">—</b></div>
-      <div class="row"><span>Reference frames</span><b id="refFrames">—</b></div>
-      <div class="row"><span>Dominant colour</span><b id="refColor">—</b></div>
+    <div class="gate-top">
+      <a class="back" href="/explore/?view=objects">&larr; Explore objects</a>
+      <span id="chip"></span>
     </div>
+    <svg class="mark" viewBox="0 0 44 44" fill="none">
+      <path d="M22 3C15 14 15 30 22 41C29 30 29 14 22 3Z" stroke="#E8A44A" stroke-width="2.2" stroke-linejoin="round"/>
+      <ellipse cx="22" cy="22" rx="19" ry="8" stroke="#5EC8BD" stroke-width="1.6" opacity=".8"/>
+    </svg>
+    <p class="eyebrow">Digital barcoding</p>
+    <h1>Verify a piece</h1>
+    <p class="lede">Load a piece's enrolled fingerprint, then capture the piece in front of you. Each shot is matched against the reference — the confidence rises as your angles line up with the ones on file. Nothing you capture leaves this device.</p>
+
+    <section class="src" id="srcRegistry" hidden>
+      <div class="src-h"><span class="n">1</span><b>From the registry</b></div>
+      <div id="refCard">
+        <div class="rt" id="refTitle">Reference loaded</div>
+        <div class="row"><span>Enrolled</span><b id="refDate">—</b></div>
+        <div class="row"><span>Reference strength</span><b id="refRating">—</b></div>
+        <div class="row"><span>Reference frames</span><b id="refFrames">—</b></div>
+        <div class="row"><span>Dominant colour</span><b id="refColor">—</b></div>
+        <div class="row" id="refBoundRow" hidden><span>Content Credentials</span><b id="refBound">—</b></div>
+      </div>
+    </section>
+
+    <section class="src" id="srcMine" hidden>
+      <div class="src-h"><span class="n">2</span><b>One of my pieces</b></div>
+      <p>Fingerprinted pieces in your Glowtbook registry — confirm a piece against its own record, and log the check in its provenance.</p>
+      <div class="pieces" id="pieces"></div>
+    </section>
+
+    <section class="src" id="srcFile">
+      <div class="src-h"><span class="n">3</span><b>From a file</b></div>
+      <label class="drop" id="drop">
+        <b>Load a fingerprint export</b>
+        <span>The <code>glass-fingerprint-….zip</code> from the capture app (or its fingerprint.json)</span>
+        <input id="file" type="file" accept=".zip,.json,application/zip,application/json" hidden>
+      </label>
+      <p class="fine" style="margin-top:.6rem">Looking for a piece? Every published, fingerprinted piece in <a href="/explore/?view=objects">Explore → Objects</a> has a <b>Verify this piece</b> button that opens this app with its reference loaded.</p>
+    </section>
+
+    <div id="refCardFile"></div>
     <button id="start">Enable camera</button>
     <div id="err"></div>
   </div>
@@ -224,6 +292,7 @@
 (function(){
   const $=s=>document.querySelector(s);
   const video=$("#cam"), cap=$("#cap"), capx=cap.getContext("2d");
+  const G = window.GDB || null;
 
   /* ---- tunables ---- */
   const AW=160, AH=Math.round(AW*0.75);
@@ -240,7 +309,8 @@
 
   const S={ ref:null, refByFile:{}, frames:[], stream:null, imageCapture:null, facing:"environment", deviceId:null,
     auto:false, lastAuto:0, live:{sharp:0,dhash:null,cnov:64,worthy:false,hit:false},
-    conf:0, prevConf:0, seq:0 };
+    conf:0, prevConf:0, seq:0,
+    user:null, pieces:[], refKind:null, refId:null, refTitle:"", refMaker:"", recorded:false, claimed:null, bound:null };
 
   /* ring */
   const sectorsG=$("#sectors");
@@ -271,10 +341,6 @@
   const CH_HB=16, CH_SB=4, CH_N=CH_HB*CH_SB;
   // Mat-anchored white balance (identical to enroll, so descriptors are comparable).
   function whiteBalance(d){
-    // white-patch AWB: the mat's white margin is the brightest region and its
-    // colour is the illuminant. Estimate it from the brightest pixels and scale
-    // channels to neutralise it, so hues are lighting/device invariant. No-op if
-    // there's no bright reference (off-mat).
     let mx=0; const N=d.length;
     for(let i=0;i<N;i+=4){ const l=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(l>mx)mx=l; }
     const thr=mx*0.85; let sr=0,sg=0,sb=0,n=0;
@@ -374,7 +440,7 @@
     const delta=S.conf-S.prevConf;
     if(delta>0){ g.classList.remove("bump"); void g.offsetWidth; g.classList.add("bump");
       const pl=$("#plus"); pl.textContent="+"+delta; pl.classList.remove("go"); void pl.offsetWidth; pl.classList.add("go"); buzz(12);
-      if(cls==="match" && S.prevConf<MATCH_READY){ toast("Match likely","ok"); buzz([30,40,30]); } }
+      if(cls==="match" && S.prevConf<MATCH_READY){ toast("Match likely — open Pairs to record or claim it","ok"); buzz([30,40,30]); } }
     refresh();
   }
 
@@ -412,9 +478,6 @@
 
   /* camera */
   async function startCamera(){ stopCamera();
-    // facingMode hangs on some phones, so grab ANY camera with one clean request,
-    // then switch to the back one by device id (reliable). A picked id that fails
-    // falls back to any camera rather than leaving a black screen.
     const grab = c => Promise.race([ navigator.mediaDevices.getUserMedia(c),
       new Promise((_,rej)=>setTimeout(()=>rej(Object.assign(new Error("camera timeout"),{name:"TimeoutError"})),12000)) ]);
     const constraints = S.deviceId ? {audio:false, video:{deviceId:{exact:S.deviceId}}} : {audio:false, video:true};
@@ -433,7 +496,6 @@
       const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="videoinput");
       const t=S.stream&&S.stream.getVideoTracks()[0];
       const cur=t?t.getSettings().deviceId:null;
-      // once, switch to a back/rear camera by id (facingMode is unreliable)
       if(!S.deviceId && !S.autoCam && devs.length>1){
         S.autoCam=true;
         const back=devs.find(d=>/back|rear|environment|world/i.test(d.label||""));
@@ -478,7 +540,6 @@
              else { const k=0.3; for(const key in raw) S.subj[key]+=(raw[key]-S.subj[key])*k; } }
     else if(S.subj){ S.subj.conf+=(0-S.subj.conf)*0.2; if(S.subj.conf<0.04) S.subj=null; }
     ovx.fillStyle="rgba(8,11,13,0.5)"; ovx.fillRect(0,0,W,H);
-    // central framing guide — keep the object inside this box (only the box is fingerprinted)
     (function(){const cw=W*0.6, ch=H*0.6, gx=(W-cw)/2, gy=(H-ch)/2;
       ovx.save(); ovx.setLineDash&&ovx.setLineDash([Math.max(4,W/90),Math.max(4,W/90)]);
       ovx.strokeStyle="rgba(236,231,221,0.35)"; ovx.lineWidth=Math.max(1.5,W/420);
@@ -491,7 +552,7 @@
       g.addColorStop(0,"rgba(0,0,0,1)"); g.addColorStop(1,"rgba(0,0,0,0)");
       ovx.fillStyle=g; ovx.beginPath(); ovx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); ovx.fill(); ovx.restore();
       const hot=a&&(a.worthy||a.hit);
-      ovx.strokeStyle=hot?"rgba(242,180,23,0.95)":"rgba(236,231,221,0.55)"; ovx.lineWidth=Math.max(2,W/300);
+      ovx.strokeStyle=hot?"rgba(232,164,74,0.95)":"rgba(236,231,221,0.55)"; ovx.lineWidth=Math.max(2,W/300);
       rr(ovx,cx-rx,cy-ry,rx*2,ry*2,16); ovx.stroke();
       objLabel.textContent=hot?"Locked on — good angle, capture it":"Object in view";
       objLabel.classList.add("show");
@@ -499,15 +560,59 @@
   }
   (function(){ const lb=$("#lensBtn"); if(lb) lb.onclick=()=>{ S.overlay=!S.overlay; lb.classList.toggle("on",S.overlay);
     if(!S.overlay){ ovx.clearRect(0,0,ov.width,ov.height); objLabel.classList.remove("show"); } }; })();
-  function showInsecureHelp(){ const e=$("#err"); const f=location.protocol==="file:"; const page=(location.pathname.split("/").pop()||"enroll.html");
+  function showInsecureHelp(){ const e=$("#err"); const f=location.protocol==="file:"; const page=(location.pathname.split("/").pop()||"verify.html");
     e.innerHTML = f
-      ? "The camera can\u2019t run from a file opened straight off disk \u2014 browsers block it. Serve this folder over http first:<br><br><b>Easiest:</b> double-click <code>serve.command</code> in this folder, then use the tab it opens.<br><br><b>Or</b> in Terminal, from this folder:<br><code>python3 -m http.server 8000</code><br>then open <code>http://localhost:8000/"+page+"</code>"
-      : "The camera needs a secure page \u2014 open this over <code>https://</code> or <code>http://localhost</code>."; }
+      ? "The camera can’t run from a file opened straight off disk — browsers block it. Serve this folder over http first (<code>python -m scripts.dev_site</code> in the repo, then open <code>http://127.0.0.1:8080/fingerprint/"+page+"</code>)."
+      : "The camera needs a secure page — open this over <code>https://</code> or <code>http://localhost</code>."; }
+
+  /* ---------- actions after a verdict: record on my piece / claim a public piece ---------- */
+  function esc(s){ return G?G.esc(s):String(s==null?"":s); }
+  function report(){
+    const r=recompute(); const [,label]=verdictFor(r);
+    return { tool:"glass-verify", version:1, created:new Date().toISOString(),
+      reference:{kind:S.refKind, id:S.refId, title:S.refTitle, created:S.ref.created, rating:S.ref.rating, tier:S.ref.tier, frames:S.ref.frames.length, bound:S.bound},
+      verdict:label, confidence:r.conf, matchQuality:+r.quality.toFixed(3), spread:+r.spread.toFixed(3),
+      referenceViewsMatched:r.cells.size, shots:S.frames.length, descriptor:S.descriptor,
+      params:{SIM_LO,SIM_HI,STRONG_T,SPREAD_TARGET,MATCH_READY,NO_MATCH},
+      note:"Decision-support match report. Confidence is a perceptual-structure match score, not proof of authenticity.",
+      pairs:S.frames.map(f=>({shot:f.seq,sharp:+f.sharp.toFixed(1),
+        refFile:f.match&&f.match.ref?f.match.ref.file:null,dist:f.match?f.match.dist:null,similarity:f.match?+f.match.sim.toFixed(3):null})) };
+  }
+  function renderActions(){
+    const box=$("#actions"); if(!S.frames.length||!S.ref){ box.hidden=true; return; }
+    const r=recompute(); const [cls,label]=verdictFor(r); box.hidden=false; box.classList.toggle("nomatch",cls==="nomatch");
+    const who=S.refTitle?`<b>${esc(S.refTitle)}</b>${S.refMaker?" by "+esc(S.refMaker):""}`:"the reference";
+    let html=`<h3>${esc(label)} — ${r.conf}/100 against ${who}</h3>`;
+    if(cls!=="match"){ html+=`<p class="fine">${cls==="inconc"?"Keep circling — line up with more of the reference angles (teal shutter) to decide it.":"These shots don't line up with the reference. Check lighting and that you're on the same piece."}</p>`; box.innerHTML=html; return; }
+    if(S.refKind==="mine"){
+      html+= S.recorded ? `<p>✓ Verification recorded in this piece's provenance.</p>`
+        : `<p>Log this check in the piece's provenance timeline (date, confidence, views matched).</p><div class="filmbtns" style="margin-top:0"><button class="primary" id="recordBtn">Record verification</button></div>`;
+    } else if(S.refKind==="public"){
+      if(!S.user){ html+=`<p>Holding this piece? Sign in to <b>claim it for your collection</b> — a verified scan is how a collection proves it's authentic.</p><div class="filmbtns" style="margin-top:0"><a class="primary" href="${G?esc(G.loginUrl()):'#'}">Sign in to claim</a></div>`; }
+      else if(S.claimed){ html+=`<p>✓ ${S.claimed.status==="verified"?"Claimed — it's in your collection.":"Claim recorded — pending review."} <a href="/games.html#collection" style="color:var(--hot)">Open my collection</a></p>`; }
+      else { html+=`<p>Holding this piece? <b>Claim it for your collection</b> — the match confidence travels with the claim.</p><div class="filmbtns" style="margin-top:0"><button class="primary" id="claimBtn">Claim for my collection</button></div>`; }
+    } else {
+      html+=`<p class="fine">Loaded from a file — to record or claim, open the piece from <a href="/explore/?view=objects">Explore</a> or from your Glowtbook pieces.</p>`;
+    }
+    box.innerHTML=html;
+    const rb=$("#recordBtn"); if(rb) rb.onclick=async()=>{ rb.disabled=true;
+      try{ const rep=report(); await G.json(`/me/objects/${S.refId}/events`,{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({event_type:"verified", event_date:new Date().toISOString().slice(0,10), actor:S.user.name||"",
+            note:`Verify app: ${rep.verdict}, confidence ${rep.confidence}/100, ${rep.referenceViewsMatched} reference views matched (${rep.descriptor}).`})});
+        S.recorded=true; toast("Recorded in the piece's provenance","ok"); renderActions();
+      }catch(e){ toast("Couldn't record: "+e.message,"warn"); rb.disabled=false; } };
+    const cb=$("#claimBtn"); if(cb) cb.onclick=async()=>{ cb.disabled=true;
+      try{ const rep=report(); const j=await G.json("/claims",{method:"POST",headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({object_row_id:S.refId, confidence:rep.confidence, report:rep, location:""})});
+        S.claimed=j.claim||j; toast(S.claimed.status==="verified"?"Claimed — it's in your collection":"Claim recorded, pending review","ok"); buzz([30,40,30]); renderActions();
+      }catch(e){ toast(e.status===404?"Collections aren't enabled on this server yet":"Couldn't claim: "+e.message,"warn"); cb.disabled=false; } };
+  }
 
   /* ui */
   function refresh(){ $("#total").textContent=S.frames.length; $("#review").disabled=!S.frames.length;
     const r=recompute(); const [,label]=verdictFor(r);
     $("#filmMeta").textContent=S.frames.length? `${label} — confidence ${r.conf}/100, ${r.cells.size} reference views matched`:"No shots yet.";
+    renderActions();
     const box=$("#pairs"); box.innerHTML="";
     S.frames.slice().map(f=>f).sort((a,b)=>(b.match?b.match.sim:0)-(a.match?a.match.sim:0)).forEach(f=>{
       const m=f.match; const sim=m?Math.round(m.sim*100):0;
@@ -521,7 +626,7 @@
           <small> · dist ${m?m.dist:"—"}${m&&m.ref?" · "+m.ref.file.replace("frames/",""):""}</small>
           <div class="barrow"><i style="width:${sim}%;background:${col}"></i></div></div>`;
       box.appendChild(row); }); }
-  function toast(m,k){const t=$("#toast"); t.textContent=m; t.className="toast show"+(k?" "+k:""); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),1700);}
+  function toast(m,k){const t=$("#toast"); t.textContent=m; t.className="toast show"+(k?" "+k:""); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),k==="warn"?2600:1900);}
   function flash(){document.body.animate([{filter:"brightness(2)"},{filter:"brightness(1)"}],{duration:120});}
   function buzz(p){try{navigator.vibrate&&navigator.vibrate(p);}catch(_){}}
 
@@ -547,20 +652,11 @@
   $("#review").onclick=()=>$("#film").classList.add("open");
   $("#closeFilm").onclick=()=>$("#film").classList.remove("open");
   $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Discard captured shots?"))return;
-    S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; update(); };
+    S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.recorded=false; update(); };
 
   $("#exportBtn").onclick=()=>{
     if(!S.frames.length){toast("Nothing to export","warn"); return;}
-    const r=recompute(); const [,label]=verdictFor(r);
-    const report={ tool:"glass-verify", version:1, created:new Date().toISOString(),
-      reference:{created:S.ref.created,rating:S.ref.rating,tier:S.ref.tier,frames:S.ref.frames.length},
-      verdict:label, confidence:r.conf, matchQuality:+r.quality.toFixed(3), spread:+r.spread.toFixed(3),
-      referenceViewsMatched:r.cells.size, shots:S.frames.length,
-      params:{SIM_LO,SIM_HI,STRONG_T,SPREAD_TARGET,MATCH_READY,NO_MATCH},
-      note:"Decision-support match report. Confidence is a perceptual-structure match score, not proof of authenticity.",
-      pairs:S.frames.map(f=>({shot:f.seq,sharp:+f.sharp.toFixed(1),
-        refFile:f.match&&f.match.ref?f.match.ref.file:null,dist:f.match?f.match.dist:null,similarity:f.match?+f.match.sim.toFixed(3):null})) };
-    const blob=new Blob([JSON.stringify(report,null,2)],{type:"application/json"});
+    const blob=new Blob([JSON.stringify(report(),null,2)],{type:"application/json"});
     const url=URL.createObjectURL(blob), a=document.createElement("a");
     a.href=url; a.download=`glass-verify-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.json`; a.click();
     setTimeout(()=>URL.revokeObjectURL(url),4000); toast("Result exported","ok");
@@ -578,46 +674,85 @@
         ref=JSON.parse(await jf.async("string"));
         for(const fr of ref.frames){ const zf=zip.file(fr.file); if(zf){ const b=await zf.async("blob"); S.refByFile[fr.file]=URL.createObjectURL(b); } }
       }
-      applyRef(ref);
+      S.refKind="file"; S.refId=null; S.refTitle=(ref.object&&ref.object.title)||file.name; S.refMaker="";
+      applyRef(ref, S.refTitle);
     }catch(err){ console.error(err); $("#err").textContent="Couldn't read that file: "+(err.message||err); }
   };
 
-  function applyRef(ref){
+  function applyRef(ref, title){
     if(!ref||!Array.isArray(ref.frames)||!ref.frames.length) throw new Error("no frames in fingerprint");
     // normalise dhash to [hi,lo] numbers
     ref.frames.forEach(f=>{ if(f.dhash&&f.dhash.length===2){ f.dhash=[f.dhash[0]>>>0,f.dhash[1]>>>0]; } if(f.sector==null)f.sector=-1; if(f.cell==null)f.cell="c"+f.file; });
-    S.ref=ref;
+    S.ref=ref; S.recorded=false; S.claimed=null;
+    $("#srcRegistry").hidden=false;
+    $("#refTitle").textContent = title ? "Verifying: "+title : "Reference loaded";
+    $("#targetChip").innerHTML="Against <b>"+esc(title||"reference")+"</b>";
     $("#refDate").textContent=(ref.created||"").slice(0,10)||"unknown";
     $("#refRating").textContent=(ref.rating!=null?ref.rating+"/100":"—")+(ref.tier?" ("+ref.tier+")":"");
-    $("#refFrames").textContent=ref.frames.length+(Object.keys(S.refByFile).length?"":" (json only — no images)");
+    $("#refFrames").textContent=ref.frames.length+(Object.keys(S.refByFile).length?"":" (descriptors only — no images)");
     const dc=(ref.metadata&&ref.metadata.dominantColor)||dominantColor(aggChist(ref.frames));
     $("#refColor").innerHTML = dc? `<span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${dc.hex};vertical-align:middle;margin-right:6px;border:1px solid #0006"></span>${dc.name}` : "—";
     S.hasEmb = ref.frames.some(f=>f.emb&&f.emb.length);
     // Prefer the AI (DINOv2) descriptor when the reference carries embeddings —
     // colour alone can't separate similar-coloured pieces; texture can.
     if(S.hasEmb){ S.descriptor="dino"; const el=$("#descBtn"); if(el) el.textContent="Match: AI (DINOv2)"; }
+    else { S.descriptor="color"; const el=$("#descBtn"); if(el) el.textContent="Match: Colour"; }
     $("#refCard").classList.add("show"); $("#start").classList.add("show");
+    [...document.querySelectorAll(".piece")].forEach(el=>el.classList.toggle("sel", S.refKind==="mine" && String(el.dataset.id)===String(S.refId)));
     toast("Reference loaded","ok");
   }
 
-  // Verify anytime: load the registered reference straight from the registry
-  // with  verify.html?object=<row_id>  (linked from Explore).
-  (async()=>{
-    const objId=new URLSearchParams(location.search).get("object");
-    if(!objId) return;
+  async function loadPublic(objId){
     try{
-      const res=await fetch("/api/objects/"+encodeURIComponent(objId)+"/fingerprint");
+      const res=await fetch(G?G.API+"/objects/"+encodeURIComponent(objId)+"/fingerprint":"/api/objects/"+encodeURIComponent(objId)+"/fingerprint");
       if(!res.ok) throw new Error("no fingerprint registered for this object");
-      applyRef(await res.json());
+      const ref=await res.json();
+      S.refKind="public"; S.refId=objId; S.refTitle=""; S.refMaker="";
+      try{ const o=await (G?G.json("/datasets/objects/"+encodeURIComponent(objId)):fetch("/api/datasets/objects/"+encodeURIComponent(objId)).then(r=>r.json()));
+        if(o&&o.title){ S.refTitle=o.title; S.refMaker=o.maker||""; } }catch(_){}
+      applyRef(ref, S.refTitle? S.refTitle+(S.refMaker?" — "+S.refMaker:"") : "object "+objId);
       try{
-        const v = await (await fetch("/api/objects/"+encodeURIComponent(objId)+"/fingerprint/verify")).json();
-        if(v.bound){ toast("✓ Fingerprint verified against Content Credentials — "+
-          (v.views||"?")+" views, signed by "+(v.signer||"the issuer"), "ok"); }
-        else if(v.signed_sha256){ toast("⚠ This fingerprint does NOT match the signed one"+
-          (v.reason? " ("+v.reason+")":""), "warn"); }
+        const v = await (await fetch((G?G.API:"/api")+"/objects/"+encodeURIComponent(objId)+"/fingerprint/verify")).json();
+        S.bound = !!v.bound; const row=$("#refBoundRow"); row.hidden=false;
+        if(v.bound){ $("#refBound").textContent="✓ bound to the signed credential"+(v.signer?" · "+v.signer:""); $("#refBound").style.color="var(--cool)"; }
+        else if(v.signed_sha256){ $("#refBound").textContent="⚠ does NOT match the signed fingerprint"; $("#refBound").style.color="var(--danger)"; toast("This fingerprint does not match the signed one"+(v.reason?" ("+v.reason+")":""),"warn"); }
+        else { $("#refBound").textContent="unsigned"; }
       }catch(_){}
     }catch(err){ $("#err").textContent="Couldn't load the registered fingerprint: "+(err.message||err); }
-  })();
+  }
+  async function loadMine(id){
+    if(!G) return;
+    try{ const ref=await G.json("/me/objects/"+encodeURIComponent(id)+"/fingerprint");
+      const p=S.pieces.find(x=>String(x.id)===String(id)); S.refKind="mine"; S.refId=+id; S.refTitle=p?p.title:("my piece "+id); S.refMaker=p?(p.maker||""):"";
+      applyRef(ref, S.refTitle); $("#refBoundRow").hidden=true;
+    }catch(e){ $("#err").textContent="Couldn't load that piece's fingerprint: "+e.message; }
+  }
+  function renderPieces(){
+    const sec=$("#srcMine"), box=$("#pieces");
+    const mine=S.pieces.filter(p=>p.fingerprint);
+    if(!S.user){ sec.hidden=true; return; }
+    sec.hidden=false;
+    if(!mine.length){ box.innerHTML='<p class="fine">None of your pieces has a fingerprint yet — <a href="/fingerprint/enroll.html" style="color:var(--hot)">capture one</a>.</p>'; return; }
+    box.innerHTML="";
+    for(const p of mine){
+      const b=document.createElement("button"); b.type="button"; b.className="piece"; b.dataset.id=p.id;
+      const st=(p.publication||{}).state;
+      b.innerHTML=`<span class="t">${esc(p.title)}<small>${esc([p.maker,p.year].filter(Boolean).join(" · ")||"—")}</small></span>
+        <span class="tag fp">FP ${p.fingerprint.rating}</span>${st==="published"?'<span class="tag pub">published</span>':""}`;
+      b.onclick=()=>loadMine(p.id);
+      box.appendChild(b);
+    }
+  }
+  async function initAccount(){
+    const objId=G?G.param("object"):new URLSearchParams(location.search).get("object");
+    const mineId=G?G.param("mine"):null;
+    if(G){
+      G.chip("#chip",{compact:true,onchange:async(m)=>{ S.user=m; if(m){ try{ S.pieces=(await G.json("/me/objects")).objects||[]; }catch(_){ S.pieces=[]; } } else S.pieces=[]; renderPieces(); }})
+        .then(async m=>{ S.user=m&&m.signed_in?m:null; if(S.user){ try{ S.pieces=(await G.json("/me/objects")).objects||[]; }catch(_){ S.pieces=[]; } } renderPieces();
+          if(mineId && S.user) loadMine(mineId); });
+    }
+    if(objId) loadPublic(objId);
+  }
 
   $("#start").onclick=async()=>{ if(!S.ref){$("#err").textContent="Load a reference first."; return;} $("#err").textContent="";
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("#err").textContent="No camera API here. Use Chrome or Safari over https (or localhost)."; return;}
@@ -639,6 +774,7 @@
   };
 
   window.addEventListener("beforeunload",e=>{if(S.frames.length){e.preventDefault(); e.returnValue="";}});
+  initAccount();
 })();
 </script>
 </body>
