@@ -4,7 +4,7 @@ date: 2026-10-17
 author: Glass Database
 series: Theoretical studies
 summary: Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.
-tags: economics, studio build, Peru, series
+tags: economics, studio build, Peru
 ---
 
 ## Premise
