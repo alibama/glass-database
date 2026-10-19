@@ -55,6 +55,16 @@
   .fd-card .fd-go { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .12em;
     text-transform: uppercase; color: var(--fd-amber); }
   .fd-card--teal:hover { border-color: var(--fd-teal); } .fd-card--teal .fd-go { color: var(--fd-teal); }
+  /* the featured blog post: a wide card that reads like a cover */
+  .fd-card--feature { margin-top: 2.2rem; padding: clamp(1.6rem, 3vw, 2.4rem) clamp(1.4rem, 3vw, 2.4rem);
+    border-color: var(--fd-rule-soft); background:
+      radial-gradient(90% 120% at 100% 0%, rgba(232,164,74,.10), rgba(232,164,74,0) 60%),
+      linear-gradient(180deg, rgba(238,231,219,.035), rgba(238,231,219,0)); }
+  .fd-card--feature h3 { font-size: clamp(28px, 4.2vw, 48px); max-width: 22ch; margin: .6rem 0 .8rem;
+    font-variation-settings: "opsz" 52, "wght" 330; line-height: 1.12; }
+  .fd-card--feature p { font-size: clamp(16px, 1.8vw, 19px); max-width: 68ch; }
+  .fd-rows p a { color: var(--fd-bone); text-decoration: none; border-bottom: 1px solid var(--fd-rule-soft); }
+  .fd-rows p a:hover { color: var(--fd-amber); border-color: var(--fd-amber); }
   .fd-card--violet:hover { border-color: var(--fd-violet); } .fd-card--violet .fd-go { color: var(--fd-violet); }
   .fd-scope { display: flex; flex-wrap: wrap; gap: .5rem .4rem; margin-top: 2rem; }
   .fd-scope a { font-family: var(--fd-mono); font-size: clamp(11px,1.3vw,13px); letter-spacing: .1em;
@@ -88,6 +98,7 @@
     <span class="fd-nav__brand">Glass&nbsp;Database</span>
     <div class="fd-nav__links">
       <a href="/explore/">Explore</a>
+      <a href="/blog/">Blog</a>
       <a href="/glowtbook/">Glowtbook</a>
       <a href="#barcoding">Barcoding</a>
       <a href="/studios.html">Map</a>
@@ -147,6 +158,23 @@
       </div>
     </section>
   </header>
+
+  <section class="fd-sec" id="blog" style="padding-top:clamp(3.2rem, 7vw, 5.5rem)">
+    <div class="fd-sec__head">
+      <p class="fd-eyebrow">From the blog</p>
+      <div class="fd-kicker-rule"></div>
+      <h2 class="fd-headline">Field notes on the <em>business of glass.</em></h2>
+      <p class="fd-body" style="margin-top:1.2rem">What a hot shop really costs to build and run, where the
+        buyers are, and what the registry's data says — studies and essays, published under CC BY.</p>
+    </div>
+    <!-- blog:latest -->
+<a class="fd-card fd-card--feature" href="/blog/blowing-glass-in-lima.html"><span class="fd-label" style="color:var(--fd-amber)">Latest · Theoretical studies · Oct 17, 2026 · 21 min read</span><h3>Blowing Glass in Lima</h3><p>Lima is the opposite problem from Antarctica — cheap gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.</p><span class="fd-go">Read the study &rarr;</span></a>
+      <!-- /blog:latest -->
+    <div class="fd-hero__cta">
+      <a class="fd-cta" href="/blog/">Read the blog</a>
+      <a class="fd-cta" href="/blog/feed.xml" style="color:var(--fd-dim);border-color:var(--fd-rule-soft)">RSS</a>
+    </div>
+  </section>
 
   <section class="fd-sec" id="explore">
     <div class="fd-sec__head">
