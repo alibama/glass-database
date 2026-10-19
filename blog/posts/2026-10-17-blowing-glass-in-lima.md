@@ -3,17 +3,17 @@ title: Blowing Glass in Lima
 date: 2026-10-17
 author: Glass Database
 series: Theoretical studies
-summary: Lima is the opposite problem from Antarctica — cheap gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.
+summary: Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.
 tags: economics, studio build, Peru, series
 ---
 
 ## Premise
 
-Lima is the opposite problem from Antarctica. The Antarctic studio had no fuel, no flux, no market and no law to permit it; the Lima studio has cheap piped natural gas, a mining economy that digs up every oxide in a glass batch, an industrial glass sector already melting soda-lime at scale, and a city of eleven million with a documented appetite for design. Nothing has to be invented. The questions are grade, price, and who buys.
+Lima is an easy place to melt glass and a hard place to sell it. The city has cheap piped natural gas, a mining economy that digs up every oxide in a glass batch, an industrial glass sector already melting soda-lime at scale, and eleven million people with a documented appetite for design. Nothing has to be invented. The questions are grade, price, and who buys.
 
-This is the second in a series of theoretical studies that use an extreme location to make the economics of studio glass visible. Where Antarctica showed that energy and shelter are the whole business, Lima tests the other half: what a hot shop can do when inputs are cheap and the constraint moves to demand, import friction, and the distance between a workshop and a buyer with money.
+This is the first in a series of theoretical studies that use a specific, sometimes extreme, location to make the economics of studio glass visible. Each study builds the same hot shop somewhere new and asks what the place gives, what it withholds, and what the business has to look like to survive there. Lima opens the series because it isolates the half of the problem most working studios actually face: the inputs are cheap, so the constraint moves to demand, import friction, and the distance between a workshop and a buyer with money. Later studies will push on the other half — energy, shelter, and getting materials to the furnace at all.
 
-The studio is the same one as before so the numbers compare: one 500 lb furnace, two glory holes, two annealers, a cold shop, room for six to eight people. Figures are in US dollars at 2026 prices, with sources where they exist and marked approximate where they do not.
+The reference studio will be the same in every study so the numbers compare: one 500 lb furnace, two glory holes, two annealers, a cold shop, room for six to eight people. Figures are in US dollars at 2026 prices, with sources where they exist and marked approximate where they do not.
 
 ## The ground
 
@@ -34,7 +34,7 @@ Peru can supply four of the five things a hot shop eats from inside its own bord
 | Refractories | Suppliers to the bottle plants and the mining smelters | Castables, bricks, and fiber are stocked locally. Furnace pots and invested crucibles still come from the US or Europe |
 | Water, air, climate | Coastal desert: 18°C average, almost no rain, high humidity | Mild year-round. No heating load, no snow load, no cooling load worth the name. Humidity and salt air are hard on steel and electronics |
 
-The practical reading is the mirror of the Antarctic one. There the land gave wind and cold and nothing else; here the land gives nearly the whole batch and the cheapest furnace fuel on the continent, and gives it in a city that already runs eight glass furnaces around the clock. What Peru does not give is finished studio equipment, color bar, or the quartz-pure sand for lead-free crystal. Those arrive in a container at Callao, the same way they would arrive anywhere outside the handful of countries that make them.
+The practical reading: the land gives nearly the whole batch and the cheapest furnace fuel on the continent, and gives it in a city that already runs eight glass furnaces around the clock. What Peru does not give is finished studio equipment, color bar, or the quartz-pure sand for lead-free crystal. Those arrive in a container at Callao, the same way they would arrive anywhere outside the handful of countries that make them.
 
 ## Local versus imported
 
@@ -60,7 +60,7 @@ Two trade facts shape the manifest. First, the US–Peru Trade Promotion Agreeme
 | People: two gaffers, two assistants, one technician, one manager | Local, with one foreign lead gaffer for the first two seasons | wages in opex | Peru has lampworkers and ceramicists but almost no furnace-trained glassblowers; the first hires are trained on site |
 | Freight: two 20-foot containers, US Gulf to Callao, plus broker | — | 11,000 | Four to six weeks door to door |
 
-Total imported equipment lands at roughly $145,000 including freight and broker; local goods and services for the fit-out run about $50,000 before the building. The ratio is the point: in Antarctica 95% of the studio by weight crossed an ocean; in Lima the ocean carries only the things nobody in South America makes. If one of the studio's business lines is building and selling studio equipment into Latin America, the list of imports is also a list of what that business would make.
+Total imported equipment lands at roughly $145,000 including freight and broker; local goods and services for the fit-out run about $50,000 before the building. The ratio is the point. In most of the world a new hot shop crosses an ocean almost in its entirety; in Lima the ocean carries only the things nobody in South America makes. If one of the studio's business lines is building and selling studio equipment into Latin America, the list of imports is also a list of what that business would make.
 
 ## The build
 
@@ -93,7 +93,7 @@ The recommendation is Chorrillos: a 3,000 sq ft warehouse with a 20-foot clear h
 5. Months 6–7: commissioning, first melt, staff training with the lead gaffer
 6. Months 7–12: soft production; showroom lease and fit-out in Barranco or San Isidro
 
-The furnace runs year-round. There is no season to shut down for, which is the single largest operating difference from the Antarctic case and the reason the Lima numbers in the next section are per year, not per season.
+The furnace runs year-round. There is no season to shut down for, so the Lima numbers in the next section are per year rather than per season — a distinction that will matter when this series reaches places that have a season.
 
 ## Cost analysis
 
@@ -135,7 +135,7 @@ All figures are approximate planning numbers in 2026 US dollars. Equipment price
 | Capital amortized over 10 years | 38,000 | |
 | **All-in per year** | **≈ 347,000** | |
 
-**Unit economics.** Two benches, six days a week, ten hours a day, 48 weeks a year gives 5,760 bench-hours and about 25,000 lb of glass worked. That is $60 per bench-hour and $14 per pound all-in, against $335 and $80 in Antarctica and roughly $100 to $120 per bench-hour for a comparable US studio once its real overhead is counted rather than its subsidized rental rate.
+**Unit economics.** Two benches, six days a week, ten hours a day, 48 weeks a year gives 5,760 bench-hours and about 25,000 lb of glass worked. That is $60 per bench-hour and $14 per pound all-in, against roughly $100 to $120 per bench-hour for a comparable US studio once its real overhead is counted rather than its subsidized rental rate.
 
 The lever here is not energy. Gas is 5% of the budget. Wages are 53%, and the wage line is the one that moves: once the local gaffers are trained and the foreign lead goes home, opex drops by $60,000 and the bench-hour falls under $50. The second lever is the showroom, which is 18% of opex and produces nothing unless the business models in the next section turn it into revenue.
 
@@ -185,17 +185,19 @@ The showroom goes in Barranco, on the gallery blocks within a short walk of the 
 
 ## Verdict
 
-A glass studio in Lima is buildable for about $380,000, operable for about $350,000 a year, and viable on commissions, teaching and export without ever depending on tourists. It is the cheapest serious hot shop in this series to run, and the one with the clearest unmet market: a city of eleven million, a continent-leading restaurant scene and a growing design trade, all currently buying their glass from somewhere else.
+A glass studio in Lima is buildable for about $380,000, operable for about $350,000 a year, and viable on commissions, teaching and export without ever depending on tourists. It is a cheap serious hot shop to run — later studies in this series will have to work hard to beat it — and it has the clearest unmet market we expect to find anywhere: a city of eleven million, a continent-leading restaurant scene and a growing design trade, all currently buying their glass from somewhere else.
 
-Set beside the Antarctic case, the comparison is exact. There, energy and shelter were 70% of the budget and the market was a treaty-limited trickle of ship passengers. Here, energy and shelter are 15% of the budget and the market is the constraint that has to be built: a showroom, a trade network, a teaching program, an export channel. Antarctica was an engineering problem with a story attached. Lima is a sales problem with a furnace attached.
+The shape of the problem is worth naming, because it is the shape most working studios are in. Energy and shelter are 15% of the budget. The market is the constraint that has to be built: a showroom, a trade network, a teaching program, an export channel. Lima is a sales problem with a furnace attached.
 
-Three things transfer:
+Three things to carry into the rest of the series:
 
 - **Where the batch comes from barely matters.** Peru mines most of a glass recipe and the studio still buys its sand through an importer, because grade beats geography. The land's real gifts are cheap gas, a mild climate and a supply chain built for someone else's furnaces.
-- **Wages are the lever in a cheap-energy economy.** More than half the Lima budget is people. The studio's path to profit runs through training, not through the gas bill. That is the opposite of Antarctica and closer to the truth for most studios in most places.
+- **Wages are the lever in a cheap-energy economy.** More than half the Lima budget is people. The studio's path to profit runs through training, not through the gas bill. Expect that to be the truth for most studios in most places, and expect the exceptions to be the interesting ones.
 - **The showroom is a production asset.** Eighteen percent of opex buys nothing a furnace can make, and it is the line that decides whether the glass sells for $14 a pound or $300 a piece. A hot shop without a room where the work looks expensive is a factory; with one, it is a brand.
 
 The thing that does not transfer is the market itself. Lima's opening exists because nobody has taken it. A second studio changes the arithmetic for both, and the first one's advantage is not its furnace but the two years it spends training the only furnace glassblowers in the country.
+
+**Next in the series.** The opposite case: a hot shop in Antarctica, where there is no fuel, no flux, no market and no law to permit it — and energy and shelter are the whole business.
 
 ## Sources
 
@@ -208,6 +210,5 @@ The thing that does not transfer is the market itself. Lima's opening exists bec
 - Peru electricity prices, GlobalPetrolPrices, June 2025
 - Peru welcomed 4,157,469 international visitors by end-2025, Andina, citing Mincetur
 - Growing interest in interior design opens opportunities in Peru, CzechTrade, June 2026: Casacor Perú 2026 and buyer profile
-- Blowing Glass in Antarctica, the companion study whose equipment list and studio size this one reuses
 
 Lima rents, Peruvian wage ranges, tariff treatment under the US–Peru Trade Promotion Agreement and the Pacific Alliance, and the industrial gas estimate are planning figures from general market knowledge, labeled approximate in the text; re-quote them with a Lima broker, an accountant and Cálidda before budgeting.
