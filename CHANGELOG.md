@@ -14,7 +14,7 @@ proof-of-concept features from production-ready ones in its docs.
   generator also rewrites the "From the blog" block that now sits directly under the
   homepage hero, so the latest post is always the featured card; "Blog" is second in every
   page's nav and `deploy/install.sh` builds it on deploy. First post: *Blowing Glass in
-  Lima*, the first of the theoretical studies (Antarctica follows). How to add a post: `blog/README.md`.
+  Lima*, a theoretical study of a hot shop's economics. How to add a post: `blog/README.md`.
 - **The capture app is now part of the site** — it knows who you are and which piece
   you're on. Sign in with Google (`/api/auth/login`, same OAuth client as Glowtbook, one extra
   redirect URI) or **pair your phone** from Glowtbook → Objects → Fingerprint with a QR code
