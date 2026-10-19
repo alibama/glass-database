@@ -3,29 +3,34 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>Glass Fingerprint</title>
+<title>Glass Fingerprint — capture</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@300..700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="/site.js"></script>
 <style>
   :root{
-    --bg:#0e1316; --bg-lift:#161e22; --line:#26333a;
-    --ink:#ece7dd; --ink-dim:#8b989e;
-    --hot:#f2b417; --hot-deep:#c9860a; --cool:#3fb6c9; --danger:#e2564d; --ok:#5fd08a;
+    /* Field Data palette — same tokens as the rest of glassdatabase.org */
+    --bg:#0A0D11; --bg-lift:#16130F; --line:#2A2824; --rule:#24221F;
+    --ink:#EEE7DB; --ink-dim:#A8A29A; --ink-faint:#6E665C;
+    --hot:#E8A44A; --hot-deep:#C9860A; --cool:#5EC8BD; --danger:#E25836; --ok:#5EC8BD; --violet:#967AD2;
+    --mono:"IBM Plex Mono",ui-monospace,monospace; --sans:"Archivo",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     font-synthesis:none;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{height:100%}
-  body{margin:0; background:var(--bg); color:var(--ink); overflow:hidden;
-    font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  body{margin:0; background:var(--bg); color:var(--ink); overflow:hidden; font-family:var(--sans);
     font-variant-numeric:tabular-nums; -webkit-user-select:none; user-select:none}
+  button{font-family:inherit}
 
   #stage{position:fixed; inset:0; background:#000; display:flex; align-items:center; justify-content:center}
   video{width:100%; height:100%; object-fit:cover; background:#000}
   #ov{position:absolute; inset:0; display:block; width:100%; height:100%; object-fit:cover; pointer-events:none}
   #objlabel{position:absolute; left:50%; top:11%; transform:translateX(-50%); z-index:4; pointer-events:none;
-    background:#0c1114cc; border:1px solid var(--line); color:var(--ink); font-size:11.5px; font-weight:600;
+    background:#0A0D11cc; border:1px solid var(--line); color:var(--ink); font-size:11.5px; font-weight:600;
     padding:5px 12px; border-radius:999px; backdrop-filter:blur(8px); opacity:0; transition:opacity .25s; white-space:nowrap}
   #objlabel.show{opacity:1}
-  #err code{background:#0c1114; border:1px solid var(--line); padding:1px 5px; border-radius:5px; font-size:12px}
+  #err code{background:#0A0D11; border:1px solid var(--line); padding:1px 5px; border-radius:5px; font-size:12px}
   canvas{display:none}
 
   .hud{position:fixed; inset:0; pointer-events:none}
@@ -60,19 +65,25 @@
   #subs{position:absolute; top:max(14px,env(safe-area-inset-top)); left:14px;
     display:flex; flex-direction:column; gap:10px}
   .sub{width:96px}
-  .sub label{display:block; font-size:10.5px; color:var(--ink-dim); margin-bottom:4px; font-weight:600}
+  .sub label{display:block; font-size:10px; color:var(--ink-dim); margin-bottom:4px; font-family:var(--mono);
+    letter-spacing:.08em; text-transform:uppercase}
   .track{height:5px; border-radius:3px; background:#ffffff14; overflow:hidden}
   .fill{height:100%; width:0; background:var(--hot); border-radius:3px; transition:width .5s cubic-bezier(.2,.8,.2,1)}
 
   /* right rail */
   #rail{position:absolute; top:max(14px,env(safe-area-inset-top)); right:14px;
-    display:flex; flex-direction:column; align-items:flex-end; gap:8px}
-  .chip{background:#0c1114cc; border:1px solid var(--line); border-radius:11px;
+    display:flex; flex-direction:column; align-items:flex-end; gap:8px; max-width:46vw}
+  .chip{background:#0A0D11cc; border:1px solid var(--line); border-radius:11px;
     padding:8px 11px; font-size:12.5px; font-weight:600; backdrop-filter:blur(8px)}
   .chip b{color:var(--hot)}
-  .icon-btn{background:#0c1114cc; border:1px solid var(--line); color:var(--ink);
+  .chip.target{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim);
+    max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .chip.target b{color:var(--cool); text-transform:none; letter-spacing:0; font-size:12px}
+  .chip.target.none b{color:var(--ink-dim)}
+  .icon-btn{background:#0A0D11cc; border:1px solid var(--line); color:var(--ink);
     border-radius:11px; padding:9px 12px; font-size:13px; font-weight:600; backdrop-filter:blur(8px); cursor:pointer}
   .icon-btn:disabled{opacity:.4}
+  .icon-btn.unsaved{border-color:var(--hot); color:var(--hot)}
 
   #reticle{position:absolute; top:56%; left:50%; width:66px; height:66px; margin:-33px 0 0 -33px;
     border:1.5px solid #ffffff4d; border-radius:10px; opacity:.55}
@@ -95,52 +106,109 @@
   #shutter:active{transform:scale(.9)}
   #shutWrap.auto #shutter{background:var(--bg)}
   #shutWrap.auto #shutter::after{content:"AUTO"; display:grid; place-items:center; height:100%;
-    font-size:10px; font-weight:700; color:var(--hot); letter-spacing:.5px}
+    font-size:10px; font-weight:700; color:var(--hot); letter-spacing:.5px; font-family:var(--mono)}
   #tools{flex:1; display:flex; gap:9px; justify-content:flex-end; flex-wrap:wrap}
-  .tool{background:#0c1114cc; border:1px solid var(--line); color:var(--ink);
-    border-radius:11px; padding:9px 11px; font-size:12px; font-weight:600; backdrop-filter:blur(8px); cursor:pointer}
+  .tool{background:#0A0D11cc; border:1px solid var(--line); color:var(--ink);
+    border-radius:11px; padding:9px 11px; font-size:11px; font-weight:500; backdrop-filter:blur(8px); cursor:pointer;
+    font-family:var(--mono); letter-spacing:.05em; text-transform:uppercase}
   .tool.on{border-color:var(--hot); color:var(--hot)}
 
   /* review drawer */
   #film{position:absolute; left:0; right:0; bottom:0; transform:translateY(100%);
     transition:transform .28s cubic-bezier(.2,.8,.2,1);
     background:#0b0f12f4; border-top:1px solid var(--line); backdrop-filter:blur(12px);
-    padding:14px 14px calc(14px + env(safe-area-inset-bottom)); max-height:64vh; overflow:auto}
+    padding:14px 14px calc(14px + env(safe-area-inset-bottom)); max-height:72vh; overflow:auto}
   #film.open{transform:translateY(0)}
   #film h2{margin:0 0 4px; font-size:15px}
   #film p{margin:0 0 12px; font-size:12.5px; color:var(--ink-dim)}
   .grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(84px,1fr)); gap:8px}
   .thumb{position:relative; aspect-ratio:1; border-radius:9px; overflow:hidden; background:#000; border:1px solid var(--line)}
   .thumb img{width:100%; height:100%; object-fit:cover; display:block}
-  .thumb span{position:absolute; left:4px; bottom:3px; font-size:9px; padding:1px 5px; border-radius:6px; background:#000000aa}
+  .thumb span{position:absolute; left:4px; bottom:3px; font-size:9px; padding:1px 5px; border-radius:6px; background:#000000aa; font-family:var(--mono)}
   .thumb .x{position:absolute; top:3px; right:3px; width:20px; height:20px; border:none; border-radius:6px;
     background:#000000aa; color:#fff; font-size:13px; cursor:pointer; line-height:1}
   .filmbtns{display:flex; gap:9px; margin-top:14px; flex-wrap:wrap}
-  .filmbtns button{flex:1; min-width:120px; border-radius:11px; padding:12px; font-size:13.5px; font-weight:600; cursor:pointer; border:1px solid var(--line)}
+  .filmbtns button, .filmbtns a{flex:1; min-width:120px; border-radius:11px; padding:12px; font-size:13.5px; font-weight:600;
+    cursor:pointer; border:1px solid var(--line); text-align:center; text-decoration:none; display:block}
   .primary{background:var(--hot); color:#191100; border-color:var(--hot)!important}
   .ghost{background:transparent; color:var(--ink)}
   .ghost.warn{color:var(--danger); border-color:#5a2b28!important}
+  .ghost.teal{color:var(--cool); border-color:#2f5a56!important}
+  button:disabled{opacity:.5; cursor:default}
+  .receipt{border:1px solid var(--line); border-radius:14px; padding:14px; margin-top:4px;
+    background:linear-gradient(180deg,rgba(94,200,189,.08),rgba(94,200,189,.02))}
+  .receipt h2{color:var(--cool)}
+  .receipt dl{display:grid; grid-template-columns:auto 1fr; gap:.25rem .8rem; margin:.4rem 0 .6rem; font-size:12.5px}
+  .receipt dt{font-family:var(--mono); letter-spacing:.06em; text-transform:uppercase; font-size:10px; color:var(--ink-faint); padding-top:3px}
+  .receipt dd{margin:0; color:var(--ink)}
+  .receipt .fine{font-size:12px; color:var(--ink-dim); margin:.6rem 0 0}
+  .receipt .fine a{color:var(--hot)}
 
   /* gate */
   #gate{position:fixed; inset:0; background:var(--bg); z-index:20; display:flex; flex-direction:column;
-    padding:26px 22px calc(26px + env(safe-area-inset-bottom)); overflow:auto}
-  #gate .wrap{max-width:520px; margin:auto; width:100%}
-  #gate .mark{width:44px; height:44px; margin-bottom:20px}
-  #gate h1{font-size:26px; margin:0 0 6px; letter-spacing:-.02em; line-height:1.1}
-  #gate .lede{font-size:14.5px; color:var(--ink-dim); margin:0 0 24px; line-height:1.5; max-width:46ch}
-  .check{border-top:1px solid var(--line); padding:13px 0; display:flex; gap:13px}
-  .check .n{color:var(--hot); font-weight:700; font-size:13px; width:20px; flex:none; padding-top:1px}
-  .check b{font-size:14px; display:block; margin-bottom:2px}
-  .check p{margin:0; font-size:12.8px; color:var(--ink-dim); line-height:1.45}
-  #start{width:100%; margin-top:24px; background:var(--hot); color:#191100; border:none;
-    border-radius:13px; padding:15px; font-size:15.5px; font-weight:700; cursor:pointer}
+    padding:18px 22px calc(26px + env(safe-area-inset-bottom)); overflow:auto;
+    background-image:radial-gradient(115% 62% at 22% 100%, rgba(232,164,74,.08) 0%, rgba(232,164,74,0) 60%)}
+  #gate .wrap{max-width:560px; margin:auto; width:100%}
+  .gate-top{display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:22px}
+  .gate-top a.back{font-family:var(--mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-dim); text-decoration:none}
+  .gate-top a.back:hover{color:var(--hot)}
+  #gate .mark{width:40px; height:40px; margin-bottom:14px}
+  #gate .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--hot); margin:0 0 8px}
+  #gate h1{font-size:26px; margin:0 0 6px; letter-spacing:-.02em; line-height:1.1; font-weight:500}
+  #gate .lede{font-size:14.5px; color:var(--ink-dim); margin:0 0 22px; line-height:1.5; max-width:50ch}
+  .step{border-top:1px solid var(--rule); padding:16px 0 14px}
+  .step-h{display:flex; gap:12px; align-items:baseline; margin-bottom:8px}
+  .step-h .n{color:var(--hot); font-weight:700; font-size:12px; font-family:var(--mono); width:18px; flex:none}
+  .step-h b{font-size:15px; font-weight:600}
+  .step-h .st{margin-left:auto; font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint)}
+  .step-h .st.ok{color:var(--cool)}
+  .step p{margin:0 0 .6rem; font-size:13px; color:var(--ink-dim); line-height:1.5}
+  .step p.fine{font-size:12px; color:var(--ink-faint)}
+  .step p.fine a, .step p.fine button.link{color:var(--hot)}
+  button.link{background:none; border:0; padding:0; font:inherit; cursor:pointer; text-decoration:underline}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:.5rem; border-radius:999px; padding:11px 18px;
+    font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; cursor:pointer;
+    text-decoration:none; border:1px solid var(--line); color:var(--ink); background:transparent}
+  .btn.primary{background:var(--hot); color:#191100; border-color:var(--hot)}
+  .btn.teal{color:var(--cool); border-color:#2f5a56}
+  .btn:disabled{opacity:.45; cursor:default}
+  .who{display:flex; align-items:center; gap:.7rem; flex-wrap:wrap}
+  .who .dot{width:9px; height:9px; border-radius:50%; background:var(--ink-faint)}
+  .who.on .dot{background:var(--cool); box-shadow:0 0 10px var(--cool)}
+  .pieces{display:grid; gap:8px; margin:6px 0 10px}
+  .piece{display:flex; gap:10px; align-items:center; text-align:left; width:100%; background:#12100E; border:1px solid var(--line);
+    border-radius:12px; padding:10px 12px; color:var(--ink); cursor:pointer; transition:border-color .15s}
+  .piece:hover{border-color:var(--ink-faint)}
+  .piece.sel{border-color:var(--hot); box-shadow:0 0 0 1px var(--hot) inset}
+  .piece .t{font-size:14px; font-weight:600; flex:1; min-width:0}
+  .piece .t small{display:block; font-weight:400; color:var(--ink-dim); font-size:12px; margin-top:2px}
+  .piece .tags{display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end}
+  .tag{font-family:var(--mono); font-size:9.5px; letter-spacing:.06em; text-transform:uppercase; padding:3px 7px; border-radius:999px;
+    border:1px solid var(--line); color:var(--ink-dim); white-space:nowrap}
+  .tag.fp{border-color:#5a4521; color:var(--hot)}
+  .tag.pub{border-color:#2f5a56; color:var(--cool)}
+  .tag.pend{border-color:#4b3a57; color:var(--violet)}
+  .newpiece{display:flex; gap:8px; flex-wrap:wrap}
+  .newpiece input{flex:1 1 140px; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:#12100E; color:var(--ink); font:inherit; font-size:14px}
+  .newpiece input::placeholder{color:var(--ink-faint)}
+  .check{display:flex; gap:12px; padding:7px 0}
+  .check .n{color:var(--ink-faint); font-size:12px; width:18px; flex:none; padding-top:2px; font-family:var(--mono)}
+  .check b{font-size:13.5px; display:block; margin-bottom:1px; font-weight:600}
+  .check p{margin:0; font-size:12.5px; color:var(--ink-dim); line-height:1.45}
+  #start{width:100%; margin-top:16px; background:var(--hot); color:#191100; border:none;
+    border-radius:13px; padding:15px; font-size:14px; font-weight:700; cursor:pointer; font-family:var(--mono); letter-spacing:.08em; text-transform:uppercase}
   #err{color:var(--danger); font-size:13px; margin-top:14px; min-height:1em}
+  .banner{border:1px solid #5a4521; background:rgba(232,164,74,.08); border-radius:12px; padding:12px 14px; margin:0 0 16px; font-size:13px}
+  .banner b{color:var(--hot)}
+  .banner .row{display:flex; gap:8px; margin-top:8px; flex-wrap:wrap}
+  .mini{font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase}
 
   .toast{position:fixed; left:50%; bottom:120px; transform:translateX(-50%) translateY(12px);
-    background:#0c1114ee; border:1px solid var(--line); color:var(--ink); padding:9px 15px;
-    border-radius:11px; font-size:13px; font-weight:600; opacity:0; transition:.22s; pointer-events:none; z-index:15}
+    background:#0A0D11ee; border:1px solid var(--line); color:var(--ink); padding:9px 15px;
+    border-radius:11px; font-size:13px; font-weight:600; opacity:0; transition:.22s; pointer-events:none; z-index:30; max-width:92vw; text-align:center}
   .toast.show{opacity:1; transform:translateX(-50%) translateY(0)}
   .toast.warn{border-color:#5a2b28; color:var(--danger)}
+  .toast.ok{border-color:#2f5a56; color:var(--ok)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
   @media (max-width:430px){#hint{display:none} #tools{flex:none}}
 </style>
@@ -164,13 +232,14 @@
       <line id="readyTick" x1="50" y1="14" x2="50" y2="20"/>
       <text id="score" x="50" y="52" text-anchor="middle">0</text>
       <text id="tier" x="50" y="65" text-anchor="middle">Sparse</text>
-      <g id="seal"><circle cx="50" cy="76" r="6" fill="none" stroke="#5fd08a" stroke-width="1.6"/>
-        <path d="M47 76 l2 2 l4 -4" fill="none" stroke="#5fd08a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <g id="seal"><circle cx="50" cy="76" r="6" fill="none" stroke="#5EC8BD" stroke-width="1.6"/>
+        <path d="M47 76 l2 2 l4 -4" fill="none" stroke="#5EC8BD" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></g>
     </svg>
     <div id="plus"></div>
   </div>
 
   <div id="rail">
+    <div class="chip target none" id="targetChip">Saving to <b>— export only</b></div>
     <div class="chip">Frames <b id="total">0</b></div>
     <button class="icon-btn" id="review" disabled>Review</button>
   </div>
@@ -194,30 +263,62 @@
   </div>
 
   <div id="film">
-    <h2>Captured frames</h2>
-    <p id="filmMeta">Nothing captured yet.</p>
-    <div class="grid" id="grid"></div>
-    <div class="filmbtns">
-      <button class="primary" id="exportBtn">Export fingerprint (.zip)</button>
-      <button class="ghost" id="closeFilm">Keep capturing</button>
-      <button class="ghost warn" id="clearBtn">Clear all</button>
+    <div id="filmReview">
+      <h2>Captured frames</h2>
+      <p id="filmMeta">Nothing captured yet.</p>
+      <div class="grid" id="grid"></div>
+      <div class="filmbtns">
+        <button class="primary" id="saveBtn" hidden>Save to piece</button>
+        <button class="ghost" id="exportBtn">Export .zip</button>
+        <button class="ghost" id="closeFilm">Keep capturing</button>
+        <button class="ghost warn" id="clearBtn">Clear all</button>
+      </div>
+      <p id="saveHint" style="margin:10px 0 0;font-size:12px;color:var(--ink-faint)"></p>
     </div>
+    <div id="filmReceipt" class="receipt" hidden></div>
   </div>
 </div>
 
 <div id="gate">
   <div class="wrap">
+    <div class="gate-top">
+      <a class="back" href="/glowtbook/">&larr; Glowtbook</a>
+      <span id="chip"></span>
+    </div>
     <svg class="mark" viewBox="0 0 44 44" fill="none">
-      <path d="M22 3C15 14 15 30 22 41C29 30 29 14 22 3Z" stroke="#f2b417" stroke-width="2.2" stroke-linejoin="round"/>
-      <ellipse cx="22" cy="22" rx="19" ry="8" stroke="#3fb6c9" stroke-width="1.6" opacity=".8"/>
+      <path d="M22 3C15 14 15 30 22 41C29 30 29 14 22 3Z" stroke="#E8A44A" stroke-width="2.2" stroke-linejoin="round"/>
+      <ellipse cx="22" cy="22" rx="19" ry="8" stroke="#5EC8BD" stroke-width="1.6" opacity=".8"/>
     </svg>
+    <p class="eyebrow">Digital barcoding</p>
     <h1>Glass fingerprint</h1>
-    <p class="lede">Capture a blown-glass piece from enough angles to build a fingerprint strong enough to re-identify it later. A live rating climbs as coverage, sharpness, and distinctive detail add up — capture until it reaches Strong.</p>
-    <div class="check"><div class="n">1</div><div><b>Kill reflections</b><p>Dark, matte, neutral surroundings so moving highlights don't get baked into the fingerprint. This screen stays dark on purpose.</p></div></div>
-    <div class="check"><div class="n">2</div><div><b>Circle it slowly, at a few heights</b><p>Keep it centred and orbit, then again higher and lower. Blurry or repeat angles are ignored, so move deliberately.</p></div></div>
-    <div class="check"><div class="n">3</div><div><b>Feed the detail score</b><p>The distinctive, hard-to-forge parts drive the rating fastest: move in close on the pontil mark, any signature, and cold-working, and take a backlit angle or two to record the internal bubbles.</p></div></div>
-    <button id="start">Enable camera</button>
-    <div id="err"></div>
+    <p class="lede">Capture a piece from enough angles to build a fingerprint strong enough to re-identify it later. A live rating climbs as coverage, sharpness and distinctive detail add up — capture until it reads <b>Strong</b>, then save it onto the piece.</p>
+
+    <div id="draft" class="banner" hidden></div>
+
+    <section class="step" id="stepWho">
+      <div class="step-h"><span class="n">1</span><b>Who's saving this</b><span class="st" id="whoSt">checking…</span></div>
+      <div id="whoBody"><p>Checking your sign-in…</p></div>
+    </section>
+
+    <section class="step" id="stepPiece" hidden>
+      <div class="step-h"><span class="n">2</span><b>Which piece</b><span class="st" id="pieceSt"></span></div>
+      <p>The fingerprint saves straight onto a piece in your Glowtbook registry.</p>
+      <div class="pieces" id="pieces"><p class="fine">Loading your pieces…</p></div>
+      <div class="newpiece">
+        <input id="newTitle" placeholder="New piece — title" maxlength="200">
+        <input id="newMaker" placeholder="Maker (optional)" maxlength="200">
+        <button class="btn" id="newBtn">Add</button>
+      </div>
+    </section>
+
+    <section class="step" id="stepCapture">
+      <div class="step-h"><span class="n">3</span><b>Capture</b></div>
+      <div class="check"><div class="n">a</div><div><b>Kill reflections</b><p>Dark, matte, neutral surroundings so moving highlights don't get baked in. Shooting on the <a href="/fingerprint/capture-mat.pdf" style="color:var(--hot)">printed mat</a> also measures real dimensions.</p></div></div>
+      <div class="check"><div class="n">b</div><div><b>Circle it slowly, at a few heights</b><p>Keep it centred and orbit, then again higher and lower. Blurry or repeat angles are ignored, so move deliberately.</p></div></div>
+      <div class="check"><div class="n">c</div><div><b>Feed the detail score</b><p>Move in close on the pontil, any signature and cold-working, and take a backlit angle or two to record the internal bubbles.</p></div></div>
+      <button id="start">Enable camera</button>
+      <div id="err"></div>
+    </section>
   </div>
 </div>
 
@@ -228,6 +329,7 @@
 (function(){
   const $=s=>document.querySelector(s);
   const video=$("#cam"), cap=$("#cap"), capx=cap.getContext("2d");
+  const G = window.GDB || null;                       // site helper (sign-in, API); null → export-only mode
 
   /* ---- tunables (may need field adjustment per device/lighting) ---- */
   const AW=160, AR=0.75;                 // analysis width, height ratio
@@ -247,7 +349,8 @@
   const S={ frames:[], stream:null, imageCapture:null, facing:"environment", deviceId:null,
     orient:null, here:-1, pseudo:0, auto:false, lastAuto:0,
     live:{sharp:0,detail:0,dhash:null,novelty:64,worthy:false},
-    rating:0, prevRating:0, prevTierIdx:4, seq:0, ready:false };
+    rating:0, prevRating:0, prevTierIdx:4, seq:0, ready:false,
+    user:null, pieces:[], target:null, saved:null, dirty:false };
 
   /* ---------- coverage ring ---------- */
   const sectorsG=$("#sectors");
@@ -286,15 +389,10 @@
     if(df){ if(mx===r)h=((g-b)/df)%6; else if(mx===g)h=(b-r)/df+2; else h=(r-g)/df+4; h*=60; if(h<0)h+=360; }
     return [h, mx?df/mx:0, mx/255]; }
   const CH_HB=16, CH_SB=4, CH_N=CH_HB*CH_SB;
-  // Mat-anchored white balance: estimate the illuminant from the neutral
-  // (low-saturation, non-dark) mat pixels and scale channels to neutralise it,
-  // so the colour histogram is lighting/device invariant. No-op off-mat (when no
-  // neutral reference is found), so it degrades gracefully.
+  // Mat-anchored white balance: the mat's white margin is the brightest region and its
+  // colour is the illuminant. Estimate it from the brightest pixels and scale channels to
+  // neutralise it, so hues are lighting/device invariant. No-op off-mat.
   function whiteBalance(d){
-    // white-patch AWB: the mat's white margin is the brightest region and its
-    // colour is the illuminant. Estimate it from the brightest pixels and scale
-    // channels to neutralise it, so hues are lighting/device invariant. No-op if
-    // there's no bright reference (off-mat).
     let mx=0; const N=d.length;
     for(let i=0;i<N;i+=4){ const l=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2]; if(l>mx)mx=l; }
     const thr=mx*0.85; let sr=0,sg=0,sb=0,n=0;
@@ -308,10 +406,6 @@
       if(hs[1]>0.24&&hs[2]>0.16&&hs[2]<0.96){ const hb=Math.min(CH_HB-1,(hs[0]/360*CH_HB)|0), sb=Math.min(CH_SB-1,(hs[1]*CH_SB)|0); hist[hb*CH_SB+sb]++; cnt++; } }
     if(cnt<40) return null; const out=new Array(CH_N);
     for(let i=0;i<CH_N;i++) out[i]=Math.round(hist[i]/cnt*1000); return out; }
-  function histCorr(a,b){ if(!a||!b||a.length!==b.length) return 0; const n=a.length; let ma=0,mb=0;
-    for(let i=0;i<n;i++){ma+=a[i];mb+=b[i];} ma/=n; mb/=n; let num=0,da=0,db=0;
-    for(let i=0;i<n;i++){const u=a[i]-ma,v=b[i]-mb; num+=u*v; da+=u*u; db+=v*v;} const d=Math.sqrt(da*db);
-    return d? Math.max(0,num/d):0; }
   /* --- metadata + optional DINOv2 embedding --- */
   const HUE_NAMES=[[15,"red"],[42,"orange"],[70,"yellow"],[160,"green"],[200,"cyan"],[255,"blue"],[290,"violet"],[335,"magenta"],[360,"red"]];
   function dominantColor(chist){ if(!chist) return null; let bi=-1,bv=-1;
@@ -383,7 +477,7 @@
     const ti=tierIdx(r.total); $("#tier").textContent=TIERS[ti][1];
     const g=$("#gauge");
     const nowReady=r.total>=READY;
-    if(nowReady&&!S.ready){S.ready=true; toast("Fingerprint ready — keep going to strengthen it","ok"); buzz([30,40,30]);}
+    if(nowReady&&!S.ready){S.ready=true; toast(S.target?"Fingerprint ready — save it, or keep going to strengthen it":"Fingerprint ready — keep going to strengthen it","ok"); buzz([30,40,30]);}
     if(!nowReady&&S.ready){S.ready=false;}
     g.classList.toggle("ready",nowReady);
 
@@ -427,12 +521,11 @@
       t:new Date().toISOString(),orientation:S.orient};
     S.frames.push(f);
     // DINOv2 is expensive: sample a capped handful of representative views, then
-    // stop — colour + dHash keep running on every frame. This keeps capture fast
-    // and the export small while still giving texture data for verification.
+    // stop — colour + dHash keep running on every frame.
     if(S.aiEmbed && (S.embCount||0) < EMB_CAP){
-      embedFromBlob(f.blob).then(e=>{ if(e){ f.emb=e; S.embCount=(S.embCount||0)+1;
+      embedFromBlob(f.blob).then(e=>{ if(e){ f.emb=e; S.embCount=(S.embCount||0)+1; markDirty();
         if(S.embCount>=EMB_CAP){ toast("AI samples captured ("+EMB_CAP+" views) — capture speeds up now"); } } }).catch(()=>{}); }
-    paintRing(); updateRating(); refresh(); flash();
+    markDirty(); paintRing(); updateRating(); refresh(); flash();
     if(!manual||nov>=NOVELTY_MIN) buzz(12);
   }
 
@@ -544,7 +637,7 @@
       g.addColorStop(0,"rgba(0,0,0,1)"); g.addColorStop(1,"rgba(0,0,0,0)");
       ovx.fillStyle=g; ovx.beginPath(); ovx.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); ovx.fill(); ovx.restore();
       const hot=a&&(a.worthy||a.hit);
-      ovx.strokeStyle=hot?"rgba(242,180,23,0.95)":"rgba(236,231,221,0.55)"; ovx.lineWidth=Math.max(2,W/300);
+      ovx.strokeStyle=hot?"rgba(232,164,74,0.95)":"rgba(236,231,221,0.55)"; ovx.lineWidth=Math.max(2,W/300);
       rr(ovx,cx-rx,cy-ry,rx*2,ry*2,16); ovx.stroke();
       objLabel.textContent=hot?"Locked on — good angle, capture it":"Object in view";
       objLabel.classList.add("show");
@@ -554,21 +647,206 @@
     if(!S.overlay){ ovx.clearRect(0,0,ov.width,ov.height); objLabel.classList.remove("show"); } }; })();
   function showInsecureHelp(){ const e=$("#err"); const f=location.protocol==="file:"; const page=(location.pathname.split("/").pop()||"enroll.html");
     e.innerHTML = f
-      ? "The camera can\u2019t run from a file opened straight off disk \u2014 browsers block it. Serve this folder over http first:<br><br><b>Easiest:</b> double-click <code>serve.command</code> in this folder, then use the tab it opens.<br><br><b>Or</b> in Terminal, from this folder:<br><code>python3 -m http.server 8000</code><br>then open <code>http://localhost:8000/"+page+"</code>"
-      : "The camera needs a secure page \u2014 open this over <code>https://</code> or <code>http://localhost</code>."; }
+      ? "The camera can’t run from a file opened straight off disk — browsers block it. Serve this folder over http first (<code>python -m scripts.dev_site</code> in the repo, then open <code>http://127.0.0.1:8080/fingerprint/"+page+"</code>)."
+      : "The camera needs a secure page — open this over <code>https://</code> or <code>http://localhost</code>."; }
+
+  /* ---------- fingerprint document + zip (shared by Save and Export) ---------- */
+  function fingerprintDoc(){
+    const r=computeRating();
+    return { tool:"glass-fingerprint", version:1, created:new Date().toISOString(),
+      rating:r.total, tier:TIERS[tierIdx(r.total)][1], ready:r.total>=READY,
+      subscores:{coverage:+r.cov.toFixed(3),detail:+r.det.toFixed(3),robustness:+r.rob.toFixed(3)},
+      device:{ua:navigator.userAgent,resolution:{w:video.videoWidth,h:video.videoHeight}},
+      params:{SHARP_MIN,NOVELTY_MIN,COV_TARGET,dhash:"9x8 dHash, [hi,lo] 32-bit ints"},
+      note:"Enrollment fingerprint. dhash + detail + coverage per frame let a later capture be matched to this reference.",
+      metadata:{ dominantColor:dominantColor(aggChist(S.frames)), hasEmbeddings:S.frames.some(f=>f.emb) },
+      object: S.target ? {id:S.target.id, title:S.target.title} : undefined,
+      frames:[] };
+  }
+  async function buildZip(){
+    const zip=new JSZip(), fp=fingerprintDoc();
+    for(const f of S.frames){ const name=`frames/${String(f.seq).padStart(3,"0")}.jpg`; zip.file(name,f.blob);
+      fp.frames.push({file:name,t:f.t,sector:f.sector,band:f.band,cell:f.cell,
+        sharp:+f.sharp.toFixed(1),detail:+f.detail.toFixed(4),
+        dhash:[f.dhash[0],f.dhash[1]],noveltyAtCapture:f.noveltyAtCapture,chist:f.chist,emb:f.emb||undefined,orientation:f.orientation});}
+    zip.file("fingerprint.json",JSON.stringify(fp,null,2));
+    return { blob: await zip.generateAsync({type:"blob"}), fp };
+  }
+
+  /* ---------- unsaved-draft safety net (IndexedDB) ----------
+     Every capture is stashed locally (debounced) so a phone call, a tab swipe or a
+     dead battery doesn't lose a 60-frame session. Cleared on save / clear / discard. */
+  const DRAFT_DB="gdb-fingerprint", DRAFT_STORE="drafts", DRAFT_KEY="draft";
+  function idb(){ return new Promise((res,rej)=>{ if(!("indexedDB" in window)) return rej(new Error("no idb"));
+    const req=indexedDB.open(DRAFT_DB,1);
+    req.onupgradeneeded=()=>{ req.result.createObjectStore(DRAFT_STORE); };
+    req.onsuccess=()=>res(req.result); req.onerror=()=>rej(req.error); }); }
+  async function draftPut(val){ try{ const db=await idb(); await new Promise((res,rej)=>{ const tx=db.transaction(DRAFT_STORE,"readwrite");
+    tx.objectStore(DRAFT_STORE).put(val,DRAFT_KEY); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); db.close(); }catch(_){} }
+  async function draftGet(){ try{ const db=await idb(); const v=await new Promise((res,rej)=>{ const tx=db.transaction(DRAFT_STORE,"readonly");
+    const r=tx.objectStore(DRAFT_STORE).get(DRAFT_KEY); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); db.close(); return v||null; }catch(_){ return null; } }
+  async function draftClear(){ try{ const db=await idb(); await new Promise((res,rej)=>{ const tx=db.transaction(DRAFT_STORE,"readwrite");
+    tx.objectStore(DRAFT_STORE).delete(DRAFT_KEY); tx.oncomplete=res; tx.onerror=()=>rej(tx.error); }); db.close(); }catch(_){} }
+  let _draftT=null;
+  function markDirty(){ S.dirty=S.frames.length>0; $("#review").classList.toggle("unsaved",S.dirty);
+    clearTimeout(_draftT); _draftT=setTimeout(saveDraft,1500); }
+  async function saveDraft(){
+    if(!S.frames.length){ await draftClear(); return; }
+    const frames=S.frames.map(f=>({blob:f.blob,seq:f.seq,sharp:f.sharp,detail:f.detail,chist:f.chist,emb:f.emb,dhash:f.dhash,
+      noveltyAtCapture:f.noveltyAtCapture,sector:f.sector,band:f.band,cell:f.cell,t:f.t,orientation:f.orientation}));
+    await draftPut({ savedAt:Date.now(), objectId:S.target?S.target.id:null, objectTitle:S.target?S.target.title:null,
+      frames, seq:S.seq, pseudo:S.pseudo, embCount:S.embCount||0, rating:S.rating });
+  }
+  function restoreDraft(d){
+    S.frames=(d.frames||[]).map(f=>Object.assign({},f,{url:URL.createObjectURL(f.blob)}));
+    S.seq=d.seq||S.frames.length; S.pseudo=d.pseudo||0; S.embCount=d.embCount||0;
+    S.prevTierIdx=4; S.ready=false; S.dirty=true;
+    paintRing(); updateRating(); refresh(); $("#review").classList.add("unsaved");
+  }
+  function ago(ts){ const m=Math.max(0,Math.round((Date.now()-ts)/60000)); return m<1?"just now":m<60?m+" min ago":Math.round(m/60)+" h ago"; }
+  async function showDraftBanner(){
+    const d=await draftGet(); const box=$("#draft");
+    if(!d||!(d.frames||[]).length){ box.hidden=true; return null; }
+    box.hidden=false;
+    box.innerHTML=`<span class="mini" style="color:var(--hot)">Unsaved capture</span><br>
+      <b>${d.frames.length} frames</b> ${d.objectTitle?`for <b>${esc(d.objectTitle)}</b>`:"(no piece chosen)"} · rating ${d.rating||"?"} · ${ago(d.savedAt)}
+      <div class="row"><button class="btn primary" id="resumeBtn">Resume capture</button><button class="btn" id="discardBtn">Discard</button></div>`;
+    $("#discardBtn").onclick=async()=>{ if(!confirm("Discard the unsaved capture?")) return; await draftClear(); box.hidden=true; toast("Draft discarded"); };
+    $("#resumeBtn").onclick=async()=>{
+      if(d.objectId && S.user){ const p=S.pieces.find(x=>x.id===d.objectId); if(p) setTarget(p); }
+      const ok=await openCamera(); if(!ok) return;
+      restoreDraft(d); $("#film").classList.add("open"); toast("Capture restored — review it, then save","ok");
+    };
+    return d;
+  }
+
+  /* ---------- account + pieces (the gate) ---------- */
+  function esc(s){ return G?G.esc(s):String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+  function setTarget(p){
+    S.target=p||null;
+    [...document.querySelectorAll(".piece")].forEach(el=>el.classList.toggle("sel",!!p&&+el.dataset.id===p.id));
+    const chip=$("#targetChip");
+    if(p){ chip.classList.remove("none"); chip.innerHTML=`Saving to <b>${esc(p.title)}</b>`; $("#pieceSt").textContent="chosen"; $("#pieceSt").classList.add("ok");
+      $("#saveBtn").hidden=false; $("#saveBtn").textContent="Save to “"+p.title+"”";
+      $("#saveHint").textContent = p.fingerprint ? `“${p.title}” already has a fingerprint (${p.fingerprint.rating}/100, ${p.fingerprint.tier}) — saving replaces it.` : "";
+    } else { chip.classList.add("none"); chip.innerHTML="Saving to <b>— export only</b>"; $("#pieceSt").textContent=""; $("#pieceSt").classList.remove("ok");
+      $("#saveBtn").hidden=true; $("#saveHint").textContent=""; }
+    try{ sessionStorage.setItem("gdb_fp_target", p?String(p.id):""); }catch(_){}
+  }
+  function pieceTags(p){
+    const t=[];
+    t.push(p.fingerprint?`<span class="tag fp">FP ${p.fingerprint.rating}</span>`:`<span class="tag">no fingerprint</span>`);
+    const st=(p.publication||{}).state;
+    if(st==="published") t.push('<span class="tag pub">published</span>');
+    else if(st==="pending") t.push('<span class="tag pend">in review</span>');
+    return t.join("");
+  }
+  function renderPieces(){
+    const box=$("#pieces");
+    if(!S.pieces.length){ box.innerHTML='<p class="fine">No pieces yet — add one below. (Or create it with full details in <a href="/glowtbook/" style="color:var(--hot)">Glowtbook → Objects</a>.)</p>'; return; }
+    box.innerHTML="";
+    for(const p of S.pieces){
+      const b=document.createElement("button"); b.type="button"; b.className="piece"; b.dataset.id=p.id;
+      b.innerHTML=`<span class="t">${esc(p.title)}<small>${esc([p.maker,p.year].filter(Boolean).join(" · ")||"—")}</small></span><span class="tags">${pieceTags(p)}</span>`;
+      b.onclick=()=>setTarget(S.target&&S.target.id===p.id?null:p);
+      box.appendChild(b);
+    }
+    [...box.children].forEach(el=>el.classList.toggle("sel",!!S.target&&+el.dataset.id===S.target.id));
+  }
+  async function loadPieces(){
+    try{ const j=await G.json("/me/objects"); S.pieces=j.objects||[]; }catch(e){ S.pieces=[]; $("#pieces").innerHTML=`<p class="fine">Couldn't load your pieces: ${esc(e.message)}</p>`; return; }
+    renderPieces();
+    // preselect: ?object= / #object= (pairing link), else the last one chosen in this tab
+    let want=G.param("object"); if(!want){ try{ want=sessionStorage.getItem("gdb_fp_target"); }catch(_){} }
+    if(want){ const p=S.pieces.find(x=>String(x.id)===String(want)); if(p) setTarget(p); }
+  }
+  function renderWho(){
+    const body=$("#whoBody"), st=$("#whoSt");
+    if(S.user){
+      st.textContent="signed in"; st.classList.add("ok");
+      body.innerHTML=`<div class="who on"><span class="dot"></span><span>Signed in as <b>${esc(S.user.name||S.user.email)}</b>${S.user.kind==="pair"?' <span class="tag pub">paired</span>':""}</span></div>
+        <p class="fine" style="margin-top:.5rem">Fingerprints save straight onto your pieces in Glowtbook, and are signed into the piece's Content Credentials when you publish it.</p>`;
+      $("#stepPiece").hidden=false; loadPieces();
+    } else {
+      st.textContent="not signed in"; st.classList.remove("ok");
+      body.innerHTML=`<div class="who"><span class="dot"></span><span>Not signed in — captures can only be exported as a .zip.</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:.7rem 0 .5rem"><a class="btn primary" id="signin" href="${G?esc(G.loginUrl()):'#'}">Sign in</a>
+        <button class="btn" id="skipAuth">Capture without saving</button></div>
+        <p class="fine" id="pairHint">Faster on a phone: in Glowtbook open <b>Objects → Fingerprint → Pair this phone</b> and scan the code — this page opens already signed in, with the piece chosen.</p>`;
+      $("#stepPiece").hidden=true; setTarget(null);
+      $("#skipAuth").onclick=()=>{ $("#stepCapture").scrollIntoView({behavior:"smooth"}); toast("Export-only mode — you can import the .zip in Glowtbook later"); };
+      if(G){ G.json("/auth/providers").then(p=>{ if(!p.configured){ const a=$("#signin"); a.textContent="Sign-in not set up here"; a.classList.remove("primary"); a.removeAttribute("href"); a.setAttribute("aria-disabled","true");
+          $("#pairHint").innerHTML="This server has no Google sign-in for the capture app yet — <b>pair from Glowtbook</b> instead (Objects → Fingerprint → Pair this phone), or capture and export the .zip."; } }).catch(()=>{}); }
+    }
+  }
+  async function initAccount(){
+    if(!G){ S.user=null; renderWho(); await showDraftBanner(); return; }
+    G.chip("#chip",{compact:true, onchange:(m)=>{ S.user=m; renderWho(); }}).then(m=>{ S.user=m&&m.signed_in?m:null; renderWho(); showDraftBanner(); });
+    if(G.frag && G.frag.paired) toast("Paired with your Glowtbook account","ok");
+  }
+  $("#newBtn").onclick=async()=>{
+    const title=$("#newTitle").value.trim(); if(!title){ $("#newTitle").focus(); return; }
+    $("#newBtn").disabled=true;
+    try{ const p=await G.json("/me/objects",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title,maker:$("#newMaker").value.trim()})});
+      S.pieces.unshift(p); renderPieces(); setTarget(p); $("#newTitle").value=""; $("#newMaker").value=""; toast("Added “"+p.title+"”","ok");
+    }catch(e){ toast("Couldn't add: "+e.message,"warn"); } finally{ $("#newBtn").disabled=false; }
+  };
+
+  /* ---------- save to piece / receipt ---------- */
+  function showReceipt(j){
+    const o=j.object||{}, pub=(o.publication||{}).state;
+    const seasonHint=document.createElement("span");
+    $("#filmReview").hidden=true;
+    const r=$("#filmReceipt"); r.hidden=false;
+    r.innerHTML=`<h2>Saved to “${esc(o.title||S.target.title)}” ✓</h2>
+      <dl><dt>Strength</dt><dd>${j.rating}/100 · ${esc(j.tier)}</dd>
+          <dt>Views</dt><dd>${j.views}</dd>
+          <dt>Measured</dt><dd>${j.dimensions?esc(j.dimensions)+(j.dimensions_set?" — set on the piece":""):"no mat detected (dimensions not measured)"}</dd>
+          <dt>Status</dt><dd>${pub==="published"?"published — the credential will carry this fingerprint when you re-publish":pub==="pending"?"in the review queue":"private — publish it from Glowtbook when it's ready"}</dd></dl>
+      <div class="filmbtns">
+        <a class="primary" href="/fingerprint/verify.html?mine=${o.id}">Verify it now</a>
+        <a class="ghost teal" href="/glowtbook/?page=objects&object=${o.id}">Open in Glowtbook</a>
+        <button class="ghost" id="anotherBtn">Fingerprint another piece</button>
+      </div>
+      <p class="fine" id="nextStep">Next: in Glowtbook → Objects → <b>Contribute</b> the piece — the fingerprint is signed into its Content Credentials so anyone can verify it from Explore.</p>`;
+    $("#anotherBtn").onclick=()=>{ resetSession(); $("#film").classList.remove("open"); $("#gate").hidden=false; $("#gate").style.display=""; $("#hud").hidden=true; stopCamera(); loadPieces(); };
+    if(G){ G.json("/seasons").then(s=>{ const cur=s&&s.current; if(cur){ $("#nextStep").insertAdjacentHTML("beforeend",
+      ` Then <a href="/games.html?season=${esc(cur.slug)}">enter it in <b>${esc(cur.title)}</b></a> — this season's call for pieces is open.`); } }).catch(()=>{}); }
+  }
+  function resetSession(){
+    S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.pseudo=0; S.here=-1; S.ready=false; S.prevTierIdx=4; S.embCount=0; S.dirty=false; S.saved=null;
+    $("#review").classList.remove("unsaved"); $("#filmReceipt").hidden=true; $("#filmReview").hidden=false;
+    paintRing(); updateRating(); refresh(); draftClear();
+  }
+  $("#saveBtn").onclick=async()=>{
+    if(!S.frames.length){ toast("Nothing to save","warn"); return; }
+    if(!S.target||!G){ toast("Choose a piece first","warn"); return; }
+    if(S.rating<READY && !confirm(`The fingerprint is only ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]}). Save anyway? You can keep capturing to strengthen it.`)) return;
+    const b=$("#saveBtn"); b.disabled=true; const label=b.textContent; b.textContent="Packing…";
+    try{
+      const {blob}=await buildZip(); b.textContent="Saving…";
+      const j=await G.json(`/me/objects/${S.target.id}/fingerprint?set_dimensions=1`,{method:"POST",headers:{"Content-Type":"application/zip"},body:blob});
+      S.saved=j; S.dirty=false; $("#review").classList.remove("unsaved"); await draftClear();
+      const p=S.pieces.find(x=>x.id===S.target.id); if(p&&j.object){ Object.assign(p,j.object); }
+      toast("Saved — "+j.rating+"/100 "+j.tier,"ok"); buzz([30,40,30]); showReceipt(j);
+    }catch(e){
+      if(e.status===401){ toast("Your sign-in expired — sign in again, your capture is kept locally","warn"); S.user=null; renderWho(); }
+      else toast("Save failed: "+e.message,"warn");
+    } finally{ b.disabled=false; b.textContent=label; }
+  };
 
   /* ---------- ui ---------- */
   function refresh(){ $("#total").textContent=S.frames.length; $("#review").disabled=!S.frames.length;
     const _dc=dominantColor(aggChist(S.frames));
-    $("#filmMeta").innerHTML=S.frames.length? `${S.frames.length} frames — rating ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]})`+(_dc?` · <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${_dc.hex};border:1px solid #0006"></span> ${_dc.name}`:"") :"Nothing captured yet.";
+    $("#filmMeta").innerHTML=S.frames.length? `${S.frames.length} frames — rating ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]})`+(_dc?` · <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${_dc.hex};border:1px solid #0006"></span> ${_dc.name}`:"")+(S.dirty?' · <span style="color:var(--hot)">not saved</span>':"") :"Nothing captured yet.";
     const g=$("#grid"); g.innerHTML="";
     S.frames.slice().reverse().forEach(f=>{const d=document.createElement("div"); d.className="thumb";
       const tag=f.sharp<SHARP_MIN?"blurry":f.noveltyAtCapture<NOVELTY_MIN?"dup":"kept";
       d.innerHTML=`<img src="${f.url}" alt=""><span>${tag}</span><button class="x">×</button>`;
-      d.querySelector(".x").onclick=()=>{URL.revokeObjectURL(f.url); S.frames=S.frames.filter(x=>x!==f); paintRing(); updateRating(); refresh();};
+      d.querySelector(".x").onclick=()=>{URL.revokeObjectURL(f.url); S.frames=S.frames.filter(x=>x!==f); markDirty(); paintRing(); updateRating(); refresh();};
       g.appendChild(d);}); }
-  function toast(m,k){const t=$("#toast"); t.textContent=m; t.className="toast show"+(k==="warn"?" warn":"");
-    clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),1700);}
+  function toast(m,k){const t=$("#toast"); t.textContent=m; t.className="toast show"+(k?" "+k:"");
+    clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),k==="warn"?2600:1700);}
   function flash(){document.body.animate([{filter:"brightness(2)"},{filter:"brightness(1)"}],{duration:120});}
   function buzz(p){try{navigator.vibrate&&navigator.vibrate(p);}catch(_){}}
 
@@ -582,37 +860,21 @@
   $("#camSel").onchange=async(e)=>{ S.deviceId=e.target.value; try{await startCamera();}catch(_){toast("Couldn't switch camera","warn");} };
   $("#review").onclick=()=>$("#film").classList.add("open");
   $("#closeFilm").onclick=()=>$("#film").classList.remove("open");
-  $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Delete all captured frames?"))return;
-    S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.pseudo=0; S.here=-1; S.ready=false; S.prevTierIdx=4;
-    paintRing(); updateRating(); refresh();};
+  $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Delete all captured frames?"))return; resetSession(); };
 
   $("#exportBtn").onclick=async()=>{
     if(!S.frames.length){toast("Nothing to export","warn"); return;}
     const b=$("#exportBtn"); b.disabled=true; b.textContent="Zipping…";
-    try{ const zip=new JSZip(), r=computeRating();
-      const fp={ tool:"glass-fingerprint", version:1, created:new Date().toISOString(),
-        rating:r.total, tier:TIERS[tierIdx(r.total)][1], ready:r.total>=READY,
-        subscores:{coverage:+r.cov.toFixed(3),detail:+r.det.toFixed(3),robustness:+r.rob.toFixed(3)},
-        device:{ua:navigator.userAgent,resolution:{w:video.videoWidth,h:video.videoHeight}},
-        params:{SHARP_MIN,NOVELTY_MIN,COV_TARGET,dhash:"9x8 dHash, [hi,lo] 32-bit ints"},
-        note:"Enrollment fingerprint. dhash + detail + coverage per frame let a later capture be matched to this reference.",
-        metadata:{ dominantColor:dominantColor(aggChist(S.frames)), hasEmbeddings:S.frames.some(f=>f.emb) },
-        frames:[] };
-      for(const f of S.frames){ const name=`frames/${String(f.seq).padStart(3,"0")}.jpg`; zip.file(name,f.blob);
-        fp.frames.push({file:name,t:f.t,sector:f.sector,band:f.band,cell:f.cell,
-          sharp:+f.sharp.toFixed(1),detail:+f.detail.toFixed(4),
-          dhash:[f.dhash[0],f.dhash[1]],noveltyAtCapture:f.noveltyAtCapture,chist:f.chist,emb:f.emb||undefined,orientation:f.orientation});}
-      zip.file("fingerprint.json",JSON.stringify(fp,null,2));
-      const blob=await zip.generateAsync({type:"blob"}), url=URL.createObjectURL(blob), a=document.createElement("a");
+    try{ const {blob}=await buildZip(); const url=URL.createObjectURL(blob), a=document.createElement("a");
       a.href=url; a.download=`glass-fingerprint-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.zip`; a.click();
-      setTimeout(()=>URL.revokeObjectURL(url),4000); toast("Fingerprint exported","ok");
-    }catch(e){console.error(e); toast("Export failed","warn");} finally{b.disabled=false; b.textContent="Export fingerprint (.zip)";}
+      setTimeout(()=>URL.revokeObjectURL(url),4000); toast(S.target?"Exported — the .zip can also be imported in Glowtbook":"Exported — import the .zip in Glowtbook → Objects → Fingerprint","ok");
+    }catch(e){console.error(e); toast("Export failed","warn");} finally{b.disabled=false; b.textContent="Export .zip";}
   };
 
-  $("#start").onclick=async()=>{
+  async function openCamera(){
     $("#err").textContent="";
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("#err").textContent="No camera API here. Use Chrome or Safari over https (or localhost)."; return;}
-    if(!window.isSecureContext){showInsecureHelp(); return;}
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("#err").textContent="No camera API here. Use Chrome or Safari over https (or localhost)."; return false;}
+    if(!window.isSecureContext){showInsecureHelp(); return false;}
     const btn=$("#start"), label=btn.textContent; btn.disabled=true; btn.textContent="Starting camera…"; $("#err").textContent="Requesting camera — allow access when prompted.";
     try{await startCamera();}
     catch(err){
@@ -624,15 +886,22 @@
       else if(n==="OverconstrainedError") msg="This camera can't meet the requested settings.";
       else if(n==="TimeoutError") msg="The camera didn't respond — it may be blocked or already in use by another app or tab. Close other camera apps, check the camera icon in the address bar, and tap Enable camera again.";
       else msg="Couldn't open the camera ("+n+").";
-      $("#err").textContent=msg; btn.disabled=false; btn.textContent=label; return;}
-    btn.disabled=false; btn.textContent=label;
+      $("#err").textContent=msg; btn.disabled=false; btn.textContent=label; return false;}
+    btn.disabled=false; btn.textContent=label; $("#err").textContent="";
     const ok=await enableMotion();
     $("#hint").textContent=ok?"Circle the piece slowly. The shutter ring turns amber when a shot will count.":
       "No compass here — coverage tracks by how different each view looks instead. Move to a new angle for each shot.";
     $("#gate").hidden=true; $("#gate").style.display="none"; $("#hud").hidden=false; paintRing(); updateRating(); refresh(); requestAnimationFrame(loop);
+    return true;
+  }
+  $("#start").onclick=async()=>{
+    if(S.user && !S.target && S.pieces.length && !confirm("No piece chosen — capture in export-only mode? (Pick a piece above to save straight to Glowtbook.)")) { $("#stepPiece").scrollIntoView({behavior:"smooth"}); return; }
+    await openCamera();
   };
 
-  window.addEventListener("beforeunload",e=>{if(S.frames.length){e.preventDefault(); e.returnValue="";}});
+  window.addEventListener("beforeunload",e=>{if(S.frames.length&&S.dirty){e.preventDefault(); e.returnValue="";}});
+  document.addEventListener("visibilitychange",()=>{ if(document.hidden && S.dirty) saveDraft(); });
+  initAccount();
 })();
 </script>
 </body>

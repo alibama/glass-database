@@ -3,109 +3,619 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Glass Database — relationship graph</title>
+<title>Relationship graph — Glass Database</title>
+<meta name="description" content="Who taught whom, who made what, which pieces look alike — the Glass Database relationship graph. Artists, techniques, studios, pieces and collectors, with a path finder.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/field-data.css">
 <style>
-  :root { --ink:#EEE7DB; --ember:#E8A44A; }
-  * { box-sizing: border-box; }
-  html,body { margin:0; height:100%; font-family:'Archivo',system-ui,sans-serif; color:var(--ink); }
-  #bar { position:fixed; top:0; left:0; right:0; height:52px; display:flex; align-items:center; gap:.8rem;
-    padding:0 1rem; background:#0A0D11; color:#EEE7DB; border-bottom:1px solid #24221F; z-index:10; }
-  #bar b { font-weight:800; }
-  #bar input { flex:1; max-width:320px; padding:.45rem .7rem; border-radius:8px; border:1px solid #4b3a57;
-    background:#1A140F; color:#EEE7DB; }
-  #bar .legend { margin-left:auto; display:flex; gap:1rem; font-size:.82rem; align-items:center; flex-wrap:wrap; }
-  #bar .dot { display:inline-block; width:11px; height:11px; border-radius:50%; margin-right:5px; vertical-align:middle; }
-  #cy { position:absolute; top:52px; left:0; right:0; bottom:0; background:
-    radial-gradient(1200px 600px at 30% -10%, #12100E, #1A140F); }
-  #tip { position:fixed; bottom:14px; left:14px; background:#0A0D11; color:#EEE7DB; border-bottom:1px solid #24221F; padding:.5rem .8rem;
-    border-radius:10px; font-size:.85rem; max-width:min(360px,90vw); display:none; }
-  a { color:#E8A44A; }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:"Archivo",system-ui,sans-serif;color:var(--fd-bone);}
+  button,input{font-family:inherit}
+  #topnav{position:fixed;top:0;left:0;right:0;height:48px;display:flex;align-items:center;gap:1rem;
+    padding:0 1rem;background:#0A0D11;border-bottom:1px solid var(--fd-rule);z-index:900;overflow-x:auto;}
+  #topnav .brand{font-family:"IBM Plex Mono",monospace;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--fd-bone);font-size:12px;white-space:nowrap;}
+  #topnav a{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--fd-dim);text-decoration:none;white-space:nowrap;}
+  #topnav a:hover,#topnav a.on{color:var(--fd-amber);}
+  #topnav .sp{margin-left:auto;flex:0 0 auto;}
+  #app{position:fixed;inset:48px 0 0 0;display:flex;background:var(--fd-bg-top);}
+  #panel{width:min(330px,86vw);flex:0 0 auto;padding:1.3rem 1.2rem 2rem;overflow:auto;
+    border-right:1px solid var(--fd-rule);background:linear-gradient(180deg,#0E0B09,#12100E);z-index:500;}
+  #stage{flex:1;position:relative;min-width:0;}
+  #cy{position:absolute;inset:0;background:radial-gradient(1200px 600px at 30% -10%,#12100E,#1A140F);}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--fd-amber);font-size:12px;margin:0;}
+  h1{font-family:"Fraunces",Georgia,serif;font-weight:300;font-variation-settings:"opsz" 44,"wght" 340;
+    font-size:clamp(24px,3.4vw,30px);color:var(--fd-bone);margin:.45rem 0 .3rem;line-height:1.1;}
+  h1 em{font-style:italic;color:var(--fd-amber);}
+  .count{font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.05em;color:var(--fd-dim);line-height:1.6;margin:0;}
+  .rule{height:1px;background:var(--fd-rule-soft);margin:.9rem 0;}
+  .lbl{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--fd-faint);margin:1.1rem 0 .5rem;}
+  input[type=text],input:not([type]){width:100%;padding:.62rem .8rem;border-radius:10px;border:1px solid var(--fd-rule-soft);
+    background:rgba(238,231,219,.05);color:var(--fd-bone);font-size:.92rem;}
+  input::placeholder{color:var(--fd-faint);}
+  input:focus-visible,button:focus-visible{outline:2px solid var(--fd-amber);outline-offset:2px;}
+  .pills{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;}
+  .pill{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+    padding:.36rem .62rem;border-radius:999px;border:1px solid var(--fd-rule-soft);color:var(--fd-dim);
+    cursor:pointer;user-select:none;background:transparent;transition:.15s;display:inline-flex;align-items:center;gap:.4rem;}
+  .pill .sw{width:9px;height:9px;border-radius:50%;background:var(--c,#6E665C);flex:0 0 auto;}
+  .pill .ln{width:16px;height:0;border-top:2px solid var(--c,#6E665C);flex:0 0 auto;}
+  .pill .ln.dash{border-top-style:dashed}.pill .ln.dot{border-top-style:dotted}
+  .pill[aria-pressed="true"]{border-color:var(--c,#6E665C);color:var(--fd-bone);background:rgba(238,231,219,.06);}
+  .pill[aria-pressed="false"]{opacity:.5}
+  .pill.mode[aria-pressed="true"]{background:var(--fd-amber);color:var(--fd-bg-top);border-color:var(--fd-amber);}
+  .opt{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--fd-dim);
+    display:inline-flex;align-items:center;gap:.35rem;cursor:pointer;}
+  .opt input{accent-color:var(--fd-amber);}
+  .actions{display:flex;gap:.4rem;margin-top:.6rem;}
+  .actions button,.btn{flex:1;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;padding:.55rem .6rem;border-radius:8px;border:1px solid var(--fd-rule-soft);
+    background:transparent;color:var(--fd-dim);cursor:pointer;text-decoration:none;text-align:center;}
+  .actions button:hover,.btn:hover{border-color:var(--fd-amber);color:var(--fd-amber);}
+  .actions button.primary{color:var(--fd-bg-top);background:var(--fd-amber);border-color:var(--fd-amber);}
+  .actions button.primary:hover{color:var(--fd-bg-top);filter:brightness(1.08)}
+  .pathbox input+input{margin-top:.4rem}
+  .pathout{font-size:.86rem;color:var(--fd-dim);line-height:1.55;margin:.6rem 0 0;min-height:1.2em;}
+  .pathout b{color:var(--fd-bone);font-weight:500}
+  .pathout button{background:none;border:0;padding:0;color:var(--fd-amber);cursor:pointer;font-size:inherit;text-decoration:underline;text-underline-offset:3px;}
+  .pathout .arrow{color:var(--fd-faint);padding:0 .25rem}
+  .legend{display:grid;grid-template-columns:1fr 1fr;gap:.3rem .8rem;font-size:.8rem;color:var(--fd-dim);}
+  .legend span{display:inline-flex;align-items:center;gap:.45rem;white-space:nowrap;}
+  .legend .sw{width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
+  .legend .sw.sq{border-radius:3px}.legend .sw.dia{transform:rotate(45deg);border-radius:2px;width:9px;height:9px}
+  .legend .ln{width:18px;height:0;border-top:2px solid;flex:0 0 auto;}
+  .legend .ln.dash{border-top-style:dashed}.legend .ln.dot{border-top-style:dotted}
+  .handle{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;color:var(--fd-faint);
+    text-decoration:none;display:inline-block;margin-top:1.3rem;}
+  .hint{font-size:.8rem;color:var(--fd-faint);line-height:1.5;margin:.5rem 0 0}
+  .hint a{color:var(--fd-amber)}
+  /* detail panel */
+  #detail{width:min(360px,92vw);flex:0 0 auto;overflow:auto;border-left:1px solid var(--fd-rule);
+    background:linear-gradient(180deg,#0E0B09,#12100E);padding:1.2rem 1.2rem 2rem;position:relative;z-index:500;}
+  #detail[hidden]{display:none}
+  #detail .x{position:absolute;top:.7rem;right:.8rem;background:none;border:1px solid var(--fd-rule-soft);color:var(--fd-dim);
+    border-radius:999px;width:30px;height:30px;cursor:pointer;font-size:16px;line-height:1;}
+  #detail .x:hover{border-color:var(--fd-amber);color:var(--fd-amber)}
+  #detail h2{font-family:"Fraunces",Georgia,serif;font-weight:300;font-variation-settings:"opsz" 44,"wght" 380;
+    font-size:clamp(22px,3vw,28px);margin:.35rem 2rem .5rem 0;line-height:1.15;color:var(--fd-bone);}
+  #dImg{width:100%;max-height:240px;object-fit:cover;border-radius:12px;border:1px solid var(--fd-rule);margin:.3rem 0 .7rem;background:#0A0D11;}
+  #dMeta{display:grid;grid-template-columns:auto 1fr;gap:.3rem .8rem;margin:.4rem 0 .9rem;font-size:.86rem;}
+  #dMeta dt{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--fd-faint);padding-top:.15em}
+  #dMeta dd{margin:0;color:var(--fd-dim)}
+  #dMeta dd .tag{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+    border:1px solid var(--fd-rule-soft);border-radius:999px;padding:.15rem .5rem;margin:0 .25rem .25rem 0;color:var(--fd-dim)}
+  .dActions{display:flex;gap:.4rem;margin:.4rem 0 1rem}
+  .dActions .btn{flex:1;display:inline-flex;align-items:center;justify-content:center}
+  .hood h3{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fd-faint);
+    margin:1rem 0 .4rem;display:flex;align-items:center;gap:.5rem}
+  .hood h3 .sw{width:14px;height:0;border-top:2px solid var(--c,#6E665C)}
+  .hood ul{list-style:none;margin:0;padding:0}
+  .hood li{margin:0 0 .25rem}
+  .hood button{display:flex;width:100%;align-items:center;gap:.5rem;background:none;border:1px solid transparent;border-radius:8px;
+    padding:.35rem .5rem;color:var(--fd-bone);cursor:pointer;text-align:left;font-size:.88rem;}
+  .hood button:hover{border-color:var(--fd-rule-soft);background:rgba(238,231,219,.04)}
+  .hood button .sw{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .hood button small{margin-left:auto;font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--fd-faint);white-space:nowrap}
+  .conf{font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--fd-faint)}
+  /* empty state */
+  #empty{position:absolute;inset:0;display:grid;place-items:center;padding:2rem;text-align:center;z-index:5;}
+  #empty[hidden]{display:none}
+  #empty .card{max-width:520px;background:rgba(10,13,17,.86);border:1px solid var(--fd-rule);border-radius:16px;padding:1.6rem 1.8rem;}
+  #empty h2{font-family:"Fraunces",Georgia,serif;font-weight:300;font-size:clamp(22px,3vw,30px);margin:.2rem 0 .6rem;color:var(--fd-bone)}
+  #empty p{color:var(--fd-dim);font-size:.95rem;line-height:1.6;margin:.3rem 0}
+  #empty a{color:var(--fd-amber)}
+  #panelToggle{display:none}
+  @media (max-width:720px){
+    #app{flex-direction:column;}
+    #panel{width:auto;max-height:46vh;border-right:0;border-bottom:1px solid var(--fd-rule);padding-top:2.4rem;transition:max-height .2s;}
+    #panel.collapsed{max-height:0;padding:0;overflow:hidden;border:0}
+    #panelToggle{display:block;position:fixed;top:56px;right:.7rem;z-index:800;font-family:"IBM Plex Mono",monospace;font-size:10.5px;
+      letter-spacing:.1em;text-transform:uppercase;padding:.4rem .7rem;border-radius:999px;border:1px solid var(--fd-rule-soft);
+      background:rgba(10,13,17,.9);color:var(--fd-amber);cursor:pointer;}
+    #detail{position:fixed;left:0;right:0;bottom:0;width:auto;max-height:58vh;border-left:0;border-top:1px solid var(--fd-rule);
+      border-radius:18px 18px 0 0;box-shadow:0 -18px 50px rgba(0,0,0,.6);z-index:700;}
+    .legend{grid-template-columns:1fr 1fr 1fr}
+  }
 </style>
 </head>
-<body>
-  <div id="bar">
-    <a href="/" style="color:#EEE7DB;text-decoration:none;font-weight:700">Glass Database</a>
-    <span style="display:flex;gap:.8rem;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase">
-      <a href="/explore/" style="color:#A8A29A;text-decoration:none">Explore</a>
-      <a href="/glowtbook/" style="color:#A8A29A;text-decoration:none">Glowtbook</a>
-      <a href="/studios.html" style="color:#A8A29A;text-decoration:none">Map</a>
-      <a href="/graph.html" style="color:#E8A44A;text-decoration:none">Graph</a>
-      <a href="/api/docs" style="color:#A8A29A;text-decoration:none">API</a>
-    </span>
-    <input id="q" placeholder="Search a name / technique…" aria-label="Search">
-    <span class="legend">
-      <span><span class="dot" style="background:#E8A44A"></span>Artist</span>
-      <span><span class="dot" style="background:#5EC8BD"></span>Technique</span>
-      <span><span class="dot" style="background:#967AD2"></span>Studio</span>
-      <span style="opacity:.7">— <span id="counts">loading…</span></span>
-    </span>
-  </div>
-  <div id="cy"></div>
-  <div id="tip"></div>
+<body class="fd-ground">
+<nav id="topnav">
+  <a class="brand" href="/">Glass&nbsp;Database</a>
+  <a href="/explore/">Explore</a>
+  <a href="/glowtbook/">Glowtbook</a>
+  <a href="/#barcoding">Barcoding</a>
+  <a href="/studios.html">Map</a>
+  <a href="/shop.html">Shops</a>
+  <a href="/shop-costs.html">Costs</a>
+  <a href="/graph.html" class="on" aria-current="page">Graph</a>
+  <a href="/games.html">Seasons</a>
+  <a href="/api/docs">API</a>
+  <span class="sp" id="chip" aria-live="polite"></span>
+</nav>
+<button id="panelToggle" aria-expanded="true" aria-controls="panel">Hide controls</button>
+<div id="app">
+  <aside id="panel" aria-label="Graph controls">
+    <p class="eyebrow">The Glass Database</p>
+    <h1>Who taught whom, <em>what touches what</em></h1>
+    <p class="count" id="counts">loading…</p>
+    <div class="rule"></div>
+    <input id="q" type="text" placeholder="Search a name, piece, technique…" aria-label="Search the graph" autocomplete="off">
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
-  <script>
-  const COLOR = { artist:"#E8A44A", technique:"#5EC8BD", studio:"#967AD2" };
+    <p class="lbl">Mode</p>
+    <div class="pills" id="modePills">
+      <button class="pill mode" data-mode="all" aria-pressed="true">Everything</button>
+      <button class="pill mode" data-mode="lineage" aria-pressed="false">Lineage</button>
+      <label class="opt" id="piecesOpt" hidden><input type="checkbox" id="withPieces"> + pieces</label>
+    </div>
+
+    <p class="lbl">Show</p>
+    <div class="pills" id="typePills"></div>
+    <p class="lbl">Links</p>
+    <div class="pills" id="edgePills"></div>
+
+    <p class="lbl">How are they connected?</p>
+    <div class="pathbox">
+      <input id="pa" type="text" list="labels" placeholder="From — a person, piece, studio…" aria-label="Path from" autocomplete="off">
+      <input id="pb" type="text" list="labels" placeholder="To — anyone or anything in the graph" aria-label="Path to" autocomplete="off">
+      <datalist id="labels"></datalist>
+      <div class="actions"><button id="pathBtn" class="primary">Find path</button><button id="clearBtn">Clear</button></div>
+      <p id="pathOut" class="pathout" aria-live="polite"></p>
+    </div>
+
+    <p class="lbl">Legend</p>
+    <div class="legend">
+      <span><i class="sw" style="background:#E8A44A"></i>Artist</span>
+      <span><i class="sw" style="background:#5EC8BD"></i>Technique</span>
+      <span><i class="sw dia" style="background:#967AD2"></i>Studio</span>
+      <span><i class="sw sq" style="background:#E25836"></i>Piece</span>
+      <span><i class="sw" style="background:#EEE7DB"></i>Collector</span>
+      <span><i class="ln" style="border-color:#E8A44A"></i>studied under →</span>
+      <span><i class="ln" style="border-color:#E25836"></i>made by</span>
+      <span><i class="ln dash" style="border-color:#5EC8BD"></i>looks like</span>
+      <span><i class="ln" style="border-color:#3A342F"></i>uses</span>
+      <span><i class="ln" style="border-color:#967AD2"></i>based at</span>
+      <span><i class="ln dot" style="border-color:#EEE7DB"></i>collected by</span>
+    </div>
+    <div class="actions"><button id="fitBtn">Fit</button><button id="relayoutBtn">Re-layout</button></div>
+    <p class="hint">Structured links (reviewed lineage, published pieces, fingerprints) are drawn solid; name
+      matches found in free text are marked <span class="conf">text-match</span>. Export:
+      <a href="/api/graph.jsonld">graph.jsonld</a> · <a href="/api/graph.json">graph.json</a></p>
+    <a class="handle" href="/">← glassdatabase.org</a>
+  </aside>
+
+  <div id="stage">
+    <div id="cy" role="img" aria-label="Relationship graph"></div>
+    <div id="empty" hidden>
+      <div class="card">
+        <p class="eyebrow">Nothing to draw yet</p>
+        <h2 id="emptyTitle">The graph grows from three things.</h2>
+        <p id="emptyBody"><b>Who taught whom</b> — add a mentor/student link under
+          <a href="/explore/?view=submit">Explore → Submit → Lineage</a>.<br>
+          <b>Who works how</b> — add an artist with techniques and mentors under
+          <a href="/explore/?view=submit">Explore → Submit → Artist</a>.<br>
+          <b>What was made</b> — publish a piece in <a href="/glowtbook/">Glowtbook</a>; its maker,
+          techniques and fingerprint join the graph once approved.</p>
+      </div>
+    </div>
+  </div>
+
+  <aside id="detail" hidden aria-label="Selected node">
+    <button class="x" id="closeDetail" aria-label="Close">×</button>
+    <p class="eyebrow" id="dType"></p>
+    <h2 id="dLabel"></h2>
+    <img id="dImg" alt="" hidden loading="lazy">
+    <dl id="dMeta"></dl>
+    <div class="dActions">
+      <a id="dOpen" class="btn" href="#">Open ↗</a>
+      <button id="dFrom" class="btn">Find connections from here</button>
+    </div>
+    <div class="hood" id="dHood"></div>
+  </aside>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.30.2/cytoscape.min.js"></script>
+<script src="/site.js"></script>
+<script>
+(function(){
+  "use strict";
+  const COLOR = {artist:"#E8A44A", technique:"#5EC8BD", studio:"#967AD2", object:"#E25836", collector:"#EEE7DB"};
+  const TYPES = ["artist","technique","studio","object","collector"];
+  const TYPE_LABEL = {artist:"Artists", technique:"Techniques", studio:"Studios", object:"Pieces", collector:"Collectors"};
+  const TYPE_ONE = {artist:"Artist", technique:"Technique", studio:"Studio", object:"Piece", collector:"Collector"};
+  const EDGES = ["studied_under","made_by","uses","based_at","similar_to","collected_by"];
+  const EDGE_LABEL = {studied_under:"studied under", made_by:"made by", uses:"uses", based_at:"based at",
+                      similar_to:"looks like", collected_by:"collected by"};
+  const EDGE_COLOR = {studied_under:"#E8A44A", made_by:"#E25836", uses:"#3A342F", based_at:"#967AD2",
+                      similar_to:"#5EC8BD", collected_by:"#EEE7DB"};
+  const EDGE_STYLE = {similar_to:"dash", collected_by:"dot"};
+  // how an edge reads from each end: [as source, as target]
+  const PHRASE = {studied_under:["studied under","taught"], made_by:["made by","made"],
+                  uses:["uses","used by"], based_at:["based at","home to"],
+                  similar_to:["looks like","looks like"], collected_by:["collected by","collects"]};
+  const SOURCE_LABEL = {submission:"community submission", directory:"artist directory",
+                        object:"named as a maker on a piece", lineage:"named in a lineage link"};
+  const $ = s => document.querySelector(s);
+  const esc = (window.GDB && GDB.esc) || (s => String(s==null?"":s).replace(/[&<>"']/g,
+      c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])));
+
+  let DATA = {nodes:[], edges:[], counts:{}}, cy = null, mode = "all";
+  const typeOn = new Set(TYPES), edgeOn = new Set(EDGES);
+  const byId = {}, adj = {};   // adjacency over ALL edges (hidden or not)
+
+  if (window.GDB) { try { GDB.chip("#chip", {compact:true}); } catch(_) {} }
+
+  // ---------------------------------------------------------------- load
+  async function load(){
+    try {
+      if (window.GDB) return await GDB.json("/graph.json");
+      return await (await fetch("/api/graph.json")).json();
+    } catch(e){
+      try { return await (await fetch("/api/graph.json")).json(); } catch(_) { return null; }
+    }
+  }
+
+  function countsLine(c){
+    c = c || {};
+    const bits = [[c.artists,"artist"],[c.techniques,"technique"],[c.objects,"piece"],[c.studios,"studio"],
+                  [c.collectors,"collector"]].filter(([n]) => n).map(([n,w]) => `${n} ${w}${n===1?"":"s"}`);
+    const links = [[c.lineage,"lineage link"],[c.similar,"look-alike pair"]].filter(([n]) => n)
+                  .map(([n,w]) => `${n} ${w}${n===1?"":"s"}`);
+    return bits.join(" · ") + (links.length ? `<br>${links.join(" · ")} · ` : "<br>") + `${c.edges||0} links in all`;
+  }
+
+  // ---------------------------------------------------------------- pills
+  function pill(label, color, on, extra){
+    const b = document.createElement("button");
+    b.className = "pill"; b.type = "button"; b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.style.setProperty("--c", color);
+    b.innerHTML = (extra || '<i class="sw"></i>') + esc(label);
+    return b;
+  }
+  function buildPills(){
+    const tp = $("#typePills"); tp.innerHTML = "";
+    TYPES.forEach(t => {
+      const b = pill(TYPE_LABEL[t], COLOR[t], true); b.dataset.type = t;
+      b.onclick = () => { typeOn.has(t) ? typeOn.delete(t) : typeOn.add(t);
+        b.setAttribute("aria-pressed", typeOn.has(t)); applyView(true); };
+      tp.appendChild(b);
+    });
+    const ep = $("#edgePills"); ep.innerHTML = "";
+    EDGES.forEach(k => {
+      const b = pill(EDGE_LABEL[k], EDGE_COLOR[k], true, `<i class="ln ${EDGE_STYLE[k]||""}"></i>`); b.dataset.edge = k;
+      b.onclick = () => { edgeOn.has(k) ? edgeOn.delete(k) : edgeOn.add(k);
+        b.setAttribute("aria-pressed", edgeOn.has(k)); applyView(false); };
+      ep.appendChild(b);
+    });
+    document.querySelectorAll("#modePills .mode").forEach(b => {
+      b.onclick = () => setMode(b.dataset.mode);
+    });
+    $("#withPieces").onchange = () => applyView(true);
+  }
+  function setMode(m){
+    mode = m;
+    if (cy) cy.elements().removeClass("faded hi path");
+    document.querySelectorAll("#modePills .mode").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === m));
+    $("#piecesOpt").hidden = m !== "lineage";
+    document.querySelectorAll("#typePills .pill, #edgePills .pill").forEach(b => b.disabled = (m === "lineage"));
+    applyView(true);
+  }
+
+  // ---------------------------------------------------------------- view
+  function lineageSets(){
+    const artists = new Set();
+    DATA.edges.forEach(e => { if (e.type === "studied_under") { artists.add(e.source); artists.add(e.target); } });
+    const pieces = new Set();
+    if ($("#withPieces").checked)
+      DATA.edges.forEach(e => { if (e.type === "made_by" && artists.has(e.target)) pieces.add(e.source); });
+    return {artists, pieces};
+  }
+  function applyView(relayout){
+    if (!cy) return;
+    const lin = mode === "lineage" ? lineageSets() : null;
+    cy.batch(() => {
+      cy.nodes().forEach(n => {
+        const t = n.data("type");
+        let show = typeOn.has(t);
+        if (lin) show = lin.artists.has(n.id()) || lin.pieces.has(n.id());
+        n.toggleClass("hidden", !show);
+      });
+      cy.edges().forEach(e => {
+        const k = e.data("type");
+        let show = edgeOn.has(k);
+        if (lin) show = k === "studied_under" || (k === "made_by" && lin.pieces.size > 0);
+        show = show && !e.source().hasClass("hidden") && !e.target().hasClass("hidden");
+        e.toggleClass("hidden", !show);
+      });
+    });
+    const vis = cy.elements().not(".hidden");
+    if (lin && !lin.artists.size) {
+      $("#pathOut").innerHTML = 'No lineage links yet — add one under <a href="/explore/?view=submit" style="color:var(--fd-amber)">Explore → Submit → Lineage</a>.';
+    }
+    if (relayout) runLayout(vis, lin);
+  }
+  function runLayout(vis, lin){
+    vis = vis || cy.elements().not(".hidden");
+    if (!vis.nodes().length) return;
+    let opts;
+    if (lin) {
+      const roots = vis.nodes().filter(n => n.data("type") === "artist" &&
+        n.outgoers('edge[type="studied_under"]').not(".hidden").length === 0);
+      opts = {name:"breadthfirst", directed:false, roots: roots.length ? roots : undefined, spacingFactor:1.15,
+              padding:40, avoidOverlap:true, animate:false};
+    } else {
+      const n = vis.nodes().length;
+      opts = {name:"cose", animate:false, nodeRepulsion: n > 400 ? 4000 : 9000, idealEdgeLength:70,
+              padding:40, randomize:false, numIter: n > 400 ? 400 : 1000};
+    }
+    vis.layout(opts).run();
+    cy.fit(vis, 40);
+  }
+
+  // ---------------------------------------------------------------- highlight helpers
+  function clearHi(){ cy.elements().removeClass("faded hi path"); }
+  function focusNode(id, opts){
+    const n = cy.getElementById(id);
+    if (!n || !n.length) return;
+    opts = opts || {};
+    if (n.hasClass("hidden")) {               // bring its type back into view
+      typeOn.add(n.data("type"));
+      document.querySelectorAll("#typePills .pill").forEach(b => b.setAttribute("aria-pressed", typeOn.has(b.dataset.type)));
+      if (mode === "lineage") setMode("all"); else applyView(true);
+    }
+    clearHi();
+    const hood = n.closedNeighborhood().not(".hidden");
+    cy.elements().addClass("faded"); hood.removeClass("faded").addClass("hi");
+    cy.nodes().unselect(); n.select();
+    if (!opts.noPan) cy.animate({center:{eles:n}, zoom: Math.max(cy.zoom(), 1.1)}, {duration:250});
+    showDetail(n.id());
+  }
+
+  // ---------------------------------------------------------------- detail panel
+  function showDetail(id){
+    const n = byId[id]; if (!n) return;
+    const d = $("#detail"); d.hidden = false;
+    if (window.innerWidth <= 720 && !$("#panel").classList.contains("collapsed")) {   // phone: give the graph room
+      $("#panel").classList.add("collapsed"); $("#panelToggle").textContent = "Show controls";
+      $("#panelToggle").setAttribute("aria-expanded", "false");
+    }
+    $("#dType").textContent = TYPE_ONE[n.type] || n.type;
+    $("#dType").style.color = COLOR[n.type] || "";
+    $("#dLabel").textContent = n.label;
+    const img = $("#dImg");
+    if (n.type === "object" && n.meta && n.meta.image) {
+      img.hidden = false; img.alt = n.label; img.src = n.meta.image;
+      img.onerror = () => { img.hidden = true; };
+    } else { img.hidden = true; img.removeAttribute("src"); }
+    const m = n.meta || {}, rows = [];
+    const tags = a => (a||[]).map(x => `<span class="tag">${esc(x)}</span>`).join("");
+    if (n.type === "object") {
+      if (m.maker) rows.push(["Maker", esc(m.maker)]);
+      if (m.year) rows.push(["Year", esc(m.year)]);
+      if (m.techniques && m.techniques.length) rows.push(["Techniques", tags(m.techniques)]);
+      if (m.dominant_color) rows.push(["Colour", esc(m.dominant_color)]);
+      if (m.traits && m.traits.length) rows.push(["Traits", tags(m.traits)]);
+      rows.push(["Fingerprint", m.fingerprinted ? "enrolled (DINOv2 + colour)" : "none"]);
+    } else if (n.type === "artist") {
+      rows.push(["Source", esc(SOURCE_LABEL[m.source] || m.source || "—")]);
+    } else if (n.type === "studio") {
+      const where = [m.city, m.country].filter(Boolean).join(", ");
+      if (where) rows.push(["Where", esc(where)]);
+      if (m.kind) rows.push(["Type", esc(m.kind)]);
+    } else if (n.type === "collector") {
+      rows.push(["Pieces", esc(m.count || 0)]);
+    } else if (n.type === "technique" && m.vocab) {
+      rows.push(["Ontology", `<a href="${esc(m.vocab)}" style="color:var(--fd-amber)">${esc(m.vocab.split("#").pop())}</a>`]);
+    }
+    const deg = (adj[id] || []).length;
+    rows.push(["Links", deg + (deg === 1 ? " connection" : " connections")]);
+    $("#dMeta").innerHTML = rows.map(([k,v]) => `<dt>${esc(k)}</dt><dd>${v}</dd>`).join("");
+    const open = $("#dOpen");
+    if (n.href) { open.hidden = false; open.href = n.href; } else { open.hidden = true; }
+    $("#dFrom").onclick = () => { $("#pa").value = n.label; $("#pb").value = ""; $("#pb").focus();
+      if (window.innerWidth <= 720) { $("#panel").classList.remove("collapsed"); $("#panelToggle").textContent = "Hide controls"; } };
+    // neighbours grouped by edge type
+    const groups = {};
+    (adj[id] || []).forEach(({other, e}) => {
+      const asSource = e.source === id;
+      const key = e.type + (e.type === "similar_to" ? "" : (asSource ? ":out" : ":in"));
+      const title = PHRASE[e.type] ? PHRASE[e.type][asSource ? 0 : 1] : e.type.replace("_"," ");
+      (groups[key] = groups[key] || {title, type:e.type, items:[]}).items.push({other, e});
+    });
+    const order = ["studied_under","made_by","uses","based_at","similar_to","collected_by"];
+    const keys = Object.keys(groups).sort((a,b) => order.indexOf(groups[a].type) - order.indexOf(groups[b].type) || a.localeCompare(b));
+    $("#dHood").innerHTML = keys.length ? keys.map(k => {
+      const g = groups[k];
+      const items = g.items.sort((x,y) => (byId[x.other].label).localeCompare(byId[y.other].label)).map(({other,e}) => {
+        const o = byId[other]; const note = [];
+        if (e.relation && e.relation !== "Studied under") note.push(e.relation);
+        if (e.weight != null) note.push(e.weight.toFixed ? e.weight.toFixed(2) : e.weight);
+        if (e.meta && e.meta.confidence === "text-match") note.push("text-match");
+        return `<li><button type="button" data-id="${esc(other)}"><i class="sw" style="background:${COLOR[o.type]}"></i>` +
+               `<span>${esc(o.label)}</span>${note.length ? `<small>${esc(note.join(" · "))}</small>` : ""}</button></li>`;
+      }).join("");
+      return `<h3><i class="sw" style="--c:${EDGE_COLOR[g.type]}"></i>${esc(g.title)} <span style="color:var(--fd-dim)">(${g.items.length})</span></h3><ul>${items}</ul>`;
+    }).join("") : '<p class="hint">No links yet. Lineage links and published pieces connect this node.</p>';
+    $("#dHood").querySelectorAll("button[data-id]").forEach(b => b.onclick = () => focusNode(b.dataset.id));
+    if (cy) setTimeout(() => cy.resize(), 0);
+  }
+  function hideDetail(){ $("#detail").hidden = true; if (cy) { cy.nodes().unselect(); setTimeout(() => cy.resize(), 0); } }
+  $("#closeDetail").onclick = hideDetail;
+
+  // ---------------------------------------------------------------- path finder
+  function resolveLocal(ref){
+    if (!ref) return null;
+    ref = ref.trim(); const k = ref.toLowerCase();
+    if (byId[ref]) return ref;
+    if (byId[k]) return k;
+    const order = {artist:0, object:1, studio:2, technique:3, collector:4};
+    let hits = DATA.nodes.filter(n => n.label.toLowerCase() === k);
+    if (!hits.length) hits = DATA.nodes.filter(n => n.label.toLowerCase().includes(k));
+    hits.sort((a,b) => (order[a.type]-order[b.type]) || (a.label.length-b.label.length));
+    return hits.length ? hits[0].id : null;
+  }
+  function clientPath(a, b){
+    const ra = resolveLocal(a), rb = resolveLocal(b);
+    if (!ra || !rb) return null;
+    if (ra === rb) return {nodes:[byId[ra]], edges:[], steps:0};
+    const r = cy.elements().aStar({root:"#"+CSS.escape(ra), goal:"#"+CSS.escape(rb), directed:false});
+    if (!r.found) return null;
+    const nodes = r.path.nodes().map(n => byId[n.id()]), edges = r.path.edges().map(e => e.data("raw"));
+    return {nodes, edges, steps: edges.length};
+  }
+  function showPath(p){
+    const ids = p.nodes.map(n => n.id);
+    // make sure everything on the path is visible
+    let changed = false;
+    p.nodes.forEach(n => { if (!typeOn.has(n.type)) { typeOn.add(n.type); changed = true; } });
+    p.edges.forEach(e => { if (!edgeOn.has(e.type)) { edgeOn.add(e.type); changed = true; } });
+    if (mode === "lineage" && (changed || p.edges.some(e => e.type !== "studied_under"))) { setMode("all"); changed = false; }
+    if (changed) {
+      document.querySelectorAll("#typePills .pill").forEach(b => b.setAttribute("aria-pressed", typeOn.has(b.dataset.type)));
+      document.querySelectorAll("#edgePills .pill").forEach(b => b.setAttribute("aria-pressed", edgeOn.has(b.dataset.edge)));
+      applyView(true);
+    }
+    clearHi();
+    const nodes = cy.collection(ids.map(id => cy.getElementById(id)));
+    let eles = nodes;
+    for (let i = 0; i < ids.length - 1; i++) {
+      const a = cy.getElementById(ids[i]), b = cy.getElementById(ids[i+1]);
+      eles = eles.union(a.edgesWith(b).not(".hidden").first());
+    }
+    cy.elements().addClass("faded"); eles.removeClass("faded").addClass("path hi");
+    cy.animate({fit:{eles:eles, padding:70}}, {duration:300});
+    const chain = p.nodes.map(n => `<button type="button" data-id="${esc(n.id)}">${esc(n.label)}</button>`)
+                         .join('<span class="arrow">→</span>');
+    const via = p.edges.map(e => EDGE_LABEL[e.type] || e.type);
+    $("#pathOut").innerHTML = `<b>${p.steps} step${p.steps===1?"":"s"}:</b> ${chain}` +
+      (via.length ? `<br><span class="conf">${esc(via.join(" · "))}</span>` : "");
+    $("#pathOut").querySelectorAll("button[data-id]").forEach(b => b.onclick = () => focusNode(b.dataset.id));
+  }
+  async function findPath(){
+    const a = $("#pa").value.trim(), b = $("#pb").value.trim();
+    if (!a || !b) { $("#pathOut").textContent = "Pick two ends — a person, a piece, a studio or a technique."; return; }
+    $("#pathOut").textContent = "Looking…";
+    let p = null;
+    try {
+      if (window.GDB) p = await GDB.json(`/graph/path?from=${encodeURIComponent(a)}&to=${encodeURIComponent(b)}`);
+    } catch(_) { p = null; }
+    if (!p) { try { p = clientPath(a, b); } catch(_) {} }   // offline / older API: cytoscape aStar
+    if (!p) {
+      const ra = resolveLocal(a), rb = resolveLocal(b);
+      $("#pathOut").innerHTML = (!ra || !rb)
+        ? `Couldn't find <b>${esc(!ra ? a : b)}</b> in the graph. Try a name from the suggestions.`
+        : `No connection between <b>${esc(byId[ra].label)}</b> and <b>${esc(byId[rb].label)}</b> yet — a lineage link or a published piece would make one.`;
+      return;
+    }
+    showPath(p);
+  }
+  $("#pathBtn").onclick = findPath;
+  ["pa","pb"].forEach(id => $("#"+id).addEventListener("keydown", ev => { if (ev.key === "Enter") findPath(); }));
+  $("#clearBtn").onclick = () => { $("#pa").value = ""; $("#pb").value = ""; $("#pathOut").textContent = ""; if (cy) clearHi(); };
+
+  // ---------------------------------------------------------------- search
+  $("#q").addEventListener("input", ev => {
+    if (!cy) return;
+    const q = ev.target.value.trim().toLowerCase();
+    if (!q) { clearHi(); return; }
+    const vis = cy.nodes().not(".hidden");
+    const match = vis.filter(n => n.data("label").toLowerCase().includes(q) ||
+      ((n.data("meta")||{}).maker || "").toLowerCase().includes(q));
+    cy.elements().addClass("faded");
+    match.forEach(n => n.closedNeighborhood().not(".hidden").removeClass("faded").addClass("hi"));
+  });
+
+  // ---------------------------------------------------------------- misc controls
+  $("#fitBtn").onclick = () => cy && cy.fit(cy.elements().not(".hidden"), 40);
+  $("#relayoutBtn").onclick = () => cy && applyView(true);
+  $("#panelToggle").onclick = () => {
+    const p = $("#panel"); const col = p.classList.toggle("collapsed");
+    $("#panelToggle").textContent = col ? "Show controls" : "Hide controls";
+    $("#panelToggle").setAttribute("aria-expanded", !col);
+    if (cy) setTimeout(() => cy.resize(), 220);
+  };
+
+  // ---------------------------------------------------------------- main
   async function main(){
-    let data;
-    try { data = await (await fetch("/api/graph.json")).json(); }
-    catch(e){ document.getElementById("counts").textContent = "couldn't load data"; return; }
-    const c = data.counts || {};
-    document.getElementById("counts").textContent =
-      `${c.artists||0} artists · ${c.techniques||0} techniques · ${c.edges||0} links`;
-    if(!(data.nodes||[]).length){ document.getElementById("counts").textContent =
-      "no relationships yet — add artists with techniques & mentors"; return; }
+    buildPills();
+    const data = await load();
+    if (!data) { $("#counts").textContent = "couldn't load the graph"; return; }
+    DATA = data; DATA.nodes = DATA.nodes || []; DATA.edges = DATA.edges || [];
+    $("#counts").innerHTML = countsLine(DATA.counts);
+    if (!DATA.nodes.length) { $("#empty").hidden = false; $("#counts").textContent = "no relationships yet"; return; }
+
+    DATA.nodes.forEach(n => { byId[n.id] = n; adj[n.id] = []; });
+    DATA.edges.forEach(e => {
+      if (!byId[e.source] || !byId[e.target]) return;
+      adj[e.source].push({other:e.target, e}); adj[e.target].push({other:e.source, e});
+    });
+    const dl = $("#labels");
+    dl.innerHTML = DATA.nodes.slice().sort((a,b) => a.label.localeCompare(b.label))
+      .map(n => `<option value="${esc(n.label)}">${esc(TYPE_ONE[n.type]||n.type)}</option>`).join("");
 
     const els = [
-      ...data.nodes.map(n => ({ data:{ id:n.id, label:n.label, type:n.type } })),
-      ...data.edges.map(e => ({ data:{ source:e.source, target:e.target, type:e.type } })),
+      ...DATA.nodes.map(n => ({data:{id:n.id, label:n.label, type:n.type, meta:n.meta||{}}})),
+      ...DATA.edges.filter(e => byId[e.source] && byId[e.target]).map((e,i) => ({data:{
+        id:"e"+i, source:e.source, target:e.target, type:e.type, raw:e,
+        weight:e.weight||0, confidence:(e.meta||{}).confidence||"structured"}})),
     ];
-    const cy = cytoscape({
-      container: document.getElementById("cy"),
-      elements: els,
+    const size = t => ({artist:22, object:18, studio:17, technique:13, collector:15}[t] || 14);
+    cy = cytoscape({
+      container: $("#cy"), elements: els, wheelSensitivity: 0.25,
       style: [
-        { selector:"node", style:{
-            "background-color": ele => COLOR[ele.data("type")] || "#6E665C",
-            "label":"data(label)", "font-size": ele => ele.data("type")==="artist" ? 11 : 9,
-            "color":"#EEE7DB", "text-wrap":"wrap", "text-max-width":90,
-            "width": ele => ele.data("type")==="artist" ? 22 : 14,
-            "height": ele => ele.data("type")==="artist" ? 22 : 14,
-            "text-valign":"bottom", "text-margin-y":3, "min-zoomed-font-size":7 } },
-        { selector:"edge", style:{ "width":1.2, "line-color":"#3A342F", "curve-style":"haystack",
-            "opacity":0.6 } },
-        { selector:"edge[type='studied_under']", style:{ "line-color":"#ea580c", "width":2, "opacity":0.9,
-            "target-arrow-shape":"triangle", "target-arrow-color":"#ea580c", "curve-style":"bezier" } },
-        { selector:".faded", style:{ "opacity":0.12 } },
-        { selector:".hi", style:{ "opacity":1 } },
+        {selector:"node", style:{
+          "background-color": ele => COLOR[ele.data("type")] || "#6E665C",
+          "label":"data(label)", "font-family":"Archivo, system-ui, sans-serif",
+          "font-size": ele => ele.data("type")==="artist" ? 11 : (ele.data("type")==="object" ? 10 : 9),
+          "color":"#EEE7DB", "text-wrap":"wrap", "text-max-width":96, "text-outline-color":"#0A0D11",
+          "text-outline-width":1.5, "text-outline-opacity":0.6,
+          "width": ele => size(ele.data("type")), "height": ele => size(ele.data("type")),
+          "text-valign":"bottom", "text-margin-y":4, "min-zoomed-font-size":7,
+          "border-width":0, "overlay-opacity":0 }},
+        {selector:"node[type='object']", style:{"shape":"round-rectangle"}},
+        {selector:"node[type='studio']", style:{"shape":"diamond"}},
+        {selector:"node[type='collector']", style:{"shape":"hexagon", "color":"#A8A29A"}},
+        {selector:"node[type='technique']", style:{"color":"#A8A29A"}},
+        {selector:"node:selected", style:{"border-width":3, "border-color":"#EEE7DB"}},
+        {selector:"edge", style:{"width":1.1, "line-color":"#3A342F", "curve-style":"haystack", "opacity":0.6,
+          "haystack-radius":0.4}},
+        {selector:"edge[type='uses']", style:{"line-color":"#3A342F"}},
+        {selector:"edge[type='based_at']", style:{"line-color":"#967AD2", "width":1.3, "opacity":0.75}},
+        {selector:"edge[type='made_by']", style:{"line-color":"#E25836", "width":1.6, "opacity":0.85,
+          "curve-style":"bezier", "target-arrow-shape":"triangle", "target-arrow-color":"#E25836", "arrow-scale":0.8}},
+        {selector:"edge[type='studied_under']", style:{"line-color":"#E8A44A", "width":2.2, "opacity":0.95,
+          "curve-style":"bezier", "target-arrow-shape":"triangle", "target-arrow-color":"#E8A44A", "arrow-scale":1}},
+        {selector:"edge[type='studied_under'][confidence='text-match']", style:{"line-style":"dashed", "opacity":0.7}},
+        {selector:"edge[type='similar_to']", style:{"line-color":"#5EC8BD", "line-style":"dashed", "width":1.8,
+          "opacity":0.9, "curve-style":"haystack"}},
+        {selector:"edge[type='collected_by']", style:{"line-color":"#EEE7DB", "line-style":"dotted", "width":1.4, "opacity":0.8}},
+        {selector:".faded", style:{"opacity":0.1}},
+        {selector:".hi", style:{"opacity":1}},
+        {selector:"edge.path", style:{"width":4, "opacity":1, "line-color":"#EEE7DB", "target-arrow-color":"#EEE7DB",
+          "line-style":"solid", "z-index":9}},
+        {selector:"node.path", style:{"border-width":3, "border-color":"#EEE7DB", "z-index":9}},
+        {selector:".hidden", style:{"display":"none"}},
       ],
-      layout: { name:"cose", animate:false, nodeRepulsion:9000, idealEdgeLength:70, padding:40 },
-      wheelSensitivity:0.25,
+      layout: {name:"preset"},
     });
+    applyView(true);
 
-    function focus(node){
-      const hood = node.closedNeighborhood();
-      cy.elements().addClass("faded");
-      hood.removeClass("faded").addClass("hi");
-      const kinds = {};
-      node.connectedEdges().forEach(e => { kinds[e.data("type")] = (kinds[e.data("type")]||0)+1; });
-      const tip = document.getElementById("tip");
-      tip.style.display="block";
-      tip.innerHTML = `<b>${node.data("label")}</b> — ${node.data("type")}<br>`+
-        Object.entries(kinds).map(([k,v])=>`${v} ${k.replace('_',' ')}`).join(" · ");
-    }
-    cy.on("tap","node", e => focus(e.target));
-    cy.on("tap", e => { if(e.target === cy){ cy.elements().removeClass("faded hi");
-      document.getElementById("tip").style.display="none"; } });
+    cy.on("tap", "node", e => focusNode(e.target.id(), {noPan:true}));
+    cy.on("tap", e => { if (e.target === cy) { clearHi(); hideDetail(); } });
 
-    document.getElementById("q").addEventListener("input", ev => {
-      const q = ev.target.value.trim().toLowerCase();
-      if(!q){ cy.elements().removeClass("faded hi"); return; }
-      const match = cy.nodes().filter(n => n.data("label").toLowerCase().includes(q));
-      cy.elements().addClass("faded");
-      match.forEach(n => n.closedNeighborhood().removeClass("faded").addClass("hi"));
-    });
+    // ?focus=<node id or label> opens the panel on load
+    const f = (window.GDB && GDB.param("focus")) || new URLSearchParams(location.search).get("focus");
+    if (f) { const id = resolveLocal(f); if (id) setTimeout(() => focusNode(id), 50); }
+    const qp = new URLSearchParams(location.search);
+    if (qp.get("mode") === "lineage") setMode("lineage");
+    if (qp.get("from") || qp.get("to")) { $("#pa").value = qp.get("from") || ""; $("#pb").value = qp.get("to") || "";
+      if (qp.get("from") && qp.get("to")) setTimeout(findPath, 100); }
   }
   main();
-  </script>
+})();
+</script>
 </body>
 </html>

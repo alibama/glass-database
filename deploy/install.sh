@@ -99,6 +99,8 @@ rsync -a --delete \
 cp "$SRC/deploy/landing-index.html" "$APP_DIR/public/index.html"
 cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
 [ -f "$SRC/deploy/field-data.css" ] && cp "$SRC/deploy/field-data.css" "$APP_DIR/public/field-data.css"
+# shared client helper for the static pages (sign-in chip, authenticated fetch, pairing tokens)
+[ -f "$SRC/deploy/site.js" ] && cp "$SRC/deploy/site.js" "$APP_DIR/public/site.js"
 # Homepage 'digital barcoding' screenshots
 if [ -d "$SRC/deploy/barcoding" ]; then
     mkdir -p "$APP_DIR/public/barcoding"
@@ -113,6 +115,7 @@ if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     cp "$SRC/deploy/fingerprint-web/enroll.html" "$APP_DIR/public/fingerprint/enroll.html"
     cp "$SRC/deploy/fingerprint-web/verify.html" "$APP_DIR/public/fingerprint/verify.html"
     [ -f "$SRC/deploy/graph.html" ] && cp "$SRC/deploy/graph.html" "$APP_DIR/public/graph.html"
+    [ -f "$SRC/deploy/games.html" ] && cp "$SRC/deploy/games.html" "$APP_DIR/public/games.html"
     [ -f "$SRC/deploy/studios.html" ] && cp "$SRC/deploy/studios.html" "$APP_DIR/public/studios.html"
     [ -f "$SRC/deploy/shop.html" ] && cp "$SRC/deploy/shop.html" "$APP_DIR/public/shop.html"
     [ -f "$SRC/deploy/shop-costs.html" ] && cp "$SRC/deploy/shop-costs.html" "$APP_DIR/public/shop-costs.html"

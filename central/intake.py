@@ -92,6 +92,25 @@ FORMS = {
                private=True),
         ],
     },
+    "lineage": {
+        "title": "Lineage (who taught whom)", "table": "lineage_submissions", "domain": "lineage",
+        "desc": "Community-submitted mentor/student links (pending review)",
+        "intro": ("Record who taught whom — a mentor, an apprenticeship, a class — so the "
+                  "relationship graph can show how glass knowledge travels."),
+        "fields": [
+            _f("student_name", "Student / mentee name", required=True),
+            _f("mentor_name", "Mentor / teacher name", required=True),
+            _f("relation", "Relationship", "select",
+               options=["Studied under", "Apprenticed to", "Assisted",
+                        "Took a class / workshop from", "Taught by (university / school)",
+                        "Collaborated with"]),
+            _f("where", "Where (studio, school, program)"),
+            _f("years", "Years (e.g. 2014–2016)"),
+            _f("note", "Note (how you know, a source, context)", "textarea"),
+            _f("email", "Your email (so we can check)", "email", private=True),
+            _f("submitted_by", "Your name (if different)", private=True),
+        ],
+    },
     "studio": {
         "title": "Studio", "table": "studio_submissions", "domain": "studios",
         "desc": "Community-submitted studios (pending review)",

@@ -21,3 +21,4 @@ uvicorn[standard]>=0.29
 # Everything runs on the standard library's sqlite3 without it.
 # libsql>=0.1
 asn1crypto  # cert assembly for Vault-held signing key (deploy/vault_provision.py)
+segno>=1.6         # QR codes for pairing a phone with the capture app (optional at runtime)

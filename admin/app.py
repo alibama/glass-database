@@ -76,7 +76,7 @@ st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'
 st.sidebar.caption("[GitHub repo](https://github.com/alibama/glass-database)")
 section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue",
                                        "🧹 Duplicates", "💬 Discord", "📮 Feedback", "📊 Analytics",
-                                       "👥 Users", "🌾 Harvest", "🛰 Studio data"],
+                                       "👥 Users", "🌾 Harvest", "🛰 Studio data", "🎃 Seasons"],
                            label_visibility="collapsed")
 from brand import track as _track
 
@@ -759,6 +759,161 @@ elif section == "🛰 Studio data":
         c1.caption(f"**{s['name']}** · {s['api_url']}")
         if c2.button("Remove", key=f"srm_{s['id']}"):
             studio_sources.set_status(conn, s["id"], "rejected"); st.rerun()
+
+# ===========================================================================
+# SEASONS — seasonal games (calls for artists, collecting, voting)
+# ===========================================================================
+elif section == "🎃 Seasons":
+    import datetime as _dt
+
+    from central import seasons as _seasons
+    _seasons.ensure(conn)
+    st.header("Seasons — friendly competitions & collecting")
+    st.caption("A season is a themed call for artists (pumpkins in October, ornaments in December). "
+               "Makers enter pieces they've already published through Glowtbook, collectors scan "
+               "and **claim** them with Verify, signed-in visitors vote. Public page: "
+               "[/games.html](/games.html) · design + runbook: `docs/SEASONS.md`.")
+    _msg = st.session_state.pop("seasons_msg", None)
+    if _msg:
+        st.success(_msg)
+    _sm = _seasons.summary(conn)
+    m1, m2, m3, m4, m5 = st.columns(5)
+    m1.metric("Seasons", _sm["seasons"], help="All seasons, drafts included")
+    m2.metric("Live", _sm["live"], help="Open for entries or in voting")
+    m3.metric("Pending entries", _sm["pending_entries"])
+    m4.metric("Pending claims", _sm["pending_claims"])
+    m5.metric("Votes · claims", f'{_sm["votes"]} · {_sm["claims"]}')
+
+    with st.expander("➕ Create a season", expanded=_sm["seasons"] == 0):
+        _today = _dt.date.today()
+        with st.form("season_create", clear_on_submit=True):
+            s_title = st.text_input("Title", placeholder="Pumpkin Patch 2026")
+            s_theme = st.text_input("Theme (one line, shown in italics on the page)",
+                                    placeholder="Blown-glass pumpkins from every shop")
+            s_desc = st.text_area("Description", height=80,
+                                  placeholder="What the season is, who should enter, where to buy.")
+            d1, d2, d3, d4 = st.columns(4)
+            s_starts = d1.date_input("Starts", _today)
+            s_eclose = d2.date_input("Entries close", _today + _dt.timedelta(days=21))
+            s_vclose = d3.date_input("Voting closes", _today + _dt.timedelta(days=28))
+            s_ends = d4.date_input("Ends", _today + _dt.timedelta(days=30))
+            s_rules = st.text_area(
+                "Rules", height=90,
+                value="One entry per piece; the piece must already be published through Glowtbook "
+                      "(fingerprinted, credentialed, approved). Editions welcome — say how many. "
+                      "Collectors claim by scanning with Verify (a match of 70+ counts straight "
+                      "away). Votes can be swapped until voting closes.")
+            s_prize = st.text_input(
+                "Prize note",
+                value="Bragging rights, a homepage feature, and the Crowd Favourite badge")
+            s_votes = st.number_input("Votes per voter", 1, 10, 3)
+            s_open = st.checkbox("Open for entries right away", value=False)
+            if st.form_submit_button("Create season", type="primary"):
+                if not (s_title or "").strip():
+                    st.error("A title, at least.")
+                else:
+                    try:
+                        _seasons.create_season(
+                            conn, title=s_title, theme=s_theme, description=s_desc,
+                            starts=str(s_starts), entries_close=str(s_eclose),
+                            voting_closes=str(s_vclose), ends=str(s_ends), rules=s_rules,
+                            prize_note=s_prize, votes_per_voter=int(s_votes),
+                            status="open" if s_open else "draft")
+                        st.session_state["seasons_msg"] = f"Created “{s_title}”."
+                        st.rerun()
+                    except ValueError as ex:
+                        st.error(str(ex))
+
+    st.subheader("Seasons")
+    _all = _seasons.list_seasons(conn, include_draft=True)
+    if not _all:
+        st.info("No seasons yet — create the first one above. Suggested calendar: Pumpkin Patch "
+                "(Oct), Heirloom Ornaments (Dec), Paperweights (spring), Drinkware (summer).")
+    for s in _all:
+        with st.container(border=True):
+            c1, c2 = st.columns([3, 2])
+            c1.markdown(f"**{s['title']}** · `{s['slug']}` · **{s['status'].upper()}**")
+            c1.caption(f"{s.get('theme') or ''}  \n"
+                       f"{s['starts'] or '—'} → entries close {s['entries_close'] or '—'} → "
+                       f"voting closes {s['voting_closes'] or '—'} → ends {s['ends'] or '—'}")
+            c1.caption(f"{s['entry_count']} approved entries · {s['vote_count']} votes · "
+                       f"{s['claim_count']} claims · {s['votes_per_voter']} votes per voter · "
+                       f"[public page](/games.html?season={s['slug']})")
+            b1, b2, b3 = c2.columns(3)
+            if s["status"] in ("draft", "closed") and b1.button(
+                    "Open", key=f"so_{s['id']}", type="primary", help="Start taking entries"):
+                _seasons.set_status(conn, s["id"], "open"); st.rerun()
+            if s["status"] == "open" and b2.button(
+                    "Start voting", key=f"sv_{s['id']}", help="Entries close, votes stay open"):
+                _seasons.set_status(conn, s["id"], "voting"); st.rerun()
+            if s["status"] in ("open", "voting") and b3.button(
+                    "Close", key=f"sc_{s['id']}",
+                    help="Closes the season and awards Crowd Favourite + Set Complete"):
+                _res = _seasons.close_season(conn, s["id"])
+                _cf = _res.get("crowd_favourite")
+                st.session_state["seasons_msg"] = (
+                    f"Closed “{s['title']}”. Crowd favourite: {_cf['title']} by "
+                    f"{_cf['artist_name']} ({_cf['votes']} votes)." if _cf else
+                    f"Closed “{s['title']}”. No votes were cast, so no Crowd Favourite this time.")
+                st.rerun()
+            if s["status"] == "draft" and b3.button("Delete draft", key=f"sd_{s['id']}"):
+                conn.execute("DELETE FROM seasons WHERE id=? AND status='draft'", (s["id"],))
+                conn.commit(); st.rerun()
+            _appr = _seasons.entries(conn, s["id"], "approved")
+            if _appr:
+                with st.expander(f"Approved entries ({len(_appr)})"):
+                    for e in _appr:
+                        e1, e2 = st.columns([5, 1])
+                        e1.caption(f"**{e['title']}** — {e['artist_name'] or '—'} · "
+                                   f"{e['studio'] or 'Independent'} · edition of {e['edition_size']}"
+                                   f" · {e['vote_count']} votes · {e['claim_count']} claims")
+                        if e2.button("Pull", key=f"ep_{e['id']}", help="Reject (hide) this entry"):
+                            _seasons.approve_entry(conn, e["id"], False); st.rerun()
+
+    st.divider()
+    _pend = _seasons.pending_entries(conn)
+    st.subheader(f"Pending entries ({len(_pend)})")
+    if not _pend:
+        st.caption("Nothing waiting. New entries land here (and in Discord, if it's wired up).")
+    for e in _pend:
+        with st.container(border=True):
+            ci, cm, cb = st.columns([1, 3, 1])
+            _im = conn.execute(
+                "SELECT image_b64 FROM object_images WHERE object_row_id=? ORDER BY "
+                "CASE role WHEN 'primary' THEN 0 ELSE 1 END, id LIMIT 1",
+                (e["object_row_id"],)).fetchone()
+            if _im and _im["image_b64"]:
+                try:
+                    ci.image(base64.b64decode(_im["image_b64"]), width=140)
+                except Exception:  # noqa: BLE001
+                    pass
+            cm.markdown(f"**{e['title']}** — {e['artist_name'] or '—'}")
+            cm.caption(f"{e['studio'] or 'Independent'} · edition of {e['edition_size']} · "
+                       f"{e['price_note'] or 'no price note'} · season **{e['season_title']}** · "
+                       f"object `{e['object_row_id']}` · {str(e['created_at'] or '')[:10]}")
+            if cb.button("✅ Approve", key=f"ea_{e['id']}", type="primary"):
+                _seasons.approve_entry(conn, e["id"], True); st.rerun()
+            if cb.button("⛔ Reject", key=f"er_{e['id']}"):
+                _seasons.approve_entry(conn, e["id"], False); st.rerun()
+
+    _pc = _seasons.pending_claims(conn)
+    st.subheader(f"Pending claims ({len(_pc)})")
+    st.caption("Scans under 70 confidence wait here. Approve if you — or the artist — can vouch "
+               "that this person holds the piece.")
+    if not _pc:
+        st.caption("No claims waiting.")
+    for cl in _pc:
+        with st.container(border=True):
+            cm, cb = st.columns([4, 1])
+            cm.markdown(f"**{cl['title']}** — claimed by {cl['collector_name'] or '—'}")
+            cm.caption(f"confidence {float(cl.get('confidence') or 0):.0f} · "
+                       f"{cl.get('maker') or ''} · {cl.get('studio') or ''} · "
+                       f"{cl.get('location') or ''} · object `{cl['object_row_id']}` · "
+                       f"{str(cl.get('created_at') or '')[:10]}")
+            if cb.button("✅ Approve", key=f"ca_{cl['id']}", type="primary"):
+                _seasons.set_claim_status(conn, cl["id"], "approved"); st.rerun()
+            if cb.button("⛔ Reject", key=f"cr_{cl['id']}"):
+                _seasons.set_claim_status(conn, cl["id"], "rejected"); st.rerun()
 
 # ===========================================================================
 # DUPLICATES

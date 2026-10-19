@@ -60,6 +60,19 @@ app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"],
 )
 
+# Routers for the surfaces that grew beyond read-only: sign-in for the static
+# pages, the signed-in person's own pieces (capture app writes), seasonal games,
+# and the richer relationship graph. Each lives in its own module.
+from api import auth as _auth  # noqa: E402
+from api import graph_ext as _graph_ext  # noqa: E402
+from api import me as _me  # noqa: E402
+from api import seasons as _seasons  # noqa: E402
+
+app.include_router(_auth.router)
+app.include_router(_me.router)
+app.include_router(_seasons.router)
+app.include_router(_graph_ext.router)
+
 
 @app.on_event("startup")
 def _startup():
