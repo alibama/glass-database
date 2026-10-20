@@ -89,6 +89,24 @@ session is the source of truth.
 
 Record of who signed in is the same `users` ledger either way (`Admin → 👥 Users`).
 
+**If the capture app says "Sign-in isn't configured on this server"** (a 503 from
+`/api/auth/login`), the API could not find a complete provider in `secrets.toml`.
+Open `https://<domain>/api/auth/providers` (or run `sudo bash deploy/doctor.sh`):
+its `note` says why and `diagnostics` shows the file it looked at, whether it
+parsed and with which TOML parser, and which `[auth.*]` tables are complete —
+never the values. The usual causes, in order:
+
+1. The file is missing on the API's side (`/opt/glassdatabase/.streamlit/secrets.toml`),
+   or lives elsewhere — point `GLASSDB_SECRETS_PATH` at it in `.env`.
+2. It is not readable by the `glassdb` service user (see the gotcha below).
+3. `[auth.google]` lacks one of `client_id`, `client_secret`, `server_metadata_url`.
+4. Older builds only parsed TOML with Python 3.11's `tomllib`; on a Python 3.10
+   host (Ubuntu 22.04) that silently read nothing. The reader now falls back to
+   the `toml` package Streamlit already installs, so redeploying fixes it.
+
+Restart the API after changing the file: `sudo systemctl restart glassdb-api`.
+Pairing from Glowtbook keeps working throughout, since it needs no OAuth on the API.
+
 ## Notes
 
 - `secrets.toml` lives at `/opt/glassdatabase/.streamlit/secrets.toml` and is read

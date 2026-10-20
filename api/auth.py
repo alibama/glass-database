@@ -61,13 +61,29 @@ def provider() -> tuple[str, dict] | None:
     cfg = sessions.auth_config()
     if not cfg:
         return None
-    need = ("client_id", "client_secret", "server_metadata_url")
+    need = sessions.PROVIDER_KEYS
     for k, v in cfg.items():
         if isinstance(v, dict) and all(v.get(n) for n in need):
             return k, dict(v)
     if all(cfg.get(n) for n in need):
         return "default", {n: cfg[n] for n in need}
     return None
+
+
+def why_not_configured() -> str:
+    """A specific, admin-readable reason sign-in is off (no secret values)."""
+    d = sessions.secrets_diagnostics()
+    if not d["exists"]:
+        return (f"no secrets.toml found (looked at {d['path']}); copy .streamlit/secrets.toml.example, "
+                "fill in [auth.google], and restart the API")
+    if d["error"]:
+        return f"secrets.toml at {d['path']} could not be read: {d['error']}"
+    if not d["has_auth"]:
+        return f"secrets.toml at {d['path']} has no [auth] block"
+    if d["incomplete"] and not d["providers"]:
+        parts = "; ".join(f"[auth.{k}] is missing {', '.join(v)}" for k, v in d["incomplete"].items())
+        return f"secrets.toml at {d['path']}: {parts}"
+    return f"secrets.toml at {d['path']} has [auth] but no provider table with client_id, client_secret and server_metadata_url"
 
 
 def _public_base(request: Request) -> str:
@@ -126,11 +142,12 @@ def providers(request: Request):
     dev = os.environ.get("GLASSDB_DEV_LOGIN") == "1"
     return {"configured": bool(p) or dev, "provider": (p[0] if p else ("dev" if dev else None)),
             "login": f"{_api_prefix(request)}/auth/login",
+            "redirect_uri": redirect_uri(request) if p else None,
             "pairing": "Open the capture app from Glowtbook → Objects → Fingerprint to pair a "
                        "device without signing in again.",
-            "note": None if p else ("Sign-in isn't configured on this server: add [auth.google] to "
-                                    ".streamlit/secrets.toml and register /api/auth/callback as a "
-                                    "redirect URI (see deploy/AUTH.md).")}
+            "note": None if p else ("Sign-in isn't configured on this server: " + why_not_configured()
+                                    + ". Register /api/auth/callback as a redirect URI too (deploy/AUTH.md)."),
+            "diagnostics": sessions.secrets_diagnostics()}
 
 
 @router.get("/login", summary="Start sign-in (authorization code + PKCE)")
@@ -140,8 +157,8 @@ def login(request: Request, next: str = "/"):  # noqa: A002
         if os.environ.get("GLASSDB_DEV_LOGIN") == "1":
             return RedirectResponse(f"{_api_prefix(request)}/auth/dev-login?next={_safe_next(next)}")
         raise HTTPException(503, "Sign-in isn't configured on this server. Pair from Glowtbook "
-                                 "(Objects → Fingerprint → Pair this phone) or ask the admin to "
-                                 "configure [auth.google] in .streamlit/secrets.toml.")
+                                 "(Objects → Fingerprint → Pair this phone) instead. Admin: "
+                                 + why_not_configured() + " — details at /api/auth/providers.")
     name, cfg = p
     meta = _metadata(cfg["server_metadata_url"])
     verifier = secrets.token_urlsafe(48)

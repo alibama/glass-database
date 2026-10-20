@@ -52,17 +52,43 @@ def _b64d(s: str) -> bytes:
     return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
 
 
-def read_streamlit_secrets() -> dict:
-    """The same secrets.toml Streamlit reads (project .streamlit/ first, then ~/.streamlit/)."""
-    try:
-        import tomllib
-    except ImportError:  # pragma: no cover
-        return {}
+PROVIDER_KEYS = ("client_id", "client_secret", "server_metadata_url")
+
+
+def _load_toml(text: str, parsers: tuple[str, ...] = ("tomllib", "tomli", "toml")) -> tuple[dict, str]:
+    """Parse TOML with whatever is available: the stdlib ``tomllib`` (3.11+), ``tomli``,
+    or ``toml`` (a Streamlit dependency, so always present on an app host). Returns
+    (data, parser_name); raises if no parser can be imported."""
+    import importlib
+    last: Exception | None = None
+    for name in parsers:
+        try:
+            mod = importlib.import_module(name)
+        except ImportError as ex:
+            last = ex
+            continue
+        return mod.loads(text), name
+    raise ImportError(f"no TOML parser available ({last})")
+
+
+def secrets_candidates() -> list[Path]:
+    """Where secrets.toml may live: GLASSDB_SECRETS_PATH, the project's .streamlit/,
+    then ~/.streamlit/ — the same order Streamlit resolves it."""
     root = Path(__file__).resolve().parent.parent
-    for p in (root / ".streamlit" / "secrets.toml", Path.home() / ".streamlit" / "secrets.toml"):
+    out = []
+    env = os.environ.get("GLASSDB_SECRETS_PATH")
+    if env:
+        out.append(Path(env).expanduser())
+    out += [root / ".streamlit" / "secrets.toml", Path.home() / ".streamlit" / "secrets.toml"]
+    return out
+
+
+def read_streamlit_secrets() -> dict:
+    """The same secrets.toml Streamlit reads. Empty dict if absent or unreadable."""
+    for p in secrets_candidates():
         try:
             if p.exists():
-                return tomllib.loads(p.read_text(encoding="utf-8"))
+                return _load_toml(p.read_text(encoding="utf-8"))[0]
         except Exception:  # noqa: BLE001
             continue
     return {}
@@ -72,6 +98,48 @@ def auth_config() -> dict:
     """The [auth] block of secrets.toml (provider sub-tables included), or {}."""
     cfg = read_streamlit_secrets().get("auth") or {}
     return dict(cfg) if isinstance(cfg, dict) else {}
+
+
+def secrets_diagnostics() -> dict:
+    """Why sign-in is (not) configured, without exposing any secret values: which
+    file was found, whether it parsed and with what, whether [auth] exists, and
+    which provider tables are complete. Served by GET /api/auth/providers so an
+    admin can see the reason from a browser."""
+    import sys as _sys
+    d: dict = {"python": f"{_sys.version_info.major}.{_sys.version_info.minor}", "path": None,
+               "exists": False, "readable": False, "parser": None, "error": None, "has_auth": False,
+               "providers": [], "incomplete": {}}
+    for p in secrets_candidates():
+        d["path"] = str(p)
+        if not p.exists():
+            continue
+        d["exists"] = True
+        try:
+            data, parser = _load_toml(p.read_text(encoding="utf-8"))
+        except ImportError as ex:
+            d["error"] = f"no TOML parser: {ex} — install 'toml' or 'tomli', or run on Python 3.11+"
+            return d
+        except PermissionError:
+            d["error"] = "not readable by the service user (chown glassdb:glassdb, chmod 600)"
+            return d
+        except Exception as ex:  # noqa: BLE001
+            d["error"] = f"could not parse: {ex}"
+            return d
+        d["readable"], d["parser"] = True, parser
+        auth = data.get("auth") if isinstance(data, dict) else None
+        if isinstance(auth, dict):
+            d["has_auth"] = True
+            if all(auth.get(k) for k in PROVIDER_KEYS):
+                d["providers"].append("default")
+            for k, v in auth.items():
+                if isinstance(v, dict):
+                    missing = [n for n in PROVIDER_KEYS if not v.get(n)]
+                    if missing:
+                        d["incomplete"][k] = missing
+                    else:
+                        d["providers"].append(k)
+        return d
+    return d
 
 
 def secret() -> str:
