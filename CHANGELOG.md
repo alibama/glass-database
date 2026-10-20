@@ -6,6 +6,14 @@ All notable changes are documented here. This project distinguishes
 proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
+### Fixed
+- **"Sign-in isn't configured" on hosts running Python 3.10** — the API read
+  `.streamlit/secrets.toml` only with the stdlib `tomllib` (3.11+), so on an Ubuntu 22.04
+  server it silently saw no `[auth.google]` and the capture app's Sign in returned 503. The
+  reader now falls back to `tomli` / `toml` (the latter ships with Streamlit), honours
+  `GLASSDB_SECRETS_PATH`, and `GET /api/auth/providers` plus `deploy/doctor.sh` report *why*
+  sign-in is off (file, parser, `[auth]` tables — no values). The 503 message says the same.
+
 ### Added
 - **A blog, featured on the homepage** — Markdown posts in `blog/posts/` rendered by a
   dependency-free generator (`scripts/build_blog.py`, `make build-blog`) into `deploy/blog/`

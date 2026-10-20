@@ -99,3 +99,36 @@ def test_pair_token_works_as_bearer(client, monkeypatch):
     tok = unquote(link.split("#token=")[1].split("&")[0])
     j = client.get("/me", headers={"Authorization": f"Bearer {tok}"}).json()
     assert j["signed_in"] and j["kind"] == "pair" and j["name"] == "U Seven"
+
+
+def test_providers_configured_from_secrets_and_login_redirects(client, tmp_path, monkeypatch):
+    from tests.test_sessions import SECRETS
+    f = tmp_path / "secrets.toml"
+    f.write_text(SECRETS, encoding="utf-8")
+    monkeypatch.setenv("GLASSDB_SECRETS_PATH", str(f))
+    monkeypatch.setenv("PUBLIC_BASE_URL", "https://glassdatabase.org")
+    j = client.get("/auth/providers").json()
+    assert j["configured"] is True and j["provider"] == "google" and j["note"] is None
+    assert j["redirect_uri"] == "https://glassdatabase.org/auth/callback"
+    assert j["diagnostics"]["providers"] == ["google"] and j["diagnostics"]["parser"]
+
+    import api.auth as A
+    monkeypatch.setattr(A, "_metadata", lambda url: {
+        "authorization_endpoint": "https://accounts.google.com/o/oauth2/v2/auth",
+        "token_endpoint": "https://oauth2.googleapis.com/token",
+        "userinfo_endpoint": "https://openidconnect.googleapis.com/v1/userinfo"})
+    r = client.get("/auth/login?next=/fingerprint/enroll.html", follow_redirects=False)
+    assert r.status_code == 307
+    loc = r.headers["location"]
+    assert loc.startswith("https://accounts.google.com/o/oauth2/v2/auth?")
+    assert "code_challenge_method=S256" in loc and "client_id=abc.apps.googleusercontent.com" in loc
+    assert "redirect_uri=https%3A%2F%2Fglassdatabase.org%2Fauth%2Fcallback" in loc
+    assert A.STATE_COOKIE in r.cookies
+
+
+def test_unconfigured_login_explains_why(client, tmp_path, monkeypatch):
+    monkeypatch.setenv("GLASSDB_SECRETS_PATH", str(tmp_path / "nope.toml"))
+    r = client.get("/auth/login", follow_redirects=False)
+    assert r.status_code == 503 and "no secrets.toml found" in r.json()["detail"]
+    j = client.get("/auth/providers").json()
+    assert j["configured"] is False and "no secrets.toml found" in j["note"]
