@@ -402,7 +402,9 @@ def render_feed(posts: list[dict], base: str) -> str:
     <description>{html.escape(p['summary'])}</description>
     <content:encoded><![CDATA[{render_markdown(p['body_md'])}]]></content:encoded>
   </item>""")
-    now = datetime.now(timezone.utc).strftime("%a, %d %b %Y %H:%M:%S +0000")
+    # Deterministic: the newest post's date, not "now". The installer rebuilds the blog
+    # on the server, and a changing stamp would dirty a tracked file on every deploy.
+    now = rfc(posts[0]["date"]) if posts else "Thu, 01 Jan 2026 00:00:00 +0000"
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
 <channel>

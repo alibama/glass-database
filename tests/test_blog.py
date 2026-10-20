@@ -103,3 +103,15 @@ def test_repo_blog_builds_and_lima_is_featured(tmp_path):
     home = (ROOT / "deploy" / "landing-index.html").read_text(encoding="utf-8")
     block = home.split("<!-- blog:latest -->")[1].split("<!-- /blog:latest -->")[0]
     assert "/blog/blowing-glass-in-lima.html" in block
+
+
+def test_build_is_deterministic(tmp_path):
+    """The installer rebuilds on the server; identical sources must give identical bytes,
+    or every deploy dirties tracked files (feed.xml) and blocks the next git checkout."""
+    src = tmp_path / "p"; src.mkdir()
+    (src / "2026-10-01-a.md").write_text(POST, encoding="utf-8")
+    a, b = tmp_path / "a", tmp_path / "b"
+    B.build(src, a, "https://x.org", None)
+    B.build(src, b, "https://x.org", None)
+    for name in ("feed.xml", "index.html", "a-test-study.html", "posts.json"):
+        assert (a / name).read_bytes() == (b / name).read_bytes(), name
