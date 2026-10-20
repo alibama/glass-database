@@ -32,6 +32,16 @@ proof-of-concept features from production-ready ones in its docs.
   sign-in is off (file, parser, `[auth]` tables — no values). The 503 message says the same.
 
 ### Added
+- **Maker events with purchase registration** — a maker hosts an event in Glowtbook → Events
+  (a sale, a demo, an ornament day at a gallery; venue, dates, piece type, fingerprinting
+  none/optional/all) and gets a link + QR for the table. Buyers sign in at `/register.html`,
+  pick the event and register the piece (photo optional, piece number optional, names private
+  by default); the piece also lands in their Glowtbook ready to fingerprint. Two-stage review:
+  the host approves (bulk) in Glowtbook, then Admin → Review queue → **Event registrations**
+  publishes to the registry with provenance (created at the event by the maker, acquired by
+  the buyer). Events work by link immediately; the public directory at `/events.html` lists
+  them once an admin approves the listing. `central/events.py`, `api/events.py`,
+  `docs/EVENTS.md`.
 - **A blog, featured on the homepage** — Markdown posts in `blog/posts/` rendered by a
   dependency-free generator (`scripts/build_blog.py`, `make build-blog`) into `deploy/blog/`
   (index, one page per post, RSS `feed.xml`, `posts.json`) in the Field Data style, with

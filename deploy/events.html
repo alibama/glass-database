@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Events — Glass Database</title>
+<meta name="description" content="Maker-hosted events — ornament days, pop-ups, demos — where the piece you buy can be registered on the spot: provenance from the moment of sale, in your Glowtbook, ready to fingerprint.">
+<meta property="og:title" content="Events — Glass Database">
+<meta property="og:description" content="Buy a piece at the table, register it, and it's on the record: made by the maker, acquired by you.">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/field-data.css">
+<script src="/site.js"></script>
+<style>
+  html { scroll-behavior: smooth; }
+  body { margin: 0; }
+  [hidden] { display: none !important; }
+  .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 6rem; }
+  /* nav + footer rules are shared: see "Site chrome" in /field-data.css */
+  section.fd-sec { position: relative; padding: clamp(3.4rem, 8vw, 6.5rem) 0 0; }
+  .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.8rem; max-width: 62ch; }
+  .fd-hero .fd-headline { max-width: 22ch; }
+  .fd-hero__cta { display: flex; gap: .9rem 1rem; flex-wrap: wrap; margin-top: 2rem; }
+  .fd-two { display: grid; grid-template-columns: 1fr; gap: 2.4rem; }
+  @media (min-width: 860px){ .fd-two { grid-template-columns: 1fr 1fr; align-items: start; } }
+  .fd-hero-wrap { position: relative; }
+  .fd-filaments { position: absolute; inset: -2rem -10vw auto; height: 130%; z-index: 0; }
+  .fd-hero-wrap > *:not(.fd-filaments) { position: relative; z-index: 1; }
+
+  /* --- events (ev-) ------------------------------------------------------ */
+  .ev-mono { font-family: var(--fd-mono); letter-spacing: .1em; text-transform: uppercase; font-size: clamp(11px,1.2vw,13px); }
+  .ev-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .3rem .75rem; border-radius: 999px; white-space: nowrap;
+    border: 1px solid var(--fd-rule-soft); color: var(--fd-dim); font-family: var(--fd-mono); letter-spacing: .08em; text-transform: uppercase; font-size: 11px; }
+  .ev-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--fd-faint); flex: none; }
+  .ev-pill.open { color: var(--fd-amber); border-color: var(--fd-amber); }
+  .ev-pill.open::before { background: var(--fd-amber); box-shadow: 0 0 10px var(--fd-amber); }
+  .ev-pill.unlisted { color: var(--fd-violet); border-color: var(--fd-violet); }
+  .ev-pill.unlisted::before { background: var(--fd-violet); box-shadow: 0 0 10px var(--fd-violet); }
+
+  .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.1rem; margin-top: 2rem; }
+  .ev-card { position: relative; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden;
+    border: 1px solid var(--fd-rule); background: linear-gradient(180deg, rgba(238,231,219,.03), rgba(238,231,219,0));
+    transition: border-color .18s ease, box-shadow .3s ease; }
+  .ev-card:hover { border-color: var(--fd-rule-soft); }
+  .ev-card.hit { border-color: var(--fd-amber); box-shadow: 0 0 0 3px rgba(232,164,74,.25), 0 0 40px -10px var(--fd-amber); }
+  .ev-card.open { grid-column: 1 / -1; }
+  .ev-card__body { padding: 1.1rem 1.2rem 1.2rem; display: flex; flex-direction: column; gap: .4rem; flex: 1; }
+  .ev-card__date { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .1em; text-transform: uppercase; color: var(--fd-amber); margin: 0; }
+  .ev-card h3 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 380; font-weight: 400;
+    color: var(--fd-bone); font-size: clamp(21px, 2.4vw, 26px); margin: .1rem 0 0; line-height: 1.18; text-wrap: balance; }
+  .ev-card .who { color: var(--fd-dim); font-size: clamp(14px,1.5vw,16px); margin: 0; }
+  .ev-card .where { color: var(--fd-faint); font-size: clamp(13px,1.4vw,15px); margin: 0; }
+  .ev-card .tags { display: flex; gap: .4rem .9rem; flex-wrap: wrap; margin-top: .5rem; color: var(--fd-faint); }
+  .ev-card .tags b { color: var(--fd-bone); font-weight: 500; }
+  .ev-card .desc { color: var(--fd-dim); font-size: clamp(14px,1.5vw,16px); line-height: 1.55; margin: .5rem 0 0; }
+  .ev-actions { display: flex; gap: .5rem .9rem; flex-wrap: wrap; align-items: center; margin-top: auto; padding-top: 1rem; }
+  .ev-cta { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; font-size: 12px;
+    cursor: pointer; padding: .6rem 1rem; border-radius: 999px; border: 1.5px solid var(--fd-amber); background: transparent;
+    color: var(--fd-amber) !important; display: inline-flex; gap: .5rem; align-items: center; text-decoration: none !important; transition: all .15s ease; }
+  .ev-cta:hover, .ev-cta:focus-visible { background: var(--fd-amber); color: var(--fd-bg-top) !important; outline: none; }
+  .ev-link { font-family: var(--fd-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--fd-dim) !important;
+    text-decoration: none !important; padding: .5rem .2rem; background: none; border: 0; cursor: pointer; }
+  .ev-link:hover { color: var(--fd-amber) !important; }
+  .ev-link[aria-expanded="true"] { color: var(--fd-amber) !important; }
+  .ev-link[aria-expanded]::after { content: " ▾"; }
+  .ev-link[aria-expanded="true"]::after { content: " ▴"; }
+
+  /* gallery of approved pieces */
+  .ev-gallery { border-top: 1px solid var(--fd-rule); padding: 1rem 1.2rem 1.2rem; background: rgba(5,7,10,.35); }
+  .ev-gallery__head { display: flex; gap: .5rem 1rem; flex-wrap: wrap; align-items: baseline; justify-content: space-between; color: var(--fd-faint); margin-bottom: .9rem; }
+  .ev-pieces { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .8rem; }
+  .ev-piece { display: flex; flex-direction: column; gap: .3rem; }
+  .ev-piece img, .ev-piece .ph { aspect-ratio: 1 / 1; width: 100%; border-radius: 12px; object-fit: cover; background: #05070a; display: block; border: 1px solid var(--fd-rule); }
+  .ev-piece .ph { display: grid; place-items: center; color: var(--fd-faint); border-style: dashed; }
+  .ev-piece .ph svg { width: 26px; height: 26px; opacity: .6; }
+  .ev-piece h4 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 400; font-weight: 400; color: var(--fd-bone); font-size: 16px; margin: .35rem 0 0; line-height: 1.25; }
+  .ev-piece p { margin: 0; color: var(--fd-faint); font-size: 13px; line-height: 1.4; }
+  .ev-piece p b { color: var(--fd-dim); font-weight: 500; }
+  a.ev-piece, a.ev-piece:hover { text-decoration: none !important; }
+  a.ev-piece:hover h4 { color: var(--fd-amber); }
+  .ev-empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--fd-rule-soft); border-radius: 16px; color: var(--fd-dim);
+    font-size: clamp(15px,1.7vw,17px); line-height: 1.55; max-width: 62ch; }
+  .ev-empty.small { margin: 0; padding: .9rem 1rem; font-size: 14px; }
+  .ev-empty a.fd-cta { margin-top: 1rem; }
+  .ev-skel { height: 220px; border-radius: 16px; border: 1px solid var(--fd-rule); background: linear-gradient(90deg, rgba(238,231,219,.02), rgba(238,231,219,.05), rgba(238,231,219,.02)); background-size: 200% 100%; animation: sh 1.4s infinite; }
+  @keyframes sh { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+
+  /* past events as rows */
+  .ev-past { margin-top: 1.4rem; }
+  .ev-past .ev-row { border-bottom: 1px solid var(--fd-rule); padding: 0 0 14px; margin-bottom: 22px; }
+  .ev-past .ev-row:last-child { margin-bottom: 0; }
+  .ev-past .ev-row__main { display: grid; grid-template-columns: 1fr auto; gap: .5rem 1.5rem; align-items: center; }
+  .ev-past .ev-row p { font-size: clamp(15px,1.7vw,18px); color: var(--fd-bone); margin: 0; font-family: var(--fd-sans); }
+  .ev-past .ev-row p small { display: block; color: var(--fd-faint); font-size: clamp(12px,1.3vw,14px); margin-top: .15rem; }
+  .ev-past .ev-row .val { display: flex; gap: .4rem 1rem; flex-wrap: wrap; align-items: center; color: var(--fd-faint); white-space: nowrap; }
+  .ev-past .ev-row .val b { color: var(--fd-bone); font-weight: 500; }
+  .ev-past .ev-gallery { border: 1px solid var(--fd-rule); border-radius: 14px; margin-top: 1rem; }
+  .ev-counter { margin-top: 1.2rem; color: var(--fd-faint); display: flex; gap: 1rem; flex-wrap: wrap; }
+  .ev-counter b { color: var(--fd-amber); font-weight: 500; }
+
+  @media (max-width: 560px) {
+    .fd-page .fd-row { grid-template-columns: 1fr; gap: .25rem; }
+    .fd-hero__cta .fd-cta { width: 100%; justify-content: center; box-sizing: border-box; }
+    .ev-past .ev-row__main { grid-template-columns: 1fr; }
+    .ev-pieces { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body class="fd-ground">
+<div class="fd-page">
+
+  <nav class="fd-nav" aria-label="Site">
+    <a class="fd-nav__brand" href="/">Glass&nbsp;Database</a>
+    <div class="fd-nav__links">
+      <a href="/explore/">Explore</a>
+      <a href="/blog/">Blog</a>
+      <a href="/glowtbook/" class="on">Glowtbook</a>
+      <a href="/studios.html">Visualizations</a>
+      <a href="/shop.html">Shops</a>
+      <span id="chip"></span>
+    </div>
+  </nav>
+  <div class="fd-subnav" aria-label="Glowtbook">
+    <span class="fd-subnav__label">Glowtbook</span>
+    <a href="/glowtbook/">Journal &amp; pieces</a>
+    <a href="/fingerprint/enroll.html">Capture app</a>
+    <a href="/games.html">Seasons</a>
+    <a href="/events.html" class="on" aria-current="page">Events</a>
+  </div>
+
+  <header class="fd-hero-wrap">
+    <svg class="fd-filaments" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+      <path d="M-40 640 C 300 560, 520 520, 900 250"/>
+      <path d="M-40 700 C 360 600, 640 460, 902 252"/>
+      <path d="M120 700 C 420 560, 700 380, 902 252"/>
+      <path d="M1240 620 C 1050 520, 1010 380, 902 252"/>
+      <path d="M1240 700 C 1080 560, 980 360, 902 252"/>
+      <circle cx="902" cy="252" r="6"/>
+    </svg>
+    <section class="fd-hero fd-sec" style="padding-top:2.4rem" id="hero">
+      <p class="fd-eyebrow">Events</p>
+      <h1 class="fd-headline" style="margin-top:1.6rem">Bought a piece at the table? <em>Register it before you leave.</em></h1>
+      <p class="fd-body fd-lede" style="margin-top:1.4rem">Makers host events — ornament days, pop-ups, demos. The piece you buy there goes on the record the same afternoon: made by the maker, bought by you, ready to fingerprint.</p>
+      <div class="ev-counter ev-mono" id="heroMeta"></div>
+      <div class="fd-hero__cta">
+        <a class="fd-cta" href="/register.html">Register a piece</a>
+        <a class="fd-cta" href="/glowtbook/?page=events" style="color:var(--fd-teal);border-color:var(--fd-teal)">Host an event</a>
+      </div>
+    </section>
+  </header>
+
+  <section class="fd-sec" id="how">
+    <p class="fd-eyebrow">How it works</p>
+    <div class="fd-kicker-rule"></div>
+    <div class="fd-two">
+      <div>
+        <p class="fd-label" style="color:var(--fd-teal)">For buyers</p>
+        <div class="fd-rows" style="margin-top:1.2rem">
+          <div class="fd-row"><span class="fd-label">Buy</span>
+            <p>Get a piece at the event — the table, the gallery, the demo. The maker gets paid; that's the point.</p></div>
+          <div class="fd-row"><span class="fd-label">Register</span>
+            <p>Scan the QR on the table or open <a href="/register.html">Register a piece</a>. Sign in, say what it is, snap a photo. A minute, standing up.</p></div>
+          <div class="fd-row"><span class="fd-label">Host confirms</span>
+            <p>The maker sees the registration in Glowtbook and confirms it was theirs — usually the same day.</p></div>
+          <div class="fd-row"><span class="fd-label">On the record</span>
+            <p>The site publishes it to the registry with provenance: created by the maker at the event, acquired by you. Your name stays private unless you choose otherwise.</p></div>
+          <div class="fd-row"><span class="fd-label">Fingerprint</span>
+            <p>It's already in your <a href="/glowtbook/">Glowtbook</a>. Capture its fingerprint and any phone can prove <em>this</em> piece is the one on the record.</p></div>
+        </div>
+      </div>
+      <div>
+        <p class="fd-label" style="color:var(--fd-amber)">For makers</p>
+        <div class="fd-rows" style="margin-top:1.2rem">
+          <div class="fd-row"><span class="fd-label">Host</span>
+            <p>Open <a href="/glowtbook/?page=events">Glowtbook → Events</a> and add the sale: venue, date, what you're making. It works the moment you save it.</p></div>
+          <div class="fd-row"><span class="fd-label">QR on the table</span>
+            <p>Print the registration link and its QR. Buyers scan it with the piece in their hand.</p></div>
+          <div class="fd-row"><span class="fd-label">Approve</span>
+            <p>After the event, approve the registrations in bulk — or reject the one that wasn't yours.</p></div>
+          <div class="fd-row"><span class="fd-label">Published</span>
+            <p>The site reviews and publishes them. Each piece becomes a public record with your name on it, and the collector has a reason to come back.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="fd-sec" id="yours" hidden>
+    <p class="fd-eyebrow">From your link</p>
+    <div class="fd-kicker-rule"></div>
+    <div class="ev-grid" id="yoursGrid" style="margin-top:1rem"></div>
+  </section>
+
+  <section class="fd-sec" id="open">
+    <p class="fd-eyebrow">Open now</p>
+    <div class="fd-kicker-rule"></div>
+    <h2 class="fd-headline">Where to <em>register.</em></h2>
+    <div class="ev-grid" id="grid"><div class="ev-skel"></div><div class="ev-skel"></div><div class="ev-skel"></div></div>
+  </section>
+
+  <section class="fd-sec" id="past" hidden>
+    <p class="fd-eyebrow">Past events</p>
+    <div class="fd-kicker-rule"></div>
+    <h2 class="fd-headline">On the <em>record.</em></h2>
+    <div class="ev-past" id="pastList"></div>
+  </section>
+
+  <section class="fd-sec" id="host">
+    <p class="fd-eyebrow">Host an event</p>
+    <div class="fd-kicker-rule"></div>
+    <h2 class="fd-headline">Provenance starts <em>at the till.</em></h2>
+    <p class="fd-body" style="margin-top:1.4rem">A certificate in a drawer gets lost; a record made at the moment of sale doesn't. Hosting an event costs nothing: add it in Glowtbook, print the QR, and every piece that leaves the table can carry your name, the date and the place for as long as it exists. The collectors come back, and — quietly — it's a census of who is making what, where, and what it sells for. Data stays open under CC&nbsp;BY&nbsp;4.0.</p>
+    <div class="fd-hero__cta">
+      <a class="fd-cta" href="/glowtbook/?page=events">Open Glowtbook → Events</a>
+      <a class="fd-cta" href="https://discord.gg/9ek2UxvPT" style="color:var(--fd-dim);border-color:var(--fd-rule-soft)">Ask on Discord</a>
+    </div>
+  </section>
+
+  <footer class="fd-footer">
+    <div>
+      <p style="color:var(--fd-bone);font-size:14px;letter-spacing:.1em">GLASS&nbsp;DATABASE</p>
+      <p>Data &amp; ontology under <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a> &middot;
+         software <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache&nbsp;2.0</a></p>
+    </div>
+    <p>
+      <a href="https://discord.gg/9ek2UxvPT">Discord</a> &middot;
+      <a href="https://www.instagram.com/glassdatabase/">Instagram</a> &middot;
+      <a href="/api/docs">Developer API</a> &middot;
+      <a class="fd-handle" href="https://github.com/alibama/glass-database">github.com/alibama/glass-database</a>
+    </p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  var S = { events: [], want: GDB.param("event"), cache: {} };
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  var DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  var CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+
+  function parseDay(s) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ""); if (!m) return null;
+    return new Date(+m[1], +m[2] - 1, +m[3]);
+  }
+  function fmtDate(a, b) {
+    var d = parseDay(a); if (!d) return a || "";
+    var e = parseDay(b);
+    var one = DAY[d.getDay()] + " " + d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear();
+    if (!e || e.getTime() === d.getTime()) return one;
+    if (e.getMonth() === d.getMonth() && e.getFullYear() === d.getFullYear())
+      return d.getDate() + "–" + e.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear();
+    return d.getDate() + " " + MON[d.getMonth()] + " – " + e.getDate() + " " + MON[e.getMonth()] + " " + e.getFullYear();
+  }
+  function where(ev) { return [ev.venue, ev.city, ev.region].filter(Boolean).join(", "); }
+  function who(ev) {
+    var h = ev.host_name || "", s = ev.studio || "";
+    return s && s !== h ? (h ? h + " · " + s : s) : (h || s);
+  }
+  function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
+  function registerUrl(ev) { return "/register.html?event=" + encodeURIComponent(ev.slug); }
+  function imgUrl(p) { return GDB.API + "/events/registrations/" + p.id + "/image"; }
+
+  /* --- gallery of approved pieces ---------------------------------------- */
+  function pieceHtml(p) {
+    var by = p.buyer && p.buyer !== "a collector" ? "by <b>" + esc(p.buyer) + "</b>" : "a collector's";
+    var inner = (p.has_image ? '<img src="' + esc(imgUrl(p)) + '" alt="' + esc(p.title) + '" loading="lazy" onerror="this.style.opacity=.15">'
+                             : '<span class="ph" aria-hidden="true">' + CAM + "</span>") +
+      "<h4>" + esc(p.title) + "</h4>" +
+      "<p>" + by + (p.piece_ref ? " · piece " + esc(p.piece_ref) : "") + "</p>";
+    return p.object_url ? '<a class="ev-piece" href="' + esc(p.object_url) + '">' + inner + "</a>" : '<div class="ev-piece">' + inner + "</div>";
+  }
+  function galleryHtml(ev, full) {
+    var pieces = (full && full.pieces) || [];
+    var head = '<div class="ev-gallery__head ev-mono"><span>' + (pieces.length ? plural(pieces.length, "published piece") : "published pieces") + "</span>" +
+      (ev.can_register ? '<a class="ev-link" href="' + esc(registerUrl(ev)) + '">Register yours →</a>' : "") + "</div>";
+    if (!pieces.length) {
+      var why = ev.published > 0 ? "The host keeps this event's pieces private." :
+        (ev.registered > 0 ? plural(ev.registered, "piece") + " registered — in review. Published pieces appear here." : "No pieces published yet" + (ev.can_register ? " — be the first." : "."));
+      return head + '<div class="ev-empty small">' + esc(why) + "</div>";
+    }
+    return head + '<div class="ev-pieces">' + pieces.map(pieceHtml).join("") + "</div>";
+  }
+  function toggleGallery(btn, ev, host) {
+    var panel = host.querySelector(".ev-gallery");
+    var open = btn.getAttribute("aria-expanded") === "true";
+    if (open) { if (panel) panel.hidden = true; btn.setAttribute("aria-expanded", "false"); host.classList.remove("open"); return; }
+    btn.setAttribute("aria-expanded", "true"); host.classList.add("open");
+    if (!panel) {
+      panel = document.createElement("div"); panel.className = "ev-gallery";
+      panel.innerHTML = '<div class="ev-empty small">Loading pieces…</div>';
+      host.appendChild(panel);
+    }
+    panel.hidden = false;
+    var done = function (full) { panel.innerHTML = galleryHtml(ev, full); };
+    if (S.cache[ev.slug]) { done(S.cache[ev.slug]); return; }
+    GDB.json("/events/" + encodeURIComponent(ev.slug)).then(function (full) { S.cache[ev.slug] = full; done(full); })
+      .catch(function (err) { panel.innerHTML = '<div class="ev-empty small">Couldn\'t load the pieces (' + esc(err.message || "offline") + ").</div>"; });
+  }
+
+  /* --- cards --------------------------------------------------------------- */
+  function card(ev, opts) {
+    opts = opts || {};
+    var w = where(ev), d = fmtDate(ev.starts, ev.ends);
+    var n = ev.registered || 0;
+    return '<article class="ev-card" id="ev-' + esc(ev.slug) + '" data-slug="' + esc(ev.slug) + '">' +
+      '<div class="ev-card__body">' +
+        '<p class="ev-card__date">' + esc(d || "date to be announced") + "</p>" +
+        "<h3>" + esc(ev.title) + "</h3>" +
+        '<p class="who">' + esc(who(ev)) + "</p>" +
+        (w ? '<p class="where">' + esc(w) + "</p>" : "") +
+        '<div class="tags ev-mono">' +
+          (ev.piece_type ? "<span><b>" + esc(ev.piece_type) + "</b></span>" : "") +
+          (ev.price_note ? "<span>" + esc(ev.price_note) + "</span>" : "") +
+          "<span><b>" + n + "</b> " + (n === 1 ? "piece" : "pieces") + " registered</span>" +
+          (opts.unlisted ? '<span class="ev-pill unlisted">not in the directory yet</span>' : "") +
+          (!ev.can_register ? '<span class="ev-pill">registrations closed</span>' : "") +
+        "</div>" +
+        (ev.description ? '<p class="desc">' + esc(ev.description) + "</p>" : "") +
+        '<div class="ev-actions">' +
+          (ev.can_register ? '<a class="ev-cta" href="' + esc(registerUrl(ev)) + '">Register a piece</a>' : "") +
+          '<button type="button" class="ev-link" data-gallery aria-expanded="false">See the pieces' + (ev.published ? " (" + ev.published + ")" : "") + "</button>" +
+        "</div>" +
+      "</div></article>";
+  }
+  function wire(root) {
+    root.querySelectorAll("[data-gallery]").forEach(function (b) {
+      var host = b.closest("[data-slug]"), ev = findEv(host.getAttribute("data-slug"));
+      if (!ev) return;
+      b.addEventListener("click", function () { toggleGallery(b, ev, host); });
+    });
+  }
+  function findEv(slug) {
+    for (var i = 0; i < S.events.length; i++) if (S.events[i].slug === slug) return S.events[i];
+    return S.extra && S.extra.slug === slug ? S.extra : null;
+  }
+
+  function renderOpen(open) {
+    var g = $("#grid");
+    if (!open.length) {
+      g.innerHTML = '<div class="ev-empty">' + (S.events.length
+        ? "Nothing is open for registration right now. The next sale goes up here as soon as a host adds it — or scan the QR at a table you're standing at; that works without the directory."
+        : 'The first events are being set up — hosts: open <a href="/glowtbook/?page=events">Glowtbook → Events</a>, add your sale, and the registration link works at once. It shows here after a quick review.') +
+        "</div>";
+      return;
+    }
+    g.innerHTML = open.map(function (e) { return card(e); }).join("");
+    wire(g);
+  }
+  function renderPast(past) {
+    var sec = $("#past"), el = $("#pastList");
+    if (!past.length) { sec.hidden = true; return; }
+    sec.hidden = false;
+    el.innerHTML = past.map(function (ev) {
+      var sub = [who(ev), where(ev), fmtDate(ev.starts, ev.ends)].filter(Boolean).join(" · ");
+      return '<div class="ev-row" id="ev-' + esc(ev.slug) + '" data-slug="' + esc(ev.slug) + '">' +
+        '<div class="ev-row__main"><p>' + esc(ev.title) + (ev.piece_type ? " — <em>" + esc(ev.piece_type) + "s</em>" : "") + "<small>" + esc(sub) + "</small></p>" +
+        '<span class="val ev-mono"><span><b>' + (ev.published || 0) + "</b> published</span>" +
+        '<button type="button" class="ev-link" data-gallery aria-expanded="false">See the pieces</button></span></div></div>';
+    }).join("");
+    wire(el);
+  }
+  function renderMeta(list) {
+    var open = list.filter(function (e) { return e.can_register; }).length;
+    var pieces = list.reduce(function (a, e) { return a + (e.published || 0); }, 0);
+    var regs = list.reduce(function (a, e) { return a + (e.registered || 0); }, 0);
+    $("#heroMeta").innerHTML = list.length
+      ? "<span><b>" + plural(open, "event") + "</b> open</span><span><b>" + plural(regs, "piece") + "</b> registered</span><span><b>" + pieces + "</b> published</span>"
+      : "";
+  }
+
+  /* --- deep link (?event=slug) --------------------------------------------- */
+  function openWanted() {
+    var slug = S.want; if (!slug) return;
+    var host = document.getElementById("ev-" + slug);
+    if (host) {
+      var b = host.querySelector("[data-gallery]");
+      if (b && b.getAttribute("aria-expanded") !== "true") b.click();
+      host.classList.add("hit"); host.scrollIntoView({ block: "start" });
+      setTimeout(function () { host.classList.remove("hit"); }, 6000);
+      return;
+    }
+    // not in the directory (yet): the link from the table still works
+    GDB.json("/events/" + encodeURIComponent(slug)).then(function (full) {
+      S.extra = full; S.cache[slug] = full;
+      var sec = $("#yours"), g = $("#yoursGrid");
+      g.innerHTML = card(full, { unlisted: !full.listed }); sec.hidden = false; wire(g);
+      var b = g.querySelector("[data-gallery]"); if (b) b.click();
+      sec.scrollIntoView({ block: "start" });
+    }).catch(function () {
+      var g = $("#yoursGrid"); $("#yours").hidden = false;
+      g.innerHTML = '<div class="ev-empty">We couldn\'t find that event — the link may be old. Ask the host for a fresh one, or pick from the list below.</div>';
+    });
+  }
+
+  /* --- boot ----------------------------------------------------------------- */
+  function load() {
+    GDB.json("/events").then(function (d) {
+      S.events = d.events || [];
+      var open = S.events.filter(function (e) { return e.can_register; });
+      var past = S.events.filter(function (e) { return !e.can_register; });
+      renderMeta(S.events); renderOpen(open); renderPast(past); openWanted();
+    }).catch(function (err) {
+      $("#grid").innerHTML = '<div class="ev-empty">Couldn\'t reach the API (' + esc(err.message || "network") + "). Try again in a moment.</div>";
+    });
+  }
+  GDB.chip("#chip", { next: location.pathname + location.search, compact: true });
+  load();
+})();
+</script>
+</body>
+</html>
