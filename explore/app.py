@@ -171,6 +171,8 @@ except Exception:
     _qp = ""
 _vdefault = _VIEWS.index(_VALIAS[_qp]) if _qp in _VALIAS else 0
 mode = st.sidebar.radio("View", _VIEWS, index=_vdefault, label_visibility="collapsed")
+st.sidebar.link_button("🕸 Relationship graph", "/graph.html", use_container_width=True,
+                       help="Who taught whom, what touches what — the registry as a network.")
 from brand import track as _track
 
 _track("explore", mode)

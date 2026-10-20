@@ -12,14 +12,7 @@
   html { scroll-behavior: smooth; }
   body { margin: 0; }
   .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 7rem; }
-  .fd-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-    padding: 1.4rem 0 1.1rem; flex-wrap: wrap; border-bottom: 1px solid var(--fd-rule); }
-  .fd-nav__brand { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--fd-bone); font-size: clamp(13px,1.5vw,15px); }
-  .fd-nav__links { display: flex; gap: clamp(.9rem, 2.2vw, 1.8rem); flex-wrap: wrap; }
-  .fd-nav__links a { font-family: var(--fd-mono); font-size: clamp(12px,1.3vw,14px);
-    letter-spacing: .1em; text-transform: uppercase; color: var(--fd-dim); text-decoration: none; }
-  .fd-nav__links a:hover { color: var(--fd-amber); }
+  /* nav + footer rules are shared: see "Site chrome" in /field-data.css */
   section.fd-sec { position: relative; padding: clamp(4rem, 9vw, 7.5rem) 0 0; }
   .fd-sec__head { max-width: 62ch; }
   .fd-sec .fd-eyebrow { display: inline-block; border-bottom: none; padding-bottom: 0; }
@@ -80,12 +73,6 @@
   .fd-shots figcaption a { color: var(--fd-amber); }
   .fd-two { display: grid; grid-template-columns: 1fr; gap: 2.4rem; margin-top: 0; }
   @media (min-width: 860px){ .fd-two { grid-template-columns: 1.1fr .9fr; align-items: start; } }
-  .fd-footer { margin-top: clamp(5rem, 10vw, 8rem); padding-top: 2rem; border-top: 1px solid var(--fd-rule);
-    display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: baseline; justify-content: space-between; }
-  .fd-footer p { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .06em;
-    color: var(--fd-faint); margin: .3rem 0; }
-  .fd-footer a { color: var(--fd-dim); text-decoration: none; }
-  .fd-footer a:hover { color: var(--fd-amber); }
   .fd-hero-wrap { position: relative; }
   .fd-filaments { position: absolute; inset: -2rem -10vw auto; height: 130%; z-index: 0; }
   .fd-hero-wrap > *:not(.fd-filaments) { position: relative; z-index: 1; }
@@ -94,20 +81,14 @@
 <body class="fd-ground">
 <div class="fd-page">
 
-  <nav class="fd-nav">
+  <nav class="fd-nav" aria-label="Site">
     <span class="fd-nav__brand">Glass&nbsp;Database</span>
     <div class="fd-nav__links">
       <a href="/explore/">Explore</a>
       <a href="/blog/">Blog</a>
       <a href="/glowtbook/">Glowtbook</a>
-      <a href="#barcoding">Barcoding</a>
-      <a href="/studios.html">Map</a>
+      <a href="/studios.html">Visualizations</a>
       <a href="/shop.html">Shops</a>
-      <a href="/shop-costs.html">Costs</a>
-      <a href="/graph.html">Graph</a>
-      <a href="/games.html">Seasons</a>
-      <a href="/api/docs">API</a>
-      <a href="https://discord.gg/9ek2UxvPT">Discord</a>
     </div>
   </nav>
 
@@ -159,7 +140,42 @@
     </section>
   </header>
 
-  <section class="fd-sec" id="blog" style="padding-top:clamp(3.2rem, 7vw, 5.5rem)">
+  <section class="fd-sec" id="explore" style="padding-top:clamp(3.2rem, 7vw, 5.5rem)">
+    <div class="fd-sec__head">
+      <p class="fd-eyebrow">Open data</p>
+      <div class="fd-kicker-rule"></div>
+      <h2 class="fd-headline">See the whole field, then <em>take it with you.</em></h2>
+      <p class="fd-body" style="margin-top:1.2rem">Browse and filter the registry — artists, studios,
+        objects, opportunities, and the community boards — then take any view with you. Everything here is
+        also served by a read-only <a href="/api/docs">API</a>.</p>
+    </div>
+    <div class="fd-cards">
+      <a class="fd-card" href="/explore/">
+        <h3>Datasets</h3>
+        <p>Filterable tables of artists, studios, objects, and more — export any view.</p>
+        <span class="fd-go">Open the explorer &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--violet" href="/graph.html">
+        <h3>Relationship graph</h3>
+        <p>Artists, mentors, techniques, studios, and pieces as a living network you can explore.</p>
+        <span class="fd-go">Open the graph &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--teal" href="/explore/?view=opportunities">
+        <h3>Opportunities</h3>
+        <p>Open calls, residencies, and grants in one calendar, with an ICS feed you can subscribe to so
+          new listings land in yours.</p>
+        <span class="fd-go">Browse the calendar &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--teal" href="/explore/?view=community">
+        <h3>Community boards</h3>
+        <p>Exchange — sell, want, or trade work. Jobs — gaffer, assistant, teaching, and studio-tech openings.
+          Resources — suppliers, equipment, shared know-how.</p>
+        <span class="fd-go">Open the boards &rarr;</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="fd-sec" id="blog">
     <div class="fd-sec__head">
       <p class="fd-eyebrow">From the blog</p>
       <div class="fd-kicker-rule"></div>
@@ -174,70 +190,6 @@
       <a class="fd-cta" href="/blog/">Read the blog</a>
       <a class="fd-cta" href="/blog/feed.xml" style="color:var(--fd-dim);border-color:var(--fd-rule-soft)">RSS</a>
     </div>
-  </section>
-
-  <section class="fd-sec" id="explore">
-    <div class="fd-sec__head">
-      <p class="fd-eyebrow">Open data</p>
-      <div class="fd-kicker-rule"></div>
-      <h2 class="fd-headline">See the whole field, then <em>take it with you.</em></h2>
-      <p class="fd-body" style="margin-top:1.2rem">Browse and filter the registry, pull it through a
-        read-only API, or explore how makers, mentors, techniques, and studios connect.</p>
-    </div>
-    <div class="fd-cards">
-      <a class="fd-card" href="/explore/">
-        <h3>Explore</h3>
-        <p>Filterable tables of artists, studios, objects, and more — export any view.</p>
-        <span class="fd-go">Open the explorer &rarr;</span>
-      </a>
-      <a class="fd-card fd-card--teal" href="/api/docs">
-        <h3>Developer API</h3>
-        <p>A read-only, self-documenting API. Try <code>/api/datasets</code>.</p>
-        <span class="fd-go">Read the docs &rarr;</span>
-      </a>
-      <a class="fd-card fd-card--teal" href="/studios.html">
-        <h3>Studios worldwide</h3>
-        <p>Every studio on a dark world map — filter by type, search by city or country.</p>
-        <span class="fd-go">Open the map &rarr;</span>
-      </a>
-      <a class="fd-card fd-card--violet" href="/graph.html">
-        <h3>Relationship graph</h3>
-        <p>Artists, mentors, techniques, and studios as a living network you can explore.</p>
-        <span class="fd-go">Open the graph &rarr;</span>
-      </a>
-    </div>
-  </section>
-
-  <section class="fd-sec" id="calendar">
-    <div class="fd-sec__head">
-      <p class="fd-eyebrow">Opportunities</p>
-      <div class="fd-kicker-rule"></div>
-      <h2 class="fd-headline">Every deadline in <em>one calendar.</em></h2>
-      <p class="fd-body" style="margin-top:1.2rem">Open calls, <strong>residencies</strong>, and grants —
-        the chances to make new work somewhere new. Browse them as a month calendar, or subscribe once so
-        new approved listings land in your own calendar automatically.</p>
-    </div>
-    <div class="fd-hero__cta">
-      <a class="fd-cta" href="/explore/?view=opportunities">Browse the calendar</a>
-      <a class="fd-cta" href="/api/opportunities.ics" style="color:var(--fd-teal);border-color:var(--fd-teal)">Subscribe (ICS)</a>
-    </div>
-  </section>
-
-  <section class="fd-sec" id="community">
-    <div class="fd-sec__head">
-      <p class="fd-eyebrow">Community boards</p>
-      <div class="fd-kicker-rule"></div>
-      <h2 class="fd-headline">Buy, sell, trade, and <em class="fd-accent--teal">hire.</em></h2>
-    </div>
-    <div class="fd-rows" style="margin-top:2.2rem">
-      <div class="fd-row"><span class="fd-label">Exchange</span>
-        <p>List work to sell, want, or trade — with a place for makers who'll swap rather than sell.</p></div>
-      <div class="fd-row"><span class="fd-label">Jobs</span>
-        <p>Gaffer, assistant, teaching, and studio-tech openings across the field.</p></div>
-      <div class="fd-row"><span class="fd-label">Resources</span>
-        <p>Suppliers, equipment, and the shared know-how that keeps a shop running.</p></div>
-    </div>
-    <div class="fd-hero__cta"><a class="fd-cta" href="/explore/?view=community">Open the boards</a></div>
   </section>
 
   <section class="fd-sec" id="glowtbook">
@@ -266,7 +218,7 @@
 
   <section class="fd-sec" id="barcoding">
     <div class="fd-sec__head">
-      <p class="fd-eyebrow" style="color:var(--fd-molten)">Experimental</p>
+      <p class="fd-eyebrow" style="color:var(--fd-molten)">Glowtbook &middot; Barcoding (experimental)</p>
       <div class="fd-kicker-rule"></div>
       <h2 class="fd-headline">A <em class="fd-accent--molten">digital barcode</em> for one-of-a-kind glass.</h2>
       <p class="fd-body" style="margin-top:1.2rem">Every mass-produced thing has a barcode; a handmade piece
@@ -316,7 +268,7 @@
 
   <section class="fd-sec" id="seasons">
     <div class="fd-sec__head">
-      <p class="fd-eyebrow" style="color:var(--fd-violet)">Seasons</p>
+      <p class="fd-eyebrow" style="color:var(--fd-violet)">Glowtbook &middot; Seasons</p>
       <div class="fd-kicker-rule"></div>
       <h2 class="fd-headline">Collect the season. <em class="fd-accent--violet">Prove it's real.</em></h2>
       <p class="fd-body" style="margin-top:1.2rem">Friendly, time-boxed calls for pieces — pumpkins in October,
@@ -330,9 +282,31 @@
     </div>
   </section>
 
+  <section class="fd-sec" id="visualizations">
+    <div class="fd-sec__head">
+      <p class="fd-eyebrow">Visualizations</p>
+      <div class="fd-kicker-rule"></div>
+      <h2 class="fd-headline">The field on a map, and a shop <em class="fd-accent--teal">on a spreadsheet.</em></h2>
+      <p class="fd-body" style="margin-top:1.2rem">Two ways to see the numbers behind the registry: every
+        studio we know of on one world map, and a calculator for what it costs to run a hot shop.</p>
+    </div>
+    <div class="fd-cards">
+      <a class="fd-card fd-card--teal" href="/studios.html">
+        <h3>Studios worldwide</h3>
+        <p>Every studio on a dark world map — filter by type, search by city or country.</p>
+        <span class="fd-go">Open the map &rarr;</span>
+      </a>
+      <a class="fd-card" href="/shop-costs.html">
+        <h3>Shop cost calculator</h3>
+        <p>Gas, power, rent, people, and consumables — what a shop costs to run, by the month and by the piece.</p>
+        <span class="fd-go">Run the numbers &rarr;</span>
+      </a>
+    </div>
+  </section>
+
   <section class="fd-sec" id="shop">
     <div class="fd-sec__head">
-      <p class="fd-eyebrow">Open shop documentation</p>
+      <p class="fd-eyebrow">Shops &middot; Open shop documentation</p>
       <div class="fd-kicker-rule"></div>
       <h2 class="fd-headline">Describe a shop through its <em class="fd-accent--teal">components.</em></h2>
       <p class="fd-body" style="margin-top:1.2rem">A hot shop is a system — gas, air, power, heat,
@@ -385,8 +359,7 @@
     <p>
       <a href="https://discord.gg/9ek2UxvPT">Discord</a> &middot;
       <a href="https://www.instagram.com/glassdatabase/">Instagram</a> &middot;
-      <a href="/explore/">Explore</a> &middot; <a href="/glowtbook/">Glowtbook</a> &middot;
-      <a href="/api/docs">API</a> &middot;
+      <a href="/api/docs">Developer API</a> &middot;
       <a class="fd-handle" href="https://github.com/alibama/glass-database">github.com/alibama/glass-database</a>
     </p>
   </footer>

@@ -181,21 +181,14 @@ FONTS = ('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n
          '&family=IBM+Plex+Mono:wght@400;500&display=swap">\n'
          '<link rel="stylesheet" href="/field-data.css">')
 
-NAV = [("Explore", "/explore/"), ("Blog", "/blog/"), ("Glowtbook", "/glowtbook/"), ("Barcoding", "/#barcoding"),
-       ("Map", "/studios.html"), ("Shops", "/shop.html"), ("Costs", "/shop-costs.html"), ("Graph", "/graph.html"),
-       ("Seasons", "/games.html"), ("API", "/api/docs"), ("Discord", "https://discord.gg/9ek2UxvPT")]
+# The site's five sections (the nav + footer styles are the shared "Site chrome"
+# rules in deploy/field-data.css; API and Discord live in the footer).
+NAV = [("Explore", "/explore/"), ("Blog", "/blog/"), ("Glowtbook", "/glowtbook/"),
+       ("Visualizations", "/studios.html"), ("Shops", "/shop.html")]
 
 CSS = """
   html { scroll-behavior: smooth; } body { margin: 0; }
   .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 7rem; }
-  .fd-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-    padding: 1.4rem 0 1.1rem; flex-wrap: wrap; border-bottom: 1px solid var(--fd-rule); }
-  .fd-nav__brand { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
-    color: var(--fd-bone); font-size: clamp(13px,1.5vw,15px); text-decoration: none; }
-  .fd-nav__links { display: flex; gap: clamp(.9rem, 2.2vw, 1.8rem); flex-wrap: wrap; }
-  .fd-nav__links a { font-family: var(--fd-mono); font-size: clamp(12px,1.3vw,14px); letter-spacing: .1em;
-    text-transform: uppercase; color: var(--fd-dim); text-decoration: none; }
-  .fd-nav__links a:hover, .fd-nav__links a.on { color: var(--fd-amber); }
   .fd-sec { padding: clamp(3rem, 7vw, 5.5rem) 0 0; }
   .fd-sec .fd-eyebrow { display: inline-block; border-bottom: none; padding-bottom: 0; }
   .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.8rem; max-width: 62ch; }
@@ -280,8 +273,10 @@ def _nav(active: str = "Blog") -> str:
 
 def _footer() -> str:
     return ('<footer class="fd-footer"><p>Writing under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>'
-            ' · <a href="/blog/feed.xml">RSS</a></p><p><a href="/">Home</a> · <a href="/explore/">Explore</a> · '
-            '<a href="/glowtbook/">Glowtbook</a> · <a href="/games.html">Seasons</a> · '
+            ' · <a href="/blog/feed.xml">RSS</a></p><p><a href="/">Home</a> · '
+            '<a href="https://discord.gg/9ek2UxvPT">Discord</a> · '
+            '<a href="https://www.instagram.com/glassdatabase/">Instagram</a> · '
+            '<a href="/api/docs">Developer API</a> · '
             '<a href="https://github.com/alibama/glass-database">GitHub</a></p></footer>')
 
 

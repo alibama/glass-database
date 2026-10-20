@@ -20,6 +20,8 @@
     color:var(--fd-dim);text-decoration:none;white-space:nowrap;}
   #topnav a:hover,#topnav a.on{color:var(--fd-amber);}
   #topnav .sp{margin-left:auto;flex:0 0 auto;}
+  #topnav .sub{display:inline-flex;gap:.8rem;align-items:center;margin-left:.2rem;padding-left:1rem;border-left:1px solid var(--fd-rule-soft);}
+  #topnav .sub a{font-size:10px;color:var(--fd-faint);} #topnav .sub a.on{color:var(--fd-amber);}
   #app{position:fixed;inset:48px 0 0 0;display:flex;background:var(--fd-bg-top);}
   #panel{width:min(330px,86vw);flex:0 0 auto;padding:1.3rem 1.2rem 2rem;overflow:auto;
     border-right:1px solid var(--fd-rule);background:linear-gradient(180deg,#0E0B09,#12100E);z-index:500;}
@@ -123,18 +125,14 @@
 </style>
 </head>
 <body class="fd-ground">
-<nav id="topnav">
+<nav id="topnav" aria-label="Site">
   <a class="brand" href="/">Glass&nbsp;Database</a>
-  <a href="/explore/">Explore</a>
+  <a href="/explore/" class="on">Explore</a>
   <a href="/blog/">Blog</a>
   <a href="/glowtbook/">Glowtbook</a>
-  <a href="/#barcoding">Barcoding</a>
-  <a href="/studios.html">Map</a>
+  <a href="/studios.html">Visualizations</a>
   <a href="/shop.html">Shops</a>
-  <a href="/shop-costs.html">Costs</a>
-  <a href="/graph.html" class="on" aria-current="page">Graph</a>
-  <a href="/games.html">Seasons</a>
-  <a href="/api/docs">API</a>
+  <span class="sub" aria-label="Explore"><a href="/explore/">Datasets</a><a href="/graph.html" class="on" aria-current="page">Graph</a></span>
   <span class="sp" id="chip" aria-live="polite"></span>
 </nav>
 <button id="panelToggle" aria-expanded="true" aria-controls="panel">Hide controls</button>

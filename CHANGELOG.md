@@ -6,6 +6,23 @@ All notable changes are documented here. This project distinguishes
 proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
+### Changed
+- **Five sections instead of eleven links** — the site nav is now *Explore · Blog · Glowtbook ·
+  Visualizations · Shops* on every page (home, blog, Seasons, graph, map, shop pages). Barcoding and
+  Seasons live under Glowtbook, the graph under Explore, the map and the shop-cost calculator under
+  Visualizations; pages with children show them in a sub-nav row. The API link and Discord moved to
+  the footer of every page (Discord stays in the home hero and the "Come say hi" section). The home
+  page folds the Opportunities and Community sections into Explore cards and gains a Visualizations
+  section; nav + footer styles are one shared "Site chrome" block in `deploy/field-data.css`
+  (`scripts/build_blog.py` carries the same five links). Explore's sidebar links to the graph.
+- **Readable Streamlit widgets** — `.streamlit/config.toml` is now a dark base theme in the brand
+  palette, so dropdown menus, date pickers, tooltips and dataframes (rendered outside the CSS's
+  reach) no longer fall back to light-on-light; the "faint" text tone was lifted to clear 4.5:1
+  on the dark ground across the site and the apps.
+- **Maker events** — `api/events.py` + `central/events.py` (two-stage approval: host, then admin)
+  are in with their tests: published registrations list newest first deterministically, event
+  creation no longer passes `title` twice, and the tests mint session tokens after the fixture
+  sets the secret. The public `/register.html` page is still to come.
 ### Fixed
 - **"Sign-in isn't configured" on hosts running Python 3.10** — the API read
   `.streamlit/secrets.toml` only with the stdlib `tomllib` (3.11+), so on an Ubuntu 22.04

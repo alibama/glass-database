@@ -42,7 +42,7 @@ _CSS = """
 :root {
   --fd-bg-top:#0A0D11; --fd-bg-base:#1A140F; --fd-rule:#24221F; --fd-rule-soft:#2A2824;
   --fd-amber:#E8A44A; --fd-teal:#5EC8BD; --fd-molten:#E25836; --fd-violet:#967AD2;
-  --fd-bone:#EEE7DB; --fd-dim:#A8A29A; --fd-faint:#6E665C;
+  --fd-bone:#EEE7DB; --fd-dim:#A8A29A; --fd-faint:#8E867A;  /* faint clears 4.5:1 on the dark ground */
   --fd-serif:"Fraunces",Georgia,serif; --fd-sans:"Archivo",system-ui,sans-serif;
   --fd-mono:"IBM Plex Mono",ui-monospace,monospace;
 }

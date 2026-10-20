@@ -22,7 +22,7 @@
   --fd-violet: #967AD2;   /* independent pathways, standards */
   --fd-bone:   #EEE7DB;   /* primary text */
   --fd-dim:    #A8A29A;   /* body copy */
-  --fd-faint:  #6E665C;   /* basis notes, handle, footnotes */
+  --fd-faint:  #8E867A;   /* basis notes, handle, footnotes — clears 4.5:1 on the dark ground */
 
   /* data temperature ramp: teal → amber → molten */
   --fd-ramp-1: var(--fd-teal);
@@ -340,3 +340,35 @@
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ==========================================================================
+   Site chrome — one nav, one sub-nav, one footer for every page.
+   Top nav: Explore · Blog · Glowtbook · Visualizations · Shops. A section with
+   children shows them in .fd-subnav; API and Discord live in the footer.
+   The :not() chains out-rank the .fd-page link rule above.
+   ========================================================================== */
+.fd-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  padding: 1.4rem 0 1.1rem; flex-wrap: wrap; border-bottom: 1px solid var(--fd-rule); }
+.fd-nav__brand, .fd-page .fd-nav__brand { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--fd-bone); font-size: clamp(13px,1.5vw,15px);
+  text-decoration: none !important; white-space: nowrap; }
+.fd-nav__links { display: flex; gap: clamp(.9rem, 2.2vw, 1.8rem); flex-wrap: wrap; align-items: center; }
+.fd-nav__links a:not(.fd-cta):not(.fd-handle) { font-family: var(--fd-mono); font-size: clamp(12px,1.3vw,14px);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--fd-dim); text-decoration: none !important;
+  white-space: nowrap; }
+.fd-nav__links a:not(.fd-cta):not(.fd-handle):hover,
+.fd-nav__links a:not(.fd-cta):not(.fd-handle).on { color: var(--fd-amber); }
+.fd-subnav { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem 1.1rem; padding: .75rem 0 0;
+  font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--fd-faint); }
+.fd-subnav__label { color: var(--fd-faint); }
+.fd-subnav__label::after { content: "\203A"; margin-left: .55rem; }
+.fd-subnav a:not(.fd-cta):not(.fd-handle) { color: var(--fd-dim); text-decoration: none !important; white-space: nowrap; }
+.fd-subnav a:not(.fd-cta):not(.fd-handle):hover,
+.fd-subnav a:not(.fd-cta):not(.fd-handle).on { color: var(--fd-amber); }
+.fd-footer { margin-top: clamp(5rem, 10vw, 8rem); padding-top: 2rem; border-top: 1px solid var(--fd-rule);
+  display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: baseline; justify-content: space-between; }
+.fd-footer p { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .06em;
+  color: var(--fd-faint); margin: .3rem 0; }
+.fd-footer a:not(.fd-cta):not(.fd-handle) { color: var(--fd-dim); text-decoration: none; }
+.fd-footer a:not(.fd-cta):not(.fd-handle):hover { color: var(--fd-amber); }

@@ -15,24 +15,13 @@
   html { scroll-behavior: smooth; }
   body { margin: 0; }
   .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 6rem; }
-  .fd-nav { display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-    padding: 1.4rem 0 1.1rem; flex-wrap: wrap; border-bottom: 1px solid var(--fd-rule); }
-  .fd-nav__brand { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .12em;
-    text-transform: uppercase; color: var(--fd-bone); font-size: clamp(13px,1.5vw,15px); text-decoration: none !important; }
-  .fd-nav__links { display: flex; gap: clamp(.9rem, 2.2vw, 1.8rem); flex-wrap: wrap; align-items: center; }
-  .fd-nav__links a { font-family: var(--fd-mono); font-size: clamp(12px,1.3vw,14px);
-    letter-spacing: .1em; text-transform: uppercase; color: var(--fd-dim); text-decoration: none !important; }
-  .fd-nav__links a:hover, .fd-nav__links a.on { color: var(--fd-amber); }
+  /* nav + footer rules are shared: see "Site chrome" in /field-data.css */
   section.fd-sec { position: relative; padding: clamp(3.4rem, 8vw, 6.5rem) 0 0; }
   .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.8rem; max-width: 62ch; }
   .fd-hero .fd-headline { max-width: 22ch; }
   .fd-hero__cta { display: flex; gap: .9rem 1rem; flex-wrap: wrap; margin-top: 2rem; }
   .fd-two { display: grid; grid-template-columns: 1fr; gap: 2.4rem; }
   @media (min-width: 860px){ .fd-two { grid-template-columns: 1fr 1fr; align-items: start; } }
-  .fd-footer { margin-top: clamp(5rem, 10vw, 8rem); padding-top: 2rem; border-top: 1px solid var(--fd-rule);
-    display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: baseline; justify-content: space-between; }
-  .fd-footer p { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .06em; color: var(--fd-faint); margin: .3rem 0; }
-  .fd-footer a { color: var(--fd-dim); text-decoration: none; }
   .fd-hero-wrap { position: relative; }
   .fd-filaments { position: absolute; inset: -2rem -10vw auto; height: 130%; z-index: 0; }
   .fd-hero-wrap > *:not(.fd-filaments) { position: relative; z-index: 1; }
@@ -135,23 +124,23 @@
 <body class="fd-ground">
 <div class="fd-page">
 
-  <nav class="fd-nav">
+  <nav class="fd-nav" aria-label="Site">
     <a class="fd-nav__brand" href="/">Glass&nbsp;Database</a>
     <div class="fd-nav__links">
       <a href="/explore/">Explore</a>
       <a href="/blog/">Blog</a>
-      <a href="/glowtbook/">Glowtbook</a>
-      <a href="/#barcoding">Barcoding</a>
-      <a href="/studios.html">Map</a>
+      <a href="/glowtbook/" class="on">Glowtbook</a>
+      <a href="/studios.html">Visualizations</a>
       <a href="/shop.html">Shops</a>
-      <a href="/shop-costs.html">Costs</a>
-      <a href="/graph.html">Graph</a>
-      <a href="/games.html" class="on" aria-current="page">Seasons</a>
-      <a href="/api/docs">API</a>
-      <a href="https://discord.gg/9ek2UxvPT">Discord</a>
       <span id="chip"></span>
     </div>
   </nav>
+  <div class="fd-subnav" aria-label="Glowtbook">
+    <span class="fd-subnav__label">Glowtbook</span>
+    <a href="/glowtbook/">Journal &amp; pieces</a>
+    <a href="/fingerprint/enroll.html">Capture app</a>
+    <a href="/games.html" class="on" aria-current="page">Seasons</a>
+  </div>
 
   <header class="fd-hero-wrap">
     <svg class="fd-filaments" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -262,8 +251,7 @@
     <p>
       <a href="https://discord.gg/9ek2UxvPT">Discord</a> &middot;
       <a href="https://www.instagram.com/glassdatabase/">Instagram</a> &middot;
-      <a href="/explore/">Explore</a> &middot; <a href="/glowtbook/">Glowtbook</a> &middot;
-      <a href="/api/docs">API</a> &middot;
+      <a href="/api/docs">Developer API</a> &middot;
       <a class="fd-handle" href="https://github.com/alibama/glass-database">github.com/alibama/glass-database</a>
     </p>
   </footer>
