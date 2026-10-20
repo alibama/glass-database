@@ -155,7 +155,8 @@ def login(request: Request, next: str = "/"):  # noqa: A002
     p = provider()
     if not p:
         if os.environ.get("GLASSDB_DEV_LOGIN") == "1":
-            return RedirectResponse(f"{_api_prefix(request)}/auth/dev-login?next={_safe_next(next)}")
+            from urllib.parse import quote
+            return RedirectResponse(f"{_api_prefix(request)}/auth/dev-login?next={quote(_safe_next(next), safe='')}")
         raise HTTPException(503, "Sign-in isn't configured on this server. Pair from Glowtbook "
                                  "(Objects → Fingerprint → Pair this phone) instead. Admin: "
                                  + why_not_configured() + " — details at /api/auth/providers.")

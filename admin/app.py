@@ -460,7 +460,7 @@ elif section == "✅ Approvals":
 # ===========================================================================
 elif section == "🛡️ Review queue":
     st.header("Review queue")
-    tab_obj, tab_prof = st.tabs(["🪟 Objects", "🧑\u200d🎨 Artist profiles"])
+    tab_obj, tab_prof, tab_events = st.tabs(["🪟 Objects", "🧑\u200d🎨 Artist profiles", "🎟 Event registrations"])
 
     # ---- Objects -----------------------------------------------------------
     with tab_obj:
@@ -546,6 +546,68 @@ elif section == "🛡️ Review queue":
                     if r.button("✖ Reject", key=f"rj_{s['id']}"):
                         conn.execute("UPDATE submissions SET status='rejected' WHERE id=?", (s["id"],))
                         conn.commit(); st.rerun()
+
+    # ---- Event registrations (stage two: the host approved, the site publishes) --
+    with tab_events:
+        import base64 as _b64
+
+        from central import events as _ev
+        _ev.ensure(conn)
+        s = _ev.summary(conn)
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("Waiting for site review", s["host_approved"])
+        c2.metric("Published", s["approved"])
+        c3.metric("Waiting for hosts", s["pending_host"])
+        c4.metric("Listings pending", s["listings_pending"])
+        st.caption("Makers host events; buyers register purchases; the host approves first (Glowtbook → "
+                   "Events); approving here publishes the piece to the registry with provenance.")
+
+        st.subheader("Event listings")
+        listings = _ev.pending_listings(conn)
+        if not listings:
+            st.caption("No event listings waiting. (Events work by link as soon as a host creates them; "
+                       "approval here puts them in the public directory.)")
+        for ev in listings:
+            with st.expander(f"{ev['title']} — {ev['host_name']} · {ev['venue'] or '—'} · {ev['starts'] or '—'}"):
+                st.write({k: ev.get(k) for k in ("studio", "venue", "city", "region", "country", "starts", "ends",
+                                                 "piece_type", "price_note", "fingerprinting",
+                                                 "registration_closes", "description", "host_email") if ev.get(k)})
+                a, r = st.columns(2)
+                if a.button("✅ List it", key=f"evl_ok_{ev['id']}"):
+                    _ev.set_listing(conn, ev["id"], "approved"); st.rerun()
+                if r.button("✖ Don't list", key=f"evl_no_{ev['id']}"):
+                    _ev.set_listing(conn, ev["id"], "rejected"); st.rerun()
+
+        st.subheader("Registrations approved by their host")
+        queue = _ev.pending_admin(conn)
+        if not queue:
+            st.info("Nothing waiting for site review.")
+        by_event: dict = {}
+        for r in queue:
+            by_event.setdefault((r["event_id"], r["event_title"], r["host_name"]), []).append(r)
+        for (eid, etitle, host), rows in by_event.items():
+            st.markdown(f"#### {etitle} — {host} · {len(rows)} waiting")
+            if st.button(f"✅ Approve & publish all {len(rows)} from this event", key=f"evadm_all_{eid}",
+                         type="primary"):
+                done = _ev.admin_review(conn, [r["id"] for r in rows], True, reviewer="admin")
+                st.success(f"Published {len(done)} piece(s) to objects."); st.rerun()
+            for r in rows:
+                with st.expander(f"{r['title']}" + (f" · #{r['piece_ref']}" if r["piece_ref"] else "")
+                                 + f" · {r['buyer']} · {(r['created_at'] or '')[:10]}"):
+                    if r.get("image_b64"):
+                        try:
+                            st.image(_b64.b64decode(r["image_b64"]), width=260)
+                        except Exception:  # noqa: BLE001
+                            pass
+                    st.write({k: r.get(k) for k in ("description", "price_paid", "host_note", "show_name",
+                                                    "object_id") if r.get(k) not in (None, "", 0)})
+                    a, rj = st.columns(2)
+                    if a.button("✅ Approve & publish", key=f"evadm_ok_{r['id']}"):
+                        done = _ev.admin_review(conn, [r["id"]], True, reviewer="admin")
+                        st.success(f"Published as object {done[0]['object_row_id']}." if done else "Nothing changed.")
+                        st.rerun()
+                    if rj.button("✖ Reject", key=f"evadm_no_{r['id']}"):
+                        _ev.admin_review(conn, [r["id"]], False, reviewer="admin"); st.rerun()
 
 # ===========================================================================
 # DISCORD

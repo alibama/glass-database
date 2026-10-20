@@ -176,15 +176,16 @@ try:
 except Exception:  # noqa: BLE001
     user_email = ""
 # Deep links from the capture app / Seasons page: /glowtbook/?page=objects&object=12
-_PAGES = ["Home", "Journal", "Objects", "My profile"]
+_PAGES = ["Home", "Journal", "Objects", "Events", "My profile"]
 try:
     _qp = (st.query_params.get("page") or "").lower()
 except Exception:  # noqa: BLE001
     _qp = ""
-_pidx = {"home": 0, "journal": 1, "objects": 2, "profile": 3, "my profile": 3}.get(_qp, 0)
+_pidx = {"home": 0, "journal": 1, "objects": 2, "events": 3, "profile": 4, "my profile": 4}.get(_qp, 0)
 page = st.sidebar.radio("Go to", _PAGES, index=_pidx, label_visibility="collapsed")
 st.sidebar.link_button("📷 Capture app", "/fingerprint/enroll.html", use_container_width=True)
 st.sidebar.link_button("🎃 Seasons", "/games.html", use_container_width=True)
+st.sidebar.link_button("🎟 Events directory", "/events.html", use_container_width=True)
 
 
 # ===========================================================================
@@ -859,6 +860,164 @@ elif page == "Objects":
                             st.warning(f"Saved here, but Bluesky post failed: {bex}")
                 except Exception as ex:  # noqa: BLE001
                     st.error(f"Couldn't submit: {ex}")
+
+# ===========================================================================
+elif page == "Events":
+    import base64 as _b64
+    from datetime import timedelta as _td
+
+    from central import events as _ev
+    central = _central()
+    st.header("Events")
+    st.caption("Host a sale, a demo or an ornament day, and let the people who buy a piece register it "
+               "on the spot. It lands in their Glowtbook, you approve it, and the site publishes it with "
+               "provenance: made at your event, acquired by them.")
+    if central is None:
+        st.info("The central registry isn't reachable, so events are unavailable right now.")
+    else:
+        _ev.ensure(central)
+        tab_host, tab_mine = st.tabs(["🎟 Events I host", "🧾 Pieces I registered"])
+
+        with tab_host:
+            with st.expander("＋ Host an event", expanded=False):
+                with st.form("newevent", clear_on_submit=True):
+                    t = st.text_input("Event title *", placeholder="Ornament day")
+                    c1, c2 = st.columns(2)
+                    studio = c1.text_input("Studio / maker (shown as the maker)",
+                                           value=profile_row()["display_name"] or display)
+                    venue = c2.text_input("Venue (optional)", placeholder="2nd St Gallery")
+                    c3, c4, c5 = st.columns(3)
+                    city = c3.text_input("City"); region = c4.text_input("State / region")
+                    country = c5.text_input("Country")
+                    c6, c7 = st.columns(2)
+                    starts = c6.date_input("Starts", value=date.today())
+                    ends = c7.date_input("Ends", value=date.today())
+                    c8, c9 = st.columns(2)
+                    piece_type = c8.text_input("What people take home", placeholder="ornament, pumpkin, cup…")
+                    price_note = c9.text_input("Price note (optional)", placeholder="$45–85")
+                    st.caption("**Fingerprinting at the event** — none, optional, or every piece")
+                    fp_mode = st.pills("Fingerprinting", ["optional", "all", "none"], default="optional",
+                                       selection_mode="single", label_visibility="collapsed") or "optional"
+                    closes = st.date_input("Registrations close", value=date.today() + _td(days=30))
+                    show = st.checkbox("Show approved pieces on the public event page", value=True)
+                    desc = st.text_area("Description (optional)")
+                    if st.form_submit_button("Create event", type="primary") and t.strip():
+                        try:
+                            ev = _ev.create_event(
+                                central, host_uid=uid, host_name=(studio.strip() or display),
+                                host_email=user_email, title=t, studio=studio.strip(), venue=venue.strip(),
+                                city=city.strip(), region=region.strip(), country=country.strip(),
+                                starts=starts.isoformat(), ends=ends.isoformat(),
+                                piece_type=piece_type.strip(), price_note=price_note.strip(),
+                                fingerprinting=fp_mode, registration_closes=closes.isoformat(),
+                                show_registrations=show, description=desc.strip())
+                            st.success(f"Created. Registration link: {PUBLIC_BASE}/register.html?event={ev['slug']}")
+                            st.rerun()
+                        except ValueError as ex:
+                            st.error(str(ex))
+
+            evs = _ev.host_events(central, uid)
+            if not evs:
+                st.info("No events yet. Host one above — you get a link and a QR code for the table, and "
+                        "registrations show up here for you to approve.")
+            for ev in evs:
+                c = ev["counts"]
+                head = (f"{ev['title']} · {ev['starts'] or '—'} · {c['pending_host']} to review · "
+                        f"{c['approved']} published · {ev['status']}")
+                with st.expander(head, expanded=bool(c["pending_host"])):
+                    url = f"{PUBLIC_BASE}/register.html?event={ev['slug']}"
+                    qcol, icol = st.columns([1, 2])
+                    with qcol:
+                        try:
+                            import io as _io
+
+                            import segno
+                            buf = _io.BytesIO()
+                            segno.make(url, error="m").save(buf, kind="png", scale=6, border=2,
+                                                            dark="#EEE7DB", light="#0A0D11")
+                            st.image(buf.getvalue(), width=200)
+                        except Exception:  # noqa: BLE001
+                            st.code(url, language=None)
+                    with icol:
+                        st.markdown(f"**Registration link** — print the QR for the table, or share:\n\n`{url}`")
+                        listing = {"approved": "✅ listed in the public events directory",
+                                   "rejected": "✖ listing not approved (the link still works)"}.get(
+                            ev["listing"], "🕐 listing waiting for site approval — the link works now")
+                        st.caption(f"{listing} · fingerprinting: {ev['fingerprinting']} · "
+                                   f"registrations {'open' if ev['can_register'] else 'closed'}"
+                                   + (f" · closes {ev['registration_closes']}" if ev["registration_closes"] else ""))
+                        b1, b2, b3 = st.columns(3)
+                        if ev["status"] == "open" and b1.button("Close registrations", key=f"ev_close_{ev['id']}"):
+                            _ev.update_event(central, ev["slug"], uid, status="closed"); st.rerun()
+                        if ev["status"] != "open" and b1.button("Reopen", key=f"ev_open_{ev['id']}"):
+                            _ev.update_event(central, ev["slug"], uid, status="open"); st.rerun()
+                        b2.link_button("Public page", f"/events.html?event={ev['slug']}", use_container_width=True)
+                        b3.link_button("Buyer page", f"/register.html?event={ev['slug']}", use_container_width=True)
+
+                    pending = _ev.registrations(central, ev["id"], "pending_host")
+                    if pending:
+                        st.markdown(f"**{len(pending)} waiting for you** — tick the ones that are real "
+                                    "purchases from your event, then approve. Approved pieces go to the "
+                                    "site's review queue before they're published.")
+                        picked = []
+                        for r in pending:
+                            rc1, rc2, rc3 = st.columns([0.5, 3, 1])
+                            if rc1.checkbox("", key=f"evsel_{r['id']}", label_visibility="collapsed"):
+                                picked.append(r["id"])
+                            when = (r["created_at"] or "")[:16].replace("T", " ")
+                            rc2.markdown(f"**{r['title']}**" + (f" · #{r['piece_ref']}" if r["piece_ref"] else "")
+                                         + f"  \n{r['buyer']} · {r.get('buyer_email') or ''} · {when}"
+                                         + (f"  \n_{r['description']}_" if r.get("description") else "")
+                                         + (f"  \npaid: {r['price_paid']}" if r.get("price_paid") else ""))
+                            if r.get("image_b64"):
+                                try:
+                                    rc3.image(_b64.b64decode(r["image_b64"]), width=96)
+                                except Exception:  # noqa: BLE001
+                                    pass
+                        a1, a2, a3 = st.columns(3)
+                        if a1.button(f"✅ Approve selected ({len(picked)})", key=f"ev_ap_{ev['id']}",
+                                     disabled=not picked, type="primary"):
+                            n = _ev.host_review(central, ev["id"], uid, picked, True)
+                            st.success(f"Approved {n} — sent to the site's review queue."); st.rerun()
+                        if a2.button(f"Approve all {len(pending)}", key=f"ev_apall_{ev['id']}"):
+                            n = _ev.host_approve_all(central, ev["id"], uid)
+                            st.success(f"Approved {n} — sent to the site's review queue."); st.rerun()
+                        if a3.button("✖ Reject selected", key=f"ev_rj_{ev['id']}", disabled=not picked):
+                            _ev.host_review(central, ev["id"], uid, picked, False); st.rerun()
+                    else:
+                        st.caption("Nothing waiting for you.")
+                    tail = [f"{c['host_approved']} waiting for the site" if c["host_approved"] else "",
+                            f"{c['approved']} published" if c["approved"] else "",
+                            f"{c['rejected_host'] + c['rejected']} rejected" if (c["rejected_host"] + c["rejected"]) else ""]
+                    tail = [x for x in tail if x]
+                    if tail:
+                        st.caption(" · ".join(tail))
+                    if c["approved"]:
+                        with st.expander("Published pieces"):
+                            for r in _ev.registrations(central, ev["id"], "approved"):
+                                st.markdown(f"- **{r['title']}**" + (f" · #{r['piece_ref']}" if r["piece_ref"] else "")
+                                            + f" · {r['buyer']}"
+                                            + (f" · [view]({r['object_url']})" if r.get("object_url") else ""))
+
+        with tab_mine:
+            regs = _ev.my_registrations(central, uid)
+            if not regs:
+                st.info("Nothing registered yet. Bought a piece at an event? "
+                        "[Register it](/register.html) and it shows up here and in your Objects.")
+            for r in regs:
+                label = {"pending_host": "🕐 waiting for the host", "host_approved": "🕐 host approved — waiting for the site",
+                         "approved": "✅ published", "rejected_host": "✖ not confirmed by the host",
+                         "rejected": "✖ not published"}.get(r["status"], r["status"])
+                st.markdown(f"**{r['title']}**" + (f" · #{r['piece_ref']}" if r["piece_ref"] else "")
+                            + f" — {r['event_title']} ({r['host_name']}) · {label}")
+                links = []
+                if r.get("object_id"):
+                    links.append(f"[Fingerprint it](/fingerprint/enroll.html?object={r['object_id']})")
+                    links.append(f"[Open the piece](/glowtbook/?page=objects&object={r['object_id']})")
+                if r.get("object_url"):
+                    links.append(f"[View in the registry]({r['object_url']})")
+                if links:
+                    st.caption(" · ".join(links))
 
 # ===========================================================================
 else:  # My profile
