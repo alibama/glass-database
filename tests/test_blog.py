@@ -109,7 +109,7 @@ def test_build_is_deterministic(tmp_path):
     """The installer rebuilds on the server; identical sources must give identical bytes,
     or every deploy dirties tracked files (feed.xml) and blocks the next git checkout."""
     src = tmp_path / "p"; src.mkdir()
-    (src / "2026-10-01-a.md").write_text(POST, encoding="utf-8")
+    (src / "2026-10-01-a-test-study.md").write_text(POST, encoding="utf-8")
     a, b = tmp_path / "a", tmp_path / "b"
     B.build(src, a, "https://x.org", None)
     B.build(src, b, "https://x.org", None)
