@@ -162,15 +162,21 @@ def sign_image(src_bytes: bytes, title: str, author: str, provenance: dict,
     }
     if year:
         meta["xmp:CreateDate"] = str(year)
+    # The spec version we assert rides in our own assertion. It used to sit in
+    # claim_generator_info as "specVersion", but c2pa-rs (0.91+, c2pa-python 0.37.12/0.38)
+    # decodes claim_generator_info strictly and then fails to read the claim back
+    # ("unexpected trailing data"), which made every credential unreadable.
+    prov = dict(provenance or {})
+    prov.setdefault("c2pa_spec_version", SPEC_VERSION)
     manifest = {
-        "claim_generator_info": [{"name": _PRODUCT, "version": _VERSION, "specVersion": SPEC_VERSION}],
+        "claim_generator_info": [{"name": _PRODUCT, "version": _VERSION}],
         "title": title or "Glass object",
         "format": mime,
         "assertions": [
             # seed: c2pa-rs merges allActionsIncluded into the intent-generated actions
             {"label": "c2pa.actions.v2", "data": {"actions": [], "allActionsIncluded": True}},
             {"label": "cawg.metadata", "data": meta},
-            {"label": "org.glassdatabase.provenance", "data": provenance},
+            {"label": "org.glassdatabase.provenance", "data": prov},
         ],
     }
     for a in (extra_assertions or []):

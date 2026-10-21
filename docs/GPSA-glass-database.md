@@ -73,7 +73,8 @@ not claimed.
 - **Claim validation:** `image/jpeg`, `image/png` (originals ingested as `parentOf`
   ingredients when deriving the public rendition)
 
-Manifests declare `specVersion: 2.2` and set `allActionsIncluded`; the
+Manifests declare the spec version (`c2pa_spec_version: 2.2`, in the project's own
+provenance assertion) and set `allActionsIncluded`; the
 `c2pa.created` action carries a `digitalSourceType`; `c2pa.opened` and the excepted
 resize/convert actions do not (per Conformance v0.2 §2.1/§2.2/§2.4/§2.5).
 
@@ -190,7 +191,7 @@ Contributor (browser, Google OIDC) ──HTTPS──▶ Apache 2.4 (TLS terminat
                                  glassdb-glowtbook service (user: glassdb)
                                    │  Pillow format-preserving rendition (PNG→PNG, else JPEG)
                                    │  c2pa_sign.sign_image()  →  c2pa-python → c2pa-rs
-                                   │      • claim_generator_info.specVersion = 2.2
+                                   │      • provenance assertion c2pa_spec_version = 2.2
                                    │      • c2pa.actions.v2  (allActionsIncluded=true;
                                    │        created→digitalSourceType; opened→none)
                                    │      • ES256 signature (callback + cryptography)

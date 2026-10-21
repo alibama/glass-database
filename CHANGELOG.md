@@ -24,6 +24,14 @@ proof-of-concept features from production-ready ones in its docs.
   creation no longer passes `title` twice, and the tests mint session tokens after the fixture
   sets the secret. The public `/register.html` page is still to come.
 ### Fixed
+- **Signed images were unreadable with current c2pa-python** — `claim_generator_info`
+  carried an extra `specVersion` key; c2pa-rs 0.91+ (c2pa-python 0.37.12 / 0.38) decodes
+  that structure strictly and then failed to read the claim back ("claim could not be
+  converted from CBOR: unexpected trailing data"), which broke every C2PA test in CI and
+  meant freshly contributed images showed no credential in Explore. The spec version is
+  now asserted as `c2pa_spec_version` in the `org.glassdatabase.provenance` assertion and
+  `claim_generator_info` holds only name/version. Objects contributed since the regression
+  should be re-contributed to get a readable credential.
 - **"Sign-in isn't configured" on hosts running Python 3.10** — the API read
   `.streamlit/secrets.toml` only with the stdlib `tomllib` (3.11+), so on an Ubuntu 22.04
   server it silently saw no `[auth.google]` and the capture app's Sign in returned 503. The
