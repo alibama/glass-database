@@ -19,6 +19,22 @@
   .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.8rem; max-width: 62ch; }
   .fd-hero .fd-headline { max-width: 20ch; }
   .fd-hero__cta { display: flex; gap: .9rem 1rem; flex-wrap: wrap; margin-top: 2rem; }
+  /* quick links under the main nav — the children of each section, one tap from the front page */
+  .fd-quick { padding: .7rem 0 .2rem; border-bottom: 1px solid var(--fd-rule); margin-bottom: .4rem; }
+  .fd-quick a:not(.fd-cta):not(.fd-handle) { padding: .3rem .7rem; border: 1px solid var(--fd-rule-soft); border-radius: 999px; }
+  .fd-quick a:not(.fd-cta):not(.fd-handle):hover { border-color: var(--fd-amber); }
+  /* events: three steps as tappable cards + a live line */
+  .fd-ev-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 2.2rem; }
+  .fd-ev-step { display: block; text-decoration: none; padding: 1.3rem 1.3rem 1.1rem; border-radius: 16px;
+    border: 1px solid var(--fd-rule); background: linear-gradient(180deg, rgba(150,122,210,.08), rgba(150,122,210,0));
+    transition: border-color .18s, transform .18s; }
+  .fd-ev-step:hover { border-color: var(--fd-violet); transform: translateY(-2px); }
+  .fd-ev-step .fd-label { color: var(--fd-violet); }
+  .fd-ev-step p { font-family: var(--fd-sans); color: var(--fd-dim); font-size: clamp(15px,1.6vw,17px); line-height: 1.5; margin: .6rem 0 0; }
+  .fd-ev-step p em { color: var(--fd-bone); font-style: italic; }
+  .fd-ev-live { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--fd-faint); margin: 1.4rem 0 0; min-height: 1.2em; }
+  .fd-ev-live b { color: var(--fd-violet); font-weight: 500; }
   .fd-social { font-family: var(--fd-mono); font-size: clamp(12px,1.3vw,14px); letter-spacing: .08em;
     color: var(--fd-faint); margin-top: 2rem; }
   .fd-social a { color: var(--fd-dim); text-decoration: none; }
@@ -91,6 +107,17 @@
       <a href="/shop.html">Shops</a>
     </div>
   </nav>
+  <div class="fd-subnav fd-quick" aria-label="Quick links">
+    <span class="fd-subnav__label">Go to</span>
+    <a href="/register.html">Add a find</a>
+    <a href="/events.html">Events</a>
+    <a href="/games.html">Seasons</a>
+    <a href="/fingerprint/enroll.html">Capture app</a>
+    <a href="/graph.html">Graph</a>
+    <a href="/studios.html">Map</a>
+    <a href="/shop-costs.html">Costs</a>
+    <a href="/api/docs">API</a>
+  </div>
 
   <header class="fd-hero-wrap">
     <svg class="fd-filaments" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
@@ -118,6 +145,7 @@
       <div class="fd-hero__cta">
         <a class="fd-cta" href="/explore/">Explore the data</a>
         <a class="fd-cta" href="/glowtbook/" style="color:var(--fd-teal);border-color:var(--fd-teal)">Open Glowtbook</a>
+        <a class="fd-cta" href="/register.html" style="color:var(--fd-violet);border-color:var(--fd-violet)">Add a find to my collection</a>
       </div>
       <form class="fd-signup" onsubmit="return gdbSubscribe(event)">
         <input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required>
@@ -140,7 +168,29 @@
     </section>
   </header>
 
-  <section class="fd-sec" id="explore" style="padding-top:clamp(3.2rem, 7vw, 5.5rem)">
+  <section class="fd-sec" id="events" style="padding-top:clamp(3.2rem, 7vw, 5.5rem)">
+    <div class="fd-sec__head">
+      <p class="fd-eyebrow" style="color:var(--fd-violet)">Events &amp; collecting</p>
+      <div class="fd-kicker-rule"></div>
+      <h2 class="fd-headline">Bought a piece at a show? <em class="fd-accent--violet">Add it to your collection.</em></h2>
+      <p class="fd-body" style="margin-top:1.2rem">Makers host events — ornament days, pop-ups, demos — and the piece you
+        take home joins your collection the same afternoon, with its story attached: made by the maker, found by you,
+        ready to fingerprint and prove. Names stay private unless you say otherwise.</p>
+    </div>
+    <div class="fd-ev-strip" id="evStrip">
+      <a class="fd-ev-step" href="/register.html"><span class="fd-label">1 · Find</span><p>Buy it at the table, the gallery, the demo. The maker gets paid — that's the point.</p></a>
+      <a class="fd-ev-step" href="/register.html"><span class="fd-label">2 · Claim it</span><p>Scan the QR on the table, sign in, say what you found, snap a photo. A minute, standing up.</p></a>
+      <a class="fd-ev-step" href="/fingerprint/enroll.html"><span class="fd-label">3 · Prove it</span><p>The maker confirms, the registry keeps it, and a fingerprint lets any phone match <em>this</em> piece later.</p></a>
+    </div>
+    <p class="fd-ev-live" id="evLive" aria-live="polite"></p>
+    <div class="fd-hero__cta">
+      <a class="fd-cta" href="/register.html" style="color:var(--fd-violet);border-color:var(--fd-violet)">Add a find to my collection</a>
+      <a class="fd-cta" href="/events.html">See the events</a>
+      <a class="fd-cta" href="/glowtbook/?page=events" style="color:var(--fd-teal);border-color:var(--fd-teal)">Host an event</a>
+    </div>
+  </section>
+
+  <section class="fd-sec" id="explore">
     <div class="fd-sec__head">
       <p class="fd-eyebrow">Open data</p>
       <div class="fd-kicker-rule"></div>
@@ -368,6 +418,19 @@
 </div>
 
 <script>
+  // Events: a live line under the three steps ("2 events open · 14 pieces collected").
+  (function(){
+    var el = document.getElementById('evLive'); if (!el) return;
+    fetch('/api/events').then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+      if (!j || !j.events) return;
+      var open = j.events.filter(function(e){ return e.can_register; }).length;
+      var pieces = j.events.reduce(function(n, e){ return n + (e.published || 0); }, 0);
+      var reg = j.events.reduce(function(n, e){ return n + (e.registered || 0); }, 0);
+      if (!j.events.length) { el.innerHTML = 'No events listed yet — hosts: <a href="/glowtbook/?page=events" style="color:var(--fd-violet)">open Glowtbook → Events</a>.'; return; }
+      el.innerHTML = '<b>' + open + '</b> event' + (open === 1 ? '' : 's') + ' open · <b>' + reg + '</b> piece' + (reg === 1 ? '' : 's') +
+        ' registered · <b>' + pieces + '</b> in the registry';
+    }).catch(function(){});
+  })();
   async function gdbSubscribe(e){
     e.preventDefault();
     const f = e.target, email = f.email.value.trim();
