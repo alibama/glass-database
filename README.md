@@ -168,6 +168,15 @@ docs/        additional documentation
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) to get involved and
 [`SECURITY.md`](SECURITY.md) to report a vulnerability.
 
+## About
+
+The Glass Database was started by Jason Bauer, an artist and furnace-trained
+glassmaker, to look at the glass world from both the craft and the capital side.
+It is now an open-source project maintained with Anson Parker (Raging Buffalo
+Glass; almost thirty years of open-source library software) and open to
+glassblowers, collectors and researchers interested in studio art glass. The
+story and bios are on the homepage under **About**.
+
 ## Acknowledgements
 
 Built for the studio-glass community. The provenance work draws on

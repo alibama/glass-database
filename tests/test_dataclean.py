@@ -37,3 +37,14 @@ def test_clean_numeric_percentile_clip_for_nonyears():
     s, is_year = clean_numeric(pd.Series(vals))
     assert not is_year
     assert s.max() < 100000
+
+
+def test_person_identifying_columns():
+    from explore.dataclean import is_dob, is_person_name, person_identifying
+    assert is_person_name("artist_name") and is_person_name("artist") and is_person_name("led_by")
+    assert is_person_name("mentor_name") and not is_person_name("name")        # studios keep their name
+    assert not is_person_name("website") and not is_person_name("studio_name")
+    assert is_dob("birth_year") and is_dob("dob") and is_dob("death_year") and is_dob("date_of_birth")
+    assert not is_dob("founded") and not is_dob("year")
+    names, dobs = person_identifying(["artist_name", "based_in", "birth_year", "website"])
+    assert names == ["artist_name"] and dobs == ["birth_year"]

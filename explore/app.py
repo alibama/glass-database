@@ -153,7 +153,13 @@ def load(tbl: str, cols: tuple[str, ...]) -> pd.DataFrame:
 
 
 
-from explore.dataclean import GEO_COLS, classify, clean_numeric, is_excluded  # noqa: E402,F401
+from explore.dataclean import (  # noqa: E402,F401
+    GEO_COLS,
+    classify,
+    clean_numeric,
+    is_excluded,
+    person_identifying,
+)
 
 # --- sidebar: dataset picker ----------------------------------------------
 reg = registry()
@@ -426,6 +432,17 @@ except Exception as ex:  # noqa: BLE001
     st.error(f"Couldn't load this dataset: {ex}")
     st.stop()
 
+# Per-person privacy: names and birth dates never appear per row (table, filters,
+# download). Birth years may still feed the aggregate charts; names never do.
+_name_cols, _dob_cols = person_identifying(c for c, _ in cols)
+_hidden_per_row = set(_name_cols) | set(_dob_cols)
+cats = [c for c in cats if c not in _name_cols]
+if _hidden_per_row:
+    st.caption("🔒 " + ", ".join(labels.get(c, c) for c in sorted(_hidden_per_row))
+               + (" are" if len(_hidden_per_row) > 1 else " is")
+               + " not shown per row. Birth years only appear aggregated in the charts; "
+                 "websites stay so you can reach a maker directly.")
+
 # --- filters ---------------------------------------------------------------
 with st.expander("Filters", expanded=False):
     fcols = st.multiselect("Filter by", cats, format_func=lambda c: labels.get(c, c),
@@ -503,7 +520,7 @@ if {"lat", "lng"}.issubset(df.columns):
 
 # --- table + download ------------------------------------------------------
 st.subheader("Rows")
-pretty = df.rename(columns=labels)
+pretty = df.drop(columns=[c for c in _hidden_per_row if c in df.columns]).rename(columns=labels)
 st.dataframe(pretty, width="stretch", hide_index=True)
 st.download_button("⬇ Download this view (CSV)", pretty.to_csv(index=False),
                    file_name=f"{tbl}.csv", mime="text/csv")

@@ -7,6 +7,21 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Changed
+- **Explore keeps people's names and birth dates out of the per-row view** — in the Datasets
+  view, name columns (artist_name, artist, led_by, *_name for people) and date-of-birth columns
+  (birth_year, dob, death_year…) are withheld from the table, the filters and the CSV download;
+  birth years may still feed the aggregate charts (decade histogram), names never do. Website
+  links stay so readers can reach a maker directly. A 🔒 line says what's withheld.
+  (`explore/dataclean.py: person_identifying`.) The public API is unchanged.
+- **About section on the homepage** — the project's origin (started by Jason Bauer to look at
+  glass from the craft and the capital side; now open source), short bios for the founder and
+  the co-founder/maintainer, and an open invitation to the field. Linked from the quick links
+  and the footer.
+- **Homepage: events up front, nav with room to breathe, CSS that updates** — an *Events &
+  collecting* section directly under the hero (three tappable steps, a live count line, Add-a-find /
+  See-the-events / Host-an-event buttons), an "Add a find to my collection" hero button, and a
+  quick-links pill row under the main nav. Apache now caches CSS/JS for 5 minutes with
+  must-revalidate instead of a day — a day-long cache left people on an unstyled nav after a release.
 - **Five sections instead of eleven links** — the site nav is now *Explore · Blog · Glowtbook ·
   Visualizations · Shops* on every page (home, blog, Seasons, graph, map, shop pages). Barcoding and
   Seasons live under Glowtbook, the graph under Explore, the map and the shop-cost calculator under
