@@ -21,7 +21,17 @@ def _actions(signed, mime):
     m = json.loads(c2pa.Reader(mime, io.BytesIO(signed)).json())
     am = m["manifests"][m["active_manifest"]]
     acts = next(a for a in am["assertions"] if a["label"].startswith("c2pa.action"))["data"]
-    return m["validation_state"], acts, am["claim_generator_info"][0]
+    return m["validation_state"], acts, am
+
+
+def test_claim_generator_info_has_only_spec_fields():
+    """c2pa-rs decodes claim_generator_info strictly: an extra key (we used to put
+    specVersion there) makes the signed claim unreadable. Keep it to name/version."""
+    signed = C.sign_image(_img("image/jpeg"), "P", "AP", {"content_hash": "x"}, mime="image/jpeg")
+    _, _, am = _actions(signed, "image/jpeg")
+    cg = am["claim_generator_info"][0]
+    assert cg.get("name") and cg.get("version") and "specVersion" not in cg
+    assert C.read_credentials(signed)["validation_state"] == "Valid"
 
 
 @pytest.mark.parametrize("mime", ["image/jpeg", "image/png"])
@@ -36,9 +46,10 @@ def test_format_preserved_and_valid(mime):
 def test_created_has_digitalsourcetype_and_allactionsincluded_and_specversion():
     signed = C.sign_image(_img("image/jpeg"), "P", "AP",
                           {"content_hash": "x", "sourcing": "t", "contributor": "AP"}, mime="image/jpeg")
-    vs, acts, cg = _actions(signed, "image/jpeg")
+    vs, acts, am = _actions(signed, "image/jpeg")
     assert acts.get("allActionsIncluded") is True                 # §2.2
-    assert cg.get("specVersion") == C.SPEC_VERSION                # §2.1
+    prov = next(a for a in am["assertions"] if a["label"] == "org.glassdatabase.provenance")["data"]
+    assert prov.get("c2pa_spec_version") == C.SPEC_VERSION        # §2.1 (asserted in our own assertion)
     created = next(a for a in acts["actions"] if a["action"] == "c2pa.created")
     assert "digitalSourceType" in created                         # §2.4
 

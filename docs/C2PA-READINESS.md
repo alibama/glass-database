@@ -59,7 +59,10 @@ numbers reference the technical spec.*
 ## Optional, more spec-native improvements
 ## v0.2 Additional Requirements — status
 
-- **§2.1 specVersion** in claim_generator_info — **done** (`2.2`).
+- **§2.1 specVersion** — **done** (`2.2`), asserted as `c2pa_spec_version` inside the
+  `org.glassdatabase.provenance` assertion. It used to sit in `claim_generator_info`, but
+  c2pa-rs 0.91+ decodes that structure strictly and an extra key made the whole claim
+  unreadable ("unexpected trailing data"), so it moved to our own assertion.
 - **§2.2 allActionsIncluded** in actions-map-v2 — **done** (`true`, all manifests).
 - **§2.4 digitalSourceType** on non-excepted created-assertion actions — **done**
   (`c2pa.created` carries digitalCapture; `opened`/`resized.proportional`/`converted`
