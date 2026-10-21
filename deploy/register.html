@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Register a piece — Glass Database</title>
+<title>Add to your collection — Glass Database</title>
 <meta name="description" content="Bought a piece at a maker's event? Register it: it goes on the record with provenance, lands in your Glowtbook, and can be fingerprinted so you can prove it's yours later.">
-<meta property="og:title" content="Register a piece — Glass Database">
+<meta property="og:title" content="Add to your collection — Glass Database">
 <meta property="og:description" content="Register the piece you just bought at the table. The host confirms it, the site publishes it, and it's yours on the record.">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -174,9 +174,9 @@
       <circle cx="902" cy="252" r="6"/>
     </svg>
     <section class="fd-hero fd-sec" style="padding-top:2.4rem" id="hero">
-      <p class="fd-eyebrow">Register a piece</p>
-      <h1 class="fd-headline" style="margin-top:1.4rem" id="h1">Bought it at the table? <em>Put it on the record.</em></h1>
-      <p class="fd-body" style="margin-top:1.2rem" id="lede">Say what the piece is, add a photo if you like, and it's registered: the host confirms it, the site publishes it with its provenance, and it sits in your Glowtbook ready to fingerprint.</p>
+      <p class="fd-eyebrow">Add to your collection</p>
+      <h1 class="fd-headline" style="margin-top:1.4rem" id="h1">Found a new treasure? <em>Add it to your collection.</em></h1>
+      <p class="fd-body" style="margin-top:1.2rem" id="lede">Say what you found, add a photo if you like, and it joins your collection with its story attached: made by the maker for this event, found by you today. The maker confirms it, the registry keeps it, and it sits in your Glowtbook ready to fingerprint.</p>
     </section>
   </header>
 
@@ -187,9 +187,9 @@
     <div id="auth" hidden></div>
 
     <form id="form" class="rg-card" hidden novalidate autocomplete="off">
-      <span class="fd-label" style="color:var(--fd-amber)">The piece</span>
+      <span class="fd-label" style="color:var(--fd-amber)">Your find</span>
       <div class="rg-field">
-        <label for="fTitle">What is it? <small>Required — a few words is plenty.</small></label>
+        <label for="fTitle">What did you find? <small>Required — a few words is plenty.</small></label>
         <input id="fTitle" type="text" required maxlength="200" placeholder="Blue swirl ornament" autocapitalize="sentences" enterkeyhint="next">
       </div>
       <div class="rg-field">
@@ -216,15 +216,15 @@
       </div>
       <label class="rg-check"><input id="fShow" type="checkbox"><span>Show my name on the event page <small>Names are private by default. Leave this off and the piece is listed as acquired by "a collector".</small></span></label>
       <div class="rg-err" id="err" hidden role="alert"></div>
-      <div class="rg-actions"><button class="rg-btn" id="submit" type="submit">Register this piece</button></div>
-      <p class="rg-note" id="formNote">The host confirms it was theirs, then the site publishes it to the registry with its provenance. You'll see the status under <a href="#mine">My registrations</a>.</p>
+      <div class="rg-actions"><button class="rg-btn" id="submit" type="submit">Add it to my collection</button></div>
+      <p class="rg-note" id="formNote">The maker confirms it came from their table, then the registry publishes it with its provenance. Watch it under <a href="#mine">My collection</a> below.</p>
     </form>
 
     <div id="done" hidden></div>
   </section>
 
   <section class="fd-sec" id="mine" hidden>
-    <p class="fd-eyebrow">My registrations</p>
+    <p class="fd-eyebrow">My collection</p>
     <div class="fd-kicker-rule"></div>
     <div id="mineBody"></div>
   </section>
@@ -250,8 +250,8 @@
   var $ = function (s) { return document.querySelector(s); };
   var esc = GDB.esc;
   var S = { slug: GDB.param("event"), ev: null, me: null, signedIn: false, photo: null, busy: false };
-  var LABEL = { pending_host: "waiting for the host", host_approved: "host approved — waiting for the site",
-                approved: "published", rejected_host: "not confirmed by the host", rejected: "not published" };
+  var LABEL = { pending_host: "waiting for the maker to confirm", host_approved: "confirmed by the maker — joining the registry",
+                approved: "in the registry", rejected_host: "the maker didn't recognise it", rejected: "not added to the registry" };
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -319,7 +319,7 @@
           '<br><a class="rg-btn rg-btn--ghost" href="/events.html">See all events</a></div>';
         return;
       }
-      $("#picker").innerHTML = '<span class="fd-label" style="color:var(--fd-amber)">Which event?</span>' +
+      $("#picker").innerHTML = '<span class="fd-label" style="color:var(--fd-amber)">Where did you find it?</span>' +
         '<div class="fd-rows" style="margin-top:.6rem">' + open.map(function (e) {
           var sub = [who(e), where(e), fmtDate(e.starts, e.ends)].filter(Boolean).join(" · ");
           return '<a class="fd-row rg-pick" href="?event=' + encodeURIComponent(e.slug) + '"><p>' + esc(e.title) +
@@ -348,9 +348,9 @@
     show("#closed", false);
     if (!S.signedIn) {
       $("#auth").innerHTML = '<div class="rg-card">' +
-        '<span class="fd-label" style="color:var(--fd-teal)">One step first</span>' +
-        '<p class="rg-why">Sign in so the piece is tied to you — that\'s what lets you fingerprint it and prove it\'s yours later.</p>' +
-        loginBtn("Sign in to register") +
+        '<span class="fd-label" style="color:var(--fd-teal)">Make it yours</span>' +
+        '<p class="rg-why">Sign in so the piece is tied to you — that\'s what turns a photo on your phone into a collection you can prove.</p>' +
+        loginBtn("Sign in to add it") +
         '<p class="rg-note">Your name stays private unless you choose to show it. Your email is never shown.</p></div>';
       show("#auth", true); show("#form", false);
     } else {
@@ -412,7 +412,7 @@
         busy(false);
         if (e.status === 401) {
           S.signedIn = false;
-          error("Your sign-in has expired — sign in again and the form will still be here.", "<br>" + loginBtn("Sign in to register"));
+          error("Your sign-in has expired — sign in again and the form will still be here.", "<br>" + loginBtn("Sign in to add it"));
         } else if (e.status === 413) error("That photo is too big even after resizing — try a smaller one or skip it.");
         else if (e.status === 404) error("That event has gone away — ask the host for a fresh link.");
         else error(e.message || "That didn't go through — check your connection and try again.");
@@ -424,20 +424,20 @@
     var ev = S.ev;
     show("#form", false); show("#auth", false);
     $("#done").innerHTML = '<div class="rg-card rg-done">' +
-      '<span class="fd-label" style="color:var(--fd-teal)">Registered</span>' +
+      '<span class="fd-label" style="color:var(--fd-teal)">In your collection</span>' +
       "<h2>" + esc(r.title) + "</h2>" +
-      '<p class="lead">On the record as bought at <b>' + esc(ev.title) + "</b>" + (r.piece_ref ? ", piece <b>" + esc(r.piece_ref) + "</b>" : "") + ".</p>" +
+      '<p class="lead">Treasure logged — found at <b>' + esc(ev.title) + "</b>" + (r.piece_ref ? ", piece <b>" + esc(r.piece_ref) + "</b>" : "") + ".</p>" +
       '<span class="fd-label" style="color:var(--fd-dim);display:block;margin-top:1.4rem">What happens next</span>' +
       '<ol class="rg-next">' +
-        "<li><b>" + esc(ev.host_name || ev.studio || "The host") + "</b> confirms it was theirs — usually the same day.</li>" +
-        "<li>The site publishes it to the registry with its provenance: made by the maker for this event, acquired by you.</li>" +
-        "<li>Fingerprint it, and any phone can match <em>this</em> piece to its record for as long as it exists.</li>" +
+        "<li><b>" + esc(ev.host_name || ev.studio || "The maker") + "</b> confirms it came from their table — usually the same day.</li>" +
+        "<li>The registry publishes it with its provenance: made by the maker for this event, collected by you.</li>" +
+        "<li>Fingerprint it, and any phone can match <em>this</em> piece to its record — the difference between a collection and a shelf of glass.</li>" +
       "</ol>" +
       (r.fingerprint_url ? '<a class="rg-btn rg-btn--teal rg-btn--big" href="' + esc(r.fingerprint_url) + '">Fingerprint it now</a>' +
         '<p class="rg-note">A minute while it\'s in your hand: a few photos on a plain background, and the piece can be recognised later — not one like it, this one.</p>' : "") +
       '<div class="rg-actions">' +
         '<a class="rg-btn rg-btn--ghost" href="' + esc(r.glowtbook_url || "/glowtbook/") + '">Open in Glowtbook</a>' +
-        '<button type="button" class="rg-btn rg-btn--ghost" id="again">Register another piece</button>' +
+        '<button type="button" class="rg-btn rg-btn--ghost" id="again">Add another find</button>' +
       "</div></div>";
     show("#done", true);
     $("#again").addEventListener("click", function () {
@@ -489,8 +489,8 @@
     if (!S.slug) { loadPicker(); return; }
     GDB.json("/events/" + encodeURIComponent(S.slug)).then(function (ev) {
       S.ev = ev;
-      document.title = "Register a piece — " + ev.title + " — Glass Database";
-      $("#h1").innerHTML = "Register what you bought at <em>" + esc(ev.title) + ".</em>";
+      document.title = "Your new treasure from " + ev.title + " — Glass Database";
+      $("#h1").innerHTML = "Register your new treasure from <em>" + esc(ev.title) + ".</em>";
       show("#picker", false); renderHead(); decide();
     }).catch(function (err) {
       if (err.status === 404) {

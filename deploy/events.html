@@ -139,11 +139,11 @@
     </svg>
     <section class="fd-hero fd-sec" style="padding-top:2.4rem" id="hero">
       <p class="fd-eyebrow">Events</p>
-      <h1 class="fd-headline" style="margin-top:1.6rem">Bought a piece at the table? <em>Register it before you leave.</em></h1>
-      <p class="fd-body fd-lede" style="margin-top:1.4rem">Makers host events — ornament days, pop-ups, demos. The piece you buy there goes on the record the same afternoon: made by the maker, bought by you, ready to fingerprint.</p>
+      <h1 class="fd-headline" style="margin-top:1.6rem">Found a treasure at the table? <em>Start a collection you can prove.</em></h1>
+      <p class="fd-body fd-lede" style="margin-top:1.4rem">Makers host events — ornament days, pop-ups, demos. The piece you take home joins your collection the same afternoon, with its story attached: made by the maker, found by you, ready to fingerprint and prove.</p>
       <div class="ev-counter ev-mono" id="heroMeta"></div>
       <div class="fd-hero__cta">
-        <a class="fd-cta" href="/register.html">Register a piece</a>
+        <a class="fd-cta" href="/register.html">Add a find to my collection</a>
         <a class="fd-cta" href="/glowtbook/?page=events" style="color:var(--fd-teal);border-color:var(--fd-teal)">Host an event</a>
       </div>
     </section>
@@ -154,18 +154,18 @@
     <div class="fd-kicker-rule"></div>
     <div class="fd-two">
       <div>
-        <p class="fd-label" style="color:var(--fd-teal)">For buyers</p>
+        <p class="fd-label" style="color:var(--fd-teal)">For collectors</p>
         <div class="fd-rows" style="margin-top:1.2rem">
-          <div class="fd-row"><span class="fd-label">Buy</span>
-            <p>Get a piece at the event — the table, the gallery, the demo. The maker gets paid; that's the point.</p></div>
-          <div class="fd-row"><span class="fd-label">Register</span>
-            <p>Scan the QR on the table or open <a href="/register.html">Register a piece</a>. Sign in, say what it is, snap a photo. A minute, standing up.</p></div>
-          <div class="fd-row"><span class="fd-label">Host confirms</span>
-            <p>The maker sees the registration in Glowtbook and confirms it was theirs — usually the same day.</p></div>
-          <div class="fd-row"><span class="fd-label">On the record</span>
-            <p>The site publishes it to the registry with provenance: created by the maker at the event, acquired by you. Your name stays private unless you choose otherwise.</p></div>
-          <div class="fd-row"><span class="fd-label">Fingerprint</span>
-            <p>It's already in your <a href="/glowtbook/">Glowtbook</a>. Capture its fingerprint and any phone can prove <em>this</em> piece is the one on the record.</p></div>
+          <div class="fd-row"><span class="fd-label">Find</span>
+            <p>Find a piece at the event — the table, the gallery, the demo. The maker gets paid; that's the point.</p></div>
+          <div class="fd-row"><span class="fd-label">Claim it</span>
+            <p>Scan the QR on the table or open <a href="/register.html">Add to your collection</a>. Sign in, say what you found, snap a photo. A minute, standing up.</p></div>
+          <div class="fd-row"><span class="fd-label">Maker confirms</span>
+            <p>The maker sees it in Glowtbook and confirms it came from their table — usually the same day.</p></div>
+          <div class="fd-row"><span class="fd-label">In your collection</span>
+            <p>The registry publishes it with provenance: made by the maker at the event, collected by you. Your name stays private unless you choose otherwise.</p></div>
+          <div class="fd-row"><span class="fd-label">Prove it</span>
+            <p>It's already in your <a href="/glowtbook/">Glowtbook</a>. Capture its fingerprint and any phone can prove <em>this</em> piece is the one in your collection — not one like it.</p></div>
         </div>
       </div>
       <div>
@@ -178,7 +178,7 @@
           <div class="fd-row"><span class="fd-label">Approve</span>
             <p>After the event, approve the registrations in bulk — or reject the one that wasn't yours.</p></div>
           <div class="fd-row"><span class="fd-label">Published</span>
-            <p>The site reviews and publishes them. Each piece becomes a public record with your name on it, and the collector has a reason to come back.</p></div>
+            <p>The site reviews and publishes them. Each piece becomes part of someone's collection with your name on it — and a reason to come back for the next one.</p></div>
         </div>
       </div>
     </div>
@@ -193,14 +193,14 @@
   <section class="fd-sec" id="open">
     <p class="fd-eyebrow">Open now</p>
     <div class="fd-kicker-rule"></div>
-    <h2 class="fd-headline">Where to <em>register.</em></h2>
+    <h2 class="fd-headline">Where the <em>finds are.</em></h2>
     <div class="ev-grid" id="grid"><div class="ev-skel"></div><div class="ev-skel"></div><div class="ev-skel"></div></div>
   </section>
 
   <section class="fd-sec" id="past" hidden>
     <p class="fd-eyebrow">Past events</p>
     <div class="fd-kicker-rule"></div>
-    <h2 class="fd-headline">On the <em>record.</em></h2>
+    <h2 class="fd-headline">What's been <em>collected.</em></h2>
     <div class="ev-past" id="pastList"></div>
   </section>
 
@@ -319,7 +319,7 @@
         "</div>" +
         (ev.description ? '<p class="desc">' + esc(ev.description) + "</p>" : "") +
         '<div class="ev-actions">' +
-          (ev.can_register ? '<a class="ev-cta" href="' + esc(registerUrl(ev)) + '">Register a piece</a>' : "") +
+          (ev.can_register ? '<a class="ev-cta" href="' + esc(registerUrl(ev)) + '">Add my find</a>' : "") +
           '<button type="button" class="ev-link" data-gallery aria-expanded="false">See the pieces' + (ev.published ? " (" + ev.published + ")" : "") + "</button>" +
         "</div>" +
       "</div></article>";
