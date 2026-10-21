@@ -8,6 +8,7 @@ unit-tested directly.
 """
 from __future__ import annotations
 
+import re
 from datetime import date
 
 import pandas as pd
@@ -59,3 +60,30 @@ def clean_numeric(raw: pd.Series):
         if hi > lo:
             s = s[(s >= lo) & (s <= hi)]
     return s, is_year
+
+
+# --- per-person privacy in the public tables ---------------------------------
+# Names and dates of birth are kept OUT of the row view and the CSV download in
+# Explore; they may still feed the aggregate charts (a decade histogram of birth
+# years says something about the field without pointing at anyone). Website
+# links stay, so a reader can still reach a maker on their own terms.
+_NAME_EXACT = {"artist_name", "artist", "display_name", "full_name", "first_name", "last_name",
+               "led_by", "student_name", "mentor_name", "contact_name", "person", "founder"}
+_NAME_PREFIX = ("artist", "person", "maker", "student", "mentor", "contact", "instructor", "teacher")
+_DOB = re.compile(r"(^|_)(birth|dob|born|death)(_|$)|birth_year|death_year|date_of_birth|year_of_birth")
+
+
+def is_person_name(col: str) -> bool:
+    c = (col or "").lower()
+    return c in _NAME_EXACT or (c.endswith("_name") and c.startswith(_NAME_PREFIX))
+
+
+def is_dob(col: str) -> bool:
+    return bool(_DOB.search((col or "").lower()))
+
+
+def person_identifying(cols) -> tuple[list[str], list[str]]:
+    """(name columns, date-of-birth columns) among `cols` — both withheld per row;
+    only the DOB ones are allowed into aggregate charts."""
+    cols = list(cols)
+    return [c for c in cols if is_person_name(c)], [c for c in cols if is_dob(c)]
