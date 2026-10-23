@@ -4,72 +4,87 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Document your shop — Glass Database</title>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..600&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/field-data.css">
+<meta name="description" content="Describe a hot shop by its components: a scene sketch, an electrical one-line, a P&ID and a bill of materials with real part numbers, generated from a plain-language description.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
 <style>
-  body{margin:0;}
-  .wrap{max-width:1040px;margin-inline:auto;padding:0 clamp(20px,5vw,64px) 6rem;}
-  /* nav + footer: shared "Site chrome" rules in /field-data.css */
-  .eyebrow{font-family:var(--fd-mono);font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--fd-amber);font-size:12px;margin-top:2.4rem;}
-  h1{font-family:var(--fd-serif);font-weight:300;font-variation-settings:"opsz" 44,"wght" 340;font-size:clamp(30px,6vw,52px);color:var(--fd-bone);margin:.5rem 0 .6rem;line-height:1.08;}
-  h1 em{font-style:italic;color:var(--fd-amber);}
-  h2{font-family:var(--fd-serif);font-weight:300;font-variation-settings:"opsz" 44,"wght" 340;font-size:clamp(22px,3.4vw,30px);color:var(--fd-bone);margin:2.8rem 0 .4rem;}
-  p{font-family:var(--fd-sans);color:var(--fd-dim);font-size:clamp(16px,1.9vw,19px);line-height:1.6;max-width:70ch;}
-  .safety{border-left:3px solid var(--fd-molten);padding:.2rem 0 .2rem 1rem;margin:1.4rem 0;color:#d9a38f;}
-  .paper{background:#F4F2EC;border-radius:14px;padding:1rem;margin:1.4rem 0;border:1px solid var(--fd-rule);overflow:auto;}
-  .paper img{display:block;width:100%;height:auto;}
-  .paper figcaption{font-family:var(--fd-mono);font-size:11px;letter-spacing:.06em;color:#555;margin-top:.5rem;padding:0 .3rem;}
-  .prompt{font-family:var(--fd-mono);font-size:13px;line-height:1.6;color:var(--fd-bone);background:#16130F;border:1px solid var(--fd-rule);border-radius:12px;padding:1rem 1.1rem;white-space:pre-wrap;position:relative;}
-  .prompt .lbl{font-family:var(--fd-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fd-amber);display:block;margin-bottom:.5rem;}
-  .copy{position:absolute;top:.7rem;right:.7rem;font-family:var(--fd-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--fd-dim);background:transparent;border:1px solid var(--fd-rule-soft);border-radius:999px;padding:.3rem .7rem;cursor:pointer;}
-  .copy:hover{color:var(--fd-amber);border-color:var(--fd-amber);}
-  .cta{display:inline-block;font-family:var(--fd-mono);font-weight:500;letter-spacing:.1em;text-transform:uppercase;font-size:13px;color:var(--fd-amber);text-decoration:none;padding:.7rem 1.3rem;border:2px solid var(--fd-amber);border-radius:999px;margin-top:1rem;}
-  .cta:hover{background:var(--fd-amber);color:var(--fd-bg-top);}
-  .links a{color:var(--fd-amber);}
+  .intro h1{font-size:clamp(2.4rem,6vw,4.6rem);line-height:1;margin:1rem 0 1.4rem;font-weight:320}
+  .intro .lede a{color:var(--red)}
+  figure.diagram{margin:0 0 2.5rem;border-top:1px solid var(--ink);padding-top:1.2rem}
+  figure.diagram img{width:100%;height:auto;mix-blend-mode:multiply}
+  figure.diagram figcaption{margin-top:.8rem}
+  .prompt{position:relative;font:400 14px/1.65 var(--mono);color:var(--ink-2);background:var(--paper-2);border:1px solid var(--rule);
+    padding:1.1rem 1.2rem 1.2rem;white-space:pre-wrap;margin:0 0 1.2rem}
+  .prompt .lbl{display:block;font:500 12px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--red);margin-bottom:.7rem;padding-right:5rem}
+  .copy{position:absolute;top:.8rem;right:.8rem;font:500 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);
+    background:var(--paper);border:1px solid var(--ink);padding:.45rem .7rem;cursor:pointer}
+  .copy:hover{background:var(--ink);color:var(--paper)}
+  .refs{font-size:15px;color:var(--ink-2)}.refs a{color:var(--red)}
+  .two p a{color:var(--red)}
+  @media (max-width:980px){.two>figure{order:-1}}
 </style>
 </head>
-<body class="fd-ground">
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu">
+   <li><a href="/explore/">Registry</a></li><li><a href="/events.html">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li>
+  </ul>
+  <div class="right"><span id="chip" class="signin gdb-chip" aria-live="polite"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
 <div class="wrap">
-  <nav class="fd-nav" aria-label="Site">
-    <a class="fd-nav__brand" href="/">Glass&nbsp;Database</a>
-    <div class="fd-nav__links">
-      <a href="/explore/">Explore</a>
-      <a href="/blog/">Blog</a>
-      <a href="/glowtbook/">Glowtbook</a>
-      <a href="/studios.html">Visualizations</a>
-      <a href="/shop.html" class="on" aria-current="page">Shops</a>
-    </div>
-  </nav>
+ <nav class="subnav" aria-label="Tools">
+  <span class="crumb">Tools</span>
+  <a href="/fingerprint/enroll.html">Capture app</a>
+  <a href="/shop.html" class="on" aria-current="page">Shop docs</a>
+  <a href="/shop-costs.html">Shop costs</a>
+ </nav>
+</div>
+<main id="main">
 
-  <p class="eyebrow">Open shop documentation</p>
+<section class="hero intro">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 07</span> Open shop documentation</p>
   <h1>Describe a shop through its <em>components.</em></h1>
-  <p>A hot shop is a system — gas, air, power, heat, exhaust, and the controls that tie
+  <p class="lede">A hot shop is a system — gas, air, power, heat, exhaust, and the controls that tie
      it together. Documenting yours as a scene sketch, an electrical one-line, a piping
      &amp; instrumentation (P&amp;ID) diagram, and a <strong>bill of materials with real
      part numbers</strong> makes it far easier to fix, order, insure, and teach. You
      don't draw any of it by hand: describe your shop to an AI and have it render the
      diagrams and the parts list. Then publish it here so the next person can find the
      part in one search.</p>
-  <p class="safety"><strong>Safety first.</strong> These are schematic documentation,
+  <p class="note"><strong>Safety first.</strong> These are schematic documentation,
      not engineering drawings. Gas and high-current electrical work must be designed,
      installed, and inspected by licensed professionals to your local code. Mark
      anything uncertain as <strong>TBD</strong> — the examples do.</p>
+  <div class="btns"><a class="btn btn--red" href="/explore/?view=submit">Publish your shop →</a><a class="btn btn--line" href="/shop-costs.html">Estimate running costs →</a></div>
+ </div>
+</section>
 
-  <a class="cta" href="/explore/?view=submit">Publish your shop →</a>
-  <a class="cta" href="/shop-costs.html" style="color:var(--fd-teal);border-color:var(--fd-teal)">Estimate running costs →</a>
+<section class="s" aria-labelledby="h-example">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">01</span> Worked example</p>
+   <div><h2 id="h-example">Raging Buffalo Glass, <em>on paper.</em></h2>
+    <p class="lede">Generated from a plain-language description (the prompts below). Schematic, not to scale;
+     unknown pressures and ampacities marked TBD.</p></div></div>
+  <figure class="diagram"><img src="/shop-diagrams/example-oneline.svg" alt="Electrical one-line diagram of a glass studio: main breaker, panelboard, annealer branches, and a furnace feeder to an SCR and SiC elements.">
+    <figcaption>Fig. 1 — Electrical one-line: service → panel → annealers + furnace (SCR → SiC).</figcaption></figure>
+  <figure class="diagram"><img src="/shop-diagrams/example-pid.svg" alt="Piping and instrumentation diagram: natural gas, propane, oxygen, air, combustion air, and exhaust runs with valves and instruments.">
+    <figcaption>Fig. 2 — P&amp;ID: gas / air / exhaust with valves, regulators, and instruments.</figcaption></figure>
+ </div>
+</section>
 
-  <h2>Worked example — Raging Buffalo Glass</h2>
-  <p>Generated from a plain-language description (below). Schematic, not to scale;
-     unknown pressures/ampacities marked TBD.</p>
-  <figure class="paper"><img src="/shop-diagrams/example-oneline.svg" alt="Electrical one-line diagram of a glass studio: main breaker, panelboard, annealer branches, and a furnace feeder to an SCR and SiC elements.">
-    <figcaption>Electrical one-line — service → panel → annealers + furnace (SCR → SiC).</figcaption></figure>
-  <figure class="paper"><img src="/shop-diagrams/example-pid.svg" alt="Piping and instrumentation diagram: natural gas, propane, oxygen, air, combustion air, and exhaust runs with valves and instruments.">
-    <figcaption>P&amp;ID — gas / air / exhaust with valves, regulators, and instruments.</figcaption></figure>
-
-  <h2>Prompts to get you started</h2>
-  <p>Copy a prompt, fill in the bracketed parts for your shop, and paste it into your
-     AI of choice. Start with the scene, then the diagrams, then the parts list.</p>
+<section class="s alt" aria-labelledby="h-prompts">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">02</span> Prompts</p>
+   <div><h2 id="h-prompts">Four prompts to <em>get you started.</em></h2>
+    <p class="lede">Copy a prompt, fill in the bracketed parts for your shop, and paste it into your
+     AI of choice. Start with the scene, then the diagrams, then the parts list.</p></div></div>
 
   <div class="prompt"><span class="lbl">1 · Describe the space</span><button class="copy" onclick="cp(this)">Copy</button>Draw a schematic top-down floor plan (not to scale) of my glass studio. The space is [24 × 24 ft]. The glory hole is in [one corner], with forced/combustion air along [the back wall] from a [squirrel-cage blower] in [a closet outside], plus [natural gas from the city]. The furnace is [to the right of the glory hole], with [4 × SiC elements] wired through breakers to an [SCR] controlled by a [Novus PID] with a [K-type thermocouple]; [160 lb] crucible; crucible access via a [pneumatic lift] fed by [a small quiet compressor in the opposite corner]. To the right are [three annealers: a 40″ coil unit on a 60 A breaker and two Paragons on 60 A breakers with mercury 60 A relays, all on one Novus controller]. Ventilation above the hot equipment is a [large exhaust motor behind the utility wall]. The bench is [between glory hole and furnace, facing the equipment]; the marver is [3′×2′, ~5′ right of the bench]; viewing area [~8′ back at the wall]. Label each device; show gas / air / power / exhaust in different colors; mark unknowns TBD. Output one clean SVG.</div>
 
@@ -79,31 +94,51 @@
 
   <div class="prompt"><span class="lbl">4 · Bill of materials (real part numbers)</span><button class="copy" onclick="cp(this)">Copy</button>Build a bill of materials table with columns: System · Component · Manufacturer · Part number · Spec · Where to buy · Notes. Include controls (PID, SCR, thermocouples, relays/contactors), heating elements, blowers/motors, gas regulators and valves, and safety interlocks. Use the REAL manufacturer part numbers I give you (read off the nameplates); where I don't have one, leave it blank and note what to check. Do not invent part numbers.</div>
 
-  <p class="links" style="margin-top:1.6rem">Reference: <a href="/SHOP-PARTS.md">common hot-shop parts &amp; where to find real numbers</a> ·
+  <p class="refs" style="margin-top:1.6rem">Reference: <a href="/SHOP-PARTS.md">common hot-shop parts &amp; where to find real numbers</a> ·
      <a href="/shop-prompts.md">these prompts as plain text</a> ·
      <a href="/shop-diagrams/diagram_generator.py">the SVG generator</a>.</p>
+ </div>
+</section>
 
-  <h2>Publish it</h2>
-  <p>Got a description, diagrams, and a BOM? Add them under
-     <a href="/explore/?view=submit" class="links">Explore → Add to the database → Shop</a>.
-     Everything is reviewed before it appears; contact details stay private. The goal is
-     a shared, open library of how glass shops are actually built.</p>
-  <a class="cta" href="/explore/?view=submit">Publish your shop →</a>
-  <footer class="fd-footer">
-    <p>Data &amp; ontology under <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a> &middot;
-       software <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache&nbsp;2.0</a></p>
-    <p><a href="/">Home</a> &middot; <a href="https://discord.gg/9ek2UxvPT">Discord</a> &middot;
-       <a href="https://www.instagram.com/glassdatabase/">Instagram</a> &middot;
-       <a href="/api/docs">Developer API</a> &middot;
-       <a href="https://github.com/alibama/glass-database">GitHub</a></p>
-  </footer>
-</div>
+<section class="s" aria-labelledby="h-publish">
+ <div class="wrap two">
+  <div><p class="label"><span class="n">03</span> Publish it</p>
+   <h2 id="h-publish" style="margin:1rem 0 1.2rem">A shared library of how shops <em>are actually built.</em></h2>
+   <p class="lede">Got a description, diagrams, and a BOM? Add them under
+     <a href="/explore/?view=submit">Explore → Add to the database → Shop</a>.
+     Everything is reviewed before it appears; contact details stay private.</p>
+   <div class="btns"><a class="btn btn--red" href="/explore/?view=submit">Publish your shop →</a><a class="link" href="/shop-costs.html">Estimate running costs</a></div></div>
+  <div><p class="label">What a published shop carries</p>
+   <ul class="list">
+    <li><span>i.</span>A scene sketch: where the heat, air, gas and people are</li>
+    <li><span>ii.</span>An electrical one-line with amperages, unknowns marked TBD</li>
+    <li><span>iii.</span>A P&amp;ID for gas, air and exhaust, with the valves and instruments</li>
+    <li><span>iv.</span>A bill of materials with real manufacturer part numbers</li>
+   </ul></div>
+ </div>
+</section>
+</main>
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label"><span class="n">№ 10</span> Come say hi</p><h2 style="margin:1rem 0">A record kept by the field, <em>for the field.</em></h2>
+    <p>Nothing is published until it’s reviewed; anything can be corrected or removed on request.</p></div>
+   <div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
 <script>
   function cp(btn){ const t=btn.parentElement.childNodes; let s="";
     btn.parentElement.querySelectorAll(".lbl,.copy").forEach(e=>e.dataset.skip="1");
     s=btn.parentElement.innerText.replace(/^\s*\d.*\n?/,"").replace(/Copy\s*/,"").trim();
     navigator.clipboard.writeText(s).then(()=>{btn.textContent="Copied";setTimeout(()=>btn.textContent="Copy",1200);});
   }
+  const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+  mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+  if(window.GDB){GDB.chip('#chip',{compact:true});}
 </script>
 </body>
 </html>

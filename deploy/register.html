@@ -7,243 +7,204 @@
 <meta name="description" content="Bought a piece at a maker's event? Register it: it goes on the record with provenance, lands in your Glowtbook, and can be fingerprinted so you can prove it's yours later.">
 <meta property="og:title" content="Add to your collection — Glass Database">
 <meta property="og:description" content="Register the piece you just bought at the table. The host confirms it, the site publishes it, and it's yours on the record.">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/field-data.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
 <script src="/site.js"></script>
 <style>
-  html { scroll-behavior: smooth; }
-  body { margin: 0; }
   [hidden] { display: none !important; }
-  .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 6rem; }
-  /* nav + footer rules are shared: see "Site chrome" in /field-data.css */
-  section.fd-sec { position: relative; padding: clamp(2.6rem, 6vw, 4.6rem) 0 0; }
-  .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.6rem; max-width: 62ch; }
-  .fd-hero .fd-headline { max-width: 20ch; }
-  .fd-hero-wrap { position: relative; }
-  .fd-filaments { position: absolute; inset: -2rem -10vw auto; height: 140%; z-index: 0; }
-  .fd-hero-wrap > *:not(.fd-filaments) { position: relative; z-index: 1; }
+  .nav ul a.on { color: var(--red); }
+  /* site.js injects its own (field-data) chip rules after paper.css; outrank them here */
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
 
-  /* --- register (rg-) --------------------------------------------------- */
-  .rg-mono { font-family: var(--fd-mono); letter-spacing: .1em; text-transform: uppercase; font-size: clamp(11px,1.2vw,13px); }
-  .rg-col { max-width: 40rem; }
-  .rg-card { border: 1px solid var(--fd-rule); border-radius: 16px; padding: 1.2rem 1.2rem 1.3rem; margin-top: 1.2rem;
-    background: linear-gradient(180deg, rgba(238,231,219,.03), rgba(238,231,219,0)); }
-  .rg-card > .fd-label { display: block; }
-  .rg-card h2 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 380; font-weight: 400; color: var(--fd-bone);
-    font-size: clamp(22px, 3vw, 30px); margin: .6rem 0 0; line-height: 1.15; text-wrap: balance; }
-  .rg-card .who { color: var(--fd-dim); font-size: clamp(15px,1.6vw,17px); margin: .35rem 0 0; }
-  .rg-card .meta { display: flex; gap: .4rem 1.2rem; flex-wrap: wrap; margin-top: .8rem; color: var(--fd-faint); }
-  .rg-card .meta b { color: var(--fd-bone); font-weight: 500; }
-  .rg-card .desc { color: var(--fd-dim); font-size: clamp(14px,1.5vw,16px); line-height: 1.55; margin: .9rem 0 0; }
-  .rg-status { display: flex; gap: .6rem 1rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; color: var(--fd-faint); }
-  .rg-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .3rem .75rem; border-radius: 999px; white-space: nowrap;
-    border: 1px solid var(--fd-rule-soft); color: var(--fd-dim); font-family: var(--fd-mono); letter-spacing: .08em; text-transform: uppercase; font-size: 11px; }
-  .rg-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--fd-faint); flex: none; }
-  .rg-pill.open, .rg-pill.pending_host { color: var(--fd-amber); border-color: var(--fd-amber); }
-  .rg-pill.open::before, .rg-pill.pending_host::before { background: var(--fd-amber); box-shadow: 0 0 10px var(--fd-amber); }
-  .rg-pill.host_approved { color: var(--fd-violet); border-color: var(--fd-violet); }
-  .rg-pill.host_approved::before { background: var(--fd-violet); box-shadow: 0 0 10px var(--fd-violet); }
-  .rg-pill.approved { color: var(--fd-teal); border-color: var(--fd-teal); }
-  .rg-pill.approved::before { background: var(--fd-teal); box-shadow: 0 0 10px var(--fd-teal); }
-  .rg-pill.rejected, .rg-pill.rejected_host { color: var(--fd-molten); border-color: rgba(226,88,54,.6); }
-  .rg-pill.rejected::before, .rg-pill.rejected_host::before { background: var(--fd-molten); }
-  .rg-note { color: var(--fd-faint); font-size: clamp(13px,1.4vw,15px); line-height: 1.55; margin: .9rem 0 0; }
-  .rg-note a { color: var(--fd-dim); }
-  .rg-why { color: var(--fd-dim); font-size: clamp(16px,1.8vw,19px); line-height: 1.55; margin: .6rem 0 1.2rem; }
+  /* a shorter hero: people open this standing at a table */
+  .hero { padding: clamp(2rem, 5vw, 4rem) 0 clamp(1.8rem, 4vw, 3rem); }
+  .hero h1 { font-size: clamp(2.2rem, 6.5vw, 4.6rem); max-width: 20ch; margin: 1rem 0 1.2rem; }
+  .col { max-width: 40rem; }
+  .flow { padding: clamp(1.6rem, 4vw, 3rem) 0 clamp(3rem, 6vw, 5rem); }
+  button.btn { cursor: pointer; background: var(--paper); }
+  button.link { background: none; border: 0; border-bottom: 1px solid currentColor; cursor: pointer; padding: 0 0 3px; }
+  .btn:disabled { opacity: .5; cursor: progress; }
+  .btn .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* blocks: event header, sign-in, done */
+  .block { border-top: 1px solid var(--ink); padding-top: 1.2rem; margin-top: 1.2rem; }
+  .block h2 { font-size: clamp(1.7rem, 4vw, 2.4rem); line-height: 1.1; margin: .5rem 0 0; text-wrap: balance; }
+  .block .who { margin: .4rem 0 0; color: var(--ink-2); }
+  .block .meta { display: flex; gap: .4rem 1.2rem; flex-wrap: wrap; margin-top: .9rem; font: 400 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .block .meta b { color: var(--ink); font-weight: 500; }
+  .block .status { display: flex; gap: .6rem 1rem; flex-wrap: wrap; align-items: center; margin-top: 1rem; font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); }
+  .block .desc { margin: 1rem 0 0; color: var(--ink-2); font-size: 16px; }
+  .note { margin-top: 1rem; }
+  .note a { color: var(--ink); } .note a:hover { color: var(--red); }
+  .why { font-size: clamp(1.05rem, 1.5vw, 1.2rem); color: var(--ink-2); margin: .8rem 0 1.4rem; }
 
   /* picker rows */
-  .rg-pick.fd-row { grid-template-columns: 1fr auto; align-items: center; text-decoration: none !important; padding: .9rem 0; margin-bottom: 0; }
-  .rg-pick p { color: var(--fd-bone); }
-  .rg-pick p small { display: block; color: var(--fd-faint); font-size: clamp(12px,1.3vw,14px); margin-top: .2rem; }
-  .rg-pick .val { color: var(--fd-amber); white-space: nowrap; }
-  .rg-pick:hover p { color: var(--fd-amber); }
+  .list.pick li { display: block; padding: 0; }
+  .list.pick a.row { display: grid; grid-template-columns: 1fr auto; gap: .5rem 1rem; align-items: center; padding: 1rem 0; text-decoration: none; color: inherit; }
+  .list.pick p { margin: 0; max-width: none; }
+  .list.pick p small { display: block; color: var(--muted); font-size: 14px; margin-top: .2rem; }
+  .list.pick .val { font: 500 12px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--red); white-space: nowrap; padding-top: 0; }
+  .list.pick li:hover p { color: var(--red); }
 
   /* form */
-  .rg-field { display: flex; flex-direction: column; gap: .45rem; margin-top: 1.25rem; }
-  .rg-lab, .rg-field > label { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; font-size: 12px; color: var(--fd-dim); }
-  .rg-lab small, .rg-field > label small, .rg-check small { display: block; font-family: var(--fd-sans); font-weight: 400; letter-spacing: 0; text-transform: none;
-    color: var(--fd-faint); font-size: 13px; line-height: 1.45; margin-top: .2rem; }
-  .rg-field input[type="text"], .rg-field textarea { font-family: var(--fd-sans); font-size: 16px; color: var(--fd-bone); width: 100%; box-sizing: border-box;
-    background: rgba(238,231,219,.04); border: 1px solid var(--fd-rule-soft); border-radius: 12px; padding: .85rem 1rem; outline: none;
-    transition: border-color .15s ease, background-color .15s ease; }
-  .rg-field input::placeholder, .rg-field textarea::placeholder { color: var(--fd-faint); opacity: .8; }
-  .rg-field input:focus, .rg-field textarea:focus { border-color: var(--fd-amber); background: rgba(238,231,219,.06); }
-  .rg-field textarea { resize: vertical; min-height: 3.6rem; line-height: 1.45; }
-  .rg-vh { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; }
-  .rg-photo { display: flex; align-items: center; gap: 1rem; border: 1px dashed var(--fd-rule-soft); border-radius: 14px; padding: .9rem 1rem; cursor: pointer;
-    background: rgba(238,231,219,.02); transition: border-color .15s ease; }
-  .rg-photo:hover, .rg-vh:focus-visible + .rg-photo { border-color: var(--fd-amber); }
-  .rg-photo img, .rg-photo .ph { width: 76px; height: 76px; border-radius: 10px; object-fit: cover; background: #05070a; flex: none; display: block; }
-  .rg-photo .ph { display: grid; place-items: center; border: 1px solid var(--fd-rule); color: var(--fd-amber); }
-  .rg-photo .ph svg { width: 28px; height: 28px; }
-  .rg-photo .txt { color: var(--fd-bone); font-size: 15px; line-height: 1.4; }
-  .rg-photo .txt small { display: block; color: var(--fd-faint); font-size: 13px; }
-  .rg-check { display: flex; gap: .8rem; align-items: flex-start; margin-top: 1.4rem; cursor: pointer; color: var(--fd-bone); font-size: 15px; line-height: 1.45; }
-  .rg-check input { width: 1.25rem; height: 1.25rem; margin: .1rem 0 0; accent-color: var(--fd-amber); flex: none; cursor: pointer; }
-  .rg-actions { display: flex; gap: .7rem 1rem; flex-wrap: wrap; align-items: center; margin-top: 1.5rem; }
-  /* colours carry !important so <a> buttons out-rank the generic .fd-page link rule (as .gm-link does) */
-  .rg-btn { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; font-family: var(--fd-mono); font-weight: 500;
-    font-size: clamp(12px,1.4vw,15px); letter-spacing: var(--fd-track); text-transform: uppercase; color: var(--fd-amber) !important; text-decoration: none !important;
-    padding: 14px 26px; border: 1.5px solid var(--fd-amber); border-radius: 999px; background: transparent; cursor: pointer; box-sizing: border-box;
-    transition: background-color .18s ease, color .18s ease, opacity .18s ease; }
-  .rg-btn:hover, .rg-btn:focus-visible { background: var(--fd-amber); color: var(--fd-bg-top) !important; outline: none; }
-  .rg-btn:disabled { opacity: .5; cursor: progress; }
-  .rg-btn:disabled:hover { background: transparent; color: var(--fd-amber) !important; }
-  .rg-btn--teal { color: var(--fd-teal) !important; border-color: var(--fd-teal); }
-  .rg-btn--teal:hover, .rg-btn--teal:focus-visible { background: var(--fd-teal); color: var(--fd-bg-top) !important; }
-  .rg-btn--ghost { color: var(--fd-dim) !important; border-color: var(--fd-rule-soft); }
-  .rg-btn--ghost:hover, .rg-btn--ghost:focus-visible { background: var(--fd-rule-soft); color: var(--fd-bone) !important; }
+  .field { display: flex; flex-direction: column; gap: .5rem; margin-top: 1.4rem; }
+  .field > label, .lab { font: 500 12px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); }
+  .field > label small, .lab small, .check small { display: block; font: 400 13px/1.45 var(--sans); letter-spacing: 0; text-transform: none; color: var(--muted); margin-top: .2rem; }
+  .field input[type="text"], .field textarea { font: 400 16px/1.4 var(--sans); color: var(--ink); width: 100%; background: var(--paper);
+    border: 1px solid var(--ink); border-radius: 0; padding: .85rem 1rem; outline: none; -webkit-appearance: none; appearance: none; }
+  .field input::placeholder, .field textarea::placeholder { color: var(--muted); }
+  .field input:focus, .field textarea:focus { border-color: var(--red); box-shadow: inset 0 0 0 1px var(--red); }
+  .field textarea { resize: vertical; min-height: 3.6rem; }
+  .vh { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; }
+  .photo { display: flex; align-items: center; gap: 1rem; border: 1px dashed var(--ink); padding: .9rem 1rem; cursor: pointer; background: var(--paper-2); }
+  .photo:hover, .vh:focus-visible + .photo { border-color: var(--red); border-style: solid; }
+  .photo img, .photo .ph { width: 76px; height: 76px; aspect-ratio: 1; object-fit: cover; flex: none; display: block; background: var(--paper-3); }
+  .photo .ph { display: grid; place-items: center; color: var(--red); }
+  .photo .ph svg { width: 28px; height: 28px; }
+  .photo .txt { color: var(--ink); font-size: 15px; line-height: 1.4; }
+  .photo .txt small { display: block; color: var(--muted); font-size: 13px; }
   #photoClear { align-self: flex-start; }
-  .rg-btn--big { width: 100%; padding: 18px 26px; font-size: clamp(14px,1.6vw,17px); margin-top: 1.4rem; }
-  .rg-btn .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: rg-spin .8s linear infinite; }
-  @keyframes rg-spin { to { transform: rotate(360deg); } }
-  .rg-err { color: #F2A48E; border: 1px solid rgba(226,88,54,.55); background: rgba(226,88,54,.08); border-radius: 12px; padding: .8rem 1rem; margin-top: 1.2rem;
-    font-size: 15px; line-height: 1.5; }
-  .rg-err .rg-btn { margin-top: .7rem; }
-  .rg-empty { margin-top: 1.2rem; padding: 1.3rem 1.4rem; border: 1px dashed var(--fd-rule-soft); border-radius: 16px; color: var(--fd-dim);
-    font-size: clamp(15px,1.7vw,17px); line-height: 1.55; max-width: 62ch; }
-  .rg-empty .rg-btn, .rg-empty .fd-cta { margin-top: 1rem; }
-
-  /* success */
-  .rg-done { border-color: rgba(94,200,189,.55); box-shadow: 0 0 0 3px rgba(94,200,189,.12), 0 0 60px -20px var(--fd-teal); }
-  .rg-done .lead { color: var(--fd-dim); font-size: clamp(16px,1.8vw,19px); line-height: 1.55; margin: .8rem 0 0; }
-  .rg-done .lead b { color: var(--fd-bone); font-weight: 500; }
-  .rg-next { list-style: none; counter-reset: n; padding: 0; margin: 1.5rem 0 0; }
-  .rg-next li { position: relative; padding-left: 2.2rem; margin-bottom: .85rem; color: var(--fd-dim); font-size: clamp(14px,1.6vw,17px); line-height: 1.5; counter-increment: n; }
-  .rg-next li::before { content: counter(n); position: absolute; left: 0; top: .1em; width: 1.5rem; height: 1.5rem; border-radius: 50%; display: grid; place-items: center;
-    font-family: var(--fd-mono); font-size: 11px; color: var(--fd-teal); border: 1px solid var(--fd-teal); box-shadow: 0 0 10px -2px var(--fd-teal); }
-  .rg-next li b { color: var(--fd-bone); font-weight: 500; }
-  .rg-done .rg-actions { margin-top: 1.1rem; }
-
-  /* my registrations */
-  .rg-regs { margin-top: .4rem; }
-  .rg-reg { display: grid; grid-template-columns: 72px 1fr; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--fd-rule); }
-  .rg-reg img, .rg-reg .ph { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; background: #05070a; display: block; }
-  .rg-reg .ph { border: 1px dashed var(--fd-rule-soft); }
-  .rg-reg .top { display: flex; gap: .5rem 1rem; flex-wrap: wrap; align-items: center; }
-  .rg-reg h3 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 380; font-weight: 400; color: var(--fd-bone); font-size: clamp(18px,2vw,22px); margin: 0; line-height: 1.2; }
-  .rg-reg .sub { color: var(--fd-faint); font-size: clamp(13px,1.4vw,15px); margin: .35rem 0 0; line-height: 1.5; }
-  .rg-reg .note { color: var(--fd-dim); font-size: 14px; margin: .3rem 0 0; }
-  .rg-reg .links { display: flex; gap: .2rem .9rem; flex-wrap: wrap; margin-top: .4rem; }
-  .rg-link { font-family: var(--fd-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--fd-dim) !important;
-    text-decoration: none !important; padding: .45rem 0; background: none; border: 0; cursor: pointer; }
-  .rg-link:hover { color: var(--fd-amber) !important; }
-  .rg-link.teal { color: var(--fd-teal) !important; }
-  .rg-skel { height: 96px; border-radius: 16px; border: 1px solid var(--fd-rule); margin-top: 1.2rem;
-    background: linear-gradient(90deg, rgba(238,231,219,.02), rgba(238,231,219,.05), rgba(238,231,219,.02)); background-size: 200% 100%; animation: sh 1.4s infinite; }
+  .check { display: flex; gap: .8rem; align-items: flex-start; margin-top: 1.4rem; cursor: pointer; font-size: 15px; line-height: 1.45; }
+  .check input { width: 1.25rem; height: 1.25rem; margin: .1rem 0 0; accent-color: var(--red); flex: none; cursor: pointer; }
+  .acts { display: flex; gap: .8rem 1.2rem; flex-wrap: wrap; align-items: center; margin-top: 1.6rem; }
+  .btn.big { width: 100%; justify-content: center; padding: 1.1rem 1.4rem; font-size: 16px; margin-top: 1.4rem; }
+  .err { border-left: 2px solid var(--red); padding: .4rem 0 .4rem 1.2rem; margin-top: 1.2rem; color: var(--red); font-size: 15px; }
+  .err .btn { margin-top: .7rem; }
+  .empty { margin-top: 1.2rem; padding: 1.3rem 1.4rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .empty .btn { margin-top: 1rem; }
+  .skel { height: 96px; margin-top: 1.2rem; background: linear-gradient(90deg, var(--paper-2), var(--paper-3), var(--paper-2)); background-size: 200% 100%; animation: sh 1.4s infinite; }
   @keyframes sh { from { background-position: 200% 0 } to { background-position: -200% 0 } }
 
-  @media (max-width: 560px) {
-    .fd-page .fd-row { grid-template-columns: 1fr; gap: .25rem; }
-    .rg-pick.fd-row { grid-template-columns: 1fr; gap: .4rem; }
-    .rg-actions .rg-btn { width: 100%; }
-    .rg-reg { grid-template-columns: 60px 1fr; gap: .8rem; }
-    .rg-reg img, .rg-reg .ph { width: 60px; height: 60px; }
+  /* success */
+  .done { border-top: 2px solid var(--red); }
+  .done .lead { font-size: clamp(1.05rem, 1.5vw, 1.2rem); color: var(--ink-2); margin: .8rem 0 0; }
+  .done .lead b { color: var(--ink); font-weight: 500; }
+  .next { list-style: none; counter-reset: n; padding: 0; margin: 1rem 0 0; border-top: 1px solid var(--rule); }
+  .next li { display: grid; grid-template-columns: 3rem 1fr; padding: .9rem 0; border-bottom: 1px solid var(--rule); color: var(--ink-2); font-size: 16px; counter-increment: n; }
+  .next li::before { content: counter(n, decimal-leading-zero); font: 400 12px var(--mono); color: var(--red); padding-top: .3rem; }
+  .next li b { color: var(--ink); font-weight: 500; }
+  .done .acts { margin-top: 1.2rem; }
+
+  /* my registrations */
+  .regs { margin-top: 1rem; border-top: 1px solid var(--rule); }
+  .reg { display: grid; grid-template-columns: 72px 1fr; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+  .reg img, .reg .ph { width: 72px; height: 72px; object-fit: cover; background: var(--paper-2); display: block; }
+  .reg .ph { border: 1px dashed var(--rule); background: none; }
+  .reg .top { display: flex; gap: .5rem 1rem; flex-wrap: wrap; align-items: center; }
+  .reg h3 { font-size: clamp(1.15rem, 2vw, 1.4rem); }
+  .reg .sub { color: var(--muted); font-size: 14px; margin: .35rem 0 0; }
+  .reg .hostnote { color: var(--ink-2); font-size: 14px; margin: .3rem 0 0; }
+  .reg .links { display: flex; gap: .4rem 1.2rem; flex-wrap: wrap; margin-top: .6rem; }
+  .pill.bad { color: var(--red); border-color: var(--red); }
+
+  @media (max-width: 680px) {
+    .hero .lede { font-size: 1rem; }
+    .acts .btn { width: 100%; justify-content: center; }
+    .list.pick a.row { grid-template-columns: 1fr; gap: .4rem; }
+    .reg { grid-template-columns: 60px 1fr; gap: .8rem; }
+    .reg img, .reg .ph { width: 60px; height: 60px; }
   }
 </style>
 </head>
-<body class="fd-ground">
-<div class="fd-page">
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu">
+   <li><a href="/explore/">Registry</a></li><li><a href="/events.html" class="on">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li>
+  </ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">Collect</span><a href="/register.html" class="on" aria-current="page">Add a find</a><a href="/events.html">Events</a><a href="/games.html">Seasons</a></div>
 
-  <nav class="fd-nav" aria-label="Site">
-    <a class="fd-nav__brand" href="/">Glass&nbsp;Database</a>
-    <div class="fd-nav__links">
-      <a href="/explore/">Explore</a>
-      <a href="/blog/">Blog</a>
-      <a href="/glowtbook/" class="on">Glowtbook</a>
-      <a href="/studios.html">Visualizations</a>
-      <a href="/shop.html">Shops</a>
-      <span id="chip"></span>
-    </div>
-  </nav>
-  <div class="fd-subnav" aria-label="Glowtbook">
-    <span class="fd-subnav__label">Glowtbook</span>
-    <a href="/glowtbook/">Journal &amp; pieces</a>
-    <a href="/fingerprint/enroll.html">Capture app</a>
-    <a href="/games.html">Seasons</a>
-    <a href="/events.html" class="on" aria-current="page">Events</a>
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> Add to your collection</p>
+  <h1 id="h1">Found a new treasure? <em>Add it to your collection.</em></h1>
+  <p class="lede" id="lede">Say what you found, add a photo if you like, and it joins your collection with its story attached: made by the maker for this event, found by you today. The maker confirms it, the registry keeps it, and it sits in your Glowtbook ready to fingerprint.</p>
+ </div>
+</section>
+
+<section class="flow" id="flow">
+ <div class="wrap col">
+  <div id="eventHead" hidden></div>
+  <div id="picker" hidden></div>
+  <div id="closed" hidden></div>
+  <div id="auth" hidden></div>
+
+  <form id="form" class="block" hidden novalidate autocomplete="off">
+   <p class="label"><span class="n">Your find</span></p>
+   <div class="field">
+    <label for="fTitle">What did you find? <small>Required — a few words is plenty.</small></label>
+    <input id="fTitle" type="text" required maxlength="200" placeholder="Blue swirl ornament" autocapitalize="sentences" enterkeyhint="next">
+   </div>
+   <div class="field">
+    <label for="fRef">Piece number or tag <small>Optional — the number on your tag or receipt.</small></label>
+    <input id="fRef" type="text" maxlength="80" placeholder="e.g. 14" autocapitalize="characters" enterkeyhint="next">
+   </div>
+   <div class="field" style="position:relative">
+    <span class="lab" id="photoLab">Photo <small>Optional — one shot of the piece while it's in your hand.</small></span>
+    <input class="vh" id="fPhoto" type="file" accept="image/*" capture="environment" aria-labelledby="photoLab">
+    <label class="photo" for="fPhoto">
+     <img id="photoPrev" alt="" hidden>
+     <span class="ph" id="photoPh" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
+     <span class="txt" id="photoTxt">Take a photo<small>or choose one from your library</small></span>
+    </label>
+    <button type="button" class="link" id="photoClear" hidden>Remove photo</button>
+   </div>
+   <div class="field">
+    <label for="fNote">A short note <small>Optional — colour, size, what drew you to it.</small></label>
+    <textarea id="fNote" rows="2" maxlength="2000"></textarea>
+   </div>
+   <div class="field">
+    <label for="fPrice">Price paid <small>Optional and private — never shown; it feeds the census of what glass actually sells for.</small></label>
+    <input id="fPrice" type="text" inputmode="decimal" maxlength="80" placeholder="$65" enterkeyhint="done">
+   </div>
+   <label class="check"><input id="fShow" type="checkbox"><span>Show my name on the event page <small>Names are private by default. Leave this off and the piece is listed as acquired by "a collector".</small></span></label>
+   <div class="err" id="err" hidden role="alert"></div>
+   <div class="acts"><button class="btn btn--red" id="submit" type="submit">Add it to my collection</button></div>
+   <p class="note" id="formNote">The maker confirms it came from their table, then the registry publishes it with its provenance. Watch it under <a href="#mine">My collection</a> below.</p>
+  </form>
+
+  <div id="done" hidden></div>
+ </div>
+</section>
+
+<section class="s alt" id="mine" hidden aria-labelledby="h-mine">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> My collection</p>
+   <div><h2 id="h-mine">What you've <em>registered.</em></h2></div></div>
+  <div id="mineBody"></div>
+ </div>
+</section>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
   </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
 
-  <header class="fd-hero-wrap">
-    <svg class="fd-filaments" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <path d="M-40 640 C 300 560, 520 520, 900 250"/>
-      <path d="M-40 700 C 360 600, 640 460, 902 252"/>
-      <path d="M1240 620 C 1050 520, 1010 380, 902 252"/>
-      <path d="M1240 700 C 1080 560, 980 360, 902 252"/>
-      <circle cx="902" cy="252" r="6"/>
-    </svg>
-    <section class="fd-hero fd-sec" style="padding-top:2.4rem" id="hero">
-      <p class="fd-eyebrow">Add to your collection</p>
-      <h1 class="fd-headline" style="margin-top:1.4rem" id="h1">Found a new treasure? <em>Add it to your collection.</em></h1>
-      <p class="fd-body" style="margin-top:1.2rem" id="lede">Say what you found, add a photo if you like, and it joins your collection with its story attached: made by the maker for this event, found by you today. The maker confirms it, the registry keeps it, and it sits in your Glowtbook ready to fingerprint.</p>
-    </section>
-  </header>
-
-  <section class="fd-sec rg-col" id="flow" style="padding-top:1.6rem">
-    <div id="eventHead" hidden></div>
-    <div id="picker" hidden></div>
-    <div id="closed" hidden></div>
-    <div id="auth" hidden></div>
-
-    <form id="form" class="rg-card" hidden novalidate autocomplete="off">
-      <span class="fd-label" style="color:var(--fd-amber)">Your find</span>
-      <div class="rg-field">
-        <label for="fTitle">What did you find? <small>Required — a few words is plenty.</small></label>
-        <input id="fTitle" type="text" required maxlength="200" placeholder="Blue swirl ornament" autocapitalize="sentences" enterkeyhint="next">
-      </div>
-      <div class="rg-field">
-        <label for="fRef">Piece number or tag <small>Optional — the number on your tag or receipt.</small></label>
-        <input id="fRef" type="text" maxlength="80" placeholder="e.g. 14" autocapitalize="characters" enterkeyhint="next">
-      </div>
-      <div class="rg-field" style="position:relative">
-        <span class="rg-lab" id="photoLab">Photo <small>Optional — one shot of the piece while it's in your hand.</small></span>
-        <input class="rg-vh" id="fPhoto" type="file" accept="image/*" capture="environment" aria-labelledby="photoLab">
-        <label class="rg-photo" for="fPhoto">
-          <img id="photoPrev" alt="" hidden>
-          <span class="ph" id="photoPh" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></span>
-          <span class="txt" id="photoTxt">Take a photo<small>or choose one from your library</small></span>
-        </label>
-        <button type="button" class="rg-link" id="photoClear" hidden>Remove photo</button>
-      </div>
-      <div class="rg-field">
-        <label for="fNote">A short note <small>Optional — colour, size, what drew you to it.</small></label>
-        <textarea id="fNote" rows="2" maxlength="2000"></textarea>
-      </div>
-      <div class="rg-field">
-        <label for="fPrice">Price paid <small>Optional and private — never shown; it feeds the census of what glass actually sells for.</small></label>
-        <input id="fPrice" type="text" inputmode="decimal" maxlength="80" placeholder="$65" enterkeyhint="done">
-      </div>
-      <label class="rg-check"><input id="fShow" type="checkbox"><span>Show my name on the event page <small>Names are private by default. Leave this off and the piece is listed as acquired by "a collector".</small></span></label>
-      <div class="rg-err" id="err" hidden role="alert"></div>
-      <div class="rg-actions"><button class="rg-btn" id="submit" type="submit">Add it to my collection</button></div>
-      <p class="rg-note" id="formNote">The maker confirms it came from their table, then the registry publishes it with its provenance. Watch it under <a href="#mine">My collection</a> below.</p>
-    </form>
-
-    <div id="done" hidden></div>
-  </section>
-
-  <section class="fd-sec" id="mine" hidden>
-    <p class="fd-eyebrow">My collection</p>
-    <div class="fd-kicker-rule"></div>
-    <div id="mineBody"></div>
-  </section>
-
-  <footer class="fd-footer">
-    <div>
-      <p style="color:var(--fd-bone);font-size:14px;letter-spacing:.1em">GLASS&nbsp;DATABASE</p>
-      <p>Data &amp; ontology under <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a> &middot;
-         software <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache&nbsp;2.0</a></p>
-    </div>
-    <p>
-      <a href="https://discord.gg/9ek2UxvPT">Discord</a> &middot;
-      <a href="https://www.instagram.com/glassdatabase/">Instagram</a> &middot;
-      <a href="/api/docs">Developer API</a> &middot;
-      <a class="fd-handle" href="https://github.com/alibama/glass-database">github.com/alibama/glass-database</a>
-    </p>
-  </footer>
-</div>
-
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
 <script>
 (function () {
   "use strict";
@@ -252,6 +213,8 @@
   var S = { slug: GDB.param("event"), ev: null, me: null, signedIn: false, photo: null, busy: false };
   var LABEL = { pending_host: "waiting for the maker to confirm", host_approved: "confirmed by the maker — joining the registry",
                 approved: "in the registry", rejected_host: "the maker didn't recognise it", rejected: "not added to the registry" };
+  /* status -> paper pill: default while pending, ink once published, red outline when turned down */
+  var PILL = { pending_host: "pill", host_approved: "pill", approved: "pill ink", rejected_host: "pill bad", rejected: "pill bad" };
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   var DAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -276,32 +239,32 @@
     return s && s !== h ? (h ? h + " · " + s : s) : (h || s);
   }
   function loginBtn(label, cls) {
-    return '<a class="rg-btn ' + (cls || "") + '" href="' + esc(GDB.loginUrl(here())) + '">' + label + "</a>";
+    return '<a class="btn ' + (cls || "btn--red") + '" href="' + esc(GDB.loginUrl(here())) + '">' + label + "</a>";
   }
-  function link(label, href, cls) {
-    return '<a class="rg-link ' + (cls || "") + '" href="' + esc(href) + '">' + label + "</a>";
+  function link(label, href) {
+    return '<a class="link" href="' + esc(href) + '">' + label + "</a>";
   }
   function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
 
   /* --- event header ---------------------------------------------------- */
   function renderHead() {
     var ev = S.ev, w = where(ev), d = fmtDate(ev.starts, ev.ends);
-    $("#eventHead").innerHTML = '<div class="rg-card">' +
-      '<span class="fd-label" style="color:var(--fd-amber)">Event</span>' +
+    $("#eventHead").innerHTML = '<div class="block">' +
+      '<p class="label"><span class="n">Event</span></p>' +
       "<h2>" + esc(ev.title) + "</h2>" +
       '<p class="who">' + esc(who(ev)) + "</p>" +
-      '<div class="meta rg-mono">' +
+      '<div class="meta">' +
         (w ? "<span><b>" + esc(w) + "</b></span>" : "") +
         (d ? "<span><b>" + esc(d) + "</b></span>" : "") +
         (ev.piece_type ? "<span>pieces <b>" + esc(ev.piece_type) + "</b></span>" : "") +
       "</div>" +
-      '<div class="rg-status rg-mono">' +
-        '<span class="rg-pill ' + (ev.can_register ? "open" : "closed") + '">' + (ev.can_register ? "registrations open" : "registrations closed") + "</span>" +
+      '<div class="status">' +
+        '<span class="' + (ev.can_register ? "pill red" : "pill ink") + '">' + (ev.can_register ? "registrations open" : "registrations closed") + "</span>" +
         (ev.can_register && ev.registration_closes ? "<span>until " + esc(fmtDate(ev.registration_closes)) + "</span>" : "") +
         (ev.published ? "<span>" + plural(ev.published, "piece") + " published</span>" : "") +
       "</div>" +
       (ev.description ? '<p class="desc">' + esc(ev.description) + "</p>" : "") +
-      '<p class="rg-note"><a href="/events.html?event=' + encodeURIComponent(ev.slug) + '">Event page</a> · <a href="/register.html">Different event?</a></p>' +
+      '<p class="note"><a href="/events.html?event=' + encodeURIComponent(ev.slug) + '">Event page</a> · <a href="/register.html">Different event?</a></p>' +
       "</div>";
     show("#eventHead", true);
   }
@@ -310,25 +273,25 @@
   function loadPicker() {
     show("#eventHead", false); show("#closed", false); show("#auth", false); show("#form", false); show("#done", false);
     show("#picker", true);
-    $("#picker").innerHTML = '<div class="rg-skel"></div>';
+    $("#picker").innerHTML = '<div class="skel"></div>';
     GDB.json("/events").then(function (d) {
       var open = (d.events || []).filter(function (e) { return e.can_register; });
       if (!open.length) {
-        $("#picker").innerHTML = '<div class="rg-empty">No events are open for registration right now. ' +
+        $("#picker").innerHTML = '<div class="empty">No events are open for registration right now. ' +
           "If you're holding a QR or link from the table, use that — it works even before the event is listed. " +
-          '<br><a class="rg-btn rg-btn--ghost" href="/events.html">See all events</a></div>';
+          '<br><a class="btn btn--line" href="/events.html">See all events</a></div>';
         return;
       }
-      $("#picker").innerHTML = '<span class="fd-label" style="color:var(--fd-amber)">Where did you find it?</span>' +
-        '<div class="fd-rows" style="margin-top:.6rem">' + open.map(function (e) {
+      $("#picker").innerHTML = '<p class="label" style="margin-top:1rem"><span class="n">Where did you find it?</span></p>' +
+        '<ul class="list pick" style="margin-top:.6rem">' + open.map(function (e) {
           var sub = [who(e), where(e), fmtDate(e.starts, e.ends)].filter(Boolean).join(" · ");
-          return '<a class="fd-row rg-pick" href="?event=' + encodeURIComponent(e.slug) + '"><p>' + esc(e.title) +
+          return '<li><a class="row" href="?event=' + encodeURIComponent(e.slug) + '"><p>' + esc(e.title) +
             "<small>" + esc(sub) + "</small></p>" +
-            '<span class="val rg-mono">' + (e.registered ? plural(e.registered, "piece") + " registered · " : "") + "register →</span></a>";
-        }).join("") + "</div>" +
-        '<p class="rg-note">Not listed yet? Ask the host for the link or QR on the table — it works before the directory does.</p>';
+            '<span class="val">' + (e.registered ? plural(e.registered, "piece") + " registered · " : "") + "register →</span></a></li>";
+        }).join("") + "</ul>" +
+        '<p class="note">Not listed yet? Ask the host for the link or QR on the table — it works before the directory does.</p>';
     }).catch(function (err) {
-      $("#picker").innerHTML = '<div class="rg-empty">Couldn\'t reach the events list (' + esc(err.message || "offline") + "). Try again in a moment.</div>";
+      $("#picker").innerHTML = '<div class="empty">Couldn\'t reach the events list (' + esc(err.message || "offline") + "). Try again in a moment.</div>";
     });
   }
 
@@ -340,18 +303,18 @@
       var why = ev.status !== "open" ? "This event isn't taking registrations"
         : (ev.registration_opens && new Date() < parseDay(ev.registration_opens) ? "Registration opens " + fmtDate(ev.registration_opens)
         : "Registration for this event has closed" + (ev.registration_closes ? " (it ran until " + fmtDate(ev.registration_closes) + ")" : ""));
-      $("#closed").innerHTML = '<div class="rg-empty">' + esc(why) + ". If you bought a piece there, ask the host — they can reopen it from Glowtbook. " +
-        '<br><a class="rg-btn rg-btn--ghost" href="/events.html">See other events</a></div>';
+      $("#closed").innerHTML = '<div class="empty">' + esc(why) + ". If you bought a piece there, ask the host — they can reopen it from Glowtbook. " +
+        '<br><a class="btn btn--line" href="/events.html">See other events</a></div>';
       show("#closed", true); show("#auth", false); show("#form", false);
       return;
     }
     show("#closed", false);
     if (!S.signedIn) {
-      $("#auth").innerHTML = '<div class="rg-card">' +
-        '<span class="fd-label" style="color:var(--fd-teal)">Make it yours</span>' +
-        '<p class="rg-why">Sign in so the piece is tied to you — that\'s what turns a photo on your phone into a collection you can prove.</p>' +
+      $("#auth").innerHTML = '<div class="block">' +
+        '<p class="label"><span class="n">Make it yours</span></p>' +
+        '<p class="why">Sign in so the piece is tied to you — that\'s what turns a photo on your phone into a collection you can prove.</p>' +
         loginBtn("Sign in to add it") +
-        '<p class="rg-note">Your name stays private unless you choose to show it. Your email is never shown.</p></div>';
+        '<p class="note">Your name stays private unless you choose to show it. Your email is never shown.</p></div>';
       show("#auth", true); show("#form", false);
     } else {
       show("#auth", false); show("#form", true);
@@ -423,21 +386,21 @@
   function renderDone(r) {
     var ev = S.ev;
     show("#form", false); show("#auth", false);
-    $("#done").innerHTML = '<div class="rg-card rg-done">' +
-      '<span class="fd-label" style="color:var(--fd-teal)">In your collection</span>' +
+    $("#done").innerHTML = '<div class="block done">' +
+      '<span class="pill red">In your collection</span>' +
       "<h2>" + esc(r.title) + "</h2>" +
       '<p class="lead">Treasure logged — found at <b>' + esc(ev.title) + "</b>" + (r.piece_ref ? ", piece <b>" + esc(r.piece_ref) + "</b>" : "") + ".</p>" +
-      '<span class="fd-label" style="color:var(--fd-dim);display:block;margin-top:1.4rem">What happens next</span>' +
-      '<ol class="rg-next">' +
-        "<li><b>" + esc(ev.host_name || ev.studio || "The maker") + "</b> confirms it came from their table — usually the same day.</li>" +
-        "<li>The registry publishes it with its provenance: made by the maker for this event, collected by you.</li>" +
-        "<li>Fingerprint it, and any phone can match <em>this</em> piece to its record — the difference between a collection and a shelf of glass.</li>" +
+      '<p class="label" style="margin-top:1.6rem">What happens next</p>' +
+      '<ol class="next">' +
+        "<li><span><b>" + esc(ev.host_name || ev.studio || "The maker") + "</b> confirms it came from their table — usually the same day.</span></li>" +
+        "<li><span>The registry publishes it with its provenance: made by the maker for this event, collected by you.</span></li>" +
+        "<li><span>Fingerprint it, and any phone can match <em>this</em> piece to its record — the difference between a collection and a shelf of glass.</span></li>" +
       "</ol>" +
-      (r.fingerprint_url ? '<a class="rg-btn rg-btn--teal rg-btn--big" href="' + esc(r.fingerprint_url) + '">Fingerprint it now</a>' +
-        '<p class="rg-note">A minute while it\'s in your hand: a few photos on a plain background, and the piece can be recognised later — not one like it, this one.</p>' : "") +
-      '<div class="rg-actions">' +
-        '<a class="rg-btn rg-btn--ghost" href="' + esc(r.glowtbook_url || "/glowtbook/") + '">Open in Glowtbook</a>' +
-        '<button type="button" class="rg-btn rg-btn--ghost" id="again">Add another find</button>' +
+      (r.fingerprint_url ? '<a class="btn btn--red big" href="' + esc(r.fingerprint_url) + '">Fingerprint it now</a>' +
+        '<p class="note">A minute while it\'s in your hand: a few photos on a plain background, and the piece can be recognised later — not one like it, this one.</p>' : "") +
+      '<div class="acts">' +
+        '<a class="btn btn--line" href="' + esc(r.glowtbook_url || "/glowtbook/") + '">Open in Glowtbook</a>' +
+        '<button type="button" class="btn btn--line" id="again">Add another find</button>' +
       "</div></div>";
     show("#done", true);
     $("#again").addEventListener("click", function () {
@@ -452,34 +415,34 @@
   function regRow(r) {
     var sub = [r.event_title, r.host_name, r.venue, r.starts ? fmtDate(r.starts) : "", r.piece_ref ? "piece " + r.piece_ref : ""].filter(Boolean).join(" · ");
     var links = "";
-    if (r.fingerprint_url) links += link("Fingerprint", r.fingerprint_url, "teal");
+    if (r.fingerprint_url) links += link("Fingerprint", r.fingerprint_url);
     if (r.glowtbook_url) links += link("Glowtbook", r.glowtbook_url);
     if (r.status === "approved" && r.object_url) links += link("View published", r.object_url);
     if (r.event_slug) links += link("Event", "/events.html?event=" + encodeURIComponent(r.event_slug));
     var note = r.status === "rejected_host" && r.host_note ? r.host_note : (r.status === "rejected" && r.admin_note ? r.admin_note : "");
-    return '<article class="rg-reg">' +
+    return '<article class="reg">' +
       (r.image_url ? '<img src="' + esc(r.image_url) + '" alt="" loading="lazy" onerror="this.style.opacity=.15">' : '<span class="ph" aria-hidden="true"></span>') +
-      '<div><div class="top"><h3>' + esc(r.title) + '</h3><span class="rg-pill ' + esc(r.status) + '">' + esc(LABEL[r.status] || r.status) + "</span></div>" +
-      '<p class="sub">' + esc(sub) + "</p>" + (note ? '<p class="note">' + esc(note) + "</p>" : "") +
+      '<div><div class="top"><h3>' + esc(r.title) + '</h3><span class="' + (PILL[r.status] || "pill") + '">' + esc(LABEL[r.status] || r.status) + "</span></div>" +
+      '<p class="sub">' + esc(sub) + "</p>" + (note ? '<p class="hostnote">' + esc(note) + "</p>" : "") +
       '<div class="links">' + links + "</div></div></article>";
   }
   function loadMine() {
     if (!S.signedIn) { show("#mine", false); return; }
     show("#mine", true);
-    $("#mineBody").innerHTML = '<div class="rg-skel"></div>';
+    $("#mineBody").innerHTML = '<div class="skel"></div>';
     GDB.json("/me/registrations").then(function (d) {
       var regs = d.registrations || [];
       if (!regs.length) {
-        $("#mineBody").innerHTML = '<div class="rg-empty">Nothing registered yet. Pieces you register at events land here with their status — waiting for the host, waiting for the site, published.</div>';
+        $("#mineBody").innerHTML = '<div class="empty" style="margin-top:0">Nothing registered yet. Pieces you register at events land here with their status — waiting for the host, waiting for the site, published.</div>';
         return;
       }
       var waiting = regs.filter(function (r) { return r.status === "pending_host" || r.status === "host_approved"; }).length;
-      $("#mineBody").innerHTML = '<p class="rg-mono" style="color:var(--fd-faint);margin:0">' + plural(regs.length, "piece") +
-        (waiting ? " · " + waiting + " in review" : "") + "</p>" +
-        '<div class="rg-regs">' + regs.map(regRow).join("") + "</div>";
+      $("#mineBody").innerHTML = '<p class="live" style="margin-top:0">' + plural(regs.length, "piece") +
+        (waiting ? " · <b>" + waiting + "</b> in review" : "") + "</p>" +
+        '<div class="regs">' + regs.map(regRow).join("") + "</div>";
     }).catch(function (err) {
       if (err.status === 401) { S.signedIn = false; show("#mine", false); return; }
-      $("#mineBody").innerHTML = '<div class="rg-empty">Couldn\'t load your registrations (' + esc(err.message || "offline") + ").</div>";
+      $("#mineBody").innerHTML = '<div class="empty" style="margin-top:0">Couldn\'t load your registrations (' + esc(err.message || "offline") + ").</div>";
     });
   }
 
@@ -498,7 +461,7 @@
         $("#lede").textContent = "We couldn't find that event — the link may be old. Pick it from the list below, or ask the host for a fresh QR.";
         loadPicker(); return;
       }
-      $("#picker").innerHTML = '<div class="rg-empty">Couldn\'t reach the API (' + esc(err.message || "network") + "). Try again in a moment.</div>";
+      $("#picker").innerHTML = '<div class="empty">Couldn\'t reach the API (' + esc(err.message || "network") + "). Try again in a moment.</div>";
       show("#picker", true);
     });
   }

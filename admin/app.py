@@ -495,7 +495,10 @@ elif section == "🛡️ Review queue":
                 st.caption(f"Submitted by {s['submitted_by'] or 'unknown'} · sourcing: {s['sourcing']} "
                            "(self-reported — approving asserts you've checked it)")
                 with st.expander("Provenance manifest"):
-                    st.json(json.loads(s["manifest_json"]), expanded=False)
+                    if s["manifest_json"]:
+                        st.json(json.loads(s["manifest_json"]), expanded=False)
+                    else:
+                        st.caption("No manifest attached to this submission.")
                 if ostatus == "pending":
                     a, r = st.columns(2)
                     if a.button("✅ Approve & publish", key=f"oap_{s['id']}"):

@@ -84,14 +84,14 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
 
-  var CSS = ".gdb-chip{display:inline-flex;align-items:center;gap:.5rem;font-family:'IBM Plex Mono',ui-monospace,monospace;" +
-    "font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fd-dim,#A8A29A)}" +
-    ".gdb-chip .gdb-dot{width:8px;height:8px;border-radius:50%;background:var(--fd-faint,#6E665C)}" +
-    ".gdb-chip.on .gdb-dot{background:var(--fd-teal,#5EC8BD);box-shadow:0 0 10px var(--fd-teal,#5EC8BD)}" +
-    ".gdb-chip a,.gdb-chip button{font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--fd-amber,#E8A44A);" +
-    "background:none;border:1px solid var(--fd-rule-soft,#2A2824);border-radius:999px;padding:.35rem .7rem;cursor:pointer;text-decoration:none}" +
-    ".gdb-chip a:hover,.gdb-chip button:hover{border-color:var(--fd-amber,#E8A44A)}" +
-    ".gdb-chip b{color:var(--fd-bone,#EEE7DB);font-weight:500;max-width:14ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}";
+  var CSS = ".gdb-chip{display:inline-flex;align-items:center;gap:.6rem;font-family:var(--mono,'IBM Plex Mono',ui-monospace,monospace);" +
+    "font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted,#6B625A)}" +
+    ".gdb-chip .gdb-dot{width:8px;height:8px;border-radius:50%;background:var(--rule,#CFC2AE)}" +
+    ".gdb-chip.on .gdb-dot{background:var(--red,#B3261E)}" +
+    ".gdb-chip a,.gdb-chip button{font:inherit;letter-spacing:inherit;text-transform:inherit;color:var(--ink,#1F1A16);" +
+    "background:none;border:1px solid var(--ink,#1F1A16);border-radius:0;padding:.45rem .8rem;cursor:pointer;text-decoration:none}" +
+    ".gdb-chip a:hover,.gdb-chip button:hover{background:var(--ink,#1F1A16);color:var(--paper,#F4EEE4)}" +
+    ".gdb-chip b{color:var(--ink,#1F1A16);font-weight:500;max-width:14ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}";
   function ensureCss() {
     if (document.getElementById("gdb-chip-css")) return;
     var s = document.createElement("style"); s.id = "gdb-chip-css"; s.textContent = CSS; document.head.appendChild(s);

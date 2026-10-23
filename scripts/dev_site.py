@@ -27,7 +27,8 @@ from starlette.staticfiles import StaticFiles  # noqa: E402
 from api.main import app as api_app  # noqa: E402
 
 STREAMLIT = {"glowtbook": 8503, "explore": 8502, "admin": 8501}
-FILES = {"/": "landing-index.html", "/field-data.css": "field-data.css", "/site.js": "site.js",
+FILES = {"/": "landing-index.html", "/paper.css": "paper.css",
+         "/site.js": "site.js",
          "/logo.svg": "landing-logo.svg", "/shop-prompts.md": "shop-prompts.md",
          "/SHOP-PARTS.md": "SHOP-PARTS.md"}
 

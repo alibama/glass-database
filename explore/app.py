@@ -464,7 +464,7 @@ with left:
             counts = (df[gb].replace("", pd.NA).dropna().value_counts()
                       .head(25).rename_axis(gb).reset_index(name="count"))
             chart = (alt.Chart(counts)
-                     .mark_bar(color="#e2571e")
+                     .mark_bar(color="#B3261E")
                      .encode(x=alt.X("count:Q", title="count"),
                              y=alt.Y(f"{gb}:N", sort="-x", title=labels.get(gb, gb)),
                              tooltip=[alt.Tooltip(f"{gb}:N", title=labels.get(gb, gb)), "count:Q"])
@@ -490,7 +490,7 @@ with right:
                 else:
                     xfield = alt.X(f"{nb}:Q", bin=alt.Bin(maxbins=30), title=labels.get(nb, nb))
                 hist = (alt.Chart(pd.DataFrame({nb: series}))
-                        .mark_bar(color="#3b7dd8")
+                        .mark_bar(color="#4A423A")
                         .encode(x=xfield, y=alt.Y("count():Q", title="count"),
                                 tooltip=[alt.Tooltip(f"{nb}:Q", bin=True, title=labels.get(nb, nb)),
                                          "count():Q"])

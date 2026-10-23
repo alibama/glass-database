@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Build the blog — Markdown in, Field Data pages out. No dependencies.
+Build the blog — Markdown in, paper-theme pages out (styled by /paper.css). No dependencies.
 
     python -m scripts.build_blog                 # blog/posts/*.md -> deploy/blog/
     python -m scripts.build_blog --out /tmp/b    # elsewhere (tests)
@@ -174,82 +174,71 @@ def render_markdown(md: str) -> str:
     return "\n".join(out)
 
 
-# --- templates -----------------------------------------------------------------
-FONTS = ('<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
-         '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK'
-         '@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900'
-         '&family=IBM+Plex+Mono:wght@400;500&display=swap">\n'
-         '<link rel="stylesheet" href="/field-data.css">')
+# --- templates (paper theme: deploy/paper.css is the one stylesheet) -----------
+FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+         '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500'
+         '&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">\n'
+         '<link rel="stylesheet" href="/paper.css">\n'
+         '<script src="/site.js"></script>')
 
-# The site's five sections (the nav + footer styles are the shared "Site chrome"
-# rules in deploy/field-data.css; API and Discord live in the footer).
-NAV = [("Explore", "/explore/"), ("Blog", "/blog/"), ("Glowtbook", "/glowtbook/"),
-       ("Visualizations", "/studios.html"), ("Shops", "/shop.html")]
+# The site's primary menu, as on the homepage (deploy/landing-index.html).
+NAV = [("Registry", "/explore/"), ("Collect", "/events.html"), ("Field notes", "/blog/"),
+       ("Glowtbook", "/glowtbook/"), ("Tools", "/fingerprint/enroll.html"), ("About", "/#about")]
 
+# Page-specific rules only; everything shared lives in /paper.css (one owner).
 CSS = """
-  html { scroll-behavior: smooth; } body { margin: 0; }
-  .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 7rem; }
-  .fd-sec { padding: clamp(3rem, 7vw, 5.5rem) 0 0; }
-  .fd-sec .fd-eyebrow { display: inline-block; border-bottom: none; padding-bottom: 0; }
-  .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.8rem; max-width: 62ch; }
-  .meta { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .08em; text-transform: uppercase;
-    color: var(--fd-faint); display: flex; gap: .4rem 1rem; flex-wrap: wrap; margin: 1rem 0 0; }
-  .meta b { color: var(--fd-amber); font-weight: 500; }
-  .lede { font-family: var(--fd-sans); font-variation-settings: "wght" 500; color: var(--fd-bone);
-    font-size: clamp(18px,2vw,22px); line-height: 1.5; max-width: 62ch; margin: 1.4rem 0 0; }
-  article.post { max-width: 76ch; margin-top: 2.6rem; font-family: var(--fd-sans); color: var(--fd-dim);
-    font-size: clamp(16px,1.75vw,18.5px); line-height: 1.62; }
-  article.post p { margin: 0 0 1.15em; }
-  article.post h2 { font-family: var(--fd-serif); font-variation-settings: "opsz" 44, "wght" 340; font-weight: 300;
-    color: var(--fd-bone); font-size: clamp(28px,3.4vw,38px); line-height: 1.15; margin: 2.6em 0 .6em; letter-spacing: -.005em; }
-  article.post h3 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 400; font-weight: 400;
-    color: var(--fd-bone); font-size: clamp(22px,2.4vw,26px); margin: 2em 0 .5em; }
+  .nav ul a.on { color: var(--red); }
+  /* site.js injects its own (field-data) chip rules after paper.css; outrank them here */
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+  /* opener */
+  .opener { padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(2rem, 4vw, 3rem); border-bottom: 1px solid var(--rule); }
+  .opener .s-head { margin-bottom: 0; }
+  .opener h1 { font-size: clamp(2.6rem, 6vw, 5.4rem); line-height: .98; font-weight: 320; margin: 1rem 0 1.4rem; max-width: 20ch; }
+  .opener h2 { margin: 1rem 0 1.2rem; }
+  .opener .label { line-height: 1.8; }
+  .opener .sign { margin-top: 1.2rem; }
+  /* post body: prose in the 9/12 column under the title */
+  .body-grid { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; padding: clamp(2.5rem, 5vw, 4rem) 0; }
+  .body-grid aside { display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; align-self: start; position: sticky; top: 90px; }
+  article.post { max-width: 68ch; font-size: 17px; line-height: 1.65; color: var(--ink-2); }
+  article.post p { max-width: none; margin: 0 0 1.2em; }
+  article.post h2 { font-size: 2.2rem; line-height: 1.1; color: var(--ink); margin: 2.4em 0 .6em; font-variation-settings: "opsz" 72; }
   article.post h2:first-child { margin-top: 0; }
-  article.post strong { color: var(--fd-bone); font-weight: 600; }
-  article.post em { font-style: italic; color: var(--fd-bone); }
-  article.post a { color: var(--fd-amber); } article.post a:hover { color: var(--fd-teal); }
-  article.post code { font-family: var(--fd-mono); font-size: .9em; color: var(--fd-teal); }
-  article.post ul, article.post ol { padding-left: 1.3rem; margin: 0 0 1.2em; }
+  article.post h3 { color: var(--ink); margin: 1.8em 0 .5em; }
+  article.post strong { color: var(--ink); font-weight: 600; }
+  article.post a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+  article.post a:hover { color: var(--red); text-decoration-color: var(--red); }
+  article.post code { font: 400 .9em var(--mono); background: var(--paper-2); padding: .1em .35em; }
+  article.post ul, article.post ol { padding-left: 1.4rem; margin: 0 0 1.2em; }
   article.post li { margin: .35em 0; }
-  article.post li::marker { color: var(--fd-amber); font-family: var(--fd-mono); }
-  article.post blockquote { border-left: 2px solid var(--fd-amber); margin: 1.4em 0; padding: .2em 0 .2em 1.1em;
-    color: var(--fd-bone); font-variation-settings: "wght" 420; }
-  article.post hr { border: 0; height: 1px; background: var(--fd-rule); margin: 2.4em 0; }
-  .tbl { overflow-x: auto; margin: 1.4em 0 1.8em; border: 1px solid var(--fd-rule); border-radius: 14px;
-    background: linear-gradient(180deg, rgba(238,231,219,.025), rgba(238,231,219,0)); }
-  .tbl table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: .92em; line-height: 1.45; }
-  .tbl th { font-family: var(--fd-mono); font-weight: 500; font-size: .74em; letter-spacing: .1em; text-transform: uppercase;
-    color: var(--fd-amber); text-align: left; padding: .9rem 1rem .7rem; border-bottom: 1px solid var(--fd-rule-soft);
-    background: rgba(10,13,17,.5); white-space: nowrap; }
-  .tbl td { padding: .75rem 1rem; vertical-align: top; border-bottom: 1px solid var(--fd-rule); color: var(--fd-dim); }
-  .tbl tr:last-child td { border-bottom: 0; }
-  .tbl td:first-child { color: var(--fd-bone); font-variation-settings: "wght" 520; }
-  .tbl td strong { color: var(--fd-bone); }
-  .post-foot { max-width: 76ch; margin-top: 3.5rem; padding-top: 1.6rem; border-top: 1px solid var(--fd-rule); }
-  .post-nav { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1.2rem; }
-  .post-nav a { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .1em; text-transform: uppercase;
-    color: var(--fd-dim); text-decoration: none; } .post-nav a:hover { color: var(--fd-amber); }
-  .fd-signup { display: flex; gap: .6rem; flex-wrap: wrap; max-width: 34rem; margin-top: 1.2rem; }
-  .fd-signup input { flex: 1 1 15rem; padding: .8rem 1rem; border-radius: 999px; border: 1.5px solid var(--fd-rule-soft);
-    background: rgba(238,231,219,.04); color: var(--fd-bone); font-family: var(--fd-sans); font-size: 1rem; }
-  .fd-signup button { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .16em; text-transform: uppercase;
-    font-size: clamp(12px,1.4vw,14px); cursor: pointer; padding: 0 1.4rem; border-radius: 999px; border: 0;
-    background: var(--fd-amber); color: var(--fd-bg-top); }
-  .fd-signup-msg { font-family: var(--fd-mono); font-size: 12px; letter-spacing: .06em; color: var(--fd-amber); min-height: 1.2rem; margin: .6rem 0 0; }
-  .posts { display: grid; gap: 1.1rem; margin-top: 2.2rem; }
-  .post-card { display: block; text-decoration: none; padding: 1.7rem 1.6rem; border-radius: 16px; border: 1px solid var(--fd-rule);
-    background: linear-gradient(180deg, rgba(238,231,219,.03), rgba(238,231,219,0)); transition: border-color .18s, transform .18s; }
-  .post-card:hover { border-color: var(--fd-amber); transform: translateY(-2px); }
-  .post-card h2 { font-family: var(--fd-serif); font-variation-settings: "opsz" 44, "wght" 340; font-weight: 300; color: var(--fd-bone);
-    font-size: clamp(26px,3.2vw,36px); margin: .5rem 0 .6rem; line-height: 1.15; }
-  .post-card p { font-family: var(--fd-sans); color: var(--fd-dim); font-size: clamp(15px,1.7vw,17.5px); line-height: 1.55; margin: 0 0 1rem; max-width: 70ch; }
-  .post-card .fd-go { font-family: var(--fd-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--fd-amber); }
-  .fd-footer { margin-top: clamp(4rem, 9vw, 7rem); padding-top: 2rem; border-top: 1px solid var(--fd-rule); display: flex; flex-wrap: wrap;
-    gap: 1rem 2rem; justify-content: space-between; font-family: var(--fd-mono); font-size: 12px; letter-spacing: .06em; color: var(--fd-faint); }
-  .fd-footer a { color: var(--fd-dim); text-decoration: none; } .fd-footer a:hover { color: var(--fd-amber); }
+  article.post li::marker { color: var(--red); font-family: var(--mono); font-size: .9em; }
+  article.post blockquote { border-left: 2px solid var(--red); margin: 1.6em 0; padding: .3em 0 .3em 1.3rem; color: var(--ink);
+    font-family: var(--serif); font-weight: 350; font-size: 1.15em; line-height: 1.45; }
+  article.post blockquote p { margin: 0; }
+  article.post hr { border: 0; height: 1px; background: var(--rule); margin: 2.6em 0; }
+  article.post .tbl table { min-width: 520px; }
+  .post-foot { max-width: 68ch; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--ink); }
+  .post-foot .sign { margin-top: 1rem; }
+  .post-nav { display: flex; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
+  /* index */
+  .posts-wrap { padding: clamp(3rem, 6vw, 5rem) 0; }
+  .posts.list { margin-top: 3rem; }
+  .posts.list li { grid-template-columns: 9rem 1fr; gap: 1rem; padding: 1.4rem 0; }
+  .posts.list li a.t { display: block; font: 350 1.5rem/1.15 var(--serif); letter-spacing: -.01em; text-decoration: none; margin-bottom: .4rem; }
+  .posts.list li a.t:hover { color: var(--red); }
+  .posts.list li p { color: var(--ink-2); font-size: 16px; margin: 0 0 .8rem; }
+  @media (max-width: 980px) { .body-grid { grid-template-columns: 1fr; } .body-grid aside { position: static; flex-direction: row; flex-wrap: wrap; } }
+  @media (max-width: 680px) { .posts.list li { grid-template-columns: 1fr; gap: .3rem; } }
 """
 
 SUBSCRIBE_JS = """<script>
+  const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+  mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
   async function gdbSubscribe(e){
     e.preventDefault();
     const f = e.target, email = f.email.value.trim();
@@ -262,32 +251,52 @@ SUBSCRIBE_JS = """<script>
     } catch (_) { msg.textContent = "Network error — please try again."; }
     return false;
   }
+  if (window.GDB) { GDB.chip('#chip', { compact: true, next: location.pathname }); }
 </script>"""
 
 
-def _nav(active: str = "Blog") -> str:
-    links = "".join(f'<a href="{h}"{" class=on" if label == active else ""}>{label}</a>' for label, h in NAV)
-    return (f'<nav class="fd-nav"><a class="fd-nav__brand" href="/">Glass&nbsp;Database</a>'
-            f'<div class="fd-nav__links">{links}</div></nav>')
+def _nav(active: str = "Field notes", index_on: bool = False) -> str:
+    """The site header (as on the homepage) plus the Field-notes sub-nav row."""
+    items = "".join(f'<li><a href="{h}"{" class=on" if label == active else ""}>{label}</a></li>' for label, h in NAV)
+    return ('<a class="skip" href="#main">Skip to content</a>\n'
+            '<header class="site"><nav class="nav wrap" aria-label="Primary">'
+            '<a class="brand" href="/">Glass <i>Database</i></a>'
+            f'<ul id="menu">{items}</ul>'
+            '<div class="right"><span id="chip" class="signin gdb-chip"></span>'
+            '<button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>'
+            '</nav></header>\n'
+            f'<div class="subnav wrap"><span class="crumb">{html.escape(BLOG_TITLE)}</span>'
+            f'<a href="/blog/"{" class=on" if index_on else ""}>All posts</a>'
+            '<a href="/blog/feed.xml">RSS</a><a href="/#notes">On the homepage</a></div>')
 
 
 def _footer() -> str:
-    return ('<footer class="fd-footer"><p>Writing under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>'
-            ' · <a href="/blog/feed.xml">RSS</a></p><p><a href="/">Home</a> · '
-            '<a href="https://discord.gg/9ek2UxvPT">Discord</a> · '
-            '<a href="https://www.instagram.com/glassdatabase/">Instagram</a> · '
-            '<a href="/api/docs">Developer API</a> · '
-            '<a href="https://github.com/alibama/glass-database">GitHub</a></p></footer>')
+    return ('<footer><div class="wrap"><div class="fgrid">'
+            '<div><p class="label">Glass Database</p>'
+            '<p>A record kept by the field, for the field. Writing and data under CC BY 4.0, '
+            'with attribution kept and removal on request; code under Apache 2.0.</p></div>'
+            '<div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li>'
+            '<li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>'
+            '<div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li>'
+            '<li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>'
+            '<div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li>'
+            '<li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li>'
+            '<li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li>'
+            '<li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>'
+            '</div><div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>'
+            '</div></footer>')
 
 
-def _subscribe(label: str = "Get new studies by email") -> str:
-    return (f'<p class="fd-label" style="color:var(--fd-amber)">{label}</p>'
-            '<form class="fd-signup" onsubmit="return gdbSubscribe(event)">'
-            '<input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required>'
-            '<button type="submit">Subscribe</button></form><p class="fd-signup-msg" role="status" aria-live="polite"></p>')
+def _subscribe(label: str = "Get new studies by email", uid: str = "em") -> str:
+    return (f'<p class="label">{label}</p>'
+            '<form class="sign light" data-source="blog" onsubmit="return gdbSubscribe(event)">'
+            f'<label for="{uid}" class="skip">Email address</label>'
+            f'<input id="{uid}" type="email" name="email" placeholder="you@studio.com" required>'
+            '<button type="submit">Subscribe</button></form>'
+            '<p class="label" role="status" aria-live="polite" style="margin-top:.6rem"></p>')
 
 
-def _page(title: str, description: str, body: str, canonical: str, extra_head: str = "") -> str:
+def _page(title: str, description: str, body: str, canonical: str, extra_head: str = "", index_on: bool = False) -> str:
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -300,12 +309,12 @@ def _page(title: str, description: str, body: str, canonical: str, extra_head: s
 {FONTS}
 <style>{CSS}</style>{extra_head}
 </head>
-<body class="fd-ground">
-<div class="fd-page">
-{_nav()}
+<body>
+{_nav(index_on=index_on)}
+<main id="main">
 {body}
+</main>
 {_footer()}
-</div>
 {SUBSCRIBE_JS}
 </body>
 </html>
@@ -331,24 +340,29 @@ def render_post(p: dict, prev: dict | None, nxt: dict | None, base: str) -> str:
     lede = f'<p class="lede">{html.escape(p["summary"])}</p>' if p["summary"] else ""
     nav = []
     if nxt:
-        nav.append(f'<a href="{post_url(nxt)}">&larr; Newer: {html.escape(nxt["title"])}</a>')
-    nav.append('<a href="/blog/">All posts</a>')
+        nav.append(f'<a class="link" href="{post_url(nxt)}">&larr; Newer: {html.escape(nxt["title"])}</a>')
+    nav.append('<a class="link" href="/blog/">All posts</a>')
     if prev:
-        nav.append(f'<a href="{post_url(prev)}">Older: {html.escape(prev["title"])} &rarr;</a>')
+        nav.append(f'<a class="link" href="{post_url(prev)}">Older: {html.escape(prev["title"])} &rarr;</a>')
     body = f"""
-  <section class="fd-sec" style="padding-top:2.4rem">
-    <p class="fd-eyebrow">{html.escape(BLOG_TITLE)}</p>
-    <div class="fd-kicker-rule"></div>
-    <h1 class="fd-headline" style="max-width:22ch">{html.escape(p['title'])}</h1>
-    <p class="meta">{meta_html}</p>
-    {lede}
+  <section class="opener">
+    <div class="wrap s-head">
+      <p class="label"><span class="n">{html.escape(BLOG_TITLE)}</span><br>{meta_html}</p>
+      <div><h1>{html.escape(p['title'])}</h1>{lede}</div>
+    </div>
   </section>
-  <article class="post">
+  <div class="wrap body-grid">
+    <aside aria-label="Post links"><a class="link" href="/blog/">All field notes</a><a class="link" href="/blog/feed.xml">RSS</a>
+      <a class="link" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></aside>
+    <div>
+      <article class="post">
 {render_markdown(p['body_md'])}
-  </article>
-  <div class="post-foot">
-    {_subscribe()}
-    <div class="post-nav">{"".join(nav)}</div>
+      </article>
+      <div class="post-foot">
+        {_subscribe()}
+        <nav class="post-nav" aria-label="Older and newer posts">{"".join(nav)}</nav>
+      </div>
+    </div>
   </div>"""
     ld = {"@context": "https://schema.org", "@type": "Article", "headline": p["title"],
           "datePublished": p["date"], "author": {"@type": "Organization", "name": p["author"] or SITE_TITLE},
@@ -358,27 +372,40 @@ def render_post(p: dict, prev: dict | None, nxt: dict | None, base: str) -> str:
 
 
 def render_index(posts: list[dict], base: str) -> str:
-    cards = []
-    for i, p in enumerate(posts):
-        tag = "Latest" if i == 0 else ""
-        meta = " · ".join(x for x in [tag, html.escape(p["series"]), html.escape(nice_date(p["date"])),
-                                      f"{p['minutes']} min"] if x)
-        cards.append(f'<a class="post-card" href="{post_url(p)}"><span class="fd-label" style="color:var(--fd-amber)">{meta}</span>'
-                     f'<h2>{html.escape(p["title"])}</h2><p>{html.escape(p["summary"])}</p>'
-                     f'<span class="fd-go">Read &rarr;</span></a>')
-    empty = '<p class="fd-body" style="margin-top:2rem">Nothing published yet.</p>' if not posts else ""
+    rows = []
+    feature = ""
+    if posts:
+        p = posts[0]
+        meta = " · ".join(x for x in ["Latest", html.escape(p["series"]), html.escape(nice_date(p["date"])),
+                                      f"{p['minutes']} min read"] if x)
+        feature = (f'<article class="feature"><div><p class="label">{meta}</p>'
+                   f'<h3><a href="{post_url(p)}" style="text-decoration:none">{html.escape(p["title"])}</a></h3>'
+                   f'<p class="lede">{html.escape(p["summary"])}</p>'
+                   f'<div class="btns"><a class="link" href="{post_url(p)}">Read the study</a>'
+                   f'<a class="link" href="/blog/feed.xml">RSS</a></div></div>'
+                   f'<a class="ph" href="{post_url(p)}" aria-label="{html.escape(p["title"], quote=True)}"></a></article>')
+    for p in posts[1:]:
+        meta = " · ".join(x for x in [html.escape(p["series"]), f"{p['minutes']} min read"] if x)
+        rows.append(f'<li><span>{html.escape(nice_date(p["date"]))}</span><div>'
+                    f'<a class="t" href="{post_url(p)}">{html.escape(p["title"])}</a>'
+                    f'{("<p>" + html.escape(p["summary"]) + "</p>") if p["summary"] else ""}'
+                    f'<p class="label">{meta}</p><a class="link" href="{post_url(p)}">Read</a></div></li>')
+    listing = f'<ul class="posts list">{"".join(rows)}</ul>' if rows else ""
+    empty = '<p class="lede">Nothing published yet.</p>' if not posts else ""
     body = f"""
-  <section class="fd-sec" style="padding-top:2.4rem">
-    <p class="fd-eyebrow">Blog</p>
-    <div class="fd-kicker-rule"></div>
-    <h1 class="fd-headline">{html.escape(BLOG_TITLE)} on the <em>business of glass.</em></h1>
-    <p class="fd-body fd-lede" style="margin-top:1.4rem;max-width:62ch">{html.escape(BLOG_TAGLINE)}</p>
-    <p class="fd-body" style="margin-top:1rem;max-width:62ch">What a hot shop costs to build and run, where the buyers are,
-      what the registry's data says, and the tools we're building along the way. Everything under CC BY 4.0.</p>
-    {_subscribe()}
+  <section class="opener">
+    <div class="wrap s-head">
+      <p class="label"><span class="n">№ —</span> {html.escape(BLOG_TITLE)}</p>
+      <div><h2>On the <em>business</em> of glass.</h2>
+        <p class="lede">{html.escape(BLOG_TAGLINE)}</p>
+        <p>What a hot shop costs to build and run, where the buyers are, what the registry's data says,
+          and the tools we're building along the way. Everything under CC BY 4.0.</p>
+        {_subscribe()}
+      </div>
+    </div>
   </section>
-  <div class="posts">{"".join(cards)}{empty}</div>"""
-    return _page(f"{BLOG_TITLE} — {SITE_TITLE}", BLOG_TAGLINE, body, base + "/blog/")
+  <section class="wrap posts-wrap">{feature}{listing}{empty}</section>"""
+    return _page(f"{BLOG_TITLE} — {SITE_TITLE}", BLOG_TAGLINE, body, base + "/blog/", index_on=True)
 
 
 def render_feed(posts: list[dict], base: str) -> str:
@@ -416,23 +443,25 @@ def render_feed(posts: list[dict], base: str) -> str:
 
 
 def render_landing_block(posts: list[dict]) -> str:
-    """The 'From the blog' block on the homepage: the latest post as a feature card,
-    the next two as index rows. Markup matches landing-index.html's classes."""
+    """The 'Field notes' block on the homepage (paper theme): the latest post as the
+    feature article, the next two as list rows. Markup matches landing-index.html."""
     if not posts:
-        return '<p class="fd-body" style="margin-top:1.6rem">First post coming soon.</p>'
+        return '<p class="lede">First study coming soon.</p>'
     p = posts[0]
     meta = " · ".join(x for x in ["Latest", html.escape(p["series"]), html.escape(nice_date(p["date"])),
                                   f"{p['minutes']} min read"] if x)
-    out = [f'<a class="fd-card fd-card--feature" href="{post_url(p)}">'
-           f'<span class="fd-label" style="color:var(--fd-amber)">{meta}</span>'
-           f'<h3>{html.escape(p["title"])}</h3><p>{html.escape(p["summary"])}</p>'
-           f'<span class="fd-go">Read the study &rarr;</span></a>']
+    out = [f'<article class="feature">'
+           f'<div><p class="label">{meta}</p><h3>{html.escape(p["title"])}</h3>'
+           f'<p class="lede">{html.escape(p["summary"])}</p>'
+           f'<div class="btns"><a class="link" href="{post_url(p)}">Read the study</a>'
+           f'<a class="link" href="/blog/">All field notes</a><a class="link" href="/blog/feed.xml">RSS</a></div></div>'
+           f'<a class="ph" href="{post_url(p)}" aria-label="{html.escape(p["title"], quote=True)}"></a></article>']
     rest = posts[1:3]
     if rest:
-        rows = "".join(f'<div class="fd-row"><span class="fd-label">{html.escape(nice_date(q["date"]))}</span>'
-                       f'<p><a href="{post_url(q)}">{html.escape(q["title"])}</a>'
-                       f'{(" — " + html.escape(q["summary"])) if q["summary"] else ""}</p></div>' for q in rest)
-        out.append(f'<div class="fd-rows" style="margin-top:1.2rem">{rows}</div>')
+        rows = "".join(f'<li><span>{html.escape(nice_date(q["date"]))}</span>'
+                       f'<a href="{post_url(q)}" style="text-decoration:none">{html.escape(q["title"])}</a>'
+                       f'{(" — " + html.escape(q["summary"])) if q["summary"] else ""}</li>' for q in rest)
+        out.append(f'<ul class="list" style="margin-top:2rem">{rows}</ul>')
     return "\n".join(out)
 
 

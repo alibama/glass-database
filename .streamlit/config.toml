@@ -1,12 +1,12 @@
-# Native Streamlit theme. The `brand` package paints the Field Data look on top
-# (Fraunces headings, the furnace nav bar, molten buttons), but anything the
-# CSS cannot reach — dropdown menus and date pickers rendered in portals,
-# tooltips, dataframes, toasts — takes its colours from here. Keep it the same
-# dark palette as the CSS so nothing falls back to light-on-light.
+# Native Streamlit theme. The `brand` package paints the paper look on top
+# (Fraunces headings, Inter body, Plex Mono labels, square red buttons), but
+# anything the CSS cannot reach — dropdown menus and date pickers rendered in
+# portals, tooltips, dataframes, toasts — takes its colours from here. Keep it
+# the same paper palette as the CSS so nothing falls back to white-on-white.
 [theme]
-base = "dark"
-primaryColor = "#E8A44A"
-backgroundColor = "#12100E"
-secondaryBackgroundColor = "#1D1712"
-textColor = "#EEE7DB"
+base = "light"
+primaryColor = "#B3261E"
+backgroundColor = "#F4EEE4"
+secondaryBackgroundColor = "#EDE4D6"
+textColor = "#1F1A16"
 font = "sans serif"

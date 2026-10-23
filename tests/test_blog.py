@@ -82,7 +82,7 @@ def test_build_pages_feed_listing_and_homepage(tmp_path):
     home = landing.read_text(encoding="utf-8")
     block = home.split("<!-- blog:latest -->")[1].split("<!-- /blog:latest -->")[0]
     assert "\nold\n" not in block                                  # the placeholder line was replaced
-    assert "fd-card--feature" in home and "A Test Study" in home and "older.html" in home
+    assert 'class="feature"' in home and "A Test Study" in home and "older.html" in home
     assert home.startswith("<p>x</p>") and home.rstrip().endswith("<p>y</p>")
 
 

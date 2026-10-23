@@ -7,6 +7,18 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Changed
+- **New theme: paper** — the site moves from the dark amber "Field Data" look to a light,
+  editorial one: paper ground (#F4EEE4), ink text, one red accent (#B3261E), Fraunces headings,
+  Inter body, IBM Plex Mono labels with "№" section numbering, square ink-bordered buttons and
+  hairline rules. `deploy/paper.css` is the shared stylesheet (served at /paper.css); the
+  homepage is rebuilt on it as a long-scroll page (hero + claim strip, registry index strip,
+  Events & collecting, Open data, Field notes, Glowtbook, Barcoding (alpha) with tabs and the
+  tester signup, Seasons calendar, Visualizations & shops, About, Ways in, dark footer) with a
+  sticky header, a season notice bar fed by /api/seasons, live event counts and the sign-in
+  chip. The blog generator, Seasons/Events/Register pages, graph, map, shop pages, the capture
+  apps' gate screens and the Streamlit brand theme follow the same tokens; the camera HUD stays
+  dark by design. The sign-in chip that `site.js` injects uses the paper tokens too. The old
+  `field-data.css` is removed: no page references it any more.
 - **Barcoding is labelled alpha, for testers** — on the homepage (with a tester signup that
   lands in the newsletter list under source `alpha-testers`), in the capture and verify apps and
   in Glowtbook's Fingerprint tab, so the state of things is clear: enrol and verify work,
