@@ -7,85 +7,78 @@
 <meta name="description" content="Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.">
 <link rel="canonical" href="https://glassdatabase.org/blog/blowing-glass-in-lima.html">
 <link rel="alternate" type="application/rss+xml" title="Glass Database — Field notes" href="/blog/feed.xml">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/field-data.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
 <style>
-  html { scroll-behavior: smooth; } body { margin: 0; }
-  .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 7rem; }
-  .fd-sec { padding: clamp(3rem, 7vw, 5.5rem) 0 0; }
-  .fd-sec .fd-eyebrow { display: inline-block; border-bottom: none; padding-bottom: 0; }
-  .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.8rem; max-width: 62ch; }
-  .meta { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .08em; text-transform: uppercase;
-    color: var(--fd-faint); display: flex; gap: .4rem 1rem; flex-wrap: wrap; margin: 1rem 0 0; }
-  .meta b { color: var(--fd-amber); font-weight: 500; }
-  .lede { font-family: var(--fd-sans); font-variation-settings: "wght" 500; color: var(--fd-bone);
-    font-size: clamp(18px,2vw,22px); line-height: 1.5; max-width: 62ch; margin: 1.4rem 0 0; }
-  article.post { max-width: 76ch; margin-top: 2.6rem; font-family: var(--fd-sans); color: var(--fd-dim);
-    font-size: clamp(16px,1.75vw,18.5px); line-height: 1.62; }
-  article.post p { margin: 0 0 1.15em; }
-  article.post h2 { font-family: var(--fd-serif); font-variation-settings: "opsz" 44, "wght" 340; font-weight: 300;
-    color: var(--fd-bone); font-size: clamp(28px,3.4vw,38px); line-height: 1.15; margin: 2.6em 0 .6em; letter-spacing: -.005em; }
-  article.post h3 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 400; font-weight: 400;
-    color: var(--fd-bone); font-size: clamp(22px,2.4vw,26px); margin: 2em 0 .5em; }
+  .nav ul a.on { color: var(--red); }
+  /* site.js injects its own (field-data) chip rules after paper.css; outrank them here */
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+  /* opener */
+  .opener { padding: clamp(2.5rem, 5vw, 4rem) 0 clamp(2rem, 4vw, 3rem); border-bottom: 1px solid var(--rule); }
+  .opener .s-head { margin-bottom: 0; }
+  .opener h1 { font-size: clamp(2.6rem, 6vw, 5.4rem); line-height: .98; font-weight: 320; margin: 1rem 0 1.4rem; max-width: 20ch; }
+  .opener h2 { margin: 1rem 0 1.2rem; }
+  .opener .label { line-height: 1.8; }
+  .opener .sign { margin-top: 1.2rem; }
+  /* post body: prose in the 9/12 column under the title */
+  .body-grid { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; padding: clamp(2.5rem, 5vw, 4rem) 0; }
+  .body-grid aside { display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; align-self: start; position: sticky; top: 90px; }
+  article.post { max-width: 68ch; font-size: 17px; line-height: 1.65; color: var(--ink-2); }
+  article.post p { max-width: none; margin: 0 0 1.2em; }
+  article.post h2 { font-size: 2.2rem; line-height: 1.1; color: var(--ink); margin: 2.4em 0 .6em; font-variation-settings: "opsz" 72; }
   article.post h2:first-child { margin-top: 0; }
-  article.post strong { color: var(--fd-bone); font-weight: 600; }
-  article.post em { font-style: italic; color: var(--fd-bone); }
-  article.post a { color: var(--fd-amber); } article.post a:hover { color: var(--fd-teal); }
-  article.post code { font-family: var(--fd-mono); font-size: .9em; color: var(--fd-teal); }
-  article.post ul, article.post ol { padding-left: 1.3rem; margin: 0 0 1.2em; }
+  article.post h3 { color: var(--ink); margin: 1.8em 0 .5em; }
+  article.post strong { color: var(--ink); font-weight: 600; }
+  article.post a { color: var(--ink); text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 3px; }
+  article.post a:hover { color: var(--red); text-decoration-color: var(--red); }
+  article.post code { font: 400 .9em var(--mono); background: var(--paper-2); padding: .1em .35em; }
+  article.post ul, article.post ol { padding-left: 1.4rem; margin: 0 0 1.2em; }
   article.post li { margin: .35em 0; }
-  article.post li::marker { color: var(--fd-amber); font-family: var(--fd-mono); }
-  article.post blockquote { border-left: 2px solid var(--fd-amber); margin: 1.4em 0; padding: .2em 0 .2em 1.1em;
-    color: var(--fd-bone); font-variation-settings: "wght" 420; }
-  article.post hr { border: 0; height: 1px; background: var(--fd-rule); margin: 2.4em 0; }
-  .tbl { overflow-x: auto; margin: 1.4em 0 1.8em; border: 1px solid var(--fd-rule); border-radius: 14px;
-    background: linear-gradient(180deg, rgba(238,231,219,.025), rgba(238,231,219,0)); }
-  .tbl table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: .92em; line-height: 1.45; }
-  .tbl th { font-family: var(--fd-mono); font-weight: 500; font-size: .74em; letter-spacing: .1em; text-transform: uppercase;
-    color: var(--fd-amber); text-align: left; padding: .9rem 1rem .7rem; border-bottom: 1px solid var(--fd-rule-soft);
-    background: rgba(10,13,17,.5); white-space: nowrap; }
-  .tbl td { padding: .75rem 1rem; vertical-align: top; border-bottom: 1px solid var(--fd-rule); color: var(--fd-dim); }
-  .tbl tr:last-child td { border-bottom: 0; }
-  .tbl td:first-child { color: var(--fd-bone); font-variation-settings: "wght" 520; }
-  .tbl td strong { color: var(--fd-bone); }
-  .post-foot { max-width: 76ch; margin-top: 3.5rem; padding-top: 1.6rem; border-top: 1px solid var(--fd-rule); }
-  .post-nav { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-top: 1.2rem; }
-  .post-nav a { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .1em; text-transform: uppercase;
-    color: var(--fd-dim); text-decoration: none; } .post-nav a:hover { color: var(--fd-amber); }
-  .fd-signup { display: flex; gap: .6rem; flex-wrap: wrap; max-width: 34rem; margin-top: 1.2rem; }
-  .fd-signup input { flex: 1 1 15rem; padding: .8rem 1rem; border-radius: 999px; border: 1.5px solid var(--fd-rule-soft);
-    background: rgba(238,231,219,.04); color: var(--fd-bone); font-family: var(--fd-sans); font-size: 1rem; }
-  .fd-signup button { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .16em; text-transform: uppercase;
-    font-size: clamp(12px,1.4vw,14px); cursor: pointer; padding: 0 1.4rem; border-radius: 999px; border: 0;
-    background: var(--fd-amber); color: var(--fd-bg-top); }
-  .fd-signup-msg { font-family: var(--fd-mono); font-size: 12px; letter-spacing: .06em; color: var(--fd-amber); min-height: 1.2rem; margin: .6rem 0 0; }
-  .posts { display: grid; gap: 1.1rem; margin-top: 2.2rem; }
-  .post-card { display: block; text-decoration: none; padding: 1.7rem 1.6rem; border-radius: 16px; border: 1px solid var(--fd-rule);
-    background: linear-gradient(180deg, rgba(238,231,219,.03), rgba(238,231,219,0)); transition: border-color .18s, transform .18s; }
-  .post-card:hover { border-color: var(--fd-amber); transform: translateY(-2px); }
-  .post-card h2 { font-family: var(--fd-serif); font-variation-settings: "opsz" 44, "wght" 340; font-weight: 300; color: var(--fd-bone);
-    font-size: clamp(26px,3.2vw,36px); margin: .5rem 0 .6rem; line-height: 1.15; }
-  .post-card p { font-family: var(--fd-sans); color: var(--fd-dim); font-size: clamp(15px,1.7vw,17.5px); line-height: 1.55; margin: 0 0 1rem; max-width: 70ch; }
-  .post-card .fd-go { font-family: var(--fd-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--fd-amber); }
-  .fd-footer { margin-top: clamp(4rem, 9vw, 7rem); padding-top: 2rem; border-top: 1px solid var(--fd-rule); display: flex; flex-wrap: wrap;
-    gap: 1rem 2rem; justify-content: space-between; font-family: var(--fd-mono); font-size: 12px; letter-spacing: .06em; color: var(--fd-faint); }
-  .fd-footer a { color: var(--fd-dim); text-decoration: none; } .fd-footer a:hover { color: var(--fd-amber); }
+  article.post li::marker { color: var(--red); font-family: var(--mono); font-size: .9em; }
+  article.post blockquote { border-left: 2px solid var(--red); margin: 1.6em 0; padding: .3em 0 .3em 1.3rem; color: var(--ink);
+    font-family: var(--serif); font-weight: 350; font-size: 1.15em; line-height: 1.45; }
+  article.post blockquote p { margin: 0; }
+  article.post hr { border: 0; height: 1px; background: var(--rule); margin: 2.6em 0; }
+  article.post .tbl table { min-width: 520px; }
+  .post-foot { max-width: 68ch; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--ink); }
+  .post-foot .sign { margin-top: 1rem; }
+  .post-nav { display: flex; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
+  /* index */
+  .posts-wrap { padding: clamp(3rem, 6vw, 5rem) 0; }
+  .posts.list { margin-top: 3rem; }
+  .posts.list li { grid-template-columns: 9rem 1fr; gap: 1rem; padding: 1.4rem 0; }
+  .posts.list li a.t { display: block; font: 350 1.5rem/1.15 var(--serif); letter-spacing: -.01em; text-decoration: none; margin-bottom: .4rem; }
+  .posts.list li a.t:hover { color: var(--red); }
+  .posts.list li p { color: var(--ink-2); font-size: 16px; margin: 0 0 .8rem; }
+  @media (max-width: 980px) { .body-grid { grid-template-columns: 1fr; } .body-grid aside { position: static; flex-direction: row; flex-wrap: wrap; } }
+  @media (max-width: 680px) { .posts.list li { grid-template-columns: 1fr; gap: .3rem; } }
 </style>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Article", "headline": "Blowing Glass in Lima", "datePublished": "2026-10-17", "author": {"@type": "Organization", "name": "Glass Database"}, "description": "Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.", "url": "https://glassdatabase.org/blog/blowing-glass-in-lima.html", "license": "https://creativecommons.org/licenses/by/4.0/"}</script>
 </head>
-<body class="fd-ground">
-<div class="fd-page">
-<nav class="fd-nav"><a class="fd-nav__brand" href="/">Glass&nbsp;Database</a><div class="fd-nav__links"><a href="/explore/">Explore</a><a href="/blog/" class=on>Blog</a><a href="/glowtbook/">Glowtbook</a><a href="/studios.html">Visualizations</a><a href="/shop.html">Shops</a></div></nav>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site"><nav class="nav wrap" aria-label="Primary"><a class="brand" href="/">Glass <i>Database</i></a><ul id="menu"><li><a href="/explore/">Registry</a></li><li><a href="/events.html">Collect</a></li><li><a href="/blog/" class=on>Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li></ul><div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div></nav></header>
+<div class="subnav wrap"><span class="crumb">Field notes</span><a href="/blog/">All posts</a><a href="/blog/feed.xml">RSS</a><a href="/#notes">On the homepage</a></div>
+<main id="main">
 
-  <section class="fd-sec" style="padding-top:2.4rem">
-    <p class="fd-eyebrow">Field notes</p>
-    <div class="fd-kicker-rule"></div>
-    <h1 class="fd-headline" style="max-width:22ch">Blowing Glass in Lima</h1>
-    <p class="meta"><b>Theoretical studies</b> · Oct 17, 2026 · Glass Database · 21 min read</p>
-    <p class="lede">Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.</p>
+  <section class="opener">
+    <div class="wrap s-head">
+      <p class="label"><span class="n">Field notes</span><br><b>Theoretical studies</b> · Oct 17, 2026 · Glass Database · 21 min read</p>
+      <div><h1>Blowing Glass in Lima</h1><p class="lede">Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.</p></div>
+    </div>
   </section>
-  <article class="post">
+  <div class="wrap body-grid">
+    <aside aria-label="Post links"><a class="link" href="/blog/">All field notes</a><a class="link" href="/blog/feed.xml">RSS</a>
+      <a class="link" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></aside>
+    <div>
+      <article class="post">
 <h2 id="premise">Premise</h2>
 <p>Lima is an easy place to melt glass and a hard place to sell it. The city has cheap piped natural gas, a mining economy that digs up every oxide in a glass batch, an industrial glass sector already melting soda-lime at scale, and eleven million people with a documented appetite for design. Nothing has to be invented. The questions are grade, price, and who buys.</p>
 <p>This is a theoretical study. It builds a specific hot shop in a specific city and asks what the place gives, what it withholds, and what the business has to look like to survive there. Lima is a useful place to do that because it isolates the half of the problem most working studios actually face: the inputs are cheap, so the constraint moves to demand, import friction, and the distance between a workshop and a buyer with money.</p>
@@ -142,14 +135,18 @@
 <h2 id="sources">Sources</h2>
 <ul><li>Peru Container Glass Market, Mordor Intelligence: volumes, plants, imported raw materials, cullet</li><li>Peru silica and quartz sand exports, HS 250510, TradeInt</li><li>The Special Characteristics of a Feldspar Ore in Peru, OneMine</li><li>South American borate deposits and Laguna Salinas, OneMine</li><li>Gas natural en Perú: cuánto pagan las regiones, Gestión, August 2026</li><li>Tarifas de gas natural para industrias, Minería y Energía, October 2024</li><li>Peru electricity prices, GlobalPetrolPrices, June 2025</li><li>Peru welcomed 4,157,469 international visitors by end-2025, Andina, citing Mincetur</li><li>Growing interest in interior design opens opportunities in Peru, CzechTrade, June 2026: Casacor Perú 2026 and buyer profile</li></ul>
 <p>Lima rents, Peruvian wage ranges, tariff treatment under the US–Peru Trade Promotion Agreement and the Pacific Alliance, and the industrial gas estimate are planning figures from general market knowledge, labeled approximate in the text; re-quote them with a Lima broker, an accountant and Cálidda before budgeting.</p>
-  </article>
-  <div class="post-foot">
-    <p class="fd-label" style="color:var(--fd-amber)">Get new studies by email</p><form class="fd-signup" onsubmit="return gdbSubscribe(event)"><input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required><button type="submit">Subscribe</button></form><p class="fd-signup-msg" role="status" aria-live="polite"></p>
-    <div class="post-nav"><a href="/blog/">All posts</a></div>
+      </article>
+      <div class="post-foot">
+        <p class="label">Get new studies by email</p><form class="sign light" data-source="blog" onsubmit="return gdbSubscribe(event)"><label for="em" class="skip">Email address</label><input id="em" type="email" name="email" placeholder="you@studio.com" required><button type="submit">Subscribe</button></form><p class="label" role="status" aria-live="polite" style="margin-top:.6rem"></p>
+        <nav class="post-nav" aria-label="Older and newer posts"><a class="link" href="/blog/">All posts</a></nav>
+      </div>
+    </div>
   </div>
-<footer class="fd-footer"><p>Writing under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a> · <a href="/blog/feed.xml">RSS</a></p><p><a href="/">Home</a> · <a href="https://discord.gg/9ek2UxvPT">Discord</a> · <a href="https://www.instagram.com/glassdatabase/">Instagram</a> · <a href="/api/docs">Developer API</a> · <a href="https://github.com/alibama/glass-database">GitHub</a></p></footer>
-</div>
+</main>
+<footer><div class="wrap"><div class="fgrid"><div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Writing and data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div><div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div><div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div><div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div></div><div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div></div></footer>
 <script>
+  const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+  mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
   async function gdbSubscribe(e){
     e.preventDefault();
     const f = e.target, email = f.email.value.trim();
@@ -162,6 +159,7 @@
     } catch (_) { msg.textContent = "Network error — please try again."; }
     return false;
   }
+  if (window.GDB) { GDB.chip('#chip', { compact: true, next: location.pathname }); }
 </script>
 </body>
 </html>

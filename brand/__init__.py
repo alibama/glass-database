@@ -3,11 +3,12 @@ brand
 =====
 One shared look and a cross-app nav for the three Streamlit surfaces (Explore,
 Glowtbook, Admin), so they read as one product and match the homepage: the
-furnace/molten palette, Fraunces headings, the glass mark, and a row of buttons
-that jump between Home, Explore, Glowtbook, and Admin.
+paper palette (warm off-white ground, ink text, a single red accent), Fraunces
+headings, Inter body, Plex Mono labels, and a row of square buttons that jump
+between Home, Explore, Glowtbook, and Admin.
 
 The nav uses native `st.link_button`s (not HTML anchors) so the whole button is
-clickable, and the active page is shown with the molten "primary" style.
+clickable; the active page is red-filled, the others are ink-outlined.
 
 Usage — right after st.set_page_config():
 
@@ -18,19 +19,12 @@ from __future__ import annotations
 
 import streamlit as st
 
-# a compact molten-gather mark (inline so it needs no served asset)
-_MARK = (
-    '<svg viewBox="0 0 40 46" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'
-    '<defs><linearGradient id="gm" x1="0" y1="0" x2="0" y2="1">'
-    '<stop offset="0" stop-color="#fde68a"/><stop offset="1" stop-color="#ea580c"/>'
-    '</linearGradient></defs>'
-    '<rect x="18" y="2" width="4" height="23" rx="2" fill="#cbd5e1"/>'
-    '<ellipse cx="20" cy="31" rx="13" ry="14" fill="url(#gm)"/>'
-    '<ellipse cx="15" cy="27" rx="3.4" ry="5" fill="#fff7ed" opacity="0.5"/></svg>'
-)
+# text lockup matching the homepage `.brand` (Fraunces, the italic word in red)
+_MARK = 'Glass <i>Database</i>'
 
-# key, label, href  (the brand mark doubles as Home)
+# key, label, href
 _NAV = [
+    ("home", "Home", "/"),
     ("explore", "Explore", "/explore/"),
     ("glowtbook", "Glowtbook", "/glowtbook/"),
     ("admin", "Admin", "/admin/"),
@@ -38,110 +32,235 @@ _NAV = [
 
 _CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 :root {
-  --fd-bg-top:#0A0D11; --fd-bg-base:#1A140F; --fd-rule:#24221F; --fd-rule-soft:#2A2824;
-  --fd-amber:#E8A44A; --fd-teal:#5EC8BD; --fd-molten:#E25836; --fd-violet:#967AD2;
-  --fd-bone:#EEE7DB; --fd-dim:#A8A29A; --fd-faint:#8E867A;  /* faint clears 4.5:1 on the dark ground */
-  --fd-serif:"Fraunces",Georgia,serif; --fd-sans:"Archivo",system-ui,sans-serif;
-  --fd-mono:"IBM Plex Mono",ui-monospace,monospace;
+  --paper:#F4EEE4; --paper-2:#EDE4D6; --paper-3:#E3D7C4;
+  --ink:#1F1A16; --ink-2:#4A423A; --muted:#6B6157; --rule:#CFC2AE;
+  --red:#B3261E; --red-dk:#8E1D17;
+  --serif:"Fraunces",Georgia,serif; --sans:"Inter",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
 /* ground */
-.stApp { background-color:var(--fd-bg-top);
-  background-image:
-    radial-gradient(115% 62% at 22% 100%, rgba(232,164,74,.08) 0%, rgba(232,164,74,0) 60%),
-    linear-gradient(180deg, var(--fd-bg-top) 0%, #12100E 60%, var(--fd-bg-base) 100%);
-  background-attachment:fixed; }
-[data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stHeader"] { background:transparent; }
-body, .stApp, .stMarkdown, p, li, label, [data-testid="stMarkdownContainer"] {
-  font-family:var(--fd-sans); color:var(--fd-dim); }
+.stApp { background:var(--paper); }
+[data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stHeader"],
+[data-testid="stBottom"], [data-testid="stBottomBlockContainer"] { background:var(--paper); }
+body, .stApp, .stMarkdown, p, li, label, [data-testid="stMarkdownContainer"],
+[data-testid="stWidgetLabel"] p { font-family:var(--sans); color:var(--ink-2); }
+strong, b { color:var(--ink); }
 
-/* headings — Fraunces, explicit axis order; weight 300 fallback if the font fails */
-h1,h2,h3,h4,[data-testid="stHeading"] {
-  font-family:var(--fd-serif) !important;
-  font-variation-settings:"opsz" 44,"wght" 340,"SOFT" 0,"WONK" 0;
-  font-weight:300 !important; color:var(--fd-bone) !important; letter-spacing:-.005em; }
+/* headings — Fraunces, light weight, optical size for app scale */
+h1,h2,h3,h4,h5,h6,[data-testid="stHeading"] h1,[data-testid="stHeading"] h2,[data-testid="stHeading"] h3 {
+  font-family:var(--serif) !important;
+  font-variation-settings:"opsz" 44,"wght" 350;
+  font-weight:350 !important; color:var(--ink) !important; letter-spacing:-.01em; }
+h1 em, h2 em, h3 em { font-style:italic; color:var(--red); }
 
 /* NOTE: never hide header[data-testid="stHeader"] (mobile sidebar toggle lives there);
    never shrink block-container top padding (content would slide under the header). */
-[data-testid="stSidebar"] { background:#0E0B09; border-right:1px solid var(--fd-rule); }
-[data-testid="stSidebar"] * { color:var(--fd-dim); }
+[data-testid="stSidebar"] { background:var(--paper-2); border-right:1px solid var(--rule); }
+[data-testid="stSidebar"] [data-testid="stSidebarContent"] { background:var(--paper-2); }
+[data-testid="stSidebar"] p, [data-testid="stSidebar"] li, [data-testid="stSidebar"] label,
+[data-testid="stSidebar"] span, [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] { color:var(--ink-2); }
 
-a, a:visited { color:var(--fd-amber); }
-a:hover { color:var(--fd-teal); }
-code, pre, [data-testid="stCode"] { font-family:var(--fd-mono); color:var(--fd-teal); }
+a, a:visited { color:var(--red); }
+a:hover { color:var(--red-dk); }
+code, pre, [data-testid="stCode"] { font-family:var(--mono); }
+code:not(pre code), [data-testid="stMarkdownContainer"] code:not(pre code) {
+  color:var(--red-dk) !important; background:var(--paper-2) !important; border:1px solid var(--rule); border-radius:0 !important; }
+[data-testid="stCode"] pre, pre { background:var(--paper-2) !important; border:1px solid var(--rule); border-radius:0; color:var(--ink) !important; }
+hr { border-color:var(--rule) !important; }
 
-/* buttons — mono pills; primary = amber, secondary = outline */
-.stButton>button, .stDownloadButton>button, .stFormSubmitButton>button, [data-testid="stLinkButton"] a {
-  border-radius:999px !important; font-family:var(--fd-mono) !important; font-weight:500 !important;
-  text-transform:uppercase; letter-spacing:.08em; font-size:.8rem !important; }
+/* buttons — square, mono uppercase; primary = red fill, secondary = ink outline */
+.stButton>button, .stDownloadButton>button, .stFormSubmitButton>button, [data-testid="stLinkButton"] a,
+[data-testid="stBaseButton-primary"], [data-testid="stBaseButton-secondary"] {
+  border-radius:0 !important; font-family:var(--mono) !important; font-weight:500 !important;
+  text-transform:uppercase; letter-spacing:.08em; font-size:.78rem !important; }
 .stButton>button[kind="primary"], .stDownloadButton>button[kind="primary"],
-.stFormSubmitButton>button[kind="primary"], [data-testid="stLinkButton"] a[kind="primary"] {
-  background:var(--fd-amber) !important; border:0 !important; color:var(--fd-bg-top) !important; }
-.stButton>button[kind="secondary"], [data-testid="stLinkButton"] a[kind="secondary"] {
-  background:transparent !important; color:var(--fd-bone) !important; border:1px solid var(--fd-rule-soft) !important; }
-.stButton>button:hover, [data-testid="stLinkButton"] a:hover { border-color:var(--fd-amber) !important; }
+.stFormSubmitButton>button[kind="primary"], [data-testid="stLinkButton"] a[kind="primary"],
+[data-testid="stBaseButton-primary"], [data-testid="stBaseLinkButton-primary"] {
+  background:var(--red) !important; border:1px solid var(--red) !important; color:#fff !important; }
+.stButton>button[kind="primary"]:hover, .stFormSubmitButton>button[kind="primary"]:hover,
+[data-testid="stLinkButton"] a[kind="primary"]:hover, [data-testid="stBaseButton-primary"]:hover {
+  background:var(--red-dk) !important; border-color:var(--red-dk) !important; color:#fff !important; }
+.stButton>button[kind="secondary"], .stDownloadButton>button[kind="secondary"],
+.stFormSubmitButton>button[kind="secondary"], [data-testid="stLinkButton"] a[kind="secondary"],
+[data-testid="stBaseButton-secondary"], [data-testid="stBaseLinkButton-secondary"] {
+  background:transparent !important; color:var(--ink) !important; border:1px solid var(--ink) !important; }
+.stButton>button[kind="secondary"]:hover, .stDownloadButton>button[kind="secondary"]:hover,
+.stFormSubmitButton>button[kind="secondary"]:hover, [data-testid="stLinkButton"] a[kind="secondary"]:hover,
+[data-testid="stBaseButton-secondary"]:hover {
+  background:var(--ink) !important; color:var(--paper) !important; border-color:var(--ink) !important; }
+.stButton>button[kind="tertiary"], [data-testid="stBaseButton-tertiary"] { color:var(--red) !important; border-radius:0 !important; }
+.stButton>button:focus-visible, [data-testid="stLinkButton"] a:focus-visible { outline:2px solid var(--red) !important; outline-offset:2px; box-shadow:none !important; }
+/* labels inside any button inherit the button's colour (the markdown container would otherwise paint them ink-2) */
+.stButton>button *, .stDownloadButton>button *, .stFormSubmitButton>button *, [data-testid="stLinkButton"] a *,
+[data-testid^="stBaseButton-"] *, [data-testid^="stBaseLinkButton-"] *, [data-testid="stButtonGroup"] button *,
+[data-testid="stPills"] button *, [data-testid="stSegmentedControl"] button *, [data-testid="stFileUploaderDropzone"] button * {
+  color:inherit !important; font-family:inherit !important; }
+/* ...except Material icon glyphs, which need their own font to render as icons */
+[data-testid="stIconMaterial"], .material-symbols-rounded, [data-testid^="stBaseButton-"] [data-testid="stIconMaterial"] {
+  font-family:"Material Symbols Rounded" !important; }
 
-/* inputs — force solid dark bg so light text is readable regardless of theme base */
-.stTextInput input, .stTextArea textarea, .stNumberInput input, .stDateInput input,
+/* inputs — paper ground, hairline rule, ink on focus (never white-on-white) */
+.stTextInput input, .stTextArea textarea, .stNumberInput input, .stDateInput input, .stTimeInput input,
 [data-baseweb="input"], [data-baseweb="textarea"], [data-baseweb="base-input"] {
-  background:#1D1712 !important; color:var(--fd-bone) !important; border-color:var(--fd-rule-soft) !important; }
-.stTextInput input::placeholder, .stTextArea textarea::placeholder { color:var(--fd-faint) !important; }
-/* selectbox / multiselect — closed control + its inner text */
-[data-baseweb="select"] > div, [data-baseweb="select"] div[role="button"] {
-  background:#1D1712 !important; border-color:var(--fd-rule-soft) !important; }
-[data-baseweb="select"] div, [data-baseweb="select"] span, [data-baseweb="select"] input {
-  color:var(--fd-bone) !important; }
-/* the dropdown popover + its options (was white-on-white) */
-[data-baseweb="popover"] [role="listbox"], [data-baseweb="menu"], ul[role="listbox"] {
-  background:#16130F !important; border:1px solid var(--fd-rule) !important; }
-[role="option"] { background:transparent !important; color:var(--fd-bone) !important; }
-[role="option"]:hover, [role="option"][aria-selected="true"] { background:rgba(232,164,74,.16) !important; }
+  background:var(--paper) !important; color:var(--ink) !important; border-color:var(--rule) !important; border-radius:0 !important; }
+[data-baseweb="input"], [data-baseweb="textarea"] { border:1px solid var(--rule) !important; }
+[data-baseweb="input"]:focus-within, [data-baseweb="textarea"]:focus-within { border-color:var(--ink) !important; box-shadow:none !important; }
+[data-baseweb="input"] input, [data-baseweb="base-input"] input, [data-baseweb="textarea"] textarea { border:0 !important; }
+.stTextInput input::placeholder, .stTextArea textarea::placeholder, .stNumberInput input::placeholder { color:var(--muted) !important; }
+.stNumberInput button, [data-testid="stNumberInputStepDown"], [data-testid="stNumberInputStepUp"] {
+  background:var(--paper-2) !important; color:var(--ink) !important; border-color:var(--rule) !important; border-radius:0 !important; }
+/* Streamlit >= 1.6x renders inputs with react-aria (not baseweb): same rules there */
+[data-testid="stTextInputRootElement"], [data-testid="stTextAreaRootElement"],
+[data-testid="stNumberInput"] [role="group"], [data-testid="stDateInput"] [role="group"],
+[data-testid="stTimeInput"] [role="group"], .react-aria-ComboBox [role="group"], .react-aria-TextField > div,
+.react-aria-DateField [role="group"], .react-aria-NumberField [role="group"] {
+  background:var(--paper) !important; color:var(--ink) !important; border:1px solid var(--rule) !important;
+  border-radius:0 !important; box-shadow:none !important; }
+[data-testid="stTextInputRootElement"]:focus-within, [data-testid="stTextAreaRootElement"]:focus-within,
+[data-testid="stNumberInput"] [role="group"]:focus-within, [data-testid="stDateInput"] [role="group"]:focus-within,
+.react-aria-ComboBox [role="group"]:focus-within, .react-aria-TextField > div:focus-within,
+.react-aria-ComboBox [role="group"][data-focus-within="true"] { border-color:var(--ink) !important; box-shadow:none !important; }
+.react-aria-ComboBox input, .react-aria-ComboBox button, [data-testid="stTextInputField"], .react-aria-TextField input, .react-aria-TextField textarea {
+  color:var(--ink) !important; background:transparent !important; }
+.react-aria-ComboBox input::placeholder, [data-testid="stTextInputField"]::placeholder { color:var(--muted) !important; }
+[data-testid="stSelectboxVirtualDropdown"], [data-testid="stMultiSelectVirtualDropdown"], .react-aria-Popover,
+[data-rac][data-trigger="ComboBox"], [data-rac][data-trigger="Select"] {
+  background:var(--paper) !important; border:1px solid var(--ink) !important; border-radius:0 !important; box-shadow:none !important; }
+[role="option"][data-selected="true"], [role="option"][data-focused="true"], [role="option"][data-hovered="true"] {
+  background:var(--paper-3) !important; color:var(--ink) !important; }
+[role="option"] [data-item-hl] { background:transparent !important; border-radius:0 !important; }
+/* selectbox / multiselect — closed control + its inner text (baseweb builds) */
+[data-baseweb="select"] > div, [data-baseweb="select"] div[role="button"], [data-baseweb="select"] > div > div {
+  background:var(--paper) !important; border-color:var(--rule) !important; border-radius:0 !important; }
+[data-baseweb="select"] > div { border:1px solid var(--rule) !important; }
+[data-baseweb="select"] > div:focus-within { border-color:var(--ink) !important; box-shadow:none !important; }
+[data-baseweb="select"] div, [data-baseweb="select"] span, [data-baseweb="select"] input,
+[data-baseweb="select"] svg { color:var(--ink) !important; fill:var(--ink); }
+/* the dropdown popover + its options */
+[data-baseweb="popover"] > div, [data-baseweb="popover"] [role="listbox"], [data-baseweb="menu"], ul[role="listbox"] {
+  background:var(--paper) !important; border:1px solid var(--ink) !important; border-radius:0 !important; box-shadow:none !important; }
+[role="option"], [data-baseweb="menu"] li { background:transparent !important; color:var(--ink) !important; font-family:var(--sans); }
+[role="option"]:hover, [role="option"][aria-selected="true"], [data-baseweb="menu"] li:hover,
+[data-baseweb="menu"] li[aria-selected="true"] { background:var(--paper-3) !important; color:var(--ink) !important; }
+/* date picker calendar popover */
+[data-baseweb="calendar"], [data-baseweb="datepicker"] { background:var(--paper) !important; color:var(--ink) !important; }
+[data-baseweb="calendar"] div, [data-baseweb="calendar"] button { color:var(--ink); }
+[data-baseweb="calendar"] [aria-selected="true"] { background:var(--red) !important; color:#fff !important; }
 /* multiselect chosen tags + file uploader dropzone */
-[data-baseweb="tag"] { background:var(--fd-amber) !important; color:#0A0D11 !important; }
+[data-baseweb="tag"] { background:var(--red) !important; border-radius:0 !important; }
+[data-baseweb="tag"] span, [data-baseweb="tag"] svg, [data-baseweb="tag"] [role="presentation"] { color:#fff !important; fill:#fff !important; }
+[data-testid="stMultiSelectTagsContainer"] [data-tag] { background:var(--red) !important; color:#fff !important; border-radius:0 !important; }
+[data-testid="stMultiSelectTagsContainer"] [data-tag] *, [data-testid="stMultiSelectTagsContainer"] [data-tag] button,
+[data-testid="stMultiSelectTagsContainer"] [data-tag] svg { color:#fff !important; fill:#fff !important; }
 [data-testid="stFileUploaderDropzone"], [data-testid="stFileUploader"] section {
-  background:#1D1712 !important; border:1px dashed var(--fd-rule-soft) !important; color:var(--fd-dim) !important; }
-[data-baseweb="tab"] { font-family:var(--fd-mono); text-transform:uppercase; letter-spacing:.06em; font-size:.8rem; }
+  background:var(--paper-2) !important; border:1px dashed var(--rule) !important; color:var(--ink-2) !important; border-radius:0 !important; }
+[data-testid="stFileUploaderDropzone"] small, [data-testid="stFileUploaderDropzoneInstructions"] span,
+[data-testid="stFileUploaderDropzoneInstructions"] * { color:var(--ink-2) !important; }
+[data-testid="stFileUploaderDropzone"] svg { fill:var(--muted); color:var(--muted); }
+[data-testid="stFileUploaderDropzone"] button, [data-testid="stFileUploaderFile"] button {
+  background:transparent !important; color:var(--ink) !important; border:1px solid var(--ink) !important; border-radius:0 !important;
+  font-family:var(--mono) !important; text-transform:uppercase; letter-spacing:.06em; font-size:.75rem !important; }
+[data-testid="stFileUploaderFile"], [data-testid="stFileUploaderFileName"], [data-testid="stFileUploaderFileData"] small { color:var(--ink-2) !important; }
+/* checkbox / radio / toggle */
+[data-testid="stCheckbox"] span[data-baseweb="checkbox"] > div, [data-baseweb="checkbox"] > div:first-child {
+  border-color:var(--ink) !important; border-radius:0 !important; }
+[data-baseweb="checkbox"] [aria-checked="true"] ~ div, [data-baseweb="checkbox"] input:checked + div { background:var(--red) !important; }
+[data-testid="stRadio"] [data-baseweb="radio"] > div:first-child { border-color:var(--ink) !important; }
+[data-testid="stSlider"] [data-baseweb="slider"] div[role="slider"] { background:var(--red) !important; border-color:var(--red) !important; }
+/* tabs */
+[data-testid="stTabs"] [data-baseweb="tab-list"] { border-bottom:1px solid var(--ink); gap:0; }
+[data-baseweb="tab"] { font-family:var(--mono) !important; text-transform:uppercase; letter-spacing:.08em; font-size:.76rem !important;
+  color:var(--muted) !important; background:transparent !important; border-radius:0 !important; }
+[data-baseweb="tab"][aria-selected="true"] { color:var(--ink) !important; }
+[data-baseweb="tab"] p { font-family:var(--mono) !important; font-size:.76rem !important; color:inherit !important; }
+[data-baseweb="tab-highlight"] { background:var(--red) !important; height:3px; }
+[data-baseweb="tab-border"] { background:transparent !important; }
+/* react-aria tabs (Streamlit >= 1.6x) */
+[data-testid="stTabs"] [role="tablist"] { border-bottom:1px solid var(--ink); }
+[data-testid="stTab"] { font-family:var(--mono) !important; text-transform:uppercase; letter-spacing:.08em; font-size:.76rem !important;
+  color:var(--muted) !important; border-radius:0 !important; }
+[data-testid="stTab"] p { font-family:var(--mono) !important; font-size:.76rem !important; color:inherit !important; }
+[data-testid="stTab"]:hover, [data-testid="stTab"][aria-selected="true"] { color:var(--ink) !important; }
+[data-testid="stTab"][aria-selected="true"] > div[data-rac] { background:var(--red) !important; border-radius:0 !important; height:3px; }
 
-/* st.pills / segmented_control -> Field Data chips (readable selected state) */
-[data-testid="stPills"] button, [data-testid="stButtonGroup"] button,
+/* st.pills / segmented_control -> square chips: selected = red fill, unselected = paper + rule */
+[data-testid="stPills"] button, [data-testid="stButtonGroup"] button, [data-testid="stSegmentedControl"] button,
 [data-baseweb="button-group"] button {
-  border-radius:999px !important; font-family:var(--fd-mono) !important; text-transform:uppercase;
-  letter-spacing:.05em; font-size:.75rem !important; border:1px solid var(--fd-rule-soft) !important;
-  color:var(--fd-bone) !important; background:#1D1712 !important; }
+  border-radius:0 !important; font-family:var(--mono) !important; text-transform:uppercase;
+  letter-spacing:.06em; font-size:.72rem !important; border:1px solid var(--rule) !important;
+  color:var(--ink-2) !important; background:var(--paper) !important; }
+[data-testid="stPills"] button p, [data-testid="stButtonGroup"] button p, [data-testid="stSegmentedControl"] button p {
+  font-family:var(--mono) !important; font-size:.72rem !important; color:inherit !important; }
+[data-testid="stPills"] button:hover, [data-testid="stButtonGroup"] button:hover, [data-testid="stSegmentedControl"] button:hover {
+  border-color:var(--ink) !important; color:var(--ink) !important; }
 [data-testid="stPills"] button[aria-checked="true"], [data-testid="stPills"] button[aria-pressed="true"],
-[data-testid="stPills"] button[kind="primary"],
+[data-testid="stPills"] button[kind="primary"], [data-testid="stPills"] button[kind="pillsActive"],
 [data-testid="stButtonGroup"] button[aria-checked="true"], [data-testid="stButtonGroup"] button[aria-pressed="true"],
+[data-testid="stSegmentedControl"] button[aria-checked="true"], [data-testid="stSegmentedControl"] button[aria-pressed="true"],
+[data-testid="stSegmentedControl"] button[kind="segmented_controlActive"],
 [data-baseweb="button-group"] button[aria-pressed="true"] {
-  background:var(--fd-amber) !important; color:#0A0D11 !important; border-color:var(--fd-amber) !important;
-  font-weight:600 !important; }
+  background:var(--red) !important; color:#fff !important; border-color:var(--red) !important; font-weight:500 !important; }
+[data-testid="stPills"] button[aria-checked="true"] p, [data-testid="stPills"] button[kind="pillsActive"] p,
+[data-testid="stSegmentedControl"] button[aria-checked="true"] p,
+[data-testid="stSegmentedControl"] button[kind="segmented_controlActive"] p { color:#fff !important; }
 
-/* captions / metrics */
-[data-testid="stCaptionContainer"], .stCaption, small { color:var(--fd-faint) !important; }
-[data-testid="stMetricValue"] { font-family:var(--fd-serif); color:var(--fd-bone); font-variation-settings:"opsz" 40,"wght" 380; }
-[data-testid="stMetricLabel"] { font-family:var(--fd-mono); text-transform:uppercase; letter-spacing:.08em; color:var(--fd-faint); }
-[data-testid="stDataFrame"], [data-testid="stTable"], [data-testid="stExpander"] {
-  border:1px solid var(--fd-rule); border-radius:10px; }
-[data-testid="stAlert"] { border-radius:10px; }
+/* captions / labels / metrics */
+[data-testid="stCaptionContainer"], .stCaption, small, [data-testid="stCaptionContainer"] p {
+  font-family:var(--mono) !important; font-size:.76rem !important; letter-spacing:.02em; color:var(--muted) !important; }
+[data-testid="stWidgetLabel"] p, [data-testid="stWidgetLabel"] label {
+  font-family:var(--mono) !important; text-transform:uppercase; letter-spacing:.1em; font-size:.72rem !important; color:var(--muted) !important; }
+[data-testid="stMetricValue"], [data-testid="stMetricValue"] div, [data-testid="stMetricValue"] p {
+  font-family:var(--serif) !important; color:var(--ink) !important; font-variation-settings:"opsz" 44,"wght" 350; font-weight:350; }
+[data-testid="stMetricLabel"], [data-testid="stMetricLabel"] p { font-family:var(--mono) !important; text-transform:uppercase; letter-spacing:.1em; font-size:.72rem !important; color:var(--muted) !important; }
+[data-testid="stMetricDelta"] { font-family:var(--mono); }
+[data-testid="stDataFrame"], [data-testid="stTable"], [data-testid="stDataEditor"] {
+  border:1px solid var(--rule); border-radius:0; }
+[data-testid="stTable"] table { border-collapse:collapse; }
+[data-testid="stTable"] th { font-family:var(--mono); text-transform:uppercase; letter-spacing:.08em; font-size:.72rem; color:var(--muted); border-bottom:1px solid var(--rule); }
+[data-testid="stTable"] td { border-bottom:1px solid var(--rule); color:var(--ink-2); }
+[data-testid="stExpander"] { border:0 !important; border-top:1px solid var(--rule) !important; border-bottom:1px solid var(--rule) !important; border-radius:0 !important; }
+[data-testid="stExpander"] details { border:0 !important; border-radius:0 !important; background:transparent !important; }
+[data-testid="stExpander"] summary { color:var(--ink) !important; }
+[data-testid="stExpander"] summary p { color:var(--ink) !important; }
+[data-testid="stExpander"] summary:hover, [data-testid="stExpander"] summary:hover svg { color:var(--red) !important; fill:var(--red); }
+[data-testid="stForm"] { border:1px solid var(--rule) !important; border-radius:0 !important; background:var(--paper) !important; }
+[data-testid="stPopover"] button, [data-testid="stPopoverButton"] { border-radius:0 !important; border:1px solid var(--ink) !important; color:var(--ink) !important; background:transparent !important; }
+[data-testid="stPopoverBody"] { background:var(--paper) !important; border:1px solid var(--ink) !important; border-radius:0 !important; }
+[data-testid="stToast"] { background:var(--ink) !important; color:var(--paper) !important; border-radius:0 !important; }
+[data-testid="stToast"] * { color:var(--paper) !important; }
+[data-testid="stTooltipContent"], [data-baseweb="tooltip"] { background:var(--ink) !important; color:var(--paper) !important; border-radius:0 !important; }
+[data-testid="stProgress"] > div > div { background:var(--red) !important; }
+[data-testid="stImage"] img { border:1px solid var(--rule); }
+
+/* alerts — toned paper, red left rule, ink text */
+[data-testid="stAlert"], [data-testid="stAlertContainer"] {
+  background:var(--paper-2) !important; color:var(--ink-2) !important; border:0 !important;
+  border-left:2px solid var(--red) !important; border-radius:0 !important; }
+[data-testid="stAlert"] p, [data-testid="stAlertContainer"] p, [data-testid="stAlert"] li, [data-testid="stAlertContainer"] li,
+[data-testid="stAlert"] [data-testid="stMarkdownContainer"] { color:var(--ink-2) !important; }
+[data-testid="stAlert"] svg, [data-testid="stAlertContainer"] svg { fill:var(--red) !important; color:var(--red) !important; }
+[data-testid="stException"] { background:var(--paper-2) !important; border-left:2px solid var(--red) !important; border-radius:0 !important; }
 
 /* brand lockup + rule */
-.gdb-brand { display:inline-flex; align-items:center; gap:.5rem; text-decoration:none;
-  color:var(--fd-bone); font-family:var(--fd-mono); font-weight:500; letter-spacing:.14em;
-  text-transform:uppercase; font-size:.95rem; margin:0 0 .5rem; }
-.gdb-brand svg { width:22px; height:26px; }
-.gdb-rule { height:1px; margin:.25rem 0 1.1rem;
-  background:linear-gradient(90deg, var(--fd-amber), var(--fd-rule-soft) 45%, transparent);
-  border-radius:2px; }
+.gdb-brand { display:inline-block; text-decoration:none; color:var(--ink);
+  font-family:var(--serif); font-weight:400; font-size:1.45rem; letter-spacing:-.01em; line-height:1;
+  font-variation-settings:"opsz" 44,"wght" 400; margin:0 0 .6rem; }
+.gdb-brand i { color:var(--red); font-style:italic; }
+.gdb-brand:hover { color:var(--ink); }
+.gdb-brand:hover i { color:var(--red-dk); }
+.gdb-rule { height:1px; margin:.25rem 0 1.1rem; background:var(--rule); }
 </style>
 """
 
 
 def apply_theme(active: str = "") -> None:
     """Inject the shared theme and render the cross-app nav. `active` is one of
-    'explore' | 'glowtbook' | 'admin' and gets the molten primary style.
-    The glass mark doubles as the Home link."""
+    'explore' | 'glowtbook' | 'admin' and gets the red-filled primary style;
+    the others are ink-outlined. The text lockup doubles as the Home link."""
     st.html(_CSS)
-    st.html(f'<a class="gdb-brand" href="/" target="_self">{_MARK}Glass Database</a>')
+    st.html(f'<a class="gdb-brand" href="/" target="_self">{_MARK}</a>')
     cols = st.columns(len(_NAV))
     for col, (key, label, href) in zip(cols, _NAV):
         col.link_button(label, href, use_container_width=True,

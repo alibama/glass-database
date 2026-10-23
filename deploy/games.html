@@ -7,258 +7,238 @@
 <meta name="description" content="Seasonal games for glass: makers enter a piece, collectors scan and claim the ones they buy, everyone votes. Pumpkins in October, ornaments in December.">
 <meta property="og:title" content="Seasons — Glass Database">
 <meta property="og:description" content="A friendly call for artists and a shelf for collectors. Scan it, claim it, vote.">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/field-data.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
 <script src="/site.js"></script>
 <style>
-  html { scroll-behavior: smooth; }
-  body { margin: 0; }
-  .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 6rem; }
-  /* nav + footer rules are shared: see "Site chrome" in /field-data.css */
-  section.fd-sec { position: relative; padding: clamp(3.4rem, 8vw, 6.5rem) 0 0; }
-  .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.8rem; max-width: 62ch; }
-  .fd-hero .fd-headline { max-width: 22ch; }
-  .fd-hero__cta { display: flex; gap: .9rem 1rem; flex-wrap: wrap; margin-top: 2rem; }
-  .fd-two { display: grid; grid-template-columns: 1fr; gap: 2.4rem; }
-  @media (min-width: 860px){ .fd-two { grid-template-columns: 1fr 1fr; align-items: start; } }
-  .fd-hero-wrap { position: relative; }
-  .fd-filaments { position: absolute; inset: -2rem -10vw auto; height: 130%; z-index: 0; }
-  .fd-hero-wrap > *:not(.fd-filaments) { position: relative; z-index: 1; }
+  [hidden] { display: none !important; }
+  .nav ul a.on { color: var(--red); }
+  /* site.js injects its own (field-data) chip rules after paper.css; outrank them here */
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
 
-  /* --- games (gm-) ------------------------------------------------------ */
-  .gm-mono { font-family: var(--fd-mono); letter-spacing: .1em; text-transform: uppercase; font-size: clamp(11px,1.2vw,13px); }
-  .gm-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .35rem .8rem; border-radius: 999px;
-    border: 1px solid var(--fd-rule-soft); color: var(--fd-dim); }
-  .gm-pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--fd-faint); }
-  .gm-pill.open { color: var(--fd-amber); border-color: var(--fd-amber); }
-  .gm-pill.open::before { background: var(--fd-amber); box-shadow: 0 0 10px var(--fd-amber); }
-  .gm-pill.voting { color: var(--fd-teal); border-color: var(--fd-teal); }
-  .gm-pill.voting::before { background: var(--fd-teal); box-shadow: 0 0 10px var(--fd-teal); }
-  .gm-status { display: flex; gap: .8rem 1.2rem; flex-wrap: wrap; align-items: center; margin-top: 1.4rem; color: var(--fd-faint); }
-  .gm-hero-meta { display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; margin-top: 1.2rem; }
-  .gm-hero-meta span { color: var(--fd-faint); }
-  .gm-hero-meta b { color: var(--fd-bone); font-weight: 500; }
-  .gm-rules { margin-top: 1.4rem; max-width: 62ch; font-size: clamp(14px,1.5vw,16px); line-height: 1.6; color: var(--fd-faint); }
-  .gm-rules summary { cursor: pointer; color: var(--fd-dim); }
+  /* hero */
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 18ch; }
+  .hero .status { display: flex; gap: .8rem 1.2rem; flex-wrap: wrap; align-items: center; margin-top: 1.6rem; font: 400 13px var(--mono); color: var(--muted); }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; }
+  .hero .btns { margin-top: 1.8rem; }
+  .rules { margin-top: 1.6rem; max-width: 62ch; font-size: 15px; color: var(--ink-2); }
+  .rules summary { cursor: pointer; list-style: none; }
+  .rules summary::-webkit-details-marker { display: none; }
+  .rules summary::after { content: " +"; color: var(--red); }
+  .rules[open] summary::after { content: " –"; }
+  .rules p { margin-top: .8rem; }
+  .rules .k { color: var(--red); }
+  button.btn { background: var(--paper); cursor: pointer; }
+  button.link { background: none; border: 0; border-bottom: 1px solid currentColor; cursor: pointer; padding: 0 0 3px; }
 
-  .gm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1.1rem; margin-top: 2rem; }
-  .gm-card { position: relative; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden;
-    border: 1px solid var(--fd-rule); background: linear-gradient(180deg, rgba(238,231,219,.03), rgba(238,231,219,0));
-    transition: border-color .18s ease, transform .18s ease, box-shadow .3s ease; }
-  .gm-card:hover { border-color: var(--fd-rule-soft); transform: translateY(-2px); }
-  .gm-card.hit { border-color: var(--fd-amber); box-shadow: 0 0 0 3px rgba(232,164,74,.25), 0 0 40px -10px var(--fd-amber); }
-  .gm-card__img { aspect-ratio: 4 / 3; background: #05070a; display: block; width: 100%; object-fit: cover; }
-  .gm-card__body { padding: 1rem 1.1rem 1.1rem; display: flex; flex-direction: column; gap: .35rem; flex: 1; }
-  .gm-card h3 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 380; font-weight: 400;
-    color: var(--fd-bone); font-size: clamp(19px, 2.2vw, 23px); margin: 0; line-height: 1.2; }
-  .gm-card .who { font-family: var(--fd-sans); color: var(--fd-dim); font-size: clamp(14px,1.5vw,16px); margin: 0; }
-  .gm-card .ed { color: var(--fd-faint); margin: 0; }
-  .gm-card .rank { position: absolute; top: .7rem; left: .7rem; background: rgba(10,13,17,.8); color: var(--fd-amber);
-    padding: .25rem .6rem; border-radius: 999px; border: 1px solid rgba(232,164,74,.5); }
-  .gm-card .mine { position: absolute; top: .7rem; right: .7rem; background: rgba(10,13,17,.8); color: var(--fd-teal);
-    padding: .25rem .6rem; border-radius: 999px; border: 1px solid rgba(94,200,189,.5); }
-  .gm-actions { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-top: auto; padding-top: .8rem; }
-  .gm-vote { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; font-size: 12px;
-    cursor: pointer; padding: .55rem .9rem; border-radius: 999px; border: 1.5px solid var(--fd-amber); background: transparent;
-    color: var(--fd-amber); display: inline-flex; gap: .5rem; align-items: center; transition: all .15s ease; }
-  .gm-vote:hover { background: var(--fd-amber); color: var(--fd-bg-top); }
-  .gm-vote.on { background: var(--fd-amber); color: var(--fd-bg-top); }
-  .gm-vote:disabled { opacity: .45; cursor: not-allowed; }
-  .gm-vote .n { font-variant-numeric: tabular-nums; }
-  .gm-link { font-family: var(--fd-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--fd-dim) !important;
-    text-decoration: none !important; padding: .5rem .2rem; }
-  .gm-link:hover { color: var(--fd-amber) !important; }
-  .gm-counter { margin-top: 1.4rem; color: var(--fd-faint); display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; }
-  .gm-counter b { color: var(--fd-amber); font-weight: 500; }
-  .gm-dots { display: inline-flex; gap: 5px; }
-  .gm-dots i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--fd-amber); display: inline-block; }
-  .gm-dots i.on { background: var(--fd-amber); box-shadow: 0 0 8px var(--fd-amber); }
+  /* how it works */
+  .list.how li { grid-template-columns: 8rem 1fr; }
+  .list.how li span { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+  .list.how p { margin: 0; color: var(--ink-2); font-size: 16px; }
+  .two > div > .label { margin-bottom: .2rem; }
 
-  .gm-tabs { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: 1.6rem; }
-  .gm-tab { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .1em; text-transform: uppercase;
-    color: var(--fd-dim); background: none; border: 1px solid var(--fd-rule); border-radius: 999px; padding: .5rem .9rem; cursor: pointer; }
-  .gm-tab[aria-selected="true"] { color: var(--fd-amber); border-color: var(--fd-amber); }
-  .gm-board { margin-top: 1.4rem; }
-  .gm-board .fd-row { grid-template-columns: 2.4rem 1fr auto; align-items: center; padding-bottom: 12px; margin-bottom: 14px; }
-  .gm-board .fd-row .num { font-family: var(--fd-mono); color: var(--fd-amber); font-size: clamp(15px,1.8vw,20px); }
-  .gm-board .fd-row .num.top { color: var(--fd-bone); }
-  .gm-board .fd-row p { font-size: clamp(15px,1.7vw,18px); color: var(--fd-bone); }
-  .gm-board .fd-row p small { display: block; color: var(--fd-faint); font-size: clamp(12px,1.3vw,14px); margin-top: .15rem; }
-  .gm-board .fd-row .val { font-family: var(--fd-mono); color: var(--fd-dim); font-size: clamp(12px,1.3vw,14px); letter-spacing: .06em; white-space: nowrap; }
-  .gm-board .fd-row .val b { color: var(--fd-bone); font-weight: 500; }
-  .gm-board a { text-decoration: none !important; }
-
-  .gm-badges { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.4rem; }
-  .gm-badge { border: 1px solid var(--fd-rule); border-radius: 14px; padding: .8rem .95rem; max-width: 22rem; flex: 1 1 15rem;
-    color: var(--fd-faint); background: rgba(238,231,219,.02); }
-  .gm-badge b { display: block; font-family: var(--fd-mono); font-weight: 500; letter-spacing: .1em; text-transform: uppercase;
-    font-size: 12px; color: var(--fd-dim); margin-bottom: .3rem; }
-  .gm-badge.on { border-color: var(--fd-violet); color: var(--fd-dim); }
-  .gm-badge.on b { color: var(--fd-violet); }
-  .gm-badge.on b::before { content: "★ "; }
-  .gm-badge p { margin: 0; font-size: clamp(13px,1.4vw,15px); line-height: 1.5; }
-  .gm-empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--fd-rule-soft); border-radius: 16px; color: var(--fd-dim);
-    font-size: clamp(15px,1.7vw,17px); line-height: 1.55; max-width: 62ch; }
-  .gm-empty a.fd-cta { margin-top: 1rem; }
-  .gm-past { margin-top: 1.4rem; }
-  .gm-past .fd-row { grid-template-columns: 1fr auto; align-items: center; }
-  .gm-past .fd-row p { font-size: clamp(15px,1.7vw,18px); color: var(--fd-bone); }
-  .gm-past .fd-row p small { display: block; color: var(--fd-faint); font-size: clamp(12px,1.3vw,14px); }
-  .gm-toast { position: fixed; left: 50%; bottom: 1.4rem; transform: translateX(-50%) translateY(20px); opacity: 0; pointer-events: none;
-    background: #15120f; color: var(--fd-bone); border: 1px solid var(--fd-rule-soft); border-radius: 999px; padding: .7rem 1.2rem;
-    font-family: var(--fd-sans); font-size: 14px; transition: all .2s ease; z-index: 50; max-width: 90vw; }
-  .gm-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  .gm-skel { height: 220px; border-radius: 16px; border: 1px solid var(--fd-rule); background: linear-gradient(90deg, rgba(238,231,219,.02), rgba(238,231,219,.05), rgba(238,231,219,.02)); background-size: 200% 100%; animation: sh 1.4s infinite; }
+  /* entries */
+  .cards { margin-top: 2rem; }
+  .card { position: relative; }
+  .card .ph { aspect-ratio: 4 / 3; margin-bottom: 1rem; background: var(--paper-2); }
+  .card .ph img { mix-blend-mode: normal; }
+  .card .marks { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .6rem; min-height: 0; }
+  .card .who { margin: 0; color: var(--ink-2); font-size: 16px; }
+  .card .ed { margin: .3rem 0 0; font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+  .card .acts { display: flex; gap: .6rem 1.2rem; flex-wrap: wrap; align-items: center; margin-top: auto; padding-top: 1.1rem; }
+  .vote { display: inline-flex; align-items: center; gap: .5rem; font: 500 13px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase;
+    padding: .65rem .9rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); cursor: pointer; transition: background .15s, color .15s; }
+  .vote:hover { background: var(--ink); color: var(--paper); }
+  .vote.on { background: var(--red); border-color: var(--red); color: #fff; }
+  .vote:disabled { opacity: .45; cursor: not-allowed; }
+  .vote:disabled:hover { background: var(--paper); color: var(--ink); }
+  .vote.on:disabled:hover { background: var(--red); color: #fff; }
+  .vote .n { font-variant-numeric: tabular-nums; }
+  .card.hit { outline: 2px solid var(--red); outline-offset: 10px; }
+  .dots { display: inline-flex; gap: 5px; vertical-align: middle; margin-right: .6rem; }
+  .dots i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--red); display: inline-block; }
+  .dots i.on { background: var(--red); }
+  .empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .empty a { color: var(--ink); } .empty a:hover { color: var(--red); }
+  .empty .btn, .empty .link { margin-top: 1rem; }
+  .skel { height: 220px; background: linear-gradient(90deg, var(--paper-2), var(--paper-3), var(--paper-2)); background-size: 200% 100%; animation: sh 1.4s infinite; grid-column: span 4; }
   @keyframes sh { from { background-position: 200% 0 } to { background-position: -200% 0 } }
-  .gm-cal { margin-top: 1.4rem; }
-  .gm-cal .fd-row { grid-template-columns: minmax(90px, 120px) 1fr; }
-  @media (max-width: 560px) {
-    .fd-page .fd-row { grid-template-columns: 1fr; gap: .25rem; }
-    .gm-board .fd-row { grid-template-columns: 2rem 1fr; }
-    .gm-board .fd-row .val { grid-column: 2; }
-    .fd-hero__cta .fd-cta { width: 100%; justify-content: center; box-sizing: border-box; }
+
+  /* boards + rows */
+  .board { margin-top: 1.5rem; border-top: 1px solid var(--rule); }
+  .board .row { display: grid; grid-template-columns: 3rem 1fr auto; gap: .5rem 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--rule); text-decoration: none; color: inherit; }
+  .board a.row:hover p { color: var(--red); }
+  .board .num { font: 400 13px var(--mono); color: var(--red); }
+  .board .num.top { color: var(--ink); }
+  .board p { margin: 0; max-width: none; font-size: 17px; }
+  .board p small { display: block; color: var(--muted); font-size: 14px; margin-top: .15rem; }
+  .board .val { font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+  .board .val b { color: var(--ink); font-weight: 500; }
+  .board .empty { border: 0; padding-left: 0; }
+  .past .row { grid-template-columns: 1fr auto; }
+
+  /* badges */
+  .badges { display: flex; flex-wrap: wrap; gap: .8rem 1rem; margin-top: 1rem; }
+  .badge { flex: 1 1 15rem; max-width: 22rem; border-top: 1px solid var(--rule); padding-top: .8rem; }
+  .badge p { margin: .6rem 0 0; font-size: 14px; color: var(--ink-2); }
+  .badge .label { display: inline; margin-left: .3rem; }
+
+  /* calendar of seasons */
+  .list.cal li { grid-template-columns: 8rem 1fr; }
+  .list.cal li span { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+  .list.cal p { margin: 0; }
+  .list.cal b { font: 350 1.25rem var(--serif); display: block; }
+
+  /* toast */
+  .toast { position: fixed; left: 50%; bottom: 1.4rem; transform: translateX(-50%) translateY(20px); opacity: 0; pointer-events: none;
+    background: var(--ink); color: var(--paper); padding: .75rem 1.2rem; font: 400 14px var(--sans); transition: all .2s ease; z-index: 50; max-width: 90vw; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 680px) {
+    .board .row { grid-template-columns: 2.4rem 1fr; }
+    .board .val { grid-column: 2; }
+    .past .row { grid-template-columns: 1fr; }
+    .list.how li, .list.cal li { grid-template-columns: 1fr; gap: .3rem; }
+    .hero .btns .btn { width: 100%; justify-content: center; }
+    .skel { grid-column: span 12; }
   }
 </style>
 </head>
-<body class="fd-ground">
-<div class="fd-page">
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu">
+   <li><a href="/explore/">Registry</a></li><li><a href="/events.html" class="on">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li>
+  </ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">Collect</span><a href="/register.html">Add a find</a><a href="/events.html">Events</a><a href="/games.html" class="on" aria-current="page">Seasons</a><a href="/glowtbook/">Glowtbook</a><a href="/fingerprint/verify.html">Verify a piece</a></div>
 
-  <nav class="fd-nav" aria-label="Site">
-    <a class="fd-nav__brand" href="/">Glass&nbsp;Database</a>
-    <div class="fd-nav__links">
-      <a href="/explore/">Explore</a>
-      <a href="/blog/">Blog</a>
-      <a href="/glowtbook/" class="on">Glowtbook</a>
-      <a href="/studios.html">Visualizations</a>
-      <a href="/shop.html">Shops</a>
-      <span id="chip"></span>
-    </div>
-  </nav>
-  <div class="fd-subnav" aria-label="Glowtbook">
-    <span class="fd-subnav__label">Glowtbook</span>
-    <a href="/glowtbook/">Journal &amp; pieces</a>
-    <a href="/fingerprint/enroll.html">Capture app</a>
-    <a href="/games.html" class="on" aria-current="page">Seasons</a>
-    <a href="/events.html">Events</a>
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> Seasons</p>
+  <h1 id="heroTitle">Loading the season…</h1>
+  <p class="lede" id="heroLede"></p>
+  <div class="status" id="heroStatus"></div>
+  <p class="live" id="heroMeta" aria-live="polite"></p>
+  <div class="btns" id="heroCta"></div>
+  <details class="rules" id="heroRules" hidden><summary class="label">Rules &amp; prize</summary><p id="heroRulesText"></p></details>
+ </div>
+</section>
+
+<section class="s" id="how" aria-labelledby="h-how">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> How it works</p>
+   <div><h2 id="h-how">Make it. Buy it. <em>Vote.</em></h2><p class="lede">A time-boxed call for pieces. Makers enter fingerprinted work, collectors scan what they bought to claim it, and everyone spends a few votes.</p></div></div>
+  <div class="two">
+   <div>
+    <p class="label">For makers</p>
+    <ul class="list how">
+     <li><span>Fingerprint</span><p>Log the piece in <a href="/glowtbook/">Glowtbook</a> and capture its fingerprint — a few photos off the pipe that let a phone recognise <em>this</em> pumpkin later.</p></li>
+     <li><span>Publish</span><p>Push it to the public registry. Once it's approved it has a page, a manifest, a Content Credential and a scan-to-verify link.</p></li>
+     <li><span>Enter</span><p>Enter it in the season with your studio, the edition size and where to buy. Then tell your people.</p></li>
+    </ul>
+   </div>
+   <div>
+    <p class="label">For collectors</p>
+    <ul class="list how">
+     <li><span>Buy</span><p>Get a piece from a shop in the season — at the studio, the market, the website. The maker gets paid; that's the point.</p></li>
+     <li><span>Scan</span><p>Open <a href="/fingerprint/verify.html">Verify</a>, point your phone at the piece, and let the confidence climb. 70+ across a few angles is a match.</p></li>
+     <li><span>Claim</span><p>Claim it to your collection. It's now an authenticated piece with a real provenance trail — yours.</p></li>
+     <li><span>Vote</span><p>Spend your votes on the entries you'd take home. Swap them as often as you like until voting closes.</p></li>
+    </ul>
+   </div>
   </div>
+ </div>
+</section>
 
-  <header class="fd-hero-wrap">
-    <svg class="fd-filaments" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <path d="M-40 640 C 300 560, 520 520, 900 250"/>
-      <path d="M-40 700 C 360 600, 640 460, 902 252"/>
-      <path d="M120 700 C 420 560, 700 380, 902 252"/>
-      <path d="M1240 620 C 1050 520, 1010 380, 902 252"/>
-      <path d="M1240 700 C 1080 560, 980 360, 902 252"/>
-      <circle cx="902" cy="252" r="6"/>
-    </svg>
-    <section class="fd-hero fd-sec" style="padding-top:2.4rem" id="hero">
-      <p class="fd-eyebrow">Seasons</p>
-      <h1 class="fd-headline" style="margin-top:1.6rem" id="heroTitle">Loading the season…</h1>
-      <p class="fd-body fd-lede" style="margin-top:1.4rem" id="heroLede"></p>
-      <div class="gm-status gm-mono" id="heroStatus"></div>
-      <div class="gm-hero-meta gm-mono" id="heroMeta"></div>
-      <div class="fd-hero__cta" id="heroCta"></div>
-      <details class="gm-rules" id="heroRules" hidden><summary class="gm-mono">Rules &amp; prize</summary><p id="heroRulesText"></p></details>
-    </section>
-  </header>
+<section class="s alt" id="entries" aria-labelledby="entriesTitle">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> Entries</p>
+   <div><h2 id="entriesTitle">This season's <em>pieces.</em></h2><p class="live" id="voteCounter" aria-live="polite" style="margin-top:1rem"></p></div></div>
+  <div class="cards" id="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+ </div>
+</section>
 
-  <section class="fd-sec" id="how">
-    <p class="fd-eyebrow">How it works</p>
-    <div class="fd-kicker-rule"></div>
-    <div class="fd-two">
-      <div>
-        <p class="fd-label" style="color:var(--fd-amber)">For makers</p>
-        <div class="fd-rows" style="margin-top:1.2rem">
-          <div class="fd-row"><span class="fd-label">Fingerprint</span>
-            <p>Log the piece in <a href="/glowtbook/">Glowtbook</a> and capture its fingerprint — a few photos off the pipe that let a phone recognise <em>this</em> pumpkin later.</p></div>
-          <div class="fd-row"><span class="fd-label">Publish</span>
-            <p>Push it to the public registry. Once it's approved it has a page, a manifest, a Content Credential and a scan-to-verify link.</p></div>
-          <div class="fd-row"><span class="fd-label">Enter</span>
-            <p>Enter it in the season with your studio, the edition size and where to buy. Then tell your people.</p></div>
-        </div>
-      </div>
-      <div>
-        <p class="fd-label" style="color:var(--fd-teal)">For collectors</p>
-        <div class="fd-rows" style="margin-top:1.2rem">
-          <div class="fd-row"><span class="fd-label">Buy</span>
-            <p>Get a piece from a shop in the season — at the studio, the market, the website. The maker gets paid; that's the point.</p></div>
-          <div class="fd-row"><span class="fd-label">Scan</span>
-            <p>Open <a href="/fingerprint/verify.html">Verify</a>, point your phone at the piece, and let the confidence climb. 70+ across a few angles is a match.</p></div>
-          <div class="fd-row"><span class="fd-label">Claim</span>
-            <p>Claim it to your collection. It's now an authenticated piece with a real provenance trail — yours.</p></div>
-          <div class="fd-row"><span class="fd-label">Vote</span>
-            <p>Spend your votes on the entries you'd take home. Swap them as often as you like until voting closes.</p></div>
-        </div>
-      </div>
-    </div>
-  </section>
+<section class="s" id="boards" aria-labelledby="h-boards">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Leaderboards</p>
+   <div><h2 id="h-boards">Who's <em>ahead.</em></h2></div></div>
+  <div class="tabs" role="tablist" id="tabs" aria-label="Leaderboards">
+   <button role="tab" aria-selected="true" data-tab="peoples_choice">People's choice</button>
+   <button role="tab" aria-selected="false" data-tab="most_collected">Most collected</button>
+   <button role="tab" aria-selected="false" data-tab="studios">Studios</button>
+   <button role="tab" aria-selected="false" data-tab="collectors">Collectors</button>
+  </div>
+  <div class="board" id="board" role="tabpanel"></div>
+ </div>
+</section>
 
-  <section class="fd-sec" id="entries">
-    <p class="fd-eyebrow">Entries</p>
-    <div class="fd-kicker-rule"></div>
-    <h2 class="fd-headline" id="entriesTitle">This season's <em>pieces.</em></h2>
-    <div class="gm-counter gm-mono" id="voteCounter"></div>
-    <div class="gm-grid" id="grid"><div class="gm-skel"></div><div class="gm-skel"></div><div class="gm-skel"></div></div>
-  </section>
+<section class="s alt" id="mine" aria-labelledby="h-mine">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> My collection</p>
+   <div><h2 id="h-mine">What you've <em>claimed.</em></h2></div></div>
+  <div id="mineBody"></div>
+ </div>
+</section>
 
-  <section class="fd-sec" id="boards">
-    <p class="fd-eyebrow">Leaderboards</p>
-    <div class="fd-kicker-rule"></div>
-    <h2 class="fd-headline">Who's <em>ahead.</em></h2>
-    <div class="gm-tabs" role="tablist" id="tabs">
-      <button class="gm-tab" role="tab" aria-selected="true" data-tab="peoples_choice">People's choice</button>
-      <button class="gm-tab" role="tab" aria-selected="false" data-tab="most_collected">Most collected</button>
-      <button class="gm-tab" role="tab" aria-selected="false" data-tab="studios">Studios</button>
-      <button class="gm-tab" role="tab" aria-selected="false" data-tab="collectors">Collectors</button>
-    </div>
-    <div class="gm-board fd-rows" id="board" role="tabpanel"></div>
-  </section>
+<section class="s" id="past" aria-labelledby="h-past">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 06</span> Past &amp; upcoming</p>
+   <div><h2 id="h-past">Other <em>seasons.</em></h2></div></div>
+  <div class="two">
+   <div>
+    <p class="label">The calendar</p>
+    <ul class="list cal" id="calendar">
+     <li><span>October</span><p><b>Pumpkin Patch</b>Blown-glass pumpkins from every shop.</p></li>
+     <li><span>December</span><p><b>Heirloom Ornaments</b>The ones that go on the tree every year.</p></li>
+     <li><span>Spring</span><p><b>Paperweights</b>Murrine, millefiori, the lampworked garden.</p></li>
+     <li><span>Summer</span><p><b>Drinkware</b>Tumblers, stemware, the glass you actually use.</p></li>
+     <li><span>Anytime</span><p><b>Marbles</b>Small, fast, and dangerously collectable.</p></li>
+    </ul>
+   </div>
+   <div class="board past" id="pastList" style="border-top:0"></div>
+  </div>
+ </div>
+</section>
 
-  <section class="fd-sec" id="mine">
-    <p class="fd-eyebrow">My collection</p>
-    <div class="fd-kicker-rule"></div>
-    <h2 class="fd-headline">What you've <em>claimed.</em></h2>
-    <div id="mineBody"></div>
-  </section>
+<section class="s alt" id="why" aria-labelledby="h-why">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 07</span> Why this exists</p>
+   <div><h2 id="h-why">A reason to buy <em>from a working shop.</em></h2>
+    <p class="lede">Independent glass artists need collectors who come back, and collectors want to know the piece on the shelf is the piece the maker made. Seasons are a reason to buy from a working shop this month, a way to prove what you own without a certificate in a drawer, and — quietly — a census of who is making what, where. No cash prizes, no entry fees: recognition, badges, a homepage feature, and a growing record of real glass in real collections. Data stays open under CC&nbsp;BY&nbsp;4.0.</p>
+    <div class="btns"><a class="btn btn--line" href="https://discord.gg/9ek2UxvPT">Propose a season on Discord</a><a class="link" href="/events.html">See the events</a></div></div></div>
+ </div>
+</section>
+</main>
 
-  <section class="fd-sec" id="past">
-    <p class="fd-eyebrow">Past &amp; upcoming</p>
-    <div class="fd-kicker-rule"></div>
-    <h2 class="fd-headline">Other <em>seasons.</em></h2>
-    <div class="gm-cal fd-rows" id="calendar">
-      <div class="fd-row"><span class="fd-label">October</span><p>Pumpkin Patch — blown-glass pumpkins from every shop.</p></div>
-      <div class="fd-row"><span class="fd-label">December</span><p>Heirloom Ornaments — the ones that go on the tree every year.</p></div>
-      <div class="fd-row"><span class="fd-label">Spring</span><p>Paperweights — murrine, millefiori, the lampworked garden.</p></div>
-      <div class="fd-row"><span class="fd-label">Summer</span><p>Drinkware — tumblers, stemware, the glass you actually use.</p></div>
-      <div class="fd-row"><span class="fd-label">Anytime</span><p>Marbles — small, fast, and dangerously collectable.</p></div>
-    </div>
-    <div class="gm-past fd-rows" id="pastList"></div>
-  </section>
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <section class="fd-sec" id="why">
-    <p class="fd-eyebrow">Why this exists</p>
-    <div class="fd-kicker-rule"></div>
-    <p class="fd-body">Independent glass artists need collectors who come back, and collectors want to know the piece on the shelf is the piece the maker made. Seasons are a reason to buy from a working shop this month, a way to prove what you own without a certificate in a drawer, and — quietly — a census of who is making what, where. No cash prizes, no entry fees: recognition, badges, a homepage feature, and a growing record of real glass in real collections. Data stays open under CC&nbsp;BY&nbsp;4.0.</p>
-    <div class="fd-hero__cta"><a class="fd-cta" href="https://discord.gg/9ek2UxvPT">Propose a season on Discord</a></div>
-  </section>
-
-  <footer class="fd-footer">
-    <div>
-      <p style="color:var(--fd-bone);font-size:14px;letter-spacing:.1em">GLASS&nbsp;DATABASE</p>
-      <p>Data &amp; ontology under <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a> &middot;
-         software <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache&nbsp;2.0</a></p>
-    </div>
-    <p>
-      <a href="https://discord.gg/9ek2UxvPT">Discord</a> &middot;
-      <a href="https://www.instagram.com/glassdatabase/">Instagram</a> &middot;
-      <a href="/api/docs">Developer API</a> &middot;
-      <a class="fd-handle" href="https://github.com/alibama/glass-database">github.com/alibama/glass-database</a>
-    </p>
-  </footer>
-</div>
-<div class="gm-toast" id="toast" role="status" aria-live="polite"></div>
-
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
 <script>
 (function () {
   "use strict";
@@ -293,6 +273,8 @@
   function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
   function cardUrl(id) { return GDB.API + "/seasons/entries/" + id + "/card.png"; }
   function verifyUrl(rid) { return VERIFY_URL + "?object=" + encodeURIComponent(rid); }
+  /* status -> paper pill: red while something is open, ink once it's closed */
+  function pillClass(status) { return status === "open" || status === "voting" ? "pill red" : status === "closed" ? "pill ink" : "pill"; }
 
   /* --- hero --------------------------------------------------------- */
   function renderHero() {
@@ -303,8 +285,8 @@
       $("#heroStatus").innerHTML = "";
       $("#heroMeta").innerHTML = "";
       $("#heroCta").innerHTML =
-        '<a class="fd-cta" href="https://discord.gg/9ek2UxvPT">Hear about the next one</a>' +
-        '<a class="fd-cta" href="' + VERIFY_URL + '" style="color:var(--fd-teal);border-color:var(--fd-teal)">Scan a piece</a>';
+        '<a class="btn btn--red" href="https://discord.gg/9ek2UxvPT">Hear about the next one</a>' +
+        '<a class="btn btn--line" href="' + VERIFY_URL + '">Scan a piece</a>';
       $("#entriesTitle").innerHTML = "Nothing on the shelf <em>yet.</em>";
       return;
     }
@@ -312,7 +294,7 @@
     $("#heroLede").textContent = s.description || "";
     var cd = countdown(s);
     $("#heroStatus").innerHTML =
-      '<span class="gm-pill ' + esc(s.status) + '">' + esc(s.status === "open" ? "open for entries" : s.status) + "</span>" +
+      '<span class="' + pillClass(s.status) + '">' + esc(s.status === "open" ? "open for entries" : s.status) + "</span>" +
       (cd ? "<span>" + esc(cd) + "</span>" : "");
     $("#heroMeta").innerHTML =
       "<span><b>" + plural(s.entry_count || 0, "entry").replace("entrys", "entries") + "</b></span>" +
@@ -321,13 +303,13 @@
       (s.entries_close ? "<span>entries close <b>" + esc(s.entries_close) + "</b></span>" : "") +
       (s.voting_closes ? "<span>voting closes <b>" + esc(s.voting_closes) + "</b></span>" : "");
     var cta = "";
-    if (s.status === "open") cta += '<a class="fd-cta" href="' + ENTER_URL + '">Enter a piece</a>';
-    cta += '<a class="fd-cta" href="' + VERIFY_URL + '" style="color:var(--fd-teal);border-color:var(--fd-teal)">Scan to claim</a>';
-    if (s.status !== "open") cta += '<a class="fd-cta" href="#boards" style="color:var(--fd-dim);border-color:var(--fd-rule-soft)">See the boards</a>';
+    if (s.status === "open") cta += '<a class="btn btn--red" href="' + ENTER_URL + '">Enter a piece</a>';
+    cta += '<a class="btn btn--line" href="' + VERIFY_URL + '">Scan to claim</a>';
+    if (s.status !== "open") cta += '<a class="link" href="#boards">See the boards</a>';
     $("#heroCta").innerHTML = cta;
     if (s.rules || s.prize_note) {
       $("#heroRules").hidden = false;
-      $("#heroRulesText").innerHTML = esc(s.rules || "") + (s.prize_note ? "<br><br><span style=\"color:var(--fd-amber)\">Prize:</span> " + esc(s.prize_note) : "");
+      $("#heroRulesText").innerHTML = esc(s.rules || "") + (s.prize_note ? '<br><br><span class="k">Prize:</span> ' + esc(s.prize_note) : "");
     }
     $("#entriesTitle").innerHTML = "This season's <em>pieces.</em>";
   }
@@ -336,30 +318,29 @@
   function card(e) {
     var on = S.myVotes.indexOf(e.id) >= 0;
     var ed = e.edition_size > 1 ? "edition of " + e.edition_size : "one of one";
-    return '<article class="gm-card" id="entry-' + e.id + '" data-id="' + e.id + '">' +
-      '<img class="gm-card__img" src="' + esc(e.image_url) + '" alt="' + esc(e.title) + '" loading="lazy" onerror="this.style.opacity=.15">' +
-      (e.rank && e.rank <= 3 && e.vote_count > 0 ? '<span class="rank gm-mono">#' + e.rank + "</span>" : "") +
-      (e.mine ? '<span class="mine gm-mono">yours</span>' : "") +
-      '<div class="gm-card__body">' +
-        "<h3>" + esc(e.title) + "</h3>" +
-        '<p class="who">' + esc(e.artist_name || "") + (e.studio ? " · " + esc(e.studio) : "") + "</p>" +
-        '<p class="ed gm-mono">' + esc(ed) + (e.price_note ? " · " + esc(e.price_note) : "") + "</p>" +
-        '<div class="gm-actions">' +
-          '<button class="gm-vote' + (on ? " on" : "") + '" data-vote="' + e.id + '" aria-pressed="' + on + '"' + (S.canVote ? "" : " disabled") + ">" +
-            (on ? "Voted" : "Vote") + ' <span class="n">' + e.vote_count + "</span></button>" +
-          '<a class="gm-link" href="' + esc(verifyUrl(e.object_row_id)) + '">Scan to claim</a>' +
-          '<a class="gm-link" href="' + esc(cardUrl(e.id)) + '" target="_blank" rel="noopener">Share card</a>' +
-        "</div>" +
+    var marks = (e.rank && e.rank <= 3 && e.vote_count > 0 ? '<span class="pill red rank">#' + e.rank + "</span>" : "") +
+      (e.mine ? '<span class="pill ink mine">yours</span>' : "");
+    return '<article class="card third" id="entry-' + e.id + '" data-id="' + e.id + '">' +
+      '<div class="ph"><img src="' + esc(e.image_url) + '" alt="' + esc(e.title) + '" loading="lazy" onerror="this.style.opacity=.15"></div>' +
+      (marks ? '<div class="marks">' + marks + "</div>" : "") +
+      "<h3>" + esc(e.title) + "</h3>" +
+      '<p class="who">' + esc(e.artist_name || "") + (e.studio ? " · " + esc(e.studio) : "") + "</p>" +
+      '<p class="ed">' + esc(ed) + (e.price_note ? " · " + esc(e.price_note) : "") + "</p>" +
+      '<div class="acts">' +
+        '<button class="vote' + (on ? " on" : "") + '" data-vote="' + e.id + '" aria-pressed="' + on + '"' + (S.canVote ? "" : " disabled") + ">" +
+          (on ? "Voted" : "Vote") + ' <span class="n">' + e.vote_count + "</span></button>" +
+        '<a class="link" href="' + esc(verifyUrl(e.object_row_id)) + '">Scan to claim</a>' +
+        '<a class="link" href="' + esc(cardUrl(e.id)) + '" target="_blank" rel="noopener">Share card</a>' +
       "</div></article>";
   }
   function renderEntries() {
     var g = $("#grid");
     if (!S.season) {
-      g.innerHTML = '<div class="gm-empty">No season is open right now. The next call for artists goes out on the <a href="https://discord.gg/9ek2UxvPT">Discord</a> — follow <a href="https://www.instagram.com/glassdatabase/">@glassdatabase</a>. You can still <a href="' + VERIFY_URL + '">scan a piece</a> you own: the claim waits for the right season.</div>';
+      g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">No season is open right now. The next call for artists goes out on the <a href="https://discord.gg/9ek2UxvPT">Discord</a> — follow <a href="https://www.instagram.com/glassdatabase/">@glassdatabase</a>. You can still <a href="' + VERIFY_URL + '">scan a piece</a> you own: the claim waits for the right season.</div>';
       $("#voteCounter").innerHTML = ""; return;
     }
     if (!S.entries.length) {
-      g.innerHTML = '<div class="gm-empty">' + (S.season.status === "open"
+      g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">' + (S.season.status === "open"
         ? 'No entries approved yet — be the first. <a href="' + ENTER_URL + '">Enter a piece</a> from Glowtbook (it needs a fingerprint and a public listing).'
         : "This season closed without entries. The shelf is ready for the next one.") + "</div>";
       $("#voteCounter").innerHTML = ""; return;
@@ -384,7 +365,7 @@
     if (!S.canVote) { c.innerHTML = S.season.status === "closed" ? "<span>Voting has closed — the boards below are final.</span>" : ""; return; }
     var dots = ""; for (var i = 0; i < cap; i++) dots += "<i" + (i < S.myVotes.length ? ' class="on"' : "") + "></i>";
     c.innerHTML = S.signedIn
-      ? '<span class="gm-dots" aria-hidden="true">' + dots + "</span><span><b>" + S.remaining + "</b> of " + cap + " votes left · tap again to take one back</span>"
+      ? '<span class="dots" aria-hidden="true">' + dots + "</span><span><b>" + S.remaining + "</b> of " + cap + " votes left · tap again to take one back</span>"
       : '<span><a href="' + esc(GDB.loginUrl(location.pathname + location.search)) + '">Sign in</a> to cast your ' + cap + " votes.</span>";
   }
   function onVote(id, btn) {
@@ -416,7 +397,7 @@
   /* --- boards ------------------------------------------------------- */
   function row(n, main, sub, val, href) {
     var inner = '<span class="num' + (n === 1 ? " top" : "") + '">' + n + "</span><p>" + main + (sub ? "<small>" + sub + "</small>" : "") + '</p><span class="val">' + val + "</span>";
-    return href ? '<a class="fd-row" href="' + esc(href) + '">' + inner + "</a>" : '<div class="fd-row">' + inner + "</div>";
+    return href ? '<a class="row" href="' + esc(href) + '">' + inner + "</a>" : '<div class="row">' + inner + "</div>";
   }
   function renderBoards() {
     var b = $("#board"), lb = S.lb || {}, list = lb[S.tab] || [], html = "";
@@ -432,7 +413,7 @@
                   most_collected: "No verified claims yet. Buy one, scan it, claim it.",
                   studios: "No studios on the board until entries are approved.",
                   collectors: "The collectors' board fills as pieces are scanned and claimed — across every season." }[S.tab];
-    b.innerHTML = html || '<div class="gm-empty">' + empty + "</div>";
+    b.innerHTML = html || '<div class="empty">' + empty + "</div>";
   }
   function refreshBoards() {
     if (!S.season) return;
@@ -448,7 +429,7 @@
   $("#tabs").addEventListener("click", function (ev) {
     var t = ev.target.closest("[data-tab]"); if (!t) return;
     S.tab = t.getAttribute("data-tab");
-    document.querySelectorAll("#tabs .gm-tab").forEach(function (x) { x.setAttribute("aria-selected", x === t); });
+    document.querySelectorAll("#tabs [role=tab]").forEach(function (x) { x.setAttribute("aria-selected", x === t); });
     renderBoards();
   });
 
@@ -456,48 +437,49 @@
   function renderMine(m) {
     var el = $("#mineBody");
     if (!m || !m.signed_in) {
-      el.innerHTML = '<div class="gm-empty">Sign in to keep a collection: every piece you scan and claim lands here with its maker, studio and season — proof of what you own, and a badge or two.' +
-        '<br><a class="fd-cta" href="' + esc(GDB.loginUrl(location.pathname + location.search + "#mine")) + '">Sign in with Google</a></div>';
+      el.innerHTML = '<div class="empty" style="margin-top:0">Sign in to keep a collection: every piece you scan and claim lands here with its maker, studio and season — proof of what you own, and a badge or two.' +
+        '<br><a class="btn btn--red" href="' + esc(GDB.loginUrl(location.pathname + location.search + "#mine")) + '">Sign in with Google</a></div>';
       return;
     }
-    el.innerHTML = '<div class="gm-skel" style="height:120px;margin-top:1.4rem"></div>';
+    el.innerHTML = '<div class="skel" style="height:120px"></div>';
     GDB.json("/me/collection").then(function (d) {
       var coll = d.collection || [], earned = {};
       (d.badges || []).forEach(function (b) { earned[b.badge] = b; });
       var html = "";
       if (!coll.length) {
-        html += '<div class="gm-empty">Nothing claimed yet. Find a piece from this season, open Verify on your phone, and let the confidence climb past 70 — then it\'s yours on the record.' +
-          '<br><a class="fd-cta" href="' + VERIFY_URL + '" style="color:var(--fd-teal);border-color:var(--fd-teal)">Scan your first piece</a></div>';
+        html += '<div class="empty" style="margin-top:0">Nothing claimed yet. Find a piece from this season, open Verify on your phone, and let the confidence climb past 70 — then it\'s yours on the record.' +
+          '<br><a class="btn btn--red" href="' + VERIFY_URL + '">Scan your first piece</a></div>';
       } else {
-        html += '<p class="gm-mono" style="margin-top:1.2rem;color:var(--fd-faint)">' + plural(coll.length, "piece") + " · " + plural(d.badges.length, "badge") + "</p>";
-        html += '<div class="gm-grid">' + coll.map(function (c) {
-          var st = c.verified ? '<span class="rank gm-mono" style="color:var(--fd-teal);border-color:rgba(94,200,189,.5)">verified</span>'
-                              : '<span class="rank gm-mono" style="color:var(--fd-dim)">' + esc(c.status) + "</span>";
-          return '<article class="gm-card">' +
-            '<img class="gm-card__img" src="' + esc(c.image_url) + '" alt="' + esc(c.title) + '" loading="lazy" onerror="this.style.opacity=.15">' + st +
-            '<div class="gm-card__body"><h3>' + esc(c.title) + "</h3>" +
+        html += '<p class="live" style="margin-top:0">' + plural(coll.length, "piece") + " · " + plural(d.badges.length, "badge") + "</p>";
+        html += '<div class="cards">' + coll.map(function (c) {
+          var st = c.verified ? '<span class="pill red">verified</span>' : '<span class="pill">' + esc(c.status) + "</span>";
+          return '<article class="card third">' +
+            '<div class="ph"><img src="' + esc(c.image_url) + '" alt="' + esc(c.title) + '" loading="lazy" onerror="this.style.opacity=.15"></div>' +
+            '<div class="marks">' + st + "</div>" +
+            "<h3>" + esc(c.title) + "</h3>" +
             '<p class="who">' + esc(c.artist_name || c.maker || "") + (c.studio ? " · " + esc(c.studio) : "") + "</p>" +
-            '<p class="ed gm-mono">' + (c.season_title ? esc(c.season_title) + " · " : "") + "scan " + Math.round(c.confidence || 0) + "/100" + (c.location ? " · " + esc(c.location) : "") + "</p>" +
-            '<div class="gm-actions">' + (c.entry_id ? '<a class="gm-link" href="' + esc(cardUrl(c.entry_id)) + '" target="_blank" rel="noopener">Share card</a>' : "") +
-            '<a class="gm-link" href="' + esc(verifyUrl(c.object_row_id)) + '">Re-verify</a></div></div></article>';
+            '<p class="ed">' + (c.season_title ? esc(c.season_title) + " · " : "") + "scan " + Math.round(c.confidence || 0) + "/100" + (c.location ? " · " + esc(c.location) : "") + "</p>" +
+            '<div class="acts">' + (c.entry_id ? '<a class="link" href="' + esc(cardUrl(c.entry_id)) + '" target="_blank" rel="noopener">Share card</a>' : "") +
+            '<a class="link" href="' + esc(verifyUrl(c.object_row_id)) + '">Re-verify</a></div></article>';
         }).join("") + "</div>";
       }
       var all = d.all_badges || {};
-      html += '<p class="fd-label" style="color:var(--fd-violet);margin-top:2.2rem">Badges</p><div class="gm-badges">' +
+      html += '<p class="label" style="margin-top:2.6rem">Badges</p><div class="badges">' +
         Object.keys(all).map(function (k) {
           var b = all[k], e = earned[k];
-          return '<div class="gm-badge' + (e ? " on" : "") + '"><b>' + esc(b.label) + "</b><p>" + esc(b.blurb) +
-            (e && e.season_title ? ' <span class="gm-mono" style="color:var(--fd-faint)">· ' + esc(e.season_title) + "</span>" : "") + "</p></div>";
+          return '<div class="badge"><span class="pill' + (e ? " red" : "") + '">' + (e ? "★ " : "") + esc(b.label) + "</span>" +
+            (e && e.season_title ? '<span class="label">' + esc(e.season_title) + "</span>" : "") +
+            "<p>" + esc(b.blurb) + "</p></div>";
         }).join("") + "</div>";
       if (d.entries && d.entries.length) {
-        html += '<p class="fd-label" style="color:var(--fd-amber);margin-top:2.2rem">My entries</p><div class="gm-board fd-rows" style="margin-top:1rem">' +
+        html += '<p class="label" style="margin-top:2.6rem">My entries</p><div class="board" style="margin-top:.8rem">' +
           d.entries.map(function (e, i) {
             return row(i + 1, esc(e.title), esc(e.season_title || "") + " · " + esc(e.status), "<b>" + e.vote_count + "</b> votes · <b>" + e.claim_count + "</b> claims",
               e.status === "approved" ? "/games.html?season=" + encodeURIComponent(e.season_slug) + "#entry-" + e.id : null); }).join("") + "</div>";
       }
       el.innerHTML = html;
     }).catch(function (err) {
-      el.innerHTML = '<div class="gm-empty">Couldn\'t load your collection (' + esc(err.message || "offline") + ").</div>";
+      el.innerHTML = '<div class="empty" style="margin-top:0">Couldn\'t load your collection (' + esc(err.message || "offline") + ").</div>";
     });
   }
 
@@ -505,11 +487,11 @@
   function renderPast(list, currentSlug) {
     var others = (list || []).filter(function (s) { return s.slug !== currentSlug; });
     var el = $("#pastList");
-    if (!others.length) { el.innerHTML = ""; return; }
-    el.innerHTML = '<p class="fd-label" style="color:var(--fd-dim);margin:2rem 0 .6rem">On the record</p>' + others.map(function (s) {
-      return '<a class="fd-row" href="?season=' + encodeURIComponent(s.slug) + '"><p>' + esc(s.title) + (s.theme ? " — <em>" + esc(s.theme) + "</em>" : "") +
+    if (!others.length) { el.innerHTML = '<p class="label">On the record</p><div class="empty" style="margin-top:1rem">No other seasons on the record yet.</div>'; return; }
+    el.innerHTML = '<p class="label" style="margin-bottom:.4rem">On the record</p>' + others.map(function (s) {
+      return '<a class="row" href="?season=' + encodeURIComponent(s.slug) + '"><p>' + esc(s.title) + (s.theme ? " — <em>" + esc(s.theme) + "</em>" : "") +
         "<small>" + esc(s.status) + (s.starts ? " · " + esc(s.starts) : "") + (s.ends ? " → " + esc(s.ends) : "") + "</small></p>" +
-        '<span class="val gm-mono" style="color:var(--fd-faint)">' + plural(s.entry_count || 0, "entry").replace("entrys", "entries") + " · " + plural(s.vote_count || 0, "vote") + " · " + plural(s.claim_count || 0, "claim") + "</span></a>";
+        '<span class="val">' + plural(s.entry_count || 0, "entry").replace("entrys", "entries") + " · " + plural(s.vote_count || 0, "vote") + " · " + plural(s.claim_count || 0, "claim") + "</span></a>";
     }).join("");
   }
 

@@ -188,23 +188,28 @@ def initial_month(rows: list[dict]):
 
 _CAL_CSS = """
 <style>
-.gdb-cal{border-collapse:separate;border-spacing:4px;width:100%;table-layout:fixed;font-size:.9rem}
-.gdb-cal caption{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:1.15rem;
-  text-align:left;margin-bottom:.4rem;color:#0f172a}
-.gdb-cal th{font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:#64748b;
-  font-weight:600;padding:.2rem;text-align:center}
-.gdb-cal td{vertical-align:top;height:88px;border:1px solid #eceaf1;border-radius:10px;
-  padding:.25rem;background:#fff;overflow:hidden}
-.gdb-cal td.out{background:#faf9fb;color:#c4c0cc}
-.gdb-cal td.today{border-color:#ea580c;box-shadow:inset 0 0 0 1px #ea580c}
-.gdb-cal td.past .dn{color:#c4c0cc}
-.gdb-cal .dn{display:block;font-size:.78rem;color:#94a3b8;text-align:right;margin-bottom:2px}
-.gdb-cal td.today .dn{color:#ea580c;font-weight:700}
+.gdb-cal{border-collapse:collapse;width:100%;table-layout:fixed;font-size:.9rem;
+  font-family:'Inter',system-ui,sans-serif;color:#1F1A16}
+.gdb-cal caption{font-family:'Fraunces',Georgia,serif;font-weight:350;font-size:1.35rem;
+  text-align:left;margin-bottom:.5rem;color:#1F1A16}
+.gdb-cal th{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:.68rem;text-transform:uppercase;
+  letter-spacing:.08em;color:#6B6157;font-weight:500;padding:.3rem .2rem;text-align:center;
+  border-bottom:1px solid #1F1A16}
+.gdb-cal td{vertical-align:top;height:88px;border:1px solid #CFC2AE;border-radius:0;
+  padding:.3rem;background:#F4EEE4;overflow:hidden}
+.gdb-cal td.out{background:#EDE4D6;color:#CFC2AE}
+.gdb-cal td.today{border:1px solid #B3261E;box-shadow:inset 0 0 0 1px #B3261E}
+.gdb-cal td.past .dn{color:#CFC2AE}
+.gdb-cal .dn{display:block;font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:.72rem;
+  color:#6B6157;text-align:right;margin-bottom:2px}
+.gdb-cal td.today .dn{color:#B3261E;font-weight:600}
 .gdb-cal .chip{display:block;text-decoration:none;font-size:.74rem;line-height:1.25;
-  background:linear-gradient(180deg,#fb923c,#ea580c);color:#2a1400;font-weight:600;
-  border-radius:6px;padding:2px 6px;margin-top:3px;white-space:nowrap;overflow:hidden;
+  background:#B3261E;color:#F4EEE4;font-weight:500;
+  border-radius:0;padding:2px 6px;margin-top:3px;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis}
-.gdb-cal .chip.res{background:linear-gradient(180deg,#a78bfa,#7c3aed);color:#fff}
+.gdb-cal .chip:hover{background:#8E1D17;color:#F4EEE4}
+.gdb-cal .chip.res{background:transparent;color:#1F1A16;border:1px solid #1F1A16}
+.gdb-cal .chip.res:hover{background:#1F1A16;color:#F4EEE4}
 </style>
 """
 

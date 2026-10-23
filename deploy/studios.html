@@ -4,136 +4,166 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Glass Studios Worldwide — Glass Database</title>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..600&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/field-data.css">
+<meta name="description" content="Every glass studio the Glass Database knows of, on a map. Filter by type, search by city or country, and see the studios publishing live open kiln data.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="/site.js"></script>
 <style>
-  html,body{margin:0;height:100%;font-family:"Archivo",system-ui,sans-serif;}
-  #topnav{position:fixed;top:0;left:0;right:0;height:48px;display:flex;align-items:center;gap:1rem;
-    padding:0 1rem;background:#0A0D11;border-bottom:1px solid var(--fd-rule);z-index:900;overflow-x:auto;}
-  #topnav .brand{font-family:"IBM Plex Mono",monospace;font-weight:500;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--fd-bone);font-size:12px;white-space:nowrap;}
-  #topnav a{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
-    color:var(--fd-dim);text-decoration:none;white-space:nowrap;}
-  #topnav a:hover,#topnav a.on{color:var(--fd-amber);}
-  #topnav .sp{margin-left:auto;}
-  #topnav .sub{display:inline-flex;gap:.8rem;align-items:center;margin-left:.2rem;padding-left:1rem;border-left:1px solid var(--fd-rule-soft);}
-  #topnav .sub a{font-size:10px;color:var(--fd-faint);} #topnav .sub a.on{color:var(--fd-amber);}
-  #app{position:fixed;inset:48px 0 0 0;display:flex;background:var(--fd-bg-top);color:var(--fd-bone);}
-  #panel{width:min(340px,86vw);flex:0 0 auto;padding:1.4rem 1.3rem;overflow:auto;
-    border-right:1px solid var(--fd-rule);background:linear-gradient(180deg,#0E0B09,#12100E);z-index:500;}
-  #map{flex:1;background:#0A0D11;}
-  .eyebrow{font-family:"IBM Plex Mono",monospace;font-weight:500;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--fd-amber);font-size:12px;}
-  h1{font-family:"Fraunces",Georgia,serif;font-weight:300;font-variation-settings:"opsz" 44,"wght" 340;
-    font-size:clamp(26px,4vw,34px);color:var(--fd-bone);margin:.5rem 0 .3rem;line-height:1.1;}
-  .count{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.06em;color:var(--fd-dim);}
-  .rule{height:1px;background:var(--fd-rule-soft);margin:1rem 0;}
-  #search{width:100%;box-sizing:border-box;padding:.7rem .9rem;border-radius:10px;border:1px solid var(--fd-rule-soft);
-    background:rgba(238,231,219,.05);color:var(--fd-bone);font-size:.95rem;}
-  #search::placeholder{color:var(--fd-faint);}
-  .lbl{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--fd-faint);margin:1.2rem 0 .6rem;}
-  .pills{display:flex;flex-wrap:wrap;gap:.4rem;}
-  .pill{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.05em;text-transform:uppercase;
-    padding:.4rem .7rem;border-radius:999px;border:1px solid var(--fd-rule-soft);color:var(--fd-dim);
-    cursor:pointer;user-select:none;background:transparent;transition:.15s;}
-  .pill[data-on="1"]{color:var(--fd-bg-top);}
-  .actions{display:flex;gap:.4rem;margin-top:1.1rem;}
-  .actions button{flex:1;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;
-    text-transform:uppercase;padding:.55rem 0;border-radius:8px;border:1px solid var(--fd-rule-soft);
-    background:transparent;color:var(--fd-dim);cursor:pointer;}
-  .actions button:hover{border-color:var(--fd-amber);color:var(--fd-amber);}
-  .handle{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;color:var(--fd-faint);
-    text-decoration:none;display:inline-block;margin-top:1.4rem;}
-  /* leaflet popup -> Field Data */
-  .leaflet-popup-content-wrapper{background:#12100E;color:var(--fd-bone);border:1px solid var(--fd-rule);
-    border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.6);}
-  .leaflet-popup-tip{background:#12100E;border:1px solid var(--fd-rule);}
-  .leaflet-popup-content{margin:1rem 1.1rem;font-family:"Archivo",sans-serif;}
-  .pop-name{font-family:"Fraunces",serif;font-weight:400;font-size:19px;color:var(--fd-bone);margin:0 0 .2rem;}
-  .pop-loc{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--fd-dim);}
-  .pop-type{display:inline-block;margin-top:.6rem;font-family:"IBM Plex Mono",monospace;font-size:10px;
-    letter-spacing:.08em;text-transform:uppercase;padding:.25rem .6rem;border-radius:999px;border:1px solid var(--fd-rule-soft);}
-  .pop-web{display:inline-block;margin-top:.7rem;font-family:"IBM Plex Mono",monospace;font-size:11px;
-    letter-spacing:.1em;text-transform:uppercase;color:var(--fd-amber);text-decoration:none;}
-  .leaflet-control-attribution{background:rgba(10,13,17,.7)!important;color:var(--fd-faint)!important;}
-  .leaflet-control-attribution a{color:var(--fd-dim)!important;}
-  .leaflet-bar a{background:#12100E!important;color:var(--fd-bone)!important;border-color:var(--fd-rule)!important;}
-  @media (max-width:720px){ #app{flex-direction:column;} #panel{width:auto;max-height:44vh;border-right:0;border-bottom:1px solid var(--fd-rule);} }
+  html,body{height:100%}
+  body{display:flex;flex-direction:column;min-height:100vh}
+  button,input{font-family:inherit}
+  #app{display:flex;height:calc(100vh - 112px);min-height:520px;border-bottom:1px solid var(--rule)}
+  #panel{width:min(340px,86vw);flex:0 0 auto;padding:1.2rem 1.2rem 2rem;overflow:auto;
+    border-right:1px solid var(--rule);border-top:1px solid var(--ink);background:var(--paper);z-index:500}
+  #map{flex:1;background:var(--paper-2);min-width:0}
+  #panel h1{font-size:clamp(1.6rem,2.6vw,2rem);line-height:1.08;margin:.5rem 0 .4rem;font-variation-settings:"opsz" 48}
+  .count{font:400 12px/1.6 var(--mono);letter-spacing:.04em;color:var(--muted);margin:0}
+  .rule{height:1px;background:var(--rule);margin:1rem 0}
+  input{width:100%;padding:.65rem .85rem;border:1px solid var(--rule);background:var(--paper);color:var(--ink);font:400 .92rem var(--sans)}
+  input::placeholder{color:var(--muted)}
+  input:focus-visible{outline:2px solid var(--red);outline-offset:1px}
+  .lbl{margin:1.2rem 0 .6rem}
+  .pills{display:flex;flex-wrap:wrap;gap:.4rem}
+  .pills .pill{cursor:pointer;user-select:none;transition:background .15s,color .15s;color:var(--muted)}
+  .pills .pill[data-on="1"]{color:#fff}
+  .actions{display:flex;gap:.4rem;margin-top:1rem}
+  .actions button{flex:1;font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:.6rem 0;
+    border:1px solid var(--ink);background:var(--paper);color:var(--ink);cursor:pointer}
+  .actions button:hover{background:var(--ink);color:var(--paper)}
+  details{margin-top:1.6rem;border-top:1px solid var(--rule);padding-top:1rem}
+  summary{cursor:pointer;font:500 12px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--red);list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"+ "}details[open] summary::before{content:"− "}
+  details p{font-size:.84rem;color:var(--ink-2);margin:.7rem 0;line-height:1.5}
+  details p a{color:var(--red)}
+  #addForm{display:flex;flex-direction:column;gap:.5rem}
+  #addForm .pair{display:flex;gap:.5rem}#addForm .pair input{width:50%}
+  #asSubmit{font:500 12px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--red);border:1px solid var(--red);padding:.75rem;cursor:pointer}
+  #asSubmit:hover{background:var(--red-dk)}
+  #asMsg{font:500 11px/1.5 var(--mono);letter-spacing:.06em;color:var(--red);min-height:1rem;margin:0}
+  /* leaflet on paper */
+  .leaflet-container{font-family:var(--sans)}
+  .leaflet-popup-content-wrapper{background:var(--paper);color:var(--ink);border:1px solid var(--ink);border-radius:0;box-shadow:0 14px 40px rgba(31,26,22,.18)}
+  .leaflet-popup-tip{background:var(--paper);border:1px solid var(--ink);box-shadow:none}
+  .leaflet-popup-content{margin:1rem 1.1rem;font-family:var(--sans);line-height:1.45}
+  .leaflet-popup-content p{margin:0;max-width:none}
+  .leaflet-popup-close-button{color:var(--muted)!important;font-family:var(--sans)}
+  .pop-name{font:400 1.2rem/1.15 var(--serif);color:var(--ink);margin:0 0 .3rem!important}
+  .pop-loc{font:500 11px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .pop-type{display:inline-flex;align-items:center;margin-top:.6rem;font:500 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;padding:.35rem .6rem;border:1px solid var(--rule);color:var(--ink-2);background:var(--paper)}
+  .pop-led{margin:.6rem 0 0!important;color:var(--ink-2);font-size:.9rem}.pop-led strong{color:var(--ink);font-weight:500}
+  .pop-notes{margin:.5rem 0 0!important;color:var(--ink-2);font-style:italic;font-size:.9rem}
+  .pop-web{display:inline-block;margin-top:.8rem;font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--red);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:3px}
+  .leaflet-control-attribution{background:rgba(244,238,228,.85)!important;color:var(--muted)!important;font:400 10px var(--mono)!important}
+  .leaflet-control-attribution a{color:var(--ink-2)!important}
+  .leaflet-bar{border:1px solid var(--ink)!important;border-radius:0!important;box-shadow:none!important}
+  .leaflet-bar a{background:var(--paper)!important;color:var(--ink)!important;border-bottom:1px solid var(--rule)!important;border-radius:0!important}
+  .leaflet-bar a:last-child{border-bottom:0!important}
+  .leaflet-bar a:hover{background:var(--paper-2)!important}
+  footer.slim{padding:1.4rem 0;margin-top:0}
+  footer.slim .row{display:flex;flex-wrap:wrap;gap:.6rem 1.6rem;justify-content:space-between;align-items:center;font:400 12px var(--mono);color:#B9AE9F}
+  footer.slim a{color:var(--paper);text-decoration:none}footer.slim a:hover{color:#F2B8A8}
+  footer.slim .links{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem}
+  @media (max-width:720px){
+    #app{flex-direction:column;height:auto;min-height:calc(100vh - 112px)}
+    #panel{width:auto;max-height:44vh;border-right:0;border-bottom:1px solid var(--rule)}
+    #map{min-height:56vh}
+  }
 </style>
 </head>
-<body class="fd-ground">
-<nav id="topnav" aria-label="Site">
-  <a class="brand" href="/">Glass&nbsp;Database</a>
-  <a href="/explore/">Explore</a>
-  <a href="/blog/">Blog</a>
-  <a href="/glowtbook/">Glowtbook</a>
-  <a href="/studios.html" class="on">Visualizations</a>
-  <a href="/shop.html">Shops</a>
-  <span class="sub" aria-label="Visualizations"><a href="/studios.html" class="on" aria-current="page">Map</a><a href="/shop-costs.html">Shop costs</a></span>
-</nav>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu">
+   <li><a href="/explore/">Registry</a></li><li><a href="/events.html">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li>
+  </ul>
+  <div class="right"><span id="chip" class="signin gdb-chip" aria-live="polite"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="wrap">
+ <nav class="subnav" aria-label="Registry">
+  <span class="crumb">Registry</span>
+  <a href="/explore/">Explorer</a>
+  <a href="/studios.html" class="on" aria-current="page">Map</a>
+  <a href="/shop-costs.html">Shop costs</a>
+ </nav>
+</div>
+<main id="main">
 <div id="app">
-  <aside id="panel">
-    <p class="eyebrow">The Glass Database</p>
-    <h1>Glass Studios<br>Worldwide</h1>
+  <aside id="panel" aria-label="Map controls">
+    <p class="label"><span class="n">№ 07</span> Studios on a map</p>
+    <h1>Glass studios <em>worldwide</em></h1>
     <p class="count" id="count">loading…</p>
     <div class="rule"></div>
     <input id="search" placeholder="Search studio, city, country…" aria-label="Search studios">
-    <p class="lbl">Filter by type</p>
+    <p class="label lbl">Filter by type</p>
     <div class="pills" id="typePills"></div>
     <div class="actions">
       <button id="allBtn">All</button>
       <button id="noneBtn">None</button>
       <button id="resetBtn">Reset view</button>
     </div>
-    <a class="handle" href="/">← glassdatabase.org</a>
-    <details style="margin-top:1.4rem">
-      <summary style="cursor:pointer;font-family:var(--fd-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fd-amber)">+ Publish your studio's data</summary>
-      <p style="font-size:.82rem;color:var(--fd-faint);margin:.7rem 0">Runs an open kiln/furnace
-        data API (CC-BY)? Add it — reviewed before it appears. See the
-        <a href="/shop.html" style="color:var(--fd-amber)">contract</a>.</p>
-      <div id="addForm" style="display:flex;flex-direction:column;gap:.5rem">
+    <details>
+      <summary>Publish your studio's data</summary>
+      <p>Runs an open kiln/furnace data API (CC-BY)? Add it — reviewed before it appears. See the
+        <a href="/shop.html">contract</a>.</p>
+      <div id="addForm">
         <input id="asName" placeholder="Studio name" aria-label="Studio name">
         <input id="asUrl" placeholder="Open API base (https://…)" aria-label="API URL">
-        <div style="display:flex;gap:.5rem">
-          <input id="asLat" placeholder="Lat" style="width:50%" aria-label="Latitude">
-          <input id="asLng" placeholder="Lng" style="width:50%" aria-label="Longitude">
+        <div class="pair">
+          <input id="asLat" placeholder="Lat" aria-label="Latitude">
+          <input id="asLng" placeholder="Lng" aria-label="Longitude">
         </div>
         <input id="asCity" placeholder="City, Country" aria-label="Location">
-        <button id="asSubmit" style="font-family:var(--fd-mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--fd-bg-top);background:var(--fd-amber);border:0;border-radius:999px;padding:.6rem;cursor:pointer">Submit for review</button>
-        <p id="asMsg" style="font-size:.8rem;color:var(--fd-amber);min-height:1rem;margin:0"></p>
+        <button id="asSubmit">Submit for review</button>
+        <p id="asMsg"></p>
       </div>
     </details>
   </aside>
   <div id="map"></div>
 </div>
+</main>
+<footer class="slim">
+ <div class="wrap row">
+  <span class="links"><a href="/explore/">Explorer</a><a href="/graph.html">Graph</a><a href="/api/docs">API</a><a href="/shop-costs.html">Shop costs</a><a href="https://github.com/alibama/glass-database">GitHub</a></span>
+  <span>Data CC BY 4.0 · Software Apache 2.0 · glassdatabase.org</span>
+ </div>
+</footer>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const RAMP = ["#E8A44A","#5EC8BD","#967AD2","#E25836","#EEE7DB","#A8A29A"];
+// paper palette for studio types: red, ink, brown, muted, dark teal, ochre — all read on the light tiles
+const RAMP = ["#B3261E","#1F1A16","#8E6A52","#6B6157","#1E7F75","#9A7B1F"];
+const LIVE = "#B3261E";
+const LIGHT_TILES = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 const map = L.map("map",{zoomControl:true,worldCopyJump:true}).setView([25,10],2);
 function addTiles(cfg){
-  L.tileLayer(cfg.url, {subdomains:cfg.subdomains||"abcd", maxZoom:cfg.maxZoom||19,
+  // the API's own default is CARTO's dark basemap; on paper we want the light one unless a custom URL is configured
+  let url = cfg && cfg.url;
+  if(!url || /basemaps\.cartocdn\.com\/dark_all\//.test(url)) url = LIGHT_TILES;
+  L.tileLayer(url, {subdomains:cfg.subdomains||"abcd", maxZoom:cfg.maxZoom||19,
     attribution:cfg.attribution||"&copy; OpenStreetMap &copy; CARTO"}).addTo(map);
 }
 fetch("/api/map-config.json").then(r=>r.json()).then(addTiles).catch(()=>addTiles({
-  url:"https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  url:LIGHT_TILES,
   attribution:"&copy; OpenStreetMap &copy; CARTO &middot; The Glass Database"}));
 
 let ALL=[], TYPES=[], onTypes=new Set(), layer=L.layerGroup().addTo(map), colorOf={};
 const $ = s => document.querySelector(s);
 
-function color(t){ return colorOf[t] || "#A8A29A"; }
+function color(t){ return colorOf[t] || "#6B6157"; }
 function marker(f){
   const [lng,lat]=f.geometry.coordinates, p=f.properties||{}, c=color(p.type||"");
   const m=L.circleMarker([lat,lng],{radius:7,color:c,weight:2,fillColor:c,fillOpacity:.55,
     className:"studio-dot"});
   const loc=[p.city,p.region,p.country].filter(Boolean).join(" · ");
   const web=p.website ? `<a class="pop-web" href="${p.website}" target="_blank" rel="noopener">Website →</a>` : "";
-  const led=p.led_by ? `<p style="margin:.6rem 0 0;color:var(--fd-dim)"><strong style="color:var(--fd-bone)">Led by</strong> — ${p.led_by}</p>`:"";
-  const notes=p.notes ? `<p style="margin:.5rem 0 0;color:var(--fd-dim);font-style:italic">${p.notes}</p>`:"";
+  const led=p.led_by ? `<p class="pop-led"><strong>Led by</strong> — ${p.led_by}</p>`:"";
+  const notes=p.notes ? `<p class="pop-notes">${p.notes}</p>`:"";
   m.bindPopup(`<p class="pop-name">${p.name||"Studio"}</p>`+
     `<p class="pop-loc">${loc}</p>`+
     (p.type?`<span class="pop-type" style="color:${c};border-color:${c}">${p.type}</span>`:"")+
@@ -158,11 +188,12 @@ function drawPills(){
   TYPES.forEach((t,i)=>{
     colorOf[t]=RAMP[i%RAMP.length];
     const el=document.createElement("span");
-    el.className="pill"; el.textContent=t||"Other";
+    el.className="pill"; el.textContent=t||"Other"; el.setAttribute("role","button"); el.tabIndex=0;
     el.style.borderColor=colorOf[t];
-    const paint=()=>{ const on=onTypes.has(t); el.dataset.on=on?"1":"0";
-      el.style.background=on?colorOf[t]:"transparent"; el.style.color=on?"#0A0D11":"var(--fd-dim)"; };
+    const paint=()=>{ const on=onTypes.has(t); el.dataset.on=on?"1":"0"; el.setAttribute("aria-pressed",on?"true":"false");
+      el.style.background=on?colorOf[t]:"var(--paper)"; el.style.color=on?"#fff":"var(--muted)"; };
     el.onclick=()=>{ onTypes.has(t)?onTypes.delete(t):onTypes.add(t); paint(); render(); };
+    el.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); el.click(); } };
     paint(); box.appendChild(el);
   });
 }
@@ -179,7 +210,7 @@ fetch("/api/studios.geojson").then(r=>r.json()).then(gj=>{
     map.fitBounds(b.pad(0.2)); }catch(e){} }
 }).catch(()=>{ $("#count").textContent="couldn't load studios"; });
 
-// live open-data studios — a distinct glowing marker + firings/energy popup
+// live open-data studios — a distinct ringed marker + firings/energy popup
 const liveLayer = L.layerGroup().addTo(map);
 fetch("/api/studio-data.json").then(r=>r.json()).then(d=>{
   (d.sources||[]).forEach(s=>{
@@ -188,10 +219,10 @@ fetch("/api/studio-data.json").then(r=>r.json()).then(d=>{
     const su=s.summary||{};
     const firings = su.firings ?? su.count ?? "—";
     const kwh = su.energy_kwh ?? su.kwh ?? null;
-    const m=L.circleMarker([lat,lng],{radius:9,color:"#E8A44A",weight:3,fillColor:"#E8A44A",fillOpacity:.7});
+    const m=L.circleMarker([lat,lng],{radius:9,color:LIVE,weight:3,fillColor:LIVE,fillOpacity:.35});
     m.bindPopup(`<p class="pop-name">${s.name||"Studio"}</p>`+
-      `<span class="pop-type" style="color:#E8A44A;border-color:#E8A44A">Live open data</span>`+
-      `<p style="margin:.6rem 0 0;color:var(--fd-dim)"><strong style="color:var(--fd-bone)">${firings}</strong> firings`+
+      `<span class="pop-type" style="color:${LIVE};border-color:${LIVE}">Live open data</span>`+
+      `<p class="pop-led"><strong>${firings}</strong> firings`+
       (kwh!=null?` · ${Math.round(kwh).toLocaleString()} kWh`:``)+`</p>`+
       (s.attribution?`<p class="pop-loc" style="margin-top:.5rem">${s.attribution}</p>`:``)+
       (s.source?`<a class="pop-web" href="${s.source}" target="_blank" rel="noopener">Open API →</a>`:``));
@@ -212,6 +243,11 @@ if($$("asSubmit")) $$("asSubmit").onclick=async ()=>{
     if(r.ok){ ["asName","asUrl","asLat","asLng","asCity"].forEach(i=>$$(i).value=""); }
   }catch(_){ $$("asMsg").textContent="Network error."; }
 };
+
+// header: sign-in chip + menu toggle
+if(window.GDB){ try{ GDB.chip("#chip",{compact:true}); }catch(_){} }
+(function(){ const nav=document.querySelector('.nav'), mb=document.querySelector('.menu-btn');
+  if(nav&&mb) mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)}); })();
 </script>
 </body>
 </html>

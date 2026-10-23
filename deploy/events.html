@@ -7,229 +7,194 @@
 <meta name="description" content="Maker-hosted events — ornament days, pop-ups, demos — where the piece you buy can be registered on the spot: provenance from the moment of sale, in your Glowtbook, ready to fingerprint.">
 <meta property="og:title" content="Events — Glass Database">
 <meta property="og:description" content="Buy a piece at the table, register it, and it's on the record: made by the maker, acquired by you.">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght,SOFT,WONK@0,9..144,100..900,0..100,0..1;1,9..144,100..900,0..100,0..1&family=Archivo:wght@100..900&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/field-data.css">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
 <script src="/site.js"></script>
 <style>
-  html { scroll-behavior: smooth; }
-  body { margin: 0; }
   [hidden] { display: none !important; }
-  .fd-page { max-width: 1280px; margin-inline: auto; padding-bottom: 6rem; }
-  /* nav + footer rules are shared: see "Site chrome" in /field-data.css */
-  section.fd-sec { position: relative; padding: clamp(3.4rem, 8vw, 6.5rem) 0 0; }
-  .fd-kicker-rule { height: 1px; background: var(--fd-rule-soft); margin: .9rem 0 1.8rem; max-width: 62ch; }
-  .fd-hero .fd-headline { max-width: 22ch; }
-  .fd-hero__cta { display: flex; gap: .9rem 1rem; flex-wrap: wrap; margin-top: 2rem; }
-  .fd-two { display: grid; grid-template-columns: 1fr; gap: 2.4rem; }
-  @media (min-width: 860px){ .fd-two { grid-template-columns: 1fr 1fr; align-items: start; } }
-  .fd-hero-wrap { position: relative; }
-  .fd-filaments { position: absolute; inset: -2rem -10vw auto; height: 130%; z-index: 0; }
-  .fd-hero-wrap > *:not(.fd-filaments) { position: relative; z-index: 1; }
+  .nav ul a.on { color: var(--red); }
+  /* site.js injects its own (field-data) chip rules after paper.css; outrank them here */
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
 
-  /* --- events (ev-) ------------------------------------------------------ */
-  .ev-mono { font-family: var(--fd-mono); letter-spacing: .1em; text-transform: uppercase; font-size: clamp(11px,1.2vw,13px); }
-  .ev-pill { display: inline-flex; align-items: center; gap: .5rem; padding: .3rem .75rem; border-radius: 999px; white-space: nowrap;
-    border: 1px solid var(--fd-rule-soft); color: var(--fd-dim); font-family: var(--fd-mono); letter-spacing: .08em; text-transform: uppercase; font-size: 11px; }
-  .ev-pill::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--fd-faint); flex: none; }
-  .ev-pill.open { color: var(--fd-amber); border-color: var(--fd-amber); }
-  .ev-pill.open::before { background: var(--fd-amber); box-shadow: 0 0 10px var(--fd-amber); }
-  .ev-pill.unlisted { color: var(--fd-violet); border-color: var(--fd-violet); }
-  .ev-pill.unlisted::before { background: var(--fd-violet); box-shadow: 0 0 10px var(--fd-violet); }
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 20ch; }
+  .hero .live { display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; margin-top: 1.4rem; }
+  .hero .btns { margin-top: 1.8rem; }
+  button.link { background: none; border: 0; border-bottom: 1px solid currentColor; cursor: pointer; padding: 0 0 3px; }
+  button.link[aria-expanded]::after { content: " ▾"; }
+  button.link[aria-expanded="true"]::after { content: " ▴"; }
+  button.link[aria-expanded="true"] { color: var(--ink); }
+  .btn.sm { padding: .7rem 1.1rem; font-size: 14px; }
 
-  .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 1.1rem; margin-top: 2rem; }
-  .ev-card { position: relative; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden;
-    border: 1px solid var(--fd-rule); background: linear-gradient(180deg, rgba(238,231,219,.03), rgba(238,231,219,0));
-    transition: border-color .18s ease, box-shadow .3s ease; }
-  .ev-card:hover { border-color: var(--fd-rule-soft); }
-  .ev-card.hit { border-color: var(--fd-amber); box-shadow: 0 0 0 3px rgba(232,164,74,.25), 0 0 40px -10px var(--fd-amber); }
-  .ev-card.open { grid-column: 1 / -1; }
-  .ev-card__body { padding: 1.1rem 1.2rem 1.2rem; display: flex; flex-direction: column; gap: .4rem; flex: 1; }
-  .ev-card__date { font-family: var(--fd-mono); font-size: clamp(11px,1.2vw,13px); letter-spacing: .1em; text-transform: uppercase; color: var(--fd-amber); margin: 0; }
-  .ev-card h3 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 380; font-weight: 400;
-    color: var(--fd-bone); font-size: clamp(21px, 2.4vw, 26px); margin: .1rem 0 0; line-height: 1.18; text-wrap: balance; }
-  .ev-card .who { color: var(--fd-dim); font-size: clamp(14px,1.5vw,16px); margin: 0; }
-  .ev-card .where { color: var(--fd-faint); font-size: clamp(13px,1.4vw,15px); margin: 0; }
-  .ev-card .tags { display: flex; gap: .4rem .9rem; flex-wrap: wrap; margin-top: .5rem; color: var(--fd-faint); }
-  .ev-card .tags b { color: var(--fd-bone); font-weight: 500; }
-  .ev-card .desc { color: var(--fd-dim); font-size: clamp(14px,1.5vw,16px); line-height: 1.55; margin: .5rem 0 0; }
-  .ev-actions { display: flex; gap: .5rem .9rem; flex-wrap: wrap; align-items: center; margin-top: auto; padding-top: 1rem; }
-  .ev-cta { font-family: var(--fd-mono); font-weight: 500; letter-spacing: .1em; text-transform: uppercase; font-size: 12px;
-    cursor: pointer; padding: .6rem 1rem; border-radius: 999px; border: 1.5px solid var(--fd-amber); background: transparent;
-    color: var(--fd-amber) !important; display: inline-flex; gap: .5rem; align-items: center; text-decoration: none !important; transition: all .15s ease; }
-  .ev-cta:hover, .ev-cta:focus-visible { background: var(--fd-amber); color: var(--fd-bg-top) !important; outline: none; }
-  .ev-link { font-family: var(--fd-mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--fd-dim) !important;
-    text-decoration: none !important; padding: .5rem .2rem; background: none; border: 0; cursor: pointer; }
-  .ev-link:hover { color: var(--fd-amber) !important; }
-  .ev-link[aria-expanded="true"] { color: var(--fd-amber) !important; }
-  .ev-link[aria-expanded]::after { content: " ▾"; }
-  .ev-link[aria-expanded="true"]::after { content: " ▴"; }
+  /* how it works */
+  .list.how li { grid-template-columns: 9rem 1fr; }
+  .list.how li span { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; }
+  .list.how p { margin: 0; color: var(--ink-2); font-size: 16px; }
+  .two > div > .label { margin-bottom: .2rem; }
+
+  /* event cards */
+  .cards { margin-top: 0; }
+  .card.ev { grid-column: span 6; }
+  .card.ev.open { grid-column: span 12; }
+  .card .date { margin: 0 0 .4rem; }
+  .card .date .n { color: var(--red); }
+  .card h3 { text-wrap: balance; }
+  .card .who { margin: 0; color: var(--ink-2); font-size: 16px; }
+  .card .where { margin: .15rem 0 0; color: var(--muted); font-size: 15px; }
+  .card .tags { display: flex; gap: .5rem .9rem; flex-wrap: wrap; align-items: center; margin-top: .9rem; font: 400 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .card .tags b { color: var(--ink); font-weight: 500; }
+  .card .desc { margin: 1rem 0 0; color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .card .acts { display: flex; gap: .8rem 1.4rem; flex-wrap: wrap; align-items: center; margin-top: auto; padding-top: 1.2rem; }
+  .card.hit { outline: 2px solid var(--red); outline-offset: 10px; }
 
   /* gallery of approved pieces */
-  .ev-gallery { border-top: 1px solid var(--fd-rule); padding: 1rem 1.2rem 1.2rem; background: rgba(5,7,10,.35); }
-  .ev-gallery__head { display: flex; gap: .5rem 1rem; flex-wrap: wrap; align-items: baseline; justify-content: space-between; color: var(--fd-faint); margin-bottom: .9rem; }
-  .ev-pieces { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: .8rem; }
-  .ev-piece { display: flex; flex-direction: column; gap: .3rem; }
-  .ev-piece img, .ev-piece .ph { aspect-ratio: 1 / 1; width: 100%; border-radius: 12px; object-fit: cover; background: #05070a; display: block; border: 1px solid var(--fd-rule); }
-  .ev-piece .ph { display: grid; place-items: center; color: var(--fd-faint); border-style: dashed; }
-  .ev-piece .ph svg { width: 26px; height: 26px; opacity: .6; }
-  .ev-piece h4 { font-family: var(--fd-serif); font-variation-settings: "opsz" 40, "wght" 400; font-weight: 400; color: var(--fd-bone); font-size: 16px; margin: .35rem 0 0; line-height: 1.25; }
-  .ev-piece p { margin: 0; color: var(--fd-faint); font-size: 13px; line-height: 1.4; }
-  .ev-piece p b { color: var(--fd-dim); font-weight: 500; }
-  a.ev-piece, a.ev-piece:hover { text-decoration: none !important; }
-  a.ev-piece:hover h4 { color: var(--fd-amber); }
-  .ev-empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--fd-rule-soft); border-radius: 16px; color: var(--fd-dim);
-    font-size: clamp(15px,1.7vw,17px); line-height: 1.55; max-width: 62ch; }
-  .ev-empty.small { margin: 0; padding: .9rem 1rem; font-size: 14px; }
-  .ev-empty a.fd-cta { margin-top: 1rem; }
-  .ev-skel { height: 220px; border-radius: 16px; border: 1px solid var(--fd-rule); background: linear-gradient(90deg, rgba(238,231,219,.02), rgba(238,231,219,.05), rgba(238,231,219,.02)); background-size: 200% 100%; animation: sh 1.4s infinite; }
+  .gallery { border-top: 1px solid var(--rule); margin-top: 1.4rem; padding-top: 1rem; }
+  .gallery .head { display: flex; gap: .5rem 1rem; flex-wrap: wrap; align-items: baseline; justify-content: space-between; margin-bottom: 1rem; }
+  .pieces { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 1rem; }
+  .piece { display: flex; flex-direction: column; text-decoration: none; }
+  .piece .ph { aspect-ratio: 1 / 1; background: var(--paper-2); }
+  .piece .ph img { mix-blend-mode: normal; }
+  .piece .ph.none { display: grid; place-items: center; color: var(--muted); border: 1px dashed var(--rule); background: none; }
+  .piece .ph.none svg { width: 26px; height: 26px; }
+  .piece h4 { font: 350 1.05rem/1.25 var(--serif); margin: .6rem 0 0; }
+  .piece p { margin: .2rem 0 0; color: var(--muted); font-size: 13px; }
+  .piece p b { color: var(--ink-2); font-weight: 500; }
+  a.piece:hover h4 { color: var(--red); }
+  .empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .empty a { color: var(--ink); } .empty a:hover { color: var(--red); }
+  .empty.small { margin: 0; padding: .9rem 1rem; font-size: 14px; }
+  .skel { height: 220px; grid-column: span 4; background: linear-gradient(90deg, var(--paper-2), var(--paper-3), var(--paper-2)); background-size: 200% 100%; animation: sh 1.4s infinite; }
   @keyframes sh { from { background-position: 200% 0 } to { background-position: -200% 0 } }
 
   /* past events as rows */
-  .ev-past { margin-top: 1.4rem; }
-  .ev-past .ev-row { border-bottom: 1px solid var(--fd-rule); padding: 0 0 14px; margin-bottom: 22px; }
-  .ev-past .ev-row:last-child { margin-bottom: 0; }
-  .ev-past .ev-row__main { display: grid; grid-template-columns: 1fr auto; gap: .5rem 1.5rem; align-items: center; }
-  .ev-past .ev-row p { font-size: clamp(15px,1.7vw,18px); color: var(--fd-bone); margin: 0; font-family: var(--fd-sans); }
-  .ev-past .ev-row p small { display: block; color: var(--fd-faint); font-size: clamp(12px,1.3vw,14px); margin-top: .15rem; }
-  .ev-past .ev-row .val { display: flex; gap: .4rem 1rem; flex-wrap: wrap; align-items: center; color: var(--fd-faint); white-space: nowrap; }
-  .ev-past .ev-row .val b { color: var(--fd-bone); font-weight: 500; }
-  .ev-past .ev-gallery { border: 1px solid var(--fd-rule); border-radius: 14px; margin-top: 1rem; }
-  .ev-counter { margin-top: 1.2rem; color: var(--fd-faint); display: flex; gap: 1rem; flex-wrap: wrap; }
-  .ev-counter b { color: var(--fd-amber); font-weight: 500; }
+  .rows { border-top: 1px solid var(--rule); }
+  .rows .row { padding: 1.2rem 0; border-bottom: 1px solid var(--rule); }
+  .rows .main { display: grid; grid-template-columns: 1fr auto; gap: .5rem 1.5rem; align-items: center; }
+  .rows p { margin: 0; max-width: none; font-size: 17px; }
+  .rows p small { display: block; color: var(--muted); font-size: 14px; margin-top: .15rem; }
+  .rows .val { display: flex; gap: .4rem 1.2rem; flex-wrap: wrap; align-items: center; font: 400 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+  .rows .val b { color: var(--ink); font-weight: 500; }
 
-  @media (max-width: 560px) {
-    .fd-page .fd-row { grid-template-columns: 1fr; gap: .25rem; }
-    .fd-hero__cta .fd-cta { width: 100%; justify-content: center; box-sizing: border-box; }
-    .ev-past .ev-row__main { grid-template-columns: 1fr; }
-    .ev-pieces { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 680px) {
+    .card.ev, .card.ev.open { grid-column: span 12; }
+    .skel { grid-column: span 12; }
+    .list.how li { grid-template-columns: 1fr; gap: .3rem; }
+    .rows .main { grid-template-columns: 1fr; }
+    .pieces { grid-template-columns: repeat(2, 1fr); }
+    .hero .btns .btn { width: 100%; justify-content: center; }
   }
 </style>
 </head>
-<body class="fd-ground">
-<div class="fd-page">
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu">
+   <li><a href="/explore/">Registry</a></li><li><a href="/events.html" class="on">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li>
+  </ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">Collect</span><a href="/register.html">Add a find</a><a href="/events.html" class="on" aria-current="page">Events</a><a href="/games.html">Seasons</a><a href="/glowtbook/?page=events">Host an event</a></div>
 
-  <nav class="fd-nav" aria-label="Site">
-    <a class="fd-nav__brand" href="/">Glass&nbsp;Database</a>
-    <div class="fd-nav__links">
-      <a href="/explore/">Explore</a>
-      <a href="/blog/">Blog</a>
-      <a href="/glowtbook/" class="on">Glowtbook</a>
-      <a href="/studios.html">Visualizations</a>
-      <a href="/shop.html">Shops</a>
-      <span id="chip"></span>
-    </div>
-  </nav>
-  <div class="fd-subnav" aria-label="Glowtbook">
-    <span class="fd-subnav__label">Glowtbook</span>
-    <a href="/glowtbook/">Journal &amp; pieces</a>
-    <a href="/fingerprint/enroll.html">Capture app</a>
-    <a href="/games.html">Seasons</a>
-    <a href="/events.html" class="on" aria-current="page">Events</a>
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> Events</p>
+  <h1>Found a treasure at the table? <em>Start a collection you can prove.</em></h1>
+  <p class="lede">Makers host events — ornament days, pop-ups, demos. The piece you take home joins your collection the same afternoon, with its story attached: made by the maker, found by you, ready to fingerprint and prove.</p>
+  <p class="live" id="heroMeta" aria-live="polite"></p>
+  <div class="btns">
+   <a class="btn btn--red" href="/register.html">Add a find to my collection</a>
+   <a class="btn btn--line" href="/glowtbook/?page=events">Host an event</a>
   </div>
+ </div>
+</section>
 
-  <header class="fd-hero-wrap">
-    <svg class="fd-filaments" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-      <path d="M-40 640 C 300 560, 520 520, 900 250"/>
-      <path d="M-40 700 C 360 600, 640 460, 902 252"/>
-      <path d="M120 700 C 420 560, 700 380, 902 252"/>
-      <path d="M1240 620 C 1050 520, 1010 380, 902 252"/>
-      <path d="M1240 700 C 1080 560, 980 360, 902 252"/>
-      <circle cx="902" cy="252" r="6"/>
-    </svg>
-    <section class="fd-hero fd-sec" style="padding-top:2.4rem" id="hero">
-      <p class="fd-eyebrow">Events</p>
-      <h1 class="fd-headline" style="margin-top:1.6rem">Found a treasure at the table? <em>Start a collection you can prove.</em></h1>
-      <p class="fd-body fd-lede" style="margin-top:1.4rem">Makers host events — ornament days, pop-ups, demos. The piece you take home joins your collection the same afternoon, with its story attached: made by the maker, found by you, ready to fingerprint and prove.</p>
-      <div class="ev-counter ev-mono" id="heroMeta"></div>
-      <div class="fd-hero__cta">
-        <a class="fd-cta" href="/register.html">Add a find to my collection</a>
-        <a class="fd-cta" href="/glowtbook/?page=events" style="color:var(--fd-teal);border-color:var(--fd-teal)">Host an event</a>
-      </div>
-    </section>
-  </header>
+<section class="s" id="how" aria-labelledby="h-how">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> How it works</p>
+   <div><h2 id="h-how">Find it. Claim it. <em>Prove it.</em></h2><p class="lede">A minute at the table for the collector; a QR and a confirmation for the maker. Names stay private unless you say otherwise.</p></div></div>
+  <div class="two">
+   <div>
+    <p class="label">For collectors</p>
+    <ul class="list how">
+     <li><span>Find</span><p>Find a piece at the event — the table, the gallery, the demo. The maker gets paid; that's the point.</p></li>
+     <li><span>Claim it</span><p>Scan the QR on the table or open <a href="/register.html">Add to your collection</a>. Sign in, say what you found, snap a photo. A minute, standing up.</p></li>
+     <li><span>Maker confirms</span><p>The maker sees it in Glowtbook and confirms it came from their table — usually the same day.</p></li>
+     <li><span>In your collection</span><p>The registry publishes it with provenance: made by the maker at the event, collected by you. Your name stays private unless you choose otherwise.</p></li>
+     <li><span>Prove it</span><p>It's already in your <a href="/glowtbook/">Glowtbook</a>. Capture its fingerprint and any phone can prove <em>this</em> piece is the one in your collection — not one like it.</p></li>
+    </ul>
+   </div>
+   <div>
+    <p class="label">For makers</p>
+    <ul class="list how">
+     <li><span>Host</span><p>Open <a href="/glowtbook/?page=events">Glowtbook → Events</a> and add the sale: venue, date, what you're making. It works the moment you save it.</p></li>
+     <li><span>QR on the table</span><p>Print the registration link and its QR. Buyers scan it with the piece in their hand.</p></li>
+     <li><span>Approve</span><p>After the event, approve the registrations in bulk — or reject the one that wasn't yours.</p></li>
+     <li><span>Published</span><p>The site reviews and publishes them. Each piece becomes part of someone's collection with your name on it — and a reason to come back for the next one.</p></li>
+    </ul>
+   </div>
+  </div>
+ </div>
+</section>
 
-  <section class="fd-sec" id="how">
-    <p class="fd-eyebrow">How it works</p>
-    <div class="fd-kicker-rule"></div>
-    <div class="fd-two">
-      <div>
-        <p class="fd-label" style="color:var(--fd-teal)">For collectors</p>
-        <div class="fd-rows" style="margin-top:1.2rem">
-          <div class="fd-row"><span class="fd-label">Find</span>
-            <p>Find a piece at the event — the table, the gallery, the demo. The maker gets paid; that's the point.</p></div>
-          <div class="fd-row"><span class="fd-label">Claim it</span>
-            <p>Scan the QR on the table or open <a href="/register.html">Add to your collection</a>. Sign in, say what you found, snap a photo. A minute, standing up.</p></div>
-          <div class="fd-row"><span class="fd-label">Maker confirms</span>
-            <p>The maker sees it in Glowtbook and confirms it came from their table — usually the same day.</p></div>
-          <div class="fd-row"><span class="fd-label">In your collection</span>
-            <p>The registry publishes it with provenance: made by the maker at the event, collected by you. Your name stays private unless you choose otherwise.</p></div>
-          <div class="fd-row"><span class="fd-label">Prove it</span>
-            <p>It's already in your <a href="/glowtbook/">Glowtbook</a>. Capture its fingerprint and any phone can prove <em>this</em> piece is the one in your collection — not one like it.</p></div>
-        </div>
-      </div>
-      <div>
-        <p class="fd-label" style="color:var(--fd-amber)">For makers</p>
-        <div class="fd-rows" style="margin-top:1.2rem">
-          <div class="fd-row"><span class="fd-label">Host</span>
-            <p>Open <a href="/glowtbook/?page=events">Glowtbook → Events</a> and add the sale: venue, date, what you're making. It works the moment you save it.</p></div>
-          <div class="fd-row"><span class="fd-label">QR on the table</span>
-            <p>Print the registration link and its QR. Buyers scan it with the piece in their hand.</p></div>
-          <div class="fd-row"><span class="fd-label">Approve</span>
-            <p>After the event, approve the registrations in bulk — or reject the one that wasn't yours.</p></div>
-          <div class="fd-row"><span class="fd-label">Published</span>
-            <p>The site reviews and publishes them. Each piece becomes part of someone's collection with your name on it — and a reason to come back for the next one.</p></div>
-        </div>
-      </div>
-    </div>
-  </section>
+<section class="s alt" id="yours" hidden aria-labelledby="h-yours">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ —</span> From your link</p>
+   <div><h2 id="h-yours">The event <em>you were sent to.</em></h2></div></div>
+  <div class="cards" id="yoursGrid"></div>
+ </div>
+</section>
 
-  <section class="fd-sec" id="yours" hidden>
-    <p class="fd-eyebrow">From your link</p>
-    <div class="fd-kicker-rule"></div>
-    <div class="ev-grid" id="yoursGrid" style="margin-top:1rem"></div>
-  </section>
+<section class="s" id="open" aria-labelledby="h-open">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> Open now</p>
+   <div><h2 id="h-open">Where the <em>finds are.</em></h2></div></div>
+  <div class="cards" id="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+ </div>
+</section>
 
-  <section class="fd-sec" id="open">
-    <p class="fd-eyebrow">Open now</p>
-    <div class="fd-kicker-rule"></div>
-    <h2 class="fd-headline">Where the <em>finds are.</em></h2>
-    <div class="ev-grid" id="grid"><div class="ev-skel"></div><div class="ev-skel"></div><div class="ev-skel"></div></div>
-  </section>
+<section class="s alt" id="past" hidden aria-labelledby="h-past">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Past events</p>
+   <div><h2 id="h-past">What's been <em>collected.</em></h2></div></div>
+  <div class="rows" id="pastList"></div>
+ </div>
+</section>
 
-  <section class="fd-sec" id="past" hidden>
-    <p class="fd-eyebrow">Past events</p>
-    <div class="fd-kicker-rule"></div>
-    <h2 class="fd-headline">What's been <em>collected.</em></h2>
-    <div class="ev-past" id="pastList"></div>
-  </section>
+<section class="s" id="host" aria-labelledby="h-host">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Host an event</p>
+   <div><h2 id="h-host">Provenance starts <em>at the till.</em></h2>
+    <p class="lede">A certificate in a drawer gets lost; a record made at the moment of sale doesn't. Hosting an event costs nothing: add it in Glowtbook, print the QR, and every piece that leaves the table can carry your name, the date and the place for as long as it exists. The collectors come back, and — quietly — it's a census of who is making what, where, and what it sells for. Data stays open under CC&nbsp;BY&nbsp;4.0.</p>
+    <div class="btns"><a class="btn btn--red" href="/glowtbook/?page=events">Open Glowtbook → Events</a><a class="link" href="https://discord.gg/9ek2UxvPT">Ask on Discord</a></div></div></div>
+ </div>
+</section>
+</main>
 
-  <section class="fd-sec" id="host">
-    <p class="fd-eyebrow">Host an event</p>
-    <div class="fd-kicker-rule"></div>
-    <h2 class="fd-headline">Provenance starts <em>at the till.</em></h2>
-    <p class="fd-body" style="margin-top:1.4rem">A certificate in a drawer gets lost; a record made at the moment of sale doesn't. Hosting an event costs nothing: add it in Glowtbook, print the QR, and every piece that leaves the table can carry your name, the date and the place for as long as it exists. The collectors come back, and — quietly — it's a census of who is making what, where, and what it sells for. Data stays open under CC&nbsp;BY&nbsp;4.0.</p>
-    <div class="fd-hero__cta">
-      <a class="fd-cta" href="/glowtbook/?page=events">Open Glowtbook → Events</a>
-      <a class="fd-cta" href="https://discord.gg/9ek2UxvPT" style="color:var(--fd-dim);border-color:var(--fd-rule-soft)">Ask on Discord</a>
-    </div>
-  </section>
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
 
-  <footer class="fd-footer">
-    <div>
-      <p style="color:var(--fd-bone);font-size:14px;letter-spacing:.1em">GLASS&nbsp;DATABASE</p>
-      <p>Data &amp; ontology under <a href="https://creativecommons.org/licenses/by/4.0/">CC&nbsp;BY&nbsp;4.0</a> &middot;
-         software <a href="https://www.apache.org/licenses/LICENSE-2.0">Apache&nbsp;2.0</a></p>
-    </div>
-    <p>
-      <a href="https://discord.gg/9ek2UxvPT">Discord</a> &middot;
-      <a href="https://www.instagram.com/glassdatabase/">Instagram</a> &middot;
-      <a href="/api/docs">Developer API</a> &middot;
-      <a class="fd-handle" href="https://github.com/alibama/glass-database">github.com/alibama/glass-database</a>
-    </p>
-  </footer>
-</div>
-
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
 <script>
 (function () {
   "use strict";
@@ -265,38 +230,38 @@
   /* --- gallery of approved pieces ---------------------------------------- */
   function pieceHtml(p) {
     var by = p.buyer && p.buyer !== "a collector" ? "by <b>" + esc(p.buyer) + "</b>" : "a collector's";
-    var inner = (p.has_image ? '<img src="' + esc(imgUrl(p)) + '" alt="' + esc(p.title) + '" loading="lazy" onerror="this.style.opacity=.15">'
-                             : '<span class="ph" aria-hidden="true">' + CAM + "</span>") +
+    var inner = (p.has_image ? '<div class="ph"><img src="' + esc(imgUrl(p)) + '" alt="' + esc(p.title) + '" loading="lazy" onerror="this.style.opacity=.15"></div>'
+                             : '<span class="ph none" aria-hidden="true">' + CAM + "</span>") +
       "<h4>" + esc(p.title) + "</h4>" +
       "<p>" + by + (p.piece_ref ? " · piece " + esc(p.piece_ref) : "") + "</p>";
-    return p.object_url ? '<a class="ev-piece" href="' + esc(p.object_url) + '">' + inner + "</a>" : '<div class="ev-piece">' + inner + "</div>";
+    return p.object_url ? '<a class="piece" href="' + esc(p.object_url) + '">' + inner + "</a>" : '<div class="piece">' + inner + "</div>";
   }
   function galleryHtml(ev, full) {
     var pieces = (full && full.pieces) || [];
-    var head = '<div class="ev-gallery__head ev-mono"><span>' + (pieces.length ? plural(pieces.length, "published piece") : "published pieces") + "</span>" +
-      (ev.can_register ? '<a class="ev-link" href="' + esc(registerUrl(ev)) + '">Register yours →</a>' : "") + "</div>";
+    var head = '<div class="head"><span class="label">' + (pieces.length ? plural(pieces.length, "published piece") : "published pieces") + "</span>" +
+      (ev.can_register ? '<a class="link" href="' + esc(registerUrl(ev)) + '">Register yours →</a>' : "") + "</div>";
     if (!pieces.length) {
       var why = ev.published > 0 ? "The host keeps this event's pieces private." :
         (ev.registered > 0 ? plural(ev.registered, "piece") + " registered — in review. Published pieces appear here." : "No pieces published yet" + (ev.can_register ? " — be the first." : "."));
-      return head + '<div class="ev-empty small">' + esc(why) + "</div>";
+      return head + '<div class="empty small">' + esc(why) + "</div>";
     }
-    return head + '<div class="ev-pieces">' + pieces.map(pieceHtml).join("") + "</div>";
+    return head + '<div class="pieces">' + pieces.map(pieceHtml).join("") + "</div>";
   }
   function toggleGallery(btn, ev, host) {
-    var panel = host.querySelector(".ev-gallery");
+    var panel = host.querySelector(".gallery");
     var open = btn.getAttribute("aria-expanded") === "true";
     if (open) { if (panel) panel.hidden = true; btn.setAttribute("aria-expanded", "false"); host.classList.remove("open"); return; }
     btn.setAttribute("aria-expanded", "true"); host.classList.add("open");
     if (!panel) {
-      panel = document.createElement("div"); panel.className = "ev-gallery";
-      panel.innerHTML = '<div class="ev-empty small">Loading pieces…</div>';
+      panel = document.createElement("div"); panel.className = "gallery";
+      panel.innerHTML = '<div class="empty small">Loading pieces…</div>';
       host.appendChild(panel);
     }
     panel.hidden = false;
     var done = function (full) { panel.innerHTML = galleryHtml(ev, full); };
     if (S.cache[ev.slug]) { done(S.cache[ev.slug]); return; }
     GDB.json("/events/" + encodeURIComponent(ev.slug)).then(function (full) { S.cache[ev.slug] = full; done(full); })
-      .catch(function (err) { panel.innerHTML = '<div class="ev-empty small">Couldn\'t load the pieces (' + esc(err.message || "offline") + ").</div>"; });
+      .catch(function (err) { panel.innerHTML = '<div class="empty small">Couldn\'t load the pieces (' + esc(err.message || "offline") + ").</div>"; });
   }
 
   /* --- cards --------------------------------------------------------------- */
@@ -304,24 +269,22 @@
     opts = opts || {};
     var w = where(ev), d = fmtDate(ev.starts, ev.ends);
     var n = ev.registered || 0;
-    return '<article class="ev-card" id="ev-' + esc(ev.slug) + '" data-slug="' + esc(ev.slug) + '">' +
-      '<div class="ev-card__body">' +
-        '<p class="ev-card__date">' + esc(d || "date to be announced") + "</p>" +
-        "<h3>" + esc(ev.title) + "</h3>" +
-        '<p class="who">' + esc(who(ev)) + "</p>" +
-        (w ? '<p class="where">' + esc(w) + "</p>" : "") +
-        '<div class="tags ev-mono">' +
-          (ev.piece_type ? "<span><b>" + esc(ev.piece_type) + "</b></span>" : "") +
-          (ev.price_note ? "<span>" + esc(ev.price_note) + "</span>" : "") +
-          "<span><b>" + n + "</b> " + (n === 1 ? "piece" : "pieces") + " registered</span>" +
-          (opts.unlisted ? '<span class="ev-pill unlisted">not in the directory yet</span>' : "") +
-          (!ev.can_register ? '<span class="ev-pill">registrations closed</span>' : "") +
-        "</div>" +
-        (ev.description ? '<p class="desc">' + esc(ev.description) + "</p>" : "") +
-        '<div class="ev-actions">' +
-          (ev.can_register ? '<a class="ev-cta" href="' + esc(registerUrl(ev)) + '">Add my find</a>' : "") +
-          '<button type="button" class="ev-link" data-gallery aria-expanded="false">See the pieces' + (ev.published ? " (" + ev.published + ")" : "") + "</button>" +
-        "</div>" +
+    return '<article class="card ev" id="ev-' + esc(ev.slug) + '" data-slug="' + esc(ev.slug) + '">' +
+      '<p class="label date"><span class="n">' + esc(d || "date to be announced") + "</span></p>" +
+      "<h3>" + esc(ev.title) + "</h3>" +
+      '<p class="who">' + esc(who(ev)) + "</p>" +
+      (w ? '<p class="where">' + esc(w) + "</p>" : "") +
+      '<div class="tags">' +
+        (ev.piece_type ? "<span><b>" + esc(ev.piece_type) + "</b></span>" : "") +
+        (ev.price_note ? "<span>" + esc(ev.price_note) + "</span>" : "") +
+        "<span><b>" + n + "</b> " + (n === 1 ? "piece" : "pieces") + " registered</span>" +
+        (ev.can_register ? '<span class="pill red">open</span>' : '<span class="pill ink">registrations closed</span>') +
+        (opts.unlisted ? '<span class="pill">not in the directory yet</span>' : "") +
+      "</div>" +
+      (ev.description ? '<p class="desc">' + esc(ev.description) + "</p>" : "") +
+      '<div class="acts">' +
+        (ev.can_register ? '<a class="btn btn--red sm" href="' + esc(registerUrl(ev)) + '">Add my find</a>' : "") +
+        '<button type="button" class="link" data-gallery aria-expanded="false">See the pieces' + (ev.published ? " (" + ev.published + ")" : "") + "</button>" +
       "</div></article>";
   }
   function wire(root) {
@@ -339,7 +302,7 @@
   function renderOpen(open) {
     var g = $("#grid");
     if (!open.length) {
-      g.innerHTML = '<div class="ev-empty">' + (S.events.length
+      g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">' + (S.events.length
         ? "Nothing is open for registration right now. The next sale goes up here as soon as a host adds it — or scan the QR at a table you're standing at; that works without the directory."
         : 'The first events are being set up — hosts: open <a href="/glowtbook/?page=events">Glowtbook → Events</a>, add your sale, and the registration link works at once. It shows here after a quick review.') +
         "</div>";
@@ -354,10 +317,10 @@
     sec.hidden = false;
     el.innerHTML = past.map(function (ev) {
       var sub = [who(ev), where(ev), fmtDate(ev.starts, ev.ends)].filter(Boolean).join(" · ");
-      return '<div class="ev-row" id="ev-' + esc(ev.slug) + '" data-slug="' + esc(ev.slug) + '">' +
-        '<div class="ev-row__main"><p>' + esc(ev.title) + (ev.piece_type ? " — <em>" + esc(ev.piece_type) + "s</em>" : "") + "<small>" + esc(sub) + "</small></p>" +
-        '<span class="val ev-mono"><span><b>' + (ev.published || 0) + "</b> published</span>" +
-        '<button type="button" class="ev-link" data-gallery aria-expanded="false">See the pieces</button></span></div></div>';
+      return '<div class="row" id="ev-' + esc(ev.slug) + '" data-slug="' + esc(ev.slug) + '">' +
+        '<div class="main"><p>' + esc(ev.title) + (ev.piece_type ? " — <em>" + esc(ev.piece_type) + "s</em>" : "") + "<small>" + esc(sub) + "</small></p>" +
+        '<span class="val"><span><b>' + (ev.published || 0) + "</b> published</span>" +
+        '<button type="button" class="link" data-gallery aria-expanded="false">See the pieces</button></span></div></div>';
     }).join("");
     wire(el);
   }
@@ -390,7 +353,7 @@
       sec.scrollIntoView({ block: "start" });
     }).catch(function () {
       var g = $("#yoursGrid"); $("#yours").hidden = false;
-      g.innerHTML = '<div class="ev-empty">We couldn\'t find that event — the link may be old. Ask the host for a fresh one, or pick from the list below.</div>';
+      g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">We couldn\'t find that event — the link may be old. Ask the host for a fresh one, or pick from the list below.</div>';
     });
   }
 
@@ -402,7 +365,7 @@
       var past = S.events.filter(function (e) { return !e.can_register; });
       renderMeta(S.events); renderOpen(open); renderPast(past); openWanted();
     }).catch(function (err) {
-      $("#grid").innerHTML = '<div class="ev-empty">Couldn\'t reach the API (' + esc(err.message || "network") + "). Try again in a moment.</div>";
+      $("#grid").innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">Couldn\'t reach the API (' + esc(err.message || "network") + "). Try again in a moment.</div>";
     });
   }
   GDB.chip("#chip", { next: location.pathname + location.search, compact: true });

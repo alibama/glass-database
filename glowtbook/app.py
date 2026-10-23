@@ -446,7 +446,7 @@ elif page == "Objects":
                     import segno
                     buf = _io.BytesIO()
                     segno.make(pair, error="m").save(buf, kind="png", scale=6, border=2,
-                                                     dark="#EEE7DB", light="#0A0D11")
+                                                     dark="#1F1A16", light="#F4EEE4")
                     st.image(buf.getvalue(), width=220)
                 except Exception:  # noqa: BLE001
                     st.code(pair, language=None)
@@ -616,7 +616,7 @@ elif page == "Objects":
                                     f'<a href="{href}" target="_blank" rel="noopener" '
                                     f'style="text-decoration:none;color:inherit"><div style="width:128px">'
                                     f'<img src="{src}" alt="{t}" loading="lazy" style="width:128px;'
-                                    f'height:128px;object-fit:cover;border-radius:8px;background:#1b1f24">'
+                                    f'height:128px;object-fit:cover;border-radius:0;border:1px solid #CFC2AE;background:#E3D7C4">'
                                     f'<div style="font-size:0.8rem;margin-top:4px;line-height:1.25">'
                                     f'<b>{t}</b><br>similarity {n["score"]:.2f}<br>'
                                     f'<span style="opacity:.75">{techs}</span></div></div></a>')
@@ -936,7 +936,7 @@ elif page == "Events":
                             import segno
                             buf = _io.BytesIO()
                             segno.make(url, error="m").save(buf, kind="png", scale=6, border=2,
-                                                            dark="#EEE7DB", light="#0A0D11")
+                                                            dark="#1F1A16", light="#F4EEE4")
                             st.image(buf.getvalue(), width=200)
                         except Exception:  # noqa: BLE001
                             st.code(url, language=None)

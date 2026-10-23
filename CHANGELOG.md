@@ -17,7 +17,8 @@ proof-of-concept features from production-ready ones in its docs.
   sticky header, a season notice bar fed by /api/seasons, live event counts and the sign-in
   chip. The blog generator, Seasons/Events/Register pages, graph, map, shop pages, the capture
   apps' gate screens and the Streamlit brand theme follow the same tokens; the camera HUD stays
-  dark by design. `field-data.css` remains only until the last page is converted.
+  dark by design. The sign-in chip that `site.js` injects uses the paper tokens too. The old
+  `field-data.css` is removed: no page references it any more.
 - **Barcoding is labelled alpha, for testers** — on the homepage (with a tester signup that
   lands in the newsletter list under source `alpha-testers`), in the capture and verify apps and
   in Glowtbook's Fingerprint tab, so the state of things is clear: enrol and verify work,

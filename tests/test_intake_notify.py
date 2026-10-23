@@ -70,9 +70,8 @@ def test_notify_noop_without_webhook(monkeypatch):
     assert notify.notify_submission("Artist", "Rae", {"x": "y"}, "t", "r", "") is False
 
 
-def test_object_submission_one_click_promote(demo_db, monkeypatch):
+def test_object_submission_one_click_promote(demo_db, monkeypatch, tmp_path):
     import os
-    from pathlib import Path
 
     from fastapi.testclient import TestClient
     from PIL import Image
@@ -83,7 +82,7 @@ def test_object_submission_one_click_promote(demo_db, monkeypatch):
     from glowtbook import contribute
     os.environ["GLASSDB_ADMIN_TOKEN"] = "s3cret"
     monkeypatch.setenv("GLASSDB_MODERATION", "1")
-    d = Path("/tmp/_objtest"); d.mkdir(exist_ok=True)
+    d = tmp_path / "_objtest"; d.mkdir()
     Image.new("RGB", (400, 300), (120, 60, 30)).save(d / "p.png")
     obj = {"title": "Test goblet", "maker": "AP", "year": "2025", "techniques": "",
            "materials": "cristallo", "dimensions": "", "description": "", "value_amount": "",
