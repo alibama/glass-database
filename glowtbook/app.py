@@ -408,6 +408,8 @@ elif page == "Objects":
         with tab_fp:
             from central import sessions as _sess
             from glowtbook import fingerprint as _fp
+            st.caption("🧪 **Alpha — for testers.** Enrol and verify work; thresholds are still being "
+                       "calibrated on real pieces. A verdict is evidence, not proof. Tell us what you see.")
             st.write("A **re-identification fingerprint** is a digital barcode read off the glass "
                      "itself — colour + shape descriptors (and, with AI on, a DINOv2 vector) over many "
                      "angles, so anyone can later confirm *this is the same physical piece*. It's "

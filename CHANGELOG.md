@@ -7,6 +7,16 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Changed
+- **Barcoding is labelled alpha, for testers** — on the homepage (with a tester signup that
+  lands in the newsletter list under source `alpha-testers`), in the capture and verify apps and
+  in Glowtbook's Fingerprint tab, so the state of things is clear: enrol and verify work,
+  thresholds are still being calibrated, a verdict is evidence not proof.
+- **"Ways in" on the homepage** — nine doors into the project (add or update a listing, host an
+  event, alpha-test the barcode, enter a season, map a lineage, document a shop, write a study,
+  review the vocabulary, contribute code), linked from the quick links as *Get involved*.
+  `docs/ENGAGEMENT.md` designs the profile-update push (claim a listing by email match, edit in
+  place through the gate, outbound mail) and answers the CMS question: keep the API-first core,
+  add Markdown pages, no Drupal.
 - **Explore keeps people's names and birth dates out of the per-row view** — in the Datasets
   view, name columns (artist_name, artist, led_by, *_name for people) and date-of-birth columns
   (birth_year, dob, death_year…) are withheld from the table, the filters and the CSV download;

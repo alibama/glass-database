@@ -104,7 +104,7 @@ It's idempotent and preserves your database, secrets, generated media, and
 signing key across runs. See [`deploy/README-DEPLOY.md`](deploy/README-DEPLOY.md)
 and [`deploy/AUTH.md`](deploy/AUTH.md).
 
-## Physical re-identification
+## Physical re-identification (alpha — for testers)
 
 Objects can carry a **re-identification fingerprint** (perceptual hashes over many angles, via [object-fingerprint](https://github.com/alibama/object-fingerprint)): enroll a piece in Glowtbook, and anyone can later confirm *this is the same physical object* by matching a fresh camera capture in Explore. The fingerprint is embedded in the object's C2PA credential. Full protocol (descriptors, calibration, thresholds, best practices) + flowchart: [`docs/FINGERPRINT-PROTOCOL.md`](docs/FINGERPRINT-PROTOCOL.md).
 
