@@ -117,6 +117,7 @@
     <a href="/studios.html">Map</a>
     <a href="/shop-costs.html">Costs</a>
     <a href="/api/docs">API</a>
+    <a href="#involved">Get involved</a>
     <a href="#about">About</a>
   </div>
 
@@ -269,7 +270,7 @@
 
   <section class="fd-sec" id="barcoding">
     <div class="fd-sec__head">
-      <p class="fd-eyebrow" style="color:var(--fd-molten)">Glowtbook &middot; Barcoding (experimental)</p>
+      <p class="fd-eyebrow" style="color:var(--fd-molten)">Glowtbook &middot; Barcoding &middot; <span style="color:var(--fd-violet)">alpha — for testers</span></p>
       <div class="fd-kicker-rule"></div>
       <h2 class="fd-headline">A <em class="fd-accent--molten">digital barcode</em> for one-of-a-kind glass.</h2>
       <p class="fd-body" style="margin-top:1.2rem">Every mass-produced thing has a barcode; a handmade piece
@@ -298,9 +299,10 @@
       <span class="fd-label">Backed by Content Credentials (C2PA)</span>
       <p>The barcode is bound to tamper-evident provenance — a compact attestation, signed into the piece's
         C2PA Content Credentials — so a verified match isn't just "looks alike"; it's anchored to a signed
-        record of what the piece is and when it was enrolled. <strong>This is experimental:</strong> it works
-        today for enrol and verify, and it's strongest on pieces with distinctive colour and detail. Treat a
-        result as strong evidence, not forensic proof.</p>
+        record of what the piece is and when it was enrolled. <strong>This is an alpha, open to testers:</strong>
+        enrol and verify work today and are strongest on pieces with distinctive colour and detail, thresholds are
+        still being calibrated on real pieces, and a result is strong evidence, not forensic proof. If you have a
+        shelf of your own work and a phone, you're exactly who we need.</p>
     </div>
     <div class="fd-rows" style="margin-top:2.2rem;max-width:70ch">
       <div class="fd-row"><span class="fd-label">Sign in once</span>
@@ -314,6 +316,17 @@
       <a class="fd-cta" href="/fingerprint/enroll.html">Open the capture app</a>
       <a class="fd-cta" href="/fingerprint/verify.html" style="color:var(--fd-teal);border-color:var(--fd-teal)">Verify a piece</a>
       <a class="fd-cta" href="/fingerprint/capture-mat.pdf" style="color:var(--fd-dim);border-color:var(--fd-rule-soft)">Print the mat</a>
+    </div>
+    <div style="margin-top:2rem;max-width:70ch">
+      <p class="fd-label" style="color:var(--fd-violet)">Join the alpha</p>
+      <p class="fd-body" style="margin-top:.6rem;font-size:clamp(15px,1.7vw,17px)">Testers get the capture mat, the
+        alpha notes as thresholds change, and a say in what the verdicts should mean. Fingerprint a few of your own
+        pieces, try to fool it with a sibling piece, and tell us what happened on the Discord.</p>
+      <form class="fd-signup" data-source="alpha-testers" onsubmit="return gdbSubscribe(event)">
+        <input type="email" name="email" placeholder="your@email.com" aria-label="Email address" required>
+        <button type="submit" style="background:var(--fd-violet)">Count me in</button>
+      </form>
+      <p class="fd-signup-msg" role="status" aria-live="polite"></p>
     </div>
   </section>
 
@@ -415,6 +428,63 @@
     </div>
   </section>
 
+  <section class="fd-sec" id="involved">
+    <div class="fd-sec__head">
+      <p class="fd-eyebrow">Ways in</p>
+      <div class="fd-kicker-rule"></div>
+      <h2 class="fd-headline">Pick a door. <em>Any of them helps.</em></h2>
+      <p class="fd-body" style="margin-top:1.2rem">The record is only as good as the people in it. Ten minutes on any
+        of these makes the field more visible to itself.</p>
+    </div>
+    <div class="fd-cards">
+      <a class="fd-card" href="/explore/?view=submit">
+        <h3>Add yourself or your studio</h3>
+        <p>Already listed? Check your entry and tell us what's changed. Not yet? The form takes five minutes and is reviewed before it's public.</p>
+        <span class="fd-go">Add or update a listing &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--teal" href="/glowtbook/?page=events">
+        <h3>Host an event</h3>
+        <p>A sale, a demo, an ornament day. Put a QR on the table and the people who buy from you register their pieces on the spot.</p>
+        <span class="fd-go">Set one up in Glowtbook &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--violet" href="/fingerprint/enroll.html">
+        <h3>Alpha-test the barcode</h3>
+        <p>Fingerprint a few pieces, try to fool it with a sibling, report back. Testers steer the thresholds.</p>
+        <span class="fd-go">Open the capture app &rarr;</span>
+      </a>
+      <a class="fd-card" href="/games.html">
+        <h3>Enter a season</h3>
+        <p>Pumpkins in October, ornaments in December. Makers enter, collectors scan and vote, shops get found.</p>
+        <span class="fd-go">This season &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--teal" href="/explore/?view=submit">
+        <h3>Map a lineage</h3>
+        <p>Who taught you? Who did you assist? A name and a year turns into a line on the graph.</p>
+        <span class="fd-go">Submit who taught whom &rarr;</span>
+      </a>
+      <a class="fd-card" href="/shop.html">
+        <h3>Document your shop</h3>
+        <p>Diagrams and a parts list with real part numbers, so the next person can fix, insure or build one.</p>
+        <span class="fd-go">Open the shop guide &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--violet" href="/blog/">
+        <h3>Write a study</h3>
+        <p>What a hot shop costs somewhere specific, what sells where, what a residency actually pays. We'll edit and publish it under your name.</p>
+        <span class="fd-go">See the blog &rarr;</span>
+      </a>
+      <a class="fd-card fd-card--teal" href="/api/vocab/glass-traits.ttl">
+        <h3>Review the vocabulary</h3>
+        <p>Curators, registrars, teachers: the style-trait thesaurus is aligned to Getty AAT and Wikidata and wants correcting.</p>
+        <span class="fd-go">Read the SKOS &rarr;</span>
+      </a>
+      <a class="fd-card" href="https://github.com/alibama/glass-database">
+        <h3>Contribute code</h3>
+        <p>Python, FastAPI, Streamlit, plain HTML. Good first issues, a test suite, and a read-only API to build against.</p>
+        <span class="fd-go">GitHub &rarr;</span>
+      </a>
+    </div>
+  </section>
+
   <section class="fd-sec" id="join">
     <div class="fd-sec__head">
       <p class="fd-eyebrow">Come say hi</p>
@@ -481,7 +551,7 @@
     try {
       const r = await fetch('/api/subscribe', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({email: email, source:'homepage'}) });
+        body: JSON.stringify({email: email, source: f.dataset.source || 'homepage'}) });
       if (r.ok) { msg.textContent = "You're on the list — thanks."; f.reset(); }
       else { const j = await r.json().catch(function(){return {};}); msg.textContent = j.detail || "That didn't work — try again?"; }
     } catch (_) { msg.textContent = "Network error — please try again."; }
