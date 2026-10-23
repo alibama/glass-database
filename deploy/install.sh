@@ -106,6 +106,7 @@ fi
 cp "$SRC/deploy/landing-index.html" "$APP_DIR/public/index.html"
 cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
 [ -f "$SRC/deploy/field-data.css" ] && cp "$SRC/deploy/field-data.css" "$APP_DIR/public/field-data.css"
+[ -f "$SRC/deploy/paper.css" ] && cp "$SRC/deploy/paper.css" "$APP_DIR/public/paper.css"
 # shared client helper for the static pages (sign-in chip, authenticated fetch, pairing tokens)
 [ -f "$SRC/deploy/site.js" ] && cp "$SRC/deploy/site.js" "$APP_DIR/public/site.js"
 # Homepage 'digital barcoding' screenshots

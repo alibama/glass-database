@@ -416,23 +416,25 @@ def render_feed(posts: list[dict], base: str) -> str:
 
 
 def render_landing_block(posts: list[dict]) -> str:
-    """The 'From the blog' block on the homepage: the latest post as a feature card,
-    the next two as index rows. Markup matches landing-index.html's classes."""
+    """The 'Field notes' block on the homepage (paper theme): the latest post as the
+    feature article, the next two as list rows. Markup matches landing-index.html."""
     if not posts:
-        return '<p class="fd-body" style="margin-top:1.6rem">First post coming soon.</p>'
+        return '<p class="lede">First study coming soon.</p>'
     p = posts[0]
     meta = " · ".join(x for x in ["Latest", html.escape(p["series"]), html.escape(nice_date(p["date"])),
                                   f"{p['minutes']} min read"] if x)
-    out = [f'<a class="fd-card fd-card--feature" href="{post_url(p)}">'
-           f'<span class="fd-label" style="color:var(--fd-amber)">{meta}</span>'
-           f'<h3>{html.escape(p["title"])}</h3><p>{html.escape(p["summary"])}</p>'
-           f'<span class="fd-go">Read the study &rarr;</span></a>']
+    out = [f'<article class="feature">'
+           f'<div><p class="label">{meta}</p><h3>{html.escape(p["title"])}</h3>'
+           f'<p class="lede">{html.escape(p["summary"])}</p>'
+           f'<div class="btns"><a class="link" href="{post_url(p)}">Read the study</a>'
+           f'<a class="link" href="/blog/">All field notes</a><a class="link" href="/blog/feed.xml">RSS</a></div></div>'
+           f'<a class="ph" href="{post_url(p)}" aria-label="{html.escape(p["title"], quote=True)}"></a></article>']
     rest = posts[1:3]
     if rest:
-        rows = "".join(f'<div class="fd-row"><span class="fd-label">{html.escape(nice_date(q["date"]))}</span>'
-                       f'<p><a href="{post_url(q)}">{html.escape(q["title"])}</a>'
-                       f'{(" — " + html.escape(q["summary"])) if q["summary"] else ""}</p></div>' for q in rest)
-        out.append(f'<div class="fd-rows" style="margin-top:1.2rem">{rows}</div>')
+        rows = "".join(f'<li><span>{html.escape(nice_date(q["date"]))}</span>'
+                       f'<a href="{post_url(q)}" style="text-decoration:none">{html.escape(q["title"])}</a>'
+                       f'{(" — " + html.escape(q["summary"])) if q["summary"] else ""}</li>' for q in rest)
+        out.append(f'<ul class="list" style="margin-top:2rem">{rows}</ul>')
     return "\n".join(out)
 
 
