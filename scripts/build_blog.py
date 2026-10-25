@@ -13,6 +13,8 @@ Each post is a Markdown file in ``blog/posts/`` with a front-matter block::
     author: Glass Database
     series: Theoretical studies
     summary: One sentence shown on the index, the homepage and in the feed.
+    image: /img/home/lima.jpg          (optional; shown when the post is featured)
+    image_alt: What the picture shows  (optional)
     ---
 
 The renderer covers the Markdown this blog uses — headings, paragraphs,
@@ -73,6 +75,7 @@ def parse_post(path: Path) -> dict:
     return {"slug": slug, "title": meta.get("title") or slug.replace("-", " ").title(),
             "date": d, "author": meta.get("author", ""), "series": meta.get("series", ""),
             "summary": meta.get("summary", ""), "tags": [t.strip() for t in meta.get("tags", "").split(",") if t.strip()],
+            "image": meta.get("image", ""), "image_alt": meta.get("image_alt", ""),
             "draft": meta.get("draft", "").lower() in ("1", "true", "yes"),
             "minutes": max(1, round(words / WORDS_PER_MINUTE)), "words": words,
             "body_md": body, "path": str(path)}
@@ -333,6 +336,14 @@ def post_url(p: dict) -> str:
     return f"/blog/{p['slug']}.html"
 
 
+def feature_img(p: dict) -> str:
+    """The <img> for a featured post's picture slot, or "" to keep the paper placeholder."""
+    if not p.get("image"):
+        return ""
+    return (f'<img src="{html.escape(p["image"], quote=True)}" '
+            f'alt="{html.escape(p.get("image_alt") or p["title"], quote=True)}" loading="lazy">')
+
+
 def render_post(p: dict, prev: dict | None, nxt: dict | None, base: str) -> str:
     meta = [f"<b>{html.escape(p['series'])}</b>" if p["series"] else "", html.escape(nice_date(p["date"])),
             html.escape(p["author"]) if p["author"] else "", f"{p['minutes']} min read"]
@@ -383,7 +394,7 @@ def render_index(posts: list[dict], base: str) -> str:
                    f'<p class="lede">{html.escape(p["summary"])}</p>'
                    f'<div class="btns"><a class="link" href="{post_url(p)}">Read the study</a>'
                    f'<a class="link" href="/blog/feed.xml">RSS</a></div></div>'
-                   f'<a class="ph" href="{post_url(p)}" aria-label="{html.escape(p["title"], quote=True)}"></a></article>')
+                   f'<a class="ph" href="{post_url(p)}" aria-label="{html.escape(p["title"], quote=True)}">{feature_img(p)}</a></article>')
     for p in posts[1:]:
         meta = " · ".join(x for x in [html.escape(p["series"]), f"{p['minutes']} min read"] if x)
         rows.append(f'<li><span>{html.escape(nice_date(p["date"]))}</span><div>'
@@ -455,7 +466,7 @@ def render_landing_block(posts: list[dict]) -> str:
            f'<p class="lede">{html.escape(p["summary"])}</p>'
            f'<div class="btns"><a class="link" href="{post_url(p)}">Read the study</a>'
            f'<a class="link" href="/blog/">All field notes</a><a class="link" href="/blog/feed.xml">RSS</a></div></div>'
-           f'<a class="ph" href="{post_url(p)}" aria-label="{html.escape(p["title"], quote=True)}"></a></article>']
+           f'<a class="ph" href="{post_url(p)}" aria-label="{html.escape(p["title"], quote=True)}">{feature_img(p)}</a></article>']
     rest = posts[1:3]
     if rest:
         rows = "".join(f'<li><span>{html.escape(nice_date(q["date"]))}</span>'
