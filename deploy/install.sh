@@ -108,6 +108,11 @@ cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
 [ -f "$SRC/deploy/paper.css" ] && cp "$SRC/deploy/paper.css" "$APP_DIR/public/paper.css"
 # shared client helper for the static pages (sign-in chip, authenticated fetch, pairing tokens)
 [ -f "$SRC/deploy/site.js" ] && cp "$SRC/deploy/site.js" "$APP_DIR/public/site.js"
+# Homepage pictures (section cards, featured field note)
+if [ -d "$SRC/deploy/img" ]; then
+    mkdir -p "$APP_DIR/public/img"
+    cp -r "$SRC/deploy/img/." "$APP_DIR/public/img/"
+fi
 # Homepage 'digital barcoding' screenshots
 if [ -d "$SRC/deploy/barcoding" ]; then
     mkdir -p "$APP_DIR/public/barcoding"

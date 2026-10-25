@@ -58,7 +58,7 @@ def _redirect(app_name):
 
 routes = [Mount("/api", app=api_app)]
 routes += [Route(path, _file(name)) for path, name in FILES.items()]
-for sub in ("fingerprint-web", "barcoding", "shop-diagrams", "pwa"):
+for sub in ("fingerprint-web", "barcoding", "shop-diagrams", "pwa", "img"):
     if (DEPLOY / sub).exists():
         mount = "/fingerprint" if sub == "fingerprint-web" else f"/{sub}"
         routes.append(Mount(mount, app=StaticFiles(directory=DEPLOY / sub)))
