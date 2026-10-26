@@ -6,11 +6,14 @@ app's "Claim" button. Reads are open; writes need a signed-in person
 (``require_user`` — the Google sign-in cookie or a pairing Bearer token).
 
   GET  /seasons                               current season + every non-draft season
-  GET  /seasons/{slug}                        season, approved entries, my votes, leaderboard
-  GET  /seasons/{slug}/leaderboard            people's choice · most collected · studios · collectors
+  GET  /seasons/{slug}                        season, approved entries, my votes, leaderboard, awards
+  GET  /seasons/{slug}/leaderboard            people's choice · most collected · studios · points · collectors
+  GET  /seasons/{slug}/awards                 award categories with standings (+ my picks)
   GET  /seasons/{slug}/entries/{entry_id}     one entry
-  POST /seasons/{slug}/entries   (sign-in)    {object_row_id, studio, edition_size, price_note, title}
+  POST /seasons/{slug}/entries   (sign-in)    {object_row_id, studio, edition_size, price_note, title,
+                                               solo, legendary, legend}
   POST /seasons/{slug}/vote      (sign-in)    {entry_id}  → toggles; {"voted","votes","remaining"}
+  POST /seasons/{slug}/awards/{category}/vote (sign-in) {entry_id} → one pick per award; swaps/toggles
   POST /claims                   (sign-in)    {object_row_id, confidence, report, location}
   GET  /me/collection            (sign-in)    my claimed pieces + badges
   GET  /me/claims                (sign-in)    claims on the pieces I published (the maker's inbox)
@@ -63,10 +66,14 @@ def _public_base(request: Request) -> str:
 
 
 def _pub_entry(e: dict, uid: str | None = None) -> dict:
-    """An entry as the public sees it: no account ids, plus `mine` for the caller."""
+    """An entry as the public sees it: no account ids, plus `mine` for the caller.
+    Which piece is the legendary stays secret until a collector has claimed it
+    (rarity == "legendary"); the maker sees their own flag."""
     e = dict(e)
     e["mine"] = bool(uid) and e.get("artist_uid") == uid
     e.pop("artist_uid", None)
+    if not (e["mine"] or e.get("rarity") == "legendary"):
+        e.pop("legendary", None); e.pop("legend", None)
     return e
 
 
@@ -74,9 +81,18 @@ def _pub_board(lb: dict, uid: str | None = None) -> dict:
     out = dict(lb)
     for key in ("peoples_choice", "most_collected"):
         out[key] = [_pub_entry(e, uid) for e in lb.get(key, [])]
-    out["collectors"] = [{k: v for k, v in c.items() if k != "collector_uid"}
-                         for c in lb.get("collectors", [])]
+    for key in ("collectors", "points"):
+        out[key] = [{k: v for k, v in c.items() if k != "collector_uid"} for c in lb.get(key, [])]
     return out
+
+
+def _my_picks(conn, s: dict, uid: str | None) -> dict:
+    """{category_slug: entry_id} for the caller."""
+    if not uid:
+        return {}
+    slugs = {c["id"]: c["slug"] for c in seasons.categories(conn, s["id"])}
+    return {slugs[cid]: eid for cid, eid in seasons.my_award_votes(conn, s["id"], uid).items()
+            if cid in slugs}
 
 
 def _bad(ex: ValueError):
@@ -244,7 +260,9 @@ def one_season(slug: str, request: Request):
             "entries": [_pub_entry(e, uid) for e in seasons.entries(conn, s["id"], "approved")],
             "my_votes": mine, "remaining_votes": max(0, cap - len(mine)),
             "can_vote": s["status"] in ("open", "voting"), "signed_in": uid is not None,
-            "leaderboard": _pub_board(lb, uid)}
+            "leaderboard": _pub_board(lb, uid),
+            "awards": seasons.awards(conn, s["id"]), "my_picks": _my_picks(conn, s, uid),
+            "legendaries_out": int(s.get("legendaries_out") or 0)}
 
 
 @router.get("/seasons/{slug}/leaderboard", summary="People's choice · most collected · studios · collectors")
@@ -256,6 +274,35 @@ def season_leaderboard(slug: str, request: Request):
     lb["collectors"] = seasons.collectors(conn)
     return {"season": {"id": s["id"], "slug": s["slug"], "title": s["title"], "status": s["status"]},
             **_pub_board(lb, u["uid"] if u else None)}
+
+
+@router.get("/seasons/{slug}/awards", summary="Award categories with their standings")
+def season_awards(slug: str, request: Request):
+    conn = _conn()
+    s = _season_or_404(conn, slug)
+    u = current_user(request)
+    uid = u["uid"] if u else None
+    return {"season": {"id": s["id"], "slug": s["slug"], "title": s["title"], "status": s["status"]},
+            "awards": seasons.awards(conn, s["id"]), "my_picks": _my_picks(conn, s, uid),
+            "can_vote": s["status"] in ("open", "voting"), "signed_in": uid is not None,
+            "legendaries_out": int(s.get("legendaries_out") or 0)}
+
+
+@router.post("/seasons/{slug}/awards/{category_slug}/vote", summary="Pick one entry for an award")
+def award_pick(slug: str, category_slug: str, payload: dict, u: dict = Depends(require_user)):
+    conn = _conn()
+    s = _season_or_404(conn, slug)
+    cat = seasons.get_category(conn, s["id"], category_slug)
+    if not cat:
+        raise HTTPException(404, "No such award")
+    try:
+        eid = int(payload.get("entry_id"))
+    except (TypeError, ValueError):
+        raise HTTPException(400, "entry_id is required")
+    try:
+        return seasons.award_vote(conn, s["id"], cat["id"], eid, u["uid"])
+    except ValueError as ex:
+        raise _bad(ex)
 
 
 @router.get("/seasons/{slug}/entries/{entry_id}", summary="One entry")
@@ -288,7 +335,9 @@ def enter_piece(slug: str, payload: dict, request: Request, u: dict = Depends(re
                             artist_name=u.get("name") or u.get("email") or "",
                             title=(payload.get("title") or "").strip(),
                             studio=(payload.get("studio") or "").strip(), edition_size=ed,
-                            price_note=(payload.get("price_note") or "").strip())
+                            price_note=(payload.get("price_note") or "").strip(),
+                            solo=bool(payload.get("solo")), legendary=bool(payload.get("legendary")),
+                            legend=str(payload.get("legend") or ""))
     except ValueError as ex:
         raise _bad(ex)
     e = seasons.get_entry(conn, eid) or {"id": eid}

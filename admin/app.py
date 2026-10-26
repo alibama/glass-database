@@ -851,6 +851,12 @@ elif section == "🎃 Seasons":
 
     with st.expander("➕ Create a season", expanded=_sm["seasons"] == 0):
         _today = _dt.date.today()
+        _preset = st.selectbox(
+            "Award preset (prefills the categories in the form)", ["Pumpkins", "Ornaments", "General"],
+            help="People's choice is always on. Edit the lines freely — one award per line: "
+                 "`title | vote` or `title | measured | solo`. 'measured' ranks by the height the "
+                 "fingerprint mat wrote onto the piece; 'solo' limits an award to pieces made solo.")
+        _preset_theme = {"Pumpkins": "pumpkin", "Ornaments": "ornament"}.get(_preset, "")
         with st.form("season_create", clear_on_submit=True):
             s_title = st.text_input("Title", placeholder="Pumpkin Patch 2026")
             s_theme = st.text_input("Theme (one line, shown in italics on the page)",
@@ -872,6 +878,12 @@ elif section == "🎃 Seasons":
                 "Prize note",
                 value="Bragging rights, a homepage feature, and the Crowd Favourite badge")
             s_votes = st.number_input("Votes per voter", 1, 10, 3)
+            s_cats = st.text_area(
+                "Award categories, one per line: title | vote or measured | solo", height=110,
+                key=f"season_cats_{_preset}",
+                value=_seasons.categories_text(_seasons.default_categories(_preset_theme)),
+                help="Leave blank to use the theme's defaults (pumpkin → stems, colour, biggest; "
+                     "ornament → hook, colour, the cat; otherwise best in show + best colour).")
             s_open = st.checkbox("Open for entries right away", value=False)
             if st.form_submit_button("Create season", type="primary"):
                 if not (s_title or "").strip():
@@ -883,7 +895,8 @@ elif section == "🎃 Seasons":
                             starts=str(s_starts), entries_close=str(s_eclose),
                             voting_closes=str(s_vclose), ends=str(s_ends), rules=s_rules,
                             prize_note=s_prize, votes_per_voter=int(s_votes),
-                            status="open" if s_open else "draft")
+                            status="open" if s_open else "draft",
+                            categories=_seasons.parse_categories(s_cats) or None)
                         st.session_state["seasons_msg"] = f"Created “{s_title}”."
                         st.rerun()
                     except ValueError as ex:
@@ -903,7 +916,11 @@ elif section == "🎃 Seasons":
                        f"voting closes {s['voting_closes'] or '—'} → ends {s['ends'] or '—'}")
             c1.caption(f"{s['entry_count']} approved entries · {s['vote_count']} votes · "
                        f"{s['claim_count']} claims · {s['votes_per_voter']} votes per voter · "
+                       f"{s.get('legendaries_out') or 0} legendaries still out · "
                        f"[public page](/games.html?season={s['slug']})")
+            _cats = _seasons.categories(conn, s["id"])
+            c1.caption("Awards: People's choice" + "".join(
+                f" · {c['title']} ({c['kind']}{', solo' if c.get('solo_only') else ''})" for c in _cats))
             b1, b2, b3 = c2.columns(3)
             if s["status"] in ("draft", "closed") and b1.button(
                     "Open", key=f"so_{s['id']}", type="primary", help="Start taking entries"):
@@ -931,7 +948,10 @@ elif section == "🎃 Seasons":
                         e1, e2 = st.columns([5, 1])
                         e1.caption(f"**{e['title']}** — {e['artist_name'] or '—'} · "
                                    f"{e['studio'] or 'Independent'} · edition of {e['edition_size']}"
-                                   f" · {e['vote_count']} votes · {e['claim_count']} claims")
+                                   f" · {e['vote_count']} votes · {e['claim_count']} claims · "
+                                   f"{(e.get('rarity') or 'common').upper()}"
+                                   + (" · solo" if e.get("solo") else "")
+                                   + (" · :red[**LEGENDARY**]" if e.get("legendary") else ""))
                         if e2.button("Pull", key=f"ep_{e['id']}", help="Reject (hide) this entry"):
                             _seasons.approve_entry(conn, e["id"], False); st.rerun()
 
@@ -952,10 +972,16 @@ elif section == "🎃 Seasons":
                     ci.image(base64.b64decode(_im["image_b64"]), width=140)
                 except Exception:  # noqa: BLE001
                     pass
-            cm.markdown(f"**{e['title']}** — {e['artist_name'] or '—'}")
+            cm.markdown(f"**{e['title']}** — {e['artist_name'] or '—'}"
+                        + (" · :red[**LEGENDARY**]" if e.get("legendary") else "")
+                        + (" · solo" if e.get("solo") else ""))
             cm.caption(f"{e['studio'] or 'Independent'} · edition of {e['edition_size']} · "
-                       f"{e['price_note'] or 'no price note'} · season **{e['season_title']}** · "
+                       f"{e['price_note'] or 'no price note'} · "
+                       f"{'fingerprinted' if e.get('fingerprinted') else 'no fingerprint'} · "
+                       f"season **{e['season_title']}** · "
                        f"object `{e['object_row_id']}` · {str(e['created_at'] or '')[:10]}")
+            if e.get("legendary") and e.get("legend"):
+                cm.caption(f"Legend: *{e['legend']}*")
             if cb.button("✅ Approve", key=f"ea_{e['id']}", type="primary"):
                 _seasons.approve_entry(conn, e["id"], True); st.rerun()
             if cb.button("⛔ Reject", key=f"er_{e['id']}"):

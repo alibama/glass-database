@@ -90,6 +90,87 @@ admin meanwhile. Propose new themes on the Discord.
 * Account ids never leave the API: entries expose `mine` (for the caller), never
   `artist_uid`; collector boards show names only.
 
+## Awards
+
+Every season has the implicit **People's choice** board (`season_votes`, N votes per voter)
+plus a small set of **award categories** (`season_categories`), one row per award:
+
+| Column | Meaning |
+|---|---|
+| `kind` | `vote` — one pick per voter per category; or `measured` — settled by the fingerprint mat, no votes |
+| `measure` | `height` (mm) for measured kinds; the third number of the `W × D × H mm (W×D×H)` string the mat writes onto the object (`glowtbook.matdetect` → `objects.dimensions`). Unmeasured pieces simply aren't ranked |
+| `solo_only` | only entries flagged *solo* (made without an assistant) are eligible |
+
+Defaults when the admin doesn't list any (picked by the theme text):
+
+| Theme contains | Categories |
+|---|---|
+| "pumpkin" | Best stem (vote) · Best colour (vote) · Biggest pumpkin (measured height) · Biggest pumpkin, solo (measured height, solo only) |
+| "ornament" | Best hook (vote) · Best colour (vote) · Most likely to survive the cat (vote) |
+| anything else | Best in show (vote) · Best colour (vote) |
+
+The admin's create form has a textarea, one award per line — `title | vote` or
+`title | measured | solo` (`seasons.parse_categories`). Picks live in `season_award_votes`
+(UNIQUE season × category × voter): picking again **swaps**, picking the same entry again
+**removes** the pick, and you can never pick your own piece (`seasons.award_vote`). Standings
+(`seasons.awards`) list the top five by picks for vote kinds and every measured entry, tallest
+first, for measured kinds. The page shows each award with its kind, the current leader and a
+select-and-Pick control. Picks are open while the season is `open` or `voting`.
+
+## Rarity
+
+Every entry carries a `rarity` and the `points` it is worth to the collector who claims it:
+
+| Rarity | Points | When |
+|---|---|---|
+| common | 1 | any approved entry |
+| uncommon | 2 | the object has a fingerprint on file |
+| rare | 5 | fingerprinted **and** `edition_size` ≤ 3 |
+| legendary | 20 | the entry is the maker's **legendary** *and* a collector holds a verified/approved claim on it |
+
+A **legendary** is one per maker per season: an edition of one, fingerprinted, with a
+*legend* of at least 40 characters (`seasons.enter(..., legendary=True, legend=...)` enforces
+all four). Until it is claimed the public API shows its base rarity and **does not expose**
+`legendary` or `legend` at all — nobody is told which piece it is; the maker sees their own
+flag in `my_entries` / `GET /api/me/collection`. The season carries `legendaries_out` (approved
+legendaries without a claim — "still out there"), shown as a line in the page's hero. The
+collector who claims one earns the `legend_hunter` badge, and the **Points** board
+(`leaderboard()["points"]`: `{collector_name, points, pieces, legendaries}`) sums the points of
+each collector's verified pieces in the season.
+
+Computation: `seasons.rarity_of(entry, has_fingerprint, claimed)`, applied in `_entry_shape`
+with fingerprint presence read from `objects.fingerprint_json` / the manifest and *claimed*
+meaning `claim_count > 0`.
+
+## Rules of play
+
+The same text sits behind "Rules of play" on `/games.html`.
+
+**Makers**
+
+1. Enter your own work, made for this season.
+2. Up to five entries per season.
+3. Fingerprint a piece before you enter it: that is what makes it Uncommon or better and
+   what the measured awards use.
+4. One legendary per maker per season: an edition of one, fingerprinted, with its legend
+   written. Don't say which piece it is; the collector finds out when they claim it.
+5. You can't vote for your own pieces.
+6. "Solo" means made without an assistant on the pipe, on your honour.
+
+**Collectors**
+
+1. One pick per award, plus your People's choice votes.
+2. A claim needs the piece in your hands (a fingerprint match) or the maker's confirmation.
+3. One claim per piece per person.
+4. Points: common 1, uncommon 2, rare 5, legendary 20.
+5. Complete a set (one piece from every studio in the season) for the badge.
+
+**Everyone:** the game never handles money; buy from the maker. Admins can remove entries or
+claims that break the rules; disputes go to the Discord.
+
+Enforced in code: entries per maker (`MAX_ENTRIES = 5`), the legendary conditions, no self
+picks, one pick per award, one claim per piece per person. The rest is honour and admins.
+
 ## The collector card share loop
 
 `GET /api/seasons/entries/{id}/card.png` renders a 4:5 card (Instagram story / post size)
@@ -110,6 +191,7 @@ on exactly that piece with a Vote button and a "Scan to claim" link.
 | `three-seasons` | Three seasons | Verified pieces across 3 seasons |
 | `set-complete` | Set complete | A piece from every studio with an approved entry in a season (≥ 2 studios); per season |
 | `crowd-favourite` | Crowd favourite | Maker of the top-voted entry when the season closes |
+| `legend_hunter` | Legend hunter | A verified/approved claim on a maker's legendary |
 
 Badges are computed by `seasons.award_badges(conn, uid)` (called after claims, approvals and
 close-out) and live in `season_badges` (`season_id = 0` for the global ones). The catalogue,
@@ -173,11 +255,13 @@ status change, and a status set to what it already is posts nothing.
 | Method | Path | Auth | Returns |
 |---|---|---|---|
 | GET | `/api/seasons` | – | `{current, seasons[], badges, signed_in}` (non-draft) |
-| GET | `/api/seasons/{slug}` | – | season + approved entries (`vote_count`, `claim_count`, `image_url`, `mine`) + `my_votes` + `remaining_votes` + `can_vote` + `leaderboard` |
-| GET | `/api/seasons/{slug}/leaderboard` | – | `peoples_choice`, `most_collected`, `studios`, `collectors` |
+| GET | `/api/seasons/{slug}` | – | season (+ `legendaries_out`) + approved entries (`vote_count`, `claim_count`, `image_url`, `mine`, `rarity`, `points`, `solo`, `height_mm`) + `my_votes` + `remaining_votes` + `can_vote` + `leaderboard` + `awards` + `my_picks` |
+| GET | `/api/seasons/{slug}/leaderboard` | – | `peoples_choice`, `most_collected`, `studios`, `points`, `collectors` |
+| GET | `/api/seasons/{slug}/awards` | – | `{awards[], my_picks, can_vote, signed_in, legendaries_out}` — each award with `standings[]`, `leader`, `eligible[]` |
 | GET | `/api/seasons/{slug}/entries/{id}` | – | one entry (+ `voted` for the caller) |
-| POST | `/api/seasons/{slug}/entries` | sign-in | `{object_row_id, studio, edition_size, price_note, title}` → pending entry |
+| POST | `/api/seasons/{slug}/entries` | sign-in | `{object_row_id, studio, edition_size, price_note, title, solo, legendary, legend}` → pending entry |
 | POST | `/api/seasons/{slug}/vote` | sign-in | `{entry_id}` → `{voted, votes, remaining}`; 400 when capped/closed |
+| POST | `/api/seasons/{slug}/awards/{category_slug}/vote` | sign-in | `{entry_id}` → `{picked, entry_id, votes}`; swaps / toggles; 400 for your own piece |
 | POST | `/api/claims` | sign-in | `{object_row_id, confidence, report, location}` → claim row + `badges` (+ `note` when pending) |
 | GET | `/api/me/collection` | sign-in | `{collection[], badges[], all_badges, entries[]}` |
 | GET | `/api/me/claims` | sign-in | `{claims[], pending, confirm_in}` — claims on the pieces I published, pending first |
@@ -188,14 +272,18 @@ Python callers use the same functions: `central.seasons.{ensure, list_seasons, g
 current_season, create_season, set_status, close_season, season_object_rows, owns_object,
 enter, my_entries, entries, approve_entry, vote, my_votes, claim, set_claim_status,
 claims_on, claims_on_my_pieces, claim_counts, confirm_claim, collection, leaderboard,
-collectors, badges_for, award_badges, summary}`.
+collectors, badges_for, award_badges, summary, default_categories, parse_categories,
+add_categories, categories, get_category, award_vote, my_award_votes, awards, rarity_of,
+has_fingerprint, parse_height_mm, legendaries_out}`.
 
 ### Tables
 
-`seasons`, `season_entries` (UNIQUE season × object), `season_votes` (UNIQUE season × entry
-× voter), `season_claims` (UNIQUE object × collector), `season_badges` (UNIQUE uid × badge ×
-season). Created lazily by `seasons.ensure(conn)`; not registered in `_datasets`, so the
-generic read API never serves them — only the routes above do.
+`seasons`, `season_entries` (UNIQUE season × object; `solo`, `legendary`, `legend` flags),
+`season_votes` (UNIQUE season × entry × voter), `season_claims` (UNIQUE object × collector),
+`season_badges` (UNIQUE uid × badge × season), `season_categories` (UNIQUE season × slug),
+`season_award_votes` (UNIQUE season × category × voter). Created lazily by
+`seasons.ensure(conn)`, which also adds the entry flag columns to an older table; not
+registered in `_datasets`, so the generic read API never serves them — only the routes above do.
 
 ## What's next
 

@@ -7,6 +7,16 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Seasons: awards, rarity and rules (first draft)** — each season has award categories, voted
+  (Best stem, Best hook, Best colour…) or measured from the capture mat (Biggest pumpkin, and a
+  solo-made variant); one pick per award per person, no voting for your own piece. Every entry
+  has a rarity by rule: common, uncommon (fingerprinted), rare (fingerprinted edition of 3 or
+  fewer), legendary (the maker's one-of-one per season, with its legend written, revealed only
+  when a collector claims it; "N legendaries still out there" in the hero). Collector points
+  1 / 2 / 5 / 20 with a Points board and a Legend hunter badge; five entries per maker per
+  season. Rules of play on the page and in `docs/SEASONS.md`; admin presets per theme;
+  solo / legendary flags on the Glowtbook entry form; `GET /seasons/{slug}/awards`,
+  `POST /seasons/{slug}/awards/{category}/vote`.
 - **3D views (prototype)** — `/splat.html` shows a Gaussian splat of a piece, rotatable, with
   a procedural demo pumpkin so testers see it work before they own a scan. Makers train the
   splat on their own phone (Scaniverse, Polycam) or laptop (Brush, OpenSplat), crop it in

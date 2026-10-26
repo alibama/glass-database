@@ -21,13 +21,17 @@ def _conn():
     return c
 
 
-def _object(c, uid=None, title="Test Piece", maker="Tess Maker", approve=True, image=False):
-    """A public object. With `uid`, an object_submissions row says who published it."""
+def _object(c, uid=None, title="Test Piece", maker="Tess Maker", approve=True, image=False,
+            fingerprint=False, dims=""):
+    """A public object. With `uid`, an object_submissions row says who published it;
+    `fingerprint` puts a fingerprint on file, `dims` what the mat measured."""
     n = next(_N)
     rid, chash = f"obj-t-{n:04d}", f"hash-t-{n:04d}"
     c.execute("INSERT OR REPLACE INTO objects (_row_id,_source_file,_source_sheet,_imported_at,"
-              "title,maker,year,techniques,content_hash,manifest_json) VALUES (?,?,?,?,?,?,?,?,?,?)",
-              (rid, "test", "test", "2026", title, maker, "2026", "Blown", chash, "{}"))
+              "title,maker,year,techniques,content_hash,manifest_json,fingerprint_json,dimensions) "
+              "VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+              (rid, "test", "test", "2026", title, maker, "2026", "Blown", chash, "{}",
+               '{"rating": 80, "frames": []}' if fingerprint else None, dims or ""))
     if uid:
         c.execute("INSERT OR REPLACE INTO object_submissions (content_hash, submitted_uid, "
                   "submitted_by, title, status) VALUES (?,?,?,?,?)",
@@ -54,10 +58,12 @@ def _season(c, status="open", **kw):
     return S.create_season(c, status=status, **base)
 
 
-def _entry(c, sid, uid, studio="Studio A", approve=True, **kw):
+def _entry(c, sid, uid, studio="Studio A", approve=True, edition=5, solo=False, legendary=False,
+           legend="", **kw):
     rid, _ = _object(c, uid=uid, **kw)
     eid = S.enter(c, sid, object_row_id=rid, artist_uid=uid, artist_name=f"Maker {uid}",
-                  studio=studio, edition_size=5, price_note="$50")
+                  studio=studio, edition_size=edition, price_note="$50", solo=solo,
+                  legendary=legendary, legend=legend)
     if approve:
         S.approve_entry(c, eid, True)
     return eid, rid
@@ -66,8 +72,12 @@ def _entry(c, sid, uid, studio="Studio A", approve=True, **kw):
 # --- seasons ----------------------------------------------------------------------
 def test_ensure_create_list_current(demo_db):
     c = _conn()
-    for t in ("seasons", "season_entries", "season_votes", "season_claims", "season_badges"):
+    for t in ("seasons", "season_entries", "season_votes", "season_claims", "season_badges",
+              "season_categories", "season_award_votes"):
         assert c.execute("SELECT 1 FROM sqlite_master WHERE name=?", (t,)).fetchone()
+    cols = {r[1] for r in c.execute("PRAGMA table_info(season_entries)").fetchall()}
+    assert {"solo", "legendary", "legend"} <= cols
+    S.ensure(c)                                               # idempotent: the ALTERs are guarded
     draft = S.create_season(c, title="Draft Only!", starts="2040-01-01")
     sid = S.create_season(c, title="Future Pumpkins 2040", theme="t", starts="2040-10-01",
                           status="open", votes_per_voter=2)
@@ -341,6 +351,179 @@ def test_leaderboard_close_and_collectors(demo_db):
     assert sm["seasons"] >= 1 and sm["claims"] >= 3 and "pending_entries" in sm
 
 
+# --- awards, rarity, rules ----------------------------------------------------------------
+LEGEND = ("Blown on the last night of the residency, from the end of a cane pulled for "
+          "something else entirely. The twist runs the wrong way.")
+
+
+def test_default_categories_by_theme_and_parse(demo_db):
+    c = _conn()
+    sid = _season(c, theme="Blown-glass pumpkins from every shop")
+    cats = S.categories(c, sid)
+    assert [x["slug"] for x in cats] == ["best-stem", "best-colour", "biggest-pumpkin",
+                                         "biggest-pumpkin-solo"]
+    assert [x["kind"] for x in cats] == ["vote", "vote", "measured", "measured"]
+    assert cats[2]["measure"] == "height" and cats[2]["solo_only"] == 0 and cats[3]["solo_only"] == 1
+    orn = _season(c, theme="Heirloom ornaments")
+    assert [x["title"] for x in S.categories(c, orn)] == ["Best hook", "Best colour",
+                                                           "Most likely to survive the cat"]
+    other = _season(c, theme="Marbles")
+    assert [x["title"] for x in S.categories(c, other)] == ["Best in show", "Best colour"]
+    parsed = S.parse_categories("Best foot | vote\n\nTallest | measured | solo\nJust a title\n | vote\n"
+                                "Best colour | vote\nBest colour | VOTE")
+    assert parsed[:3] == [{"title": "Best foot", "kind": "vote", "measure": "", "solo_only": 0},
+                          {"title": "Tallest", "kind": "measured", "measure": "height", "solo_only": 1},
+                          {"title": "Just a title", "kind": "vote", "measure": "", "solo_only": 0}]
+    custom = _season(c, theme="Pumpkins", categories=parsed)
+    assert [x["slug"] for x in S.categories(c, custom)] == ["best-foot", "tallest", "just-a-title",
+                                                            "best-colour", "best-colour-2"]
+    assert S.categories_text(parsed).splitlines()[1] == "Tallest | measured | solo"
+    assert S.get_category(c, custom, "tallest")["kind"] == "measured"
+    assert S.get_category(c, custom, "nope") is None
+    demo = S.get_season(c, "pumpkin-patch-2026")               # the seed got the pumpkin set
+    assert {x["slug"] for x in S.categories(c, demo["id"])} >= {"best-stem", "biggest-pumpkin"}
+    with pytest.raises(ValueError):
+        S.add_categories(c, custom, [{"title": "Heaviest", "kind": "measured", "measure": "weight"}])
+
+
+def test_award_vote_replace_toggle_no_self_vote(demo_db):
+    c = _conn()
+    sid = _season(c, theme="pumpkins")
+    e1, _ = _entry(c, sid, "aw-a"); e2, _ = _entry(c, sid, "aw-b")
+    pend, _ = _entry(c, sid, "aw-c", approve=False)
+    stem = S.get_category(c, sid, "best-stem"); big = S.get_category(c, sid, "biggest-pumpkin")
+    with pytest.raises(ValueError):                           # sign in
+        S.award_vote(c, sid, stem["id"], e1, "")
+    with pytest.raises(ValueError, match="own piece"):        # never your own
+        S.award_vote(c, sid, stem["id"], e1, "aw-a")
+    with pytest.raises(ValueError, match="measured"):         # the mat decides
+        S.award_vote(c, sid, big["id"], e1, "v1")
+    with pytest.raises(ValueError):                           # pending entry
+        S.award_vote(c, sid, stem["id"], pend, "v1")
+    with pytest.raises(ValueError):                           # no such award
+        S.award_vote(c, sid, 999999, e1, "v1")
+    r = S.award_vote(c, sid, stem["id"], e1, "v1")
+    assert r["picked"] is True and r["votes"] == 1 and r["category_slug"] == "best-stem"
+    assert S.my_award_votes(c, sid, "v1") == {stem["id"]: e1}
+    r = S.award_vote(c, sid, stem["id"], e2, "v1")            # pick again = swap
+    assert r["picked"] is True and r["votes"] == 1 and S.my_award_votes(c, sid, "v1") == {stem["id"]: e2}
+    assert c.execute("SELECT COUNT(*) FROM season_award_votes WHERE category_id=? AND entry_id=?",
+                     (stem["id"], e1)).fetchone()[0] == 0
+    r = S.award_vote(c, sid, stem["id"], e2, "v1")            # same again = remove
+    assert r["picked"] is False and r["votes"] == 0 and S.my_award_votes(c, sid, "v1") == {}
+    S.award_vote(c, sid, stem["id"], e2, "v1"); S.award_vote(c, sid, stem["id"], e2, "v2")
+    S.award_vote(c, sid, stem["id"], e1, "v3")
+    aw = {a["slug"]: a for a in S.awards(c, sid)}
+    st = aw["best-stem"]["standings"]
+    assert [(s["entry_id"], s["votes"], s["rank"]) for s in st] == [(e2, 2, 1), (e1, 1, 2)]
+    assert aw["best-stem"]["leader"]["entry_id"] == e2 and "artist_uid" not in st[0]
+    assert aw["best-colour"]["standings"] == [] and aw["best-colour"]["leader"] is None
+    assert set(aw["best-stem"]["eligible"]) == {e1, e2}
+    # a solo-only vote award only takes solo entries
+    S.add_categories(c, sid, [{"title": "Best solo stem", "kind": "vote", "solo_only": 1}])
+    sc = S.get_category(c, sid, "best-solo-stem")
+    with pytest.raises(ValueError, match="solo"):
+        S.award_vote(c, sid, sc["id"], e1, "v1")
+    e3, _ = _entry(c, sid, "aw-d", solo=True)
+    assert S.award_vote(c, sid, sc["id"], e3, "v1")["picked"] is True
+    assert {a["slug"]: a["eligible"] for a in S.awards(c, sid)}["best-solo-stem"] == [e3]
+    S.set_status(c, sid, "voting")
+    assert S.award_vote(c, sid, stem["id"], e1, "v4")["picked"] is True
+    S.set_status(c, sid, "closed")
+    with pytest.raises(ValueError):
+        S.award_vote(c, sid, stem["id"], e1, "v9")
+
+
+def test_measured_award_ranks_by_mat_height(demo_db):
+    c = _conn()
+    sid = _season(c, theme="Pumpkin patch")
+    a, _ = _entry(c, sid, "m-a", fingerprint=True, dims="118 × 112 × 134 mm (W×D×H)", solo=True)
+    b, _ = _entry(c, sid, "m-b", fingerprint=True, dims="90 × 90 × 150.5 mm (W×D×H)")
+    unm, _ = _entry(c, sid, "m-c", fingerprint=True)         # never on the mat: not ranked
+    aw = {x["slug"]: x for x in S.awards(c, sid)}
+    assert [(s["entry_id"], s["height_mm"], s["rank"]) for s in aw["biggest-pumpkin"]["standings"]] \
+        == [(b, 150.5, 1), (a, 134.0, 2)]
+    assert [s["entry_id"] for s in aw["biggest-pumpkin-solo"]["standings"]] == [a]
+    assert aw["biggest-pumpkin"]["leader"]["entry_id"] == b
+    assert S.parse_height_mm("12 x 10 x 8 mm") == 8.0 and S.parse_height_mm("about 10 cm") is None
+    assert S.parse_height_mm("") is None and S.parse_height_mm(None) is None
+    es = {e["id"]: e for e in S.entries(c, sid)}
+    assert es[a]["height_mm"] == 134.0 and es[unm]["height_mm"] is None
+
+
+def test_legendary_rules(demo_db):
+    c = _conn()
+    sid = _season(c)
+    uid = "leg-maker"
+    plain, _ = _object(c, uid=uid)                            # no fingerprint
+    with pytest.raises(ValueError, match="edition of one"):
+        S.enter(c, sid, object_row_id=plain, artist_uid=uid, artist_name="L", edition_size=2,
+                legendary=True, legend=LEGEND)
+    with pytest.raises(ValueError, match="[Ff]ingerprint"):
+        S.enter(c, sid, object_row_id=plain, artist_uid=uid, artist_name="L", edition_size=1,
+                legendary=True, legend=LEGEND)
+    fp, _ = _object(c, uid=uid, fingerprint=True)
+    with pytest.raises(ValueError, match="legend"):
+        S.enter(c, sid, object_row_id=fp, artist_uid=uid, artist_name="L", edition_size=1,
+                legendary=True, legend="too short")
+    eid = S.enter(c, sid, object_row_id=fp, artist_uid=uid, artist_name="L", edition_size=1,
+                  legendary=True, legend=LEGEND)
+    e = S.get_entry(c, eid)
+    assert e["legendary"] == 1 and e["legend"] == LEGEND and e["fingerprinted"] is True
+    assert e["rarity"] == "rare"                              # not claimed: reads as its base rarity
+    fp2, _ = _object(c, uid=uid, fingerprint=True)
+    with pytest.raises(ValueError, match="[Oo]ne legendary"):
+        S.enter(c, sid, object_row_id=fp2, artist_uid=uid, artist_name="L", edition_size=1,
+                legendary=True, legend=LEGEND)
+    # not legendary: no legend is kept even if one was typed
+    e2 = S.get_entry(c, S.enter(c, sid, object_row_id=fp2, artist_uid=uid, artist_name="L", legend=LEGEND))
+    assert e2["legendary"] == 0 and e2["legend"] == "" and e2["solo"] == 0
+    # five entries per maker per season
+    for _ in range(3):
+        rid, _ = _object(c, uid=uid)
+        S.enter(c, sid, object_row_id=rid, artist_uid=uid, artist_name="L")
+    rid, _ = _object(c, uid=uid)
+    with pytest.raises(ValueError, match="entries per maker"):
+        S.enter(c, sid, object_row_id=rid, artist_uid=uid, artist_name="L")
+
+
+def test_rarity_points_legendaries_out_and_points_board(demo_db):
+    c = _conn()
+    sid = _season(c)
+    common, rc = _entry(c, sid, "r-a", edition=10)
+    unc, ru = _entry(c, sid, "r-b", edition=10, fingerprint=True)
+    rare, rr = _entry(c, sid, "r-c", edition=3, fingerprint=True)
+    leg, rl = _entry(c, sid, "r-d", edition=1, fingerprint=True, legendary=True, legend=LEGEND)
+    _entry(c, sid, "r-e", edition=1, fingerprint=True, legendary=True, legend=LEGEND, approve=False)
+    es = {e["id"]: e for e in S.entries(c, sid)}
+    assert [(es[i]["rarity"], es[i]["points"]) for i in (common, unc, rare, leg)] \
+        == [("common", 1), ("uncommon", 2), ("rare", 5), ("rare", 5)]
+    assert S.rarity_of({"edition_size": 1, "legendary": 1}, True, False) == "rare"
+    assert S.rarity_of({"edition_size": 1, "legendary": 1}, True, True) == "legendary"
+    assert S.rarity_of({"edition_size": 4}, True, False) == "uncommon"
+    assert S.rarity_of({"edition_size": 1}, False, True) == "common"
+    assert S.legendaries_out(c, sid) == 1                      # the pending one doesn't count
+    assert S.get_season(c, sid)["legendaries_out"] == 1
+    S.claim(c, object_row_id=rc, collector_uid="pc1", collector_name="Points One", confidence=90)
+    S.claim(c, object_row_id=rr, collector_uid="pc1", collector_name="Points One", confidence=90)
+    S.claim(c, object_row_id=ru, collector_uid="pc2", collector_name="Points Two", confidence=90)
+    low = S.claim(c, object_row_id=rl, collector_uid="pc2", collector_name="Points Two", confidence=40)
+    assert S.get_entry(c, leg)["rarity"] == "rare" and S.legendaries_out(c, sid) == 1   # pending claim
+    lb = S.leaderboard(c, sid)["points"]
+    assert [(h["collector_name"], h["points"], h["pieces"]) for h in lb] \
+        == [("Points One", 6, 2), ("Points Two", 2, 1)]
+    S.set_claim_status(c, low["id"], "approved")               # the maker / an admin confirms
+    e = S.get_entry(c, leg)
+    assert e["rarity"] == "legendary" and e["points"] == 20 and S.legendaries_out(c, sid) == 0
+    lb = S.leaderboard(c, sid)["points"]
+    assert [(h["collector_name"], h["points"], h["legendaries"], h["rank"]) for h in lb] \
+        == [("Points Two", 22, 1, 1), ("Points One", 6, 0, 2)]
+    assert "legend_hunter" in {b["badge"] for b in S.badges_for(c, "pc2")}
+    assert "legend_hunter" not in {b["badge"] for b in S.badges_for(c, "pc1")}
+    sm = S.summary(c)
+    assert sm["legendaries_out"] >= 0 and sm["award_votes"] >= 1          # the seed's pick
+
+
 # --- API ----------------------------------------------------------------------------------
 def _client():
     from api.main import app
@@ -415,6 +598,65 @@ def test_api_reads_votes_claims_collection_and_card(demo_db):
     assert Image.open(io.BytesIO(r.content)).size == (1080, 1350)
     pending_id = cl.get("/me/collection", headers=_auth()).json()["entries"][0]["id"]
     assert cl.get(f"/seasons/entries/{pending_id}/card.png").status_code == 404   # not approved
+
+
+def test_api_awards_and_legendary_hidden_until_claimed(demo_db):
+    c = _conn()
+    sid = _season(c, theme="pumpkins")
+    slug = S.get_season(c, sid)["slug"]
+    e1, _ = _entry(c, sid, "api-a", fingerprint=True, dims="100 × 100 × 120 mm (W×D×H)")
+    e2, r2 = _entry(c, sid, "api-b", edition=1, fingerprint=True, legendary=True, legend=LEGEND)
+    cl = _client()
+    d = cl.get(f"/seasons/{slug}").json()
+    assert d["legendaries_out"] == 1 and d["season"]["legendaries_out"] == 1
+    by = {e["id"]: e for e in d["entries"]}
+    assert by[e2]["rarity"] == "rare" and "legendary" not in by[e2] and "legend" not in by[e2]
+    assert by[e1]["rarity"] == "uncommon" and by[e1]["height_mm"] == 120 and by[e1]["points"] == 2
+    assert [a["slug"] for a in d["awards"]] == ["best-stem", "best-colour", "biggest-pumpkin",
+                                                "biggest-pumpkin-solo"]
+    assert d["my_picks"] == {} and d["leaderboard"]["points"] == []
+    mine = cl.get(f"/seasons/{slug}", headers=_auth("api-b", "b@example.com", "B")).json()
+    assert {e["id"]: e for e in mine["entries"]}[e2]["legendary"] == 1      # the maker sees it
+
+    assert cl.post(f"/seasons/{slug}/awards/best-stem/vote", json={"entry_id": e1}).status_code == 401
+    assert cl.post(f"/seasons/{slug}/awards/best-stem/vote", json={"entry_id": e1},
+                   headers=_auth("api-a")).status_code == 400                # own piece
+    assert cl.post(f"/seasons/{slug}/awards/no-such/vote", json={"entry_id": e1},
+                   headers=_auth()).status_code == 404
+    assert cl.post(f"/seasons/{slug}/awards/biggest-pumpkin/vote", json={"entry_id": e1},
+                   headers=_auth()).status_code == 400                       # measured
+    assert cl.post(f"/seasons/{slug}/awards/best-stem/vote", json={}, headers=_auth()).status_code == 400
+    r = cl.post(f"/seasons/{slug}/awards/best-stem/vote", json={"entry_id": e1}, headers=_auth())
+    assert r.status_code == 200 and r.json()["picked"] is True and r.json()["votes"] == 1
+    a = cl.get(f"/seasons/{slug}/awards", headers=_auth()).json()
+    assert a["my_picks"] == {"best-stem": e1} and a["can_vote"] is True
+    aw = {x["slug"]: x for x in a["awards"]}
+    assert aw["best-stem"]["leader"]["entry_id"] == e1 and aw["best-stem"]["leader"]["votes"] == 1
+    top = aw["biggest-pumpkin"]["standings"][0]
+    assert top["entry_id"] == e1 and top["height_mm"] == 120 and "artist_uid" not in top
+    r = cl.post(f"/seasons/{slug}/awards/best-stem/vote", json={"entry_id": e1}, headers=_auth())
+    assert r.json()["picked"] is False
+    assert cl.get(f"/seasons/{slug}/awards", headers=_auth()).json()["my_picks"] == {}
+
+    # entering over HTTP with the flags; validation errors come through as 400s
+    own, _ = _object(c, uid="u1", fingerprint=True)
+    r = cl.post(f"/seasons/{slug}/entries", json={"object_row_id": own, "edition_size": 1,
+                                                  "legendary": True, "legend": "short"}, headers=_auth())
+    assert r.status_code == 400 and "legend" in r.json()["detail"]
+    r = cl.post(f"/seasons/{slug}/entries", json={"object_row_id": own, "edition_size": 1, "solo": True,
+                                                  "legendary": True, "legend": LEGEND}, headers=_auth())
+    assert r.status_code == 200 and r.json()["entry"]["legendary"] == 1 and r.json()["entry"]["solo"] == 1
+
+    # a claim reveals the legendary to everyone and scores 20
+    r = cl.post("/claims", json={"object_row_id": r2, "confidence": 92},
+                headers=_auth("hunter", "h@example.com", "Hunter"))
+    assert r.status_code == 200 and "legend_hunter" in r.json()["badges"]
+    d = cl.get(f"/seasons/{slug}").json()
+    pub = {e["id"]: e for e in d["entries"]}[e2]
+    assert pub["rarity"] == "legendary" and pub["legendary"] == 1 and pub["legend"] == LEGEND
+    assert pub["points"] == 20 and d["legendaries_out"] == 0
+    pts = cl.get(f"/seasons/{slug}/leaderboard").json()["points"]
+    assert pts[0]["collector_name"] == "Hunter" and pts[0]["points"] == 20 and "collector_uid" not in pts[0]
 
 
 def test_api_me_claims_is_the_makers_inbox(demo_db):

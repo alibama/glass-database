@@ -127,14 +127,17 @@ def seed() -> str:
 DEMO_OBJECTS = [
     dict(row_id="obj-demo-0001", title="Harvest Pumpkin No. 4", maker="Rae Sutter", year="2026",
          colour=("orange", "#e8a44a"), uid="demo-maker-rae", studio="Blue Ridge Hot Glass",
-         edition=12, price="$85 at the studio shop"),
+         edition=12, price="$85 at the studio shop", dims="118 × 112 × 134 mm (W×D×H)"),
     dict(row_id="obj-demo-0002", title="Blue Heirloom Ornament", maker="Theo Park", year="2025",
          colour=("teal", "#5ec8bd"), uid="demo-maker-theo", studio="Tidewater Glassworks",
-         edition=20, price="$60, ships in the US"),
+         edition=20, price="$60, ships in the US", dims="72 × 72 × 96 mm (W×D×H)"),
     dict(row_id="obj-demo-0003", title="Reticello Tumbler", maker="Ivo Marchetti", year="2024",
          colour=("violet", "#967ad2"), uid="demo-maker-ivo", studio="Murano Vetro Collettivo",
-         edition=1, price=""),
+         edition=1, price="", dims=""),
 ]
+# the demo legendary's story (the collector who claims it reads this)
+DEMO_LEGEND = ("Blown on the last night of the Murano residency, from the end of a reticello cane "
+               "pulled for something else entirely. The twist runs the wrong way. There is one.")
 
 
 def _demo_png_b64(hex_colour: str) -> str:
@@ -167,7 +170,8 @@ def _seed_objects_and_season(c) -> None:
     # --- wipe what we own ---------------------------------------------------
     old = c.execute("SELECT id FROM seasons WHERE slug=?", ("pumpkin-patch-2026",)).fetchone()
     if old:
-        for t in ("season_votes", "season_claims", "season_entries", "season_badges"):
+        for t in ("season_votes", "season_award_votes", "season_categories", "season_claims",
+                  "season_entries", "season_badges"):
             c.execute(f"DELETE FROM {t} WHERE season_id=?", (old[0],))
         c.execute("DELETE FROM seasons WHERE id=?", (old[0],))
     c.execute("DELETE FROM season_claims WHERE object_row_id LIKE 'obj-demo-%' "
@@ -199,7 +203,7 @@ def _seed_objects_and_season(c) -> None:
              fingerprint_tier)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (o["row_id"], "demo-seed", "demo", NOW, o["title"], o["maker"], o["year"],
-             "Offhand Blown Glass", "Soda-lime glass", "",
+             "Offhand Blown Glass", "Soda-lime glass", o.get("dims") or "",
              f"Demo piece: {o['title']} by {o['maker']} — invented for the seed.",
              o["maker"], "studio", "", 0, json.dumps(manifest), chash, NOW,
              json.dumps(manifest["fingerprint"]), 82, "Strong"))
@@ -231,16 +235,28 @@ def _seed_objects_and_season(c) -> None:
               "straight away, anything lower waits for the artist or an admin. Three votes "
               "per person, swap them as often as you like until voting closes.",
         prize_note="Bragging rights, a homepage feature, and the Crowd Favourite badge")
+    # the theme ("pumpkin") gives the season its default award categories:
+    # Best stem · Best colour · Biggest pumpkin · Biggest pumpkin, solo (+ People's choice)
     entry_ids = []
-    for o in DEMO_OBJECTS[:2]:
+    for i, o in enumerate(DEMO_OBJECTS[:2]):
         eid = seasons.enter(c, sid, object_row_id=o["row_id"], artist_uid=o["uid"],
                             artist_name=o["maker"], title=o["title"], studio=o["studio"],
-                            edition_size=o["edition"], price_note=o["price"])
+                            edition_size=o["edition"], price_note=o["price"], solo=(i == 0))
         seasons.approve_entry(c, eid, True)
         entry_ids.append(eid)
+    # the legendary: Ivo's fingerprinted one-of-one with its legend — still out there
+    leg = DEMO_OBJECTS[2]
+    eid = seasons.enter(c, sid, object_row_id=leg["row_id"], artist_uid=leg["uid"],
+                        artist_name=leg["maker"], title=leg["title"], studio=leg["studio"],
+                        edition_size=1, price_note=leg["price"], legendary=True, legend=DEMO_LEGEND)
+    seasons.approve_entry(c, eid, True)
+    entry_ids.append(eid)
     for voter, eid in (("demo-voter-1", entry_ids[0]), ("demo-voter-2", entry_ids[0]),
                        ("demo-voter-3", entry_ids[0]), ("demo-voter-1", entry_ids[1])):
         seasons.vote(c, sid, eid, voter)
+    best_stem = seasons.get_category(c, sid, "best-stem")
+    if best_stem:
+        seasons.award_vote(c, sid, best_stem["id"], entry_ids[0], "demo-voter-2")
     seasons.claim(c, object_row_id=DEMO_OBJECTS[0]["row_id"], collector_uid="demo-collector",
                   collector_name="Demo Collector", confidence=91,
                   report={"verdict": "Match likely", "views": 4, "demo": True},

@@ -34,7 +34,43 @@
   .rules[open] summary::after { content: " –"; }
   .rules p { margin-top: .8rem; }
   .rules .k { color: var(--red); }
+  .hero .legend { margin-top: 1rem; font: 500 13px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--red); }
+  .hero .legend::before { content: "◆ "; }
   button.btn { background: var(--paper); cursor: pointer; }
+
+  /* rules of play */
+  .play { margin-top: 2.6rem; max-width: none; border-top: 1px solid var(--rule); padding-top: 1.2rem; }
+  .play .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; margin-top: 1.4rem; }
+  .play ol { list-style: none; margin: .8rem 0 0; padding: 0; counter-reset: r; }
+  .play ol li { counter-increment: r; display: grid; grid-template-columns: 2rem 1fr; gap: .4rem; padding: .6rem 0; border-top: 1px solid var(--rule); font-size: 15px; color: var(--ink-2); }
+  .play ol li::before { content: counter(r, decimal-leading-zero); font: 400 12px var(--mono); color: var(--red); padding-top: .2rem; }
+  .play .everyone { margin-top: 1.4rem; font-size: 15px; color: var(--ink-2); border-top: 1px solid var(--rule); padding-top: .8rem; }
+
+  /* rarity */
+  .pill.rar { border-color: var(--ink); color: var(--ink); }
+  .pill.rar.common { border-color: var(--rule); color: var(--muted); }
+  .pill.rar.legendary { background: var(--red); border-color: var(--red); color: #fff; }
+
+  /* awards */
+  .awards { margin-top: 1.5rem; border-top: 1px solid var(--ink); }
+  .award { display: grid; grid-template-columns: minmax(12rem, 1.1fr) 1.4fr minmax(16rem, 1.2fr); gap: .6rem 2rem; align-items: start; padding: 1.3rem 0; border-bottom: 1px solid var(--rule); }
+  .award h3 { margin: 0 0 .4rem; font-size: 1.45rem; }
+  .award .kind { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .award .kind b { color: var(--red); font-weight: 500; }
+  .award .lead { margin: 0; font-size: 16px; }
+  .award .lead small { display: block; color: var(--muted); font-size: 13px; margin-top: .2rem; }
+  .award .lead .val { font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); }
+  .award .lead .val b { color: var(--ink); font-weight: 500; }
+  .award .std { margin: .6rem 0 0; padding: 0; list-style: none; font: 400 12px/1.7 var(--mono); color: var(--muted); letter-spacing: .03em; }
+  .award .std b { color: var(--ink); font-weight: 500; }
+  .award .pick { display: flex; gap: .6rem; align-items: stretch; flex-wrap: wrap; }
+  .award select { flex: 1 1 10rem; min-width: 0; font: 400 14px var(--sans); color: var(--ink); background: var(--paper); border: 1px solid var(--ink); border-radius: 0; padding: .55rem .6rem; }
+  .award select:disabled { opacity: .5; }
+  .award .mine { margin: .5rem 0 0; font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); }
+  .award .mine b { color: var(--red); font-weight: 500; }
+  .award .note { margin: 0; font-size: 14px; color: var(--muted); }
+
+  /* how it works */
   button.link { background: none; border: 0; border-bottom: 1px solid currentColor; cursor: pointer; padding: 0 0 3px; }
 
   /* how it works */
@@ -100,7 +136,9 @@
     background: var(--ink); color: var(--paper); padding: .75rem 1.2rem; font: 400 14px var(--sans); transition: all .2s ease; z-index: 50; max-width: 90vw; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+  @media (max-width: 900px) { .award { grid-template-columns: 1fr 1fr; } .award .pick-cell { grid-column: 1 / -1; } .play .three { grid-template-columns: 1fr; } }
   @media (max-width: 680px) {
+    .award { grid-template-columns: 1fr; }
     .board .row { grid-template-columns: 2.4rem 1fr; }
     .board .val { grid-column: 2; }
     .past .row { grid-template-columns: 1fr; }
@@ -132,6 +170,7 @@
   <div class="status" id="heroStatus"></div>
   <p class="live" id="heroMeta" aria-live="polite"></p>
   <div class="btns" id="heroCta"></div>
+  <p class="legend" id="heroLegend" hidden></p>
   <details class="rules" id="heroRules" hidden><summary class="label">Rules &amp; prize</summary><p id="heroRulesText"></p></details>
  </div>
 </section>
@@ -159,6 +198,42 @@
     </ul>
    </div>
   </div>
+  <details class="rules play" id="playRules">
+   <summary class="label">Rules of play</summary>
+   <div class="three">
+    <div>
+     <p class="label">Makers</p>
+     <ol>
+      <li>Enter your own work, made for this season.</li>
+      <li>Up to five entries per season.</li>
+      <li>Fingerprint a piece before you enter it. That is what makes it Uncommon or better, and what the measured awards use.</li>
+      <li>One legendary per maker per season: an edition of one, fingerprinted, with its legend written. Don't say which piece it is — the collector finds out when they claim it.</li>
+      <li>You can't vote for your own pieces.</li>
+      <li>"Solo" means made without an assistant on the pipe. On your honour.</li>
+     </ol>
+    </div>
+    <div>
+     <p class="label">Collectors</p>
+     <ol>
+      <li>One pick per award, plus your People's choice votes.</li>
+      <li>A claim needs the piece in your hands (a fingerprint match) or the maker's confirmation.</li>
+      <li>One claim per piece per person.</li>
+      <li>Points: common 1 · uncommon 2 · rare 5 · legendary 20.</li>
+      <li>Complete a set — one piece from every studio in the season — for the badge.</li>
+     </ol>
+    </div>
+    <div>
+     <p class="label">Rarity</p>
+     <ol>
+      <li><span class="pill rar common">Common</span> any approved entry.</li>
+      <li><span class="pill rar">Uncommon</span> fingerprinted.</li>
+      <li><span class="pill rar">Rare</span> fingerprinted, edition of three or fewer.</li>
+      <li><span class="pill rar legendary">Legendary</span> the maker's one-of-one, revealed when it's claimed.</li>
+     </ol>
+    </div>
+   </div>
+   <p class="everyone"><span class="k" style="color:var(--red)">Everyone:</span> the game never handles money — buy from the maker. Admins can remove entries or claims that break the rules; disputes go to the <a href="https://discord.gg/9ek2UxvPT">Discord</a>.</p>
+  </details>
  </div>
 </section>
 
@@ -170,31 +245,40 @@
  </div>
 </section>
 
-<section class="s" id="boards" aria-labelledby="h-boards">
+<section class="s" id="awards" aria-labelledby="h-awards">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 04</span> Leaderboards</p>
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Awards</p>
+   <div><h2 id="h-awards">The <em>categories.</em></h2><p class="lede">One pick per award on top of your People's choice votes. Measured awards are settled by the fingerprint mat, not the crowd.</p></div></div>
+  <div class="awards" id="awardsBody"></div>
+ </div>
+</section>
+
+<section class="s alt" id="boards" aria-labelledby="h-boards">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Leaderboards</p>
    <div><h2 id="h-boards">Who's <em>ahead.</em></h2></div></div>
   <div class="tabs" role="tablist" id="tabs" aria-label="Leaderboards">
    <button role="tab" aria-selected="true" data-tab="peoples_choice">People's choice</button>
    <button role="tab" aria-selected="false" data-tab="most_collected">Most collected</button>
    <button role="tab" aria-selected="false" data-tab="studios">Studios</button>
+   <button role="tab" aria-selected="false" data-tab="points">Points</button>
    <button role="tab" aria-selected="false" data-tab="collectors">Collectors</button>
   </div>
   <div class="board" id="board" role="tabpanel"></div>
  </div>
 </section>
 
-<section class="s alt" id="mine" aria-labelledby="h-mine">
+<section class="s" id="mine" aria-labelledby="h-mine">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 05</span> My collection</p>
+  <div class="s-head"><p class="label"><span class="n">№ 06</span> My collection</p>
    <div><h2 id="h-mine">What you've <em>claimed.</em></h2></div></div>
   <div id="mineBody"></div>
  </div>
 </section>
 
-<section class="s" id="past" aria-labelledby="h-past">
+<section class="s alt" id="past" aria-labelledby="h-past">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 06</span> Past &amp; upcoming</p>
+  <div class="s-head"><p class="label"><span class="n">№ 07</span> Past &amp; upcoming</p>
    <div><h2 id="h-past">Other <em>seasons.</em></h2></div></div>
   <div class="two">
    <div>
@@ -212,9 +296,9 @@
  </div>
 </section>
 
-<section class="s alt" id="why" aria-labelledby="h-why">
+<section class="s" id="why" aria-labelledby="h-why">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 07</span> Why this exists</p>
+  <div class="s-head"><p class="label"><span class="n">№ 08</span> Why this exists</p>
    <div><h2 id="h-why">A reason to buy <em>from a working shop.</em></h2>
     <p class="lede">Independent glass artists need collectors who come back, and collectors want to know the piece on the shelf is the piece the maker made. Seasons are a reason to buy from a working shop this month, a way to prove what you own without a certificate in a drawer, and — quietly — a census of who is making what, where. No cash prizes, no entry fees: recognition, badges, a homepage feature, and a growing record of real glass in real collections. Data stays open under CC&nbsp;BY&nbsp;4.0.</p>
     <div class="btns"><a class="btn btn--line" href="https://discord.gg/9ek2UxvPT">Propose a season on Discord</a><a class="link" href="/events.html">See the events</a></div></div></div>
@@ -245,7 +329,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   var $ = function (s) { return document.querySelector(s); };
   var esc = GDB.esc;
   var S = { season: null, entries: [], myVotes: [], remaining: 0, canVote: false, signedIn: false,
-            lb: null, seasons: [], tab: "peoples_choice", me: null };
+            lb: null, seasons: [], tab: "peoples_choice", me: null, awards: [], myPicks: {}, legendOut: 0 };
   var ENTER_URL = "/glowtbook/?page=objects&tab=seasons";
   var VERIFY_URL = "/fingerprint/verify.html";
 
@@ -271,6 +355,9 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     return "";
   }
   function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
+  function pluralEntries(n) { return n + (n === 1 ? " entry" : " entries"); }
+  function rarityPill(r) { r = r || "common"; return '<span class="pill rar ' + esc(r) + '">' + esc(r) + "</span>"; }
+  function mm(h) { return (Math.round(h * 10) / 10) + " mm"; }
   function cardUrl(id) { return GDB.API + "/seasons/entries/" + id + "/card.png"; }
   function verifyUrl(rid) { return VERIFY_URL + "?object=" + encodeURIComponent(rid); }
   /* status -> paper pill: red while something is open, ink once it's closed */
@@ -284,6 +371,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       $("#heroLede").textContent = "The next call for artists goes out on the Discord — follow @glassdatabase. In the meantime, fingerprint the pieces you'd enter, and scan the ones you own.";
       $("#heroStatus").innerHTML = "";
       $("#heroMeta").innerHTML = "";
+      $("#heroLegend").hidden = true;
       $("#heroCta").innerHTML =
         '<a class="btn btn--red" href="https://discord.gg/9ek2UxvPT">Hear about the next one</a>' +
         '<a class="btn btn--line" href="' + VERIFY_URL + '">Scan a piece</a>';
@@ -307,6 +395,9 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     cta += '<a class="btn btn--line" href="' + VERIFY_URL + '">Scan to claim</a>';
     if (s.status !== "open") cta += '<a class="link" href="#boards">See the boards</a>';
     $("#heroCta").innerHTML = cta;
+    var n = S.legendOut || 0;
+    $("#heroLegend").hidden = !(n > 0);
+    $("#heroLegend").textContent = n > 0 ? (n === 1 ? "1 legendary still out there" : n + " legendaries still out there") : "";
     if (s.rules || s.prize_note) {
       $("#heroRules").hidden = false;
       $("#heroRulesText").innerHTML = esc(s.rules || "") + (s.prize_note ? '<br><br><span class="k">Prize:</span> ' + esc(s.prize_note) : "");
@@ -319,13 +410,16 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     var on = S.myVotes.indexOf(e.id) >= 0;
     var ed = e.edition_size > 1 ? "edition of " + e.edition_size : "one of one";
     var marks = (e.rank && e.rank <= 3 && e.vote_count > 0 ? '<span class="pill red rank">#' + e.rank + "</span>" : "") +
+      rarityPill(e.rarity) +
+      (e.solo ? '<span class="pill">solo</span>' : "") +
       (e.mine ? '<span class="pill ink mine">yours</span>' : "");
     return '<article class="card third" id="entry-' + e.id + '" data-id="' + e.id + '">' +
       '<div class="ph"><img src="' + esc(e.image_url) + '" alt="' + esc(e.title) + '" loading="lazy" onerror="this.style.opacity=.15"></div>' +
-      (marks ? '<div class="marks">' + marks + "</div>" : "") +
+      '<div class="marks">' + marks + "</div>" +
       "<h3>" + esc(e.title) + "</h3>" +
       '<p class="who">' + esc(e.artist_name || "") + (e.studio ? " · " + esc(e.studio) : "") + "</p>" +
-      '<p class="ed">' + esc(ed) + (e.price_note ? " · " + esc(e.price_note) : "") + "</p>" +
+      '<p class="ed">' + esc(ed) + (e.price_note ? " · " + esc(e.price_note) : "") + (e.height_mm ? " · " + esc(mm(e.height_mm)) + " tall" : "") + "</p>" +
+      (e.rarity === "legendary" && e.legend ? '<p class="who" style="font-style:italic;margin-top:.5rem">“' + esc(e.legend) + "”</p>" : "") +
       '<div class="acts">' +
         '<button class="vote' + (on ? " on" : "") + '" data-vote="' + e.id + '" aria-pressed="' + on + '"' + (S.canVote ? "" : " disabled") + ">" +
           (on ? "Voted" : "Vote") + ' <span class="n">' + e.vote_count + "</span></button>" +
@@ -394,6 +488,87 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       });
   }
 
+  /* --- awards ------------------------------------------------------- */
+  function entryById(id) { return S.entries.filter(function (x) { return x.id === id; })[0]; }
+  function awardRow(c) {
+    var kind = c.kind === "measured"
+      ? "<b>Measured</b> · " + esc((c.measure || "height").toUpperCase()) : "<b>Vote</b>";
+    if (c.solo_only) kind += " · solo";
+    var lead = "";
+    if (c.leader) {
+      var L = c.leader;
+      lead = '<p class="lead"><a href="#entry-' + L.entry_id + '" style="color:inherit">' + esc(L.title) + "</a>" +
+        "<small>" + esc(L.artist_name || "") + (L.studio ? " · " + esc(L.studio) : "") + "</small>" +
+        '<span class="val">' + (c.kind === "measured" ? "<b>" + esc(mm(L.height_mm)) + "</b> tall" : "<b>" + L.votes + "</b> " + (L.votes === 1 ? "pick" : "picks")) + "</span></p>";
+      var rest = (c.standings || []).slice(1, 5);
+      if (rest.length) lead += '<ul class="std">' + rest.map(function (s) {
+        return "<li>" + s.rank + " · <b>" + esc(s.title) + "</b> · " + (c.kind === "measured" ? esc(mm(s.height_mm)) : s.votes + (s.votes === 1 ? " pick" : " picks")) + "</li>"; }).join("") + "</ul>";
+    } else {
+      lead = '<p class="note">' + (c.kind === "measured"
+        ? (c.eligible && c.eligible.length ? "Nothing measured yet — a fingerprint captured on the mat sets the height." : "No eligible entries yet.")
+        : "No picks yet. Be the first.") + "</p>";
+    }
+    var ctl = "";
+    if (c.kind === "vote") {
+      var mine = S.myPicks[c.slug], opts = (c.eligible || []).map(entryById).filter(Boolean);
+      if (!opts.length) ctl = '<p class="note">Nothing to pick from yet.</p>';
+      else if (!S.canVote) ctl = '<p class="note">' + (S.season.status === "closed" ? "Settled — the standings are final." : "Picks open with the season.") + "</p>";
+      else if (!S.signedIn) ctl = '<p class="note"><a class="link" href="' + esc(GDB.loginUrl(location.pathname + location.search + "#awards")) + '">Sign in</a> to pick one.</p>';
+      else {
+        ctl = '<div class="pick"><select data-cat="' + esc(c.slug) + '" aria-label="Pick for ' + esc(c.title) + '">' +
+          '<option value="">— pick an entry —</option>' +
+          opts.map(function (e) { return '<option value="' + e.id + '"' + (mine === e.id ? " selected" : "") + ">" + esc(e.title) + (e.artist_name ? " — " + esc(e.artist_name) : "") + (e.mine ? " (yours)" : "") + "</option>"; }).join("") +
+          '</select><button class="vote' + (mine ? " on" : "") + '" data-pick="' + esc(c.slug) + '">' + (mine ? "Picked" : "Pick") + "</button></div>" +
+          (mine && entryById(mine) ? '<p class="mine">your pick: <b>' + esc(entryById(mine).title) + "</b> · pick it again to take it back</p>" : "");
+      }
+    } else {
+      ctl = '<p class="note">Ranked by the height the fingerprint mat measured. No votes — fingerprint it on the mat and it ranks itself.</p>';
+    }
+    return '<div class="award" id="award-' + esc(c.slug) + '"><div><h3>' + esc(c.title) + '</h3><p class="kind">' + kind + "</p></div>" +
+      "<div>" + lead + "</div>" + '<div class="pick-cell">' + ctl + "</div></div>";
+  }
+  function renderAwards() {
+    var el = $("#awardsBody");
+    if (!S.season) { el.innerHTML = '<div class="empty" style="margin-top:0;border:0;padding-left:0">Awards are set when a season opens.</div>'; return; }
+    if (!S.awards.length) { el.innerHTML = '<div class="empty" style="margin-top:0;border:0;padding-left:0">This season has no award categories beyond People\'s choice.</div>'; return; }
+    el.innerHTML = S.awards.map(awardRow).join("");
+    el.querySelectorAll("[data-pick]").forEach(function (b) {
+      b.addEventListener("click", function () { onPick(b.getAttribute("data-pick")); });
+    });
+    el.querySelectorAll("select[data-cat]").forEach(function (sel) {
+      sel.addEventListener("change", function () {
+        var slug = sel.getAttribute("data-cat"), b = el.querySelector('[data-pick="' + slug + '"]');
+        var same = S.myPicks[slug] && +sel.value === S.myPicks[slug];
+        b.textContent = same ? "Picked" : "Pick"; b.classList.toggle("on", !!same);
+      });
+    });
+  }
+  function onPick(slug) {
+    if (!S.signedIn) { location.href = GDB.loginUrl(location.pathname + location.search + "#awards"); return; }
+    var sel = document.querySelector('select[data-cat="' + slug + '"]'); if (!sel) return;
+    var id = +sel.value; if (!id) { toast("Choose an entry first."); return; }
+    var e = entryById(id); if (e && e.mine) { toast("Not your own piece — rule 5."); return; }
+    GDB.json("/seasons/" + encodeURIComponent(S.season.slug) + "/awards/" + encodeURIComponent(slug) + "/vote",
+      { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entry_id: id }) })
+      .then(function (r) {
+        if (r.picked) S.myPicks[slug] = id; else delete S.myPicks[slug];
+        toast(r.picked ? "Picked." : "Pick taken back.");
+        return refreshAwards();
+      })
+      .catch(function (err) {
+        if (err.status === 401) { location.href = GDB.loginUrl(location.pathname + location.search + "#awards"); return; }
+        toast(err.message || "That pick didn't go through.");
+      });
+  }
+  function refreshAwards() {
+    if (!S.season) return;
+    return GDB.json("/seasons/" + encodeURIComponent(S.season.slug) + "/awards").then(function (d) {
+      S.awards = d.awards || []; S.myPicks = d.my_picks || {}; S.legendOut = d.legendaries_out || 0;
+      renderAwards();
+      $("#heroLegend").hidden = !(S.legendOut > 0);
+    }).catch(function () {});
+  }
+
   /* --- boards ------------------------------------------------------- */
   function row(n, main, sub, val, href) {
     var inner = '<span class="num' + (n === 1 ? " top" : "") + '">' + n + "</span><p>" + main + (sub ? "<small>" + sub + "</small>" : "") + '</p><span class="val">' + val + "</span>";
@@ -407,11 +582,14 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       return row(e.rank, esc(e.title), esc(e.artist_name || "") + (e.studio ? " · " + esc(e.studio) : ""), "<b>" + e.claim_count + "</b> " + (e.claim_count === 1 ? "claim" : "claims"), "#entry-" + e.id); }).join("");
     else if (S.tab === "studios") html = list.map(function (s) {
       return row(s.rank, esc(s.studio), plural(s.entries, "entry").replace("entrys", "entries"), "<b>" + s.votes + "</b> votes · <b>" + s.claims + "</b> claims"); }).join("");
+    else if (S.tab === "points") html = list.map(function (c) {
+      return row(c.rank, esc(c.collector_name), plural(c.pieces, "piece") + (c.legendaries ? " · " + plural(c.legendaries, "legendary").replace("legendarys", "legendaries") : ""), "<b>" + c.points + "</b> " + (c.points === 1 ? "point" : "points")); }).join("");
     else if (S.tab === "collectors") html = list.map(function (c) {
       return row(c.rank, esc(c.collector_name), plural(c.studios, "studio") + " · " + plural(c.seasons, "season") + (c.badges ? " · " + plural(c.badges, "badge") : ""), "<b>" + c.pieces + "</b> " + (c.pieces === 1 ? "piece" : "pieces")); }).join("");
     var empty = { peoples_choice: "No votes yet. Be the first — it takes a tap.",
                   most_collected: "No verified claims yet. Buy one, scan it, claim it.",
                   studios: "No studios on the board until entries are approved.",
+                  points: "Points come with claims: common 1 · uncommon 2 · rare 5 · legendary 20.",
                   collectors: "The collectors' board fills as pieces are scanned and claimed — across every season." }[S.tab];
     b.innerHTML = html || '<div class="empty">' + empty + "</div>";
   }
@@ -511,12 +689,13 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     return GDB.json("/seasons").then(function (all) {
       S.seasons = all.seasons || [];
       var pick = want || (all.current && all.current.slug);
-      if (!pick) { S.season = null; renderHero(); renderEntries(); renderBoards(); renderPast(S.seasons, null); return; }
+      if (!pick) { S.season = null; renderHero(); renderEntries(); renderAwards(); renderBoards(); renderPast(S.seasons, null); return; }
       return GDB.json("/seasons/" + encodeURIComponent(pick)).then(function (d) {
         S.season = d.season; S.entries = d.entries || []; S.myVotes = d.my_votes || []; S.remaining = d.remaining_votes || 0;
         S.canVote = !!d.can_vote; S.signedIn = !!d.signed_in; S.lb = d.leaderboard || null;
+        S.awards = d.awards || []; S.myPicks = d.my_picks || {}; S.legendOut = d.legendaries_out || 0;
         document.title = d.season.title + " — Seasons — Glass Database";
-        renderHero(); renderEntries(); renderBoards(); renderPast(S.seasons, d.season.slug); deepLink();
+        renderHero(); renderEntries(); renderAwards(); renderBoards(); renderPast(S.seasons, d.season.slug); deepLink();
       }).catch(function (err) {
         if (err.status === 404 && want) { history.replaceState(null, "", location.pathname); return load(); }
         throw err;
