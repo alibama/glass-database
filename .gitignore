@@ -27,6 +27,7 @@ data/glowtbook_demo.db-*
 data/glowtbook_media/
 data/dip_media/
 data/aip_bags/
+data/splat_media/
 data/c2pa/            # self-signed test cert + PRIVATE signing key
 
 # OS / editor
