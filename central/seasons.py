@@ -22,8 +22,20 @@ independent maker, and every season is a voluntary census of who made what.
 Discord nudges (``central.notify``, best effort — never raise) go out when a
 claim lands on someone's piece and when a season opens or starts voting.
 
+**Awards, rarity and rules** (a first, small draft). Every season has the implicit
+People's choice board (``season_votes``) plus a handful of **award categories**
+(``season_categories``): *vote* kinds ("Best stem") take one pick per voter per
+category (``season_award_votes``; pick again to swap, pick the same to remove,
+never your own piece); *measured* kinds ("Biggest pumpkin") rank entries by the
+height the fingerprint mat measured onto the object. Entries carry **rarity**:
+common (1 pt) → uncommon (2, fingerprinted) → rare (5, fingerprinted and an
+edition of ≤ 3) → legendary (20): a maker's one edition-of-one per season with a
+legend written, which only shows as legendary once a collector has claimed it.
+Collectors score the points of what they hold (the ``points`` board).
+
 Tables (names are a contract with the API, Glowtbook and the verify app):
-  seasons, season_entries, season_votes, season_claims, season_badges
+  seasons, season_entries, season_votes, season_claims, season_badges,
+  season_categories, season_award_votes
 """
 from __future__ import annotations
 
@@ -41,6 +53,15 @@ CLAIM_OK = ("verified", "approved")          # the claims that count on the boar
 VERIFIED_CONFIDENCE = 70.0                   # verify.html: >= 70 with >= 3 views = "Match likely"
 IMAGE_URL = "/api/objects/{row_id}/image"
 GLOBAL = 0                                   # season_id for badges that aren't per-season
+
+# awards + rarity
+CATEGORY_KINDS = ("vote", "measured")
+MEASURES = ("height",)                       # mm, from the fingerprint mat (matdetect)
+AWARD_TOP = 5                                # standings shown per vote category
+RARITY_POINTS = {"common": 1, "uncommon": 2, "rare": 5, "legendary": 20}
+RARE_EDITION = 3                             # fingerprinted + edition_size <= this = rare
+LEGEND_MIN = 40                              # characters a legend needs
+MAX_ENTRIES = 5                              # per maker per season
 
 BADGES = {
     "first-scan": {
@@ -61,6 +82,9 @@ BADGES = {
     "crowd-favourite": {
         "label": "Crowd favourite",
         "blurb": "The most-voted piece of the season. Hang this somewhere people will ask about it."},
+    "legend_hunter": {
+        "label": "Legend hunter",
+        "blurb": "You found a legendary — the one-of-one the maker never pointed at. Now you know its story."},
 }
 
 
@@ -139,13 +163,31 @@ def ensure(conn) -> None:
     conn.execute("""CREATE TABLE IF NOT EXISTS season_badges (
         id INTEGER PRIMARY KEY, uid TEXT NOT NULL, badge TEXT NOT NULL,
         season_id INTEGER DEFAULT 0, awarded_at TEXT, UNIQUE(uid, badge, season_id))""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS season_categories (
+        id INTEGER PRIMARY KEY, season_id INTEGER NOT NULL, slug TEXT NOT NULL, title TEXT NOT NULL,
+        kind TEXT DEFAULT 'vote',             -- vote|measured
+        measure TEXT DEFAULT '',              -- 'height' (mm) for measured kinds
+        solo_only INTEGER DEFAULT 0, sort INTEGER DEFAULT 0,
+        UNIQUE(season_id, slug))""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS season_award_votes (
+        id INTEGER PRIMARY KEY, season_id INTEGER NOT NULL, category_id INTEGER NOT NULL,
+        entry_id INTEGER NOT NULL, voter_uid TEXT NOT NULL, created_at TEXT,
+        UNIQUE(season_id, category_id, voter_uid))""")
+    # entry flags added after the first deploy: guarded, so re-running is a no-op
+    have = {r[1] for r in conn.execute("PRAGMA table_info(season_entries)").fetchall()}
+    for col, decl in (("solo", "INTEGER DEFAULT 0"), ("legendary", "INTEGER DEFAULT 0"),
+                      ("legend", "TEXT DEFAULT ''")):
+        if col not in have:
+            conn.execute(f"ALTER TABLE season_entries ADD COLUMN {col} {decl}")
     for ddl in ("CREATE INDEX IF NOT EXISTS ix_sentries_season ON season_entries(season_id, status)",
                 "CREATE INDEX IF NOT EXISTS ix_sentries_artist ON season_entries(artist_uid)",
                 "CREATE INDEX IF NOT EXISTS ix_svotes_entry ON season_votes(entry_id)",
                 "CREATE INDEX IF NOT EXISTS ix_svotes_voter ON season_votes(season_id, voter_uid)",
                 "CREATE INDEX IF NOT EXISTS ix_sclaims_obj ON season_claims(object_row_id, status)",
                 "CREATE INDEX IF NOT EXISTS ix_sclaims_uid ON season_claims(collector_uid)",
-                "CREATE INDEX IF NOT EXISTS ix_sbadges_uid ON season_badges(uid)"):
+                "CREATE INDEX IF NOT EXISTS ix_sbadges_uid ON season_badges(uid)",
+                "CREATE INDEX IF NOT EXISTS ix_scats_season ON season_categories(season_id, sort)",
+                "CREATE INDEX IF NOT EXISTS ix_sawards_cat ON season_award_votes(category_id, entry_id)"):
         conn.execute(ddl)
     conn.commit()
 
@@ -156,7 +198,11 @@ _SEASON_SQL = """SELECT s.*,
         AS entry_count,
     (SELECT COUNT(*) FROM season_votes v WHERE v.season_id=s.id) AS vote_count,
     (SELECT COUNT(*) FROM season_claims c WHERE c.season_id=s.id
-        AND c.status IN ('verified','approved')) AS claim_count
+        AND c.status IN ('verified','approved')) AS claim_count,
+    (SELECT COUNT(*) FROM season_entries e WHERE e.season_id=s.id AND e.status='approved'
+        AND e.legendary=1 AND NOT EXISTS (SELECT 1 FROM season_claims c
+            WHERE c.object_row_id=e.object_row_id AND c.status IN ('verified','approved')))
+        AS legendaries_out
     FROM seasons s"""
 
 
@@ -190,7 +236,10 @@ def current_season(conn) -> dict | None:
 def create_season(conn, *, title: str, slug: str | None = None, theme: str = "",
                   description: str = "", starts: str = "", entries_close: str = "",
                   voting_closes: str = "", ends: str = "", rules: str = "", prize_note: str = "",
-                  votes_per_voter: int = 3, status: str = "draft") -> int:
+                  votes_per_voter: int = 3, status: str = "draft",
+                  categories: list[dict] | None = None) -> int:
+    """Create a season. `categories` is a list of {title, kind, measure, solo_only};
+    when none are given the theme picks the defaults (``default_categories``)."""
     title = (title or "").strip()
     if not title:
         raise ValueError("a season needs a title")
@@ -207,8 +256,99 @@ def create_season(conn, *, title: str, slug: str | None = None, theme: str = "",
         (slug, title, theme or "", description or "", starts or "", entries_close or "",
          voting_closes or "", ends or "", status, rules or "", prize_note or "",
          max(1, int(votes_per_voter or 3)), _now()))
+    sid = int(cur.lastrowid)
+    add_categories(conn, sid, categories or default_categories(theme))
     conn.commit()
-    return int(cur.lastrowid)
+    return sid
+
+
+# --- award categories -----------------------------------------------------------
+def default_categories(theme: str) -> list[dict]:
+    """The award categories a theme gets when the admin doesn't say otherwise.
+    People's choice is implicit (season_votes) and never listed here."""
+    t = (theme or "").lower()
+    if "pumpkin" in t:
+        return [{"title": "Best stem", "kind": "vote"},
+                {"title": "Best colour", "kind": "vote"},
+                {"title": "Biggest pumpkin", "kind": "measured", "measure": "height"},
+                {"title": "Biggest pumpkin, solo", "kind": "measured", "measure": "height",
+                 "solo_only": 1}]
+    if "ornament" in t:
+        return [{"title": "Best hook", "kind": "vote"},
+                {"title": "Best colour", "kind": "vote"},
+                {"title": "Most likely to survive the cat", "kind": "vote"}]
+    return [{"title": "Best in show", "kind": "vote"}, {"title": "Best colour", "kind": "vote"}]
+
+
+def parse_categories(text: str) -> list[dict]:
+    """One category per line: ``title | vote`` or ``title | measured [height] [| solo]``.
+    Anything unrecognised in the kind column means a vote category."""
+    out: list[dict] = []
+    for line in (text or "").splitlines():
+        parts = [p.strip() for p in line.split("|")]
+        title = parts[0] if parts else ""
+        if not title:
+            continue
+        rest = [p.lower() for p in parts[1:]]
+        kind = "measured" if any(p.startswith("measured") for p in rest) else "vote"
+        measure = "height" if kind == "measured" else ""
+        solo = int(any(p == "solo" or p.startswith("solo") for p in rest))
+        out.append({"title": title[:120], "kind": kind, "measure": measure, "solo_only": solo})
+    return out
+
+
+def categories_text(cats: list[dict]) -> str:
+    """The inverse of parse_categories — what the admin textarea is prefilled with."""
+    lines = []
+    for c in cats or []:
+        bits = [c["title"], c.get("kind") or "vote"]
+        if c.get("solo_only"):
+            bits.append("solo")
+        lines.append(" | ".join(bits))
+    return "\n".join(lines)
+
+
+def add_categories(conn, season_id: int, cats: list[dict]) -> list[int]:
+    """Append award categories to a season (slugs made unique within it)."""
+    ids: list[int] = []
+    taken = {r[0] for r in conn.execute("SELECT slug FROM season_categories WHERE season_id=?",
+                                        (int(season_id),)).fetchall()}
+    n0 = conn.execute("SELECT COALESCE(MAX(sort),0) FROM season_categories WHERE season_id=?",
+                      (int(season_id),)).fetchone()[0]
+    for i, c in enumerate(cats or [], 1):
+        title = (c.get("title") or "").strip()
+        if not title:
+            continue
+        kind = c.get("kind") if c.get("kind") in CATEGORY_KINDS else "vote"
+        measure = (c.get("measure") or ("height" if kind == "measured" else "")) if kind == "measured" else ""
+        if kind == "measured" and measure not in MEASURES:
+            raise ValueError(f"measure must be one of {MEASURES}")
+        base = slugify(title)
+        slug, k = base, 2
+        while slug in taken:
+            slug = f"{base}-{k}"; k += 1
+        taken.add(slug)
+        cur = conn.execute(
+            "INSERT INTO season_categories (season_id, slug, title, kind, measure, solo_only, sort) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (int(season_id), slug, title[:120], kind, measure, int(bool(c.get("solo_only"))),
+             int(n0) + i))
+        ids.append(int(cur.lastrowid))
+    conn.commit()
+    return ids
+
+
+def categories(conn, season_id: int) -> list[dict]:
+    return _rows(conn.execute("SELECT * FROM season_categories WHERE season_id=? ORDER BY sort, id",
+                              (int(season_id),)))
+
+
+def get_category(conn, season_id: int, slug_or_id) -> dict | None:
+    if isinstance(slug_or_id, int) or (isinstance(slug_or_id, str) and slug_or_id.isdigit()):
+        return _one(conn.execute("SELECT * FROM season_categories WHERE season_id=? AND id=?",
+                                 (int(season_id), int(slug_or_id))))
+    return _one(conn.execute("SELECT * FROM season_categories WHERE season_id=? AND slug=?",
+                             (int(season_id), str(slug_or_id or ""))))
 
 
 def set_status(conn, season_id: int, status: str) -> None:
@@ -352,21 +492,95 @@ _ENTRY_SQL = """SELECT e.*, s.slug AS season_slug, s.title AS season_title, s.th
     FROM season_entries e JOIN seasons s ON s.id=e.season_id"""
 
 
-def _entry_shape(e: dict) -> dict:
+_DIMS_RE = re.compile(r"^\s*([\d.]+)\s*[×x*]\s*([\d.]+)\s*[×x*]\s*([\d.]+)\s*mm", re.I)
+
+
+def parse_height_mm(dimensions: str | None) -> float | None:
+    """Height from the string the fingerprint mat writes onto an object
+    (``glowtbook.matdetect``: ``"118 × 112 × 134 mm (W×D×H)"``). None when the
+    piece was never measured, or the text isn't in that shape."""
+    m = _DIMS_RE.match(dimensions or "")
+    if not m:
+        return None
+    try:
+        h = float(m.group(3))
+    except ValueError:
+        return None
+    return h if h > 0 else None
+
+
+def _fp_present(fp_json, manifest_json) -> bool:
+    return bool(fp_json) or '"fingerprint"' in (manifest_json or "")
+
+
+def _object_facts(conn, row_ids) -> dict[str, dict]:
+    """{row_id: {fingerprint, height_mm, dimensions}} for public objects: whether
+    a fingerprint is on file and what the mat measured."""
+    ids = sorted({r for r in (row_ids or []) if r})
+    out = {rid: {"fingerprint": False, "height_mm": None, "dimensions": ""} for rid in ids}
+    if not ids or not _has_table(conn, "objects"):
+        return out
+    try:
+        for i in range(0, len(ids), 400):
+            chunk = ids[i:i + 400]
+            q = ",".join("?" for _ in chunk)
+            for r in conn.execute(f"SELECT _row_id, fingerprint_json, manifest_json, dimensions "
+                                  f"FROM objects WHERE _row_id IN ({q})", chunk).fetchall():
+                out[r[0]] = {"fingerprint": _fp_present(r[1], r[2]),
+                             "height_mm": parse_height_mm(r[3]), "dimensions": r[3] or ""}
+    except Exception:  # noqa: BLE001  (an older objects table without the columns)
+        pass
+    return out
+
+
+def has_fingerprint(conn, object_row_id: str) -> bool:
+    """Is a re-identification fingerprint on file for this public piece?"""
+    return bool(_object_facts(conn, [object_row_id]).get(object_row_id, {}).get("fingerprint"))
+
+
+def rarity_of(entry: dict, has_fingerprint: bool, claimed: bool) -> str:
+    """common → uncommon (fingerprinted) → rare (fingerprinted, edition ≤ 3) →
+    legendary (flagged *and* claimed — until then it reads as its base rarity)."""
+    if entry.get("legendary") and claimed:
+        return "legendary"
+    if has_fingerprint and int(entry.get("edition_size") or 1) <= RARE_EDITION:
+        return "rare"
+    if has_fingerprint:
+        return "uncommon"
+    return "common"
+
+
+def _entry_shape(e: dict, fact: dict | None = None) -> dict:
+    fact = fact or {}
     e["image_url"] = e.get("image_url") or object_image_url(e["object_row_id"])
     e["edition_size"] = int(e.get("edition_size") or 1)
+    e["solo"] = int(e.get("solo") or 0)
+    e["legendary"] = int(e.get("legendary") or 0)
+    e["legend"] = e.get("legend") or ""
+    e["fingerprinted"] = bool(fact.get("fingerprint"))
+    e["height_mm"] = fact.get("height_mm")
+    e["rarity"] = rarity_of(e, e["fingerprinted"], int(e.get("claim_count") or 0) > 0)
+    e["points"] = RARITY_POINTS[e["rarity"]]
     return e
+
+
+def _shaped(conn, rows: list[dict]) -> list[dict]:
+    facts = _object_facts(conn, [r["object_row_id"] for r in rows])
+    return [_entry_shape(e, facts.get(e["object_row_id"])) for e in rows]
 
 
 def get_entry(conn, entry_id: int) -> dict | None:
     e = _one(conn.execute(_ENTRY_SQL + " WHERE e.id=?", (int(entry_id),)))
-    return _entry_shape(e) if e else None
+    return _shaped(conn, [e])[0] if e else None
 
 
 def enter(conn, season_id: int, *, object_row_id: str, artist_uid: str, artist_name: str,
           title: str = "", studio: str = "", edition_size: int = 1, price_note: str = "",
-          image_url: str = "") -> int:
-    """Enter a public piece into a season. Pending until an admin approves it."""
+          image_url: str = "", solo: bool = False, legendary: bool = False,
+          legend: str = "") -> int:
+    """Enter a public piece into a season. Pending until an admin approves it.
+    Up to MAX_ENTRIES per maker per season. A *legendary* is the maker's one
+    edition-of-one per season: fingerprinted, with a legend of LEGEND_MIN+ chars."""
     season = get_season(conn, int(season_id))
     if not season:
         raise ValueError("No such season")
@@ -380,13 +594,34 @@ def enter(conn, season_id: int, *, object_row_id: str, artist_uid: str, artist_n
     if conn.execute("SELECT 1 FROM season_entries WHERE season_id=? AND object_row_id=?",
                     (season["id"], object_row_id)).fetchone():
         raise ValueError("That piece is already entered in this season")
+    mine = _rows(conn.execute(
+        "SELECT legendary FROM season_entries WHERE season_id=? AND artist_uid=? AND status<>'rejected'",
+        (season["id"], artist_uid)))
+    if len(mine) >= MAX_ENTRIES:
+        raise ValueError(f"Up to {MAX_ENTRIES} entries per maker per season — that's the lot")
+    ed = max(1, int(edition_size or 1))
+    legend = (legend or "").strip()
+    if legendary:
+        if ed != 1:
+            raise ValueError("A legendary has to be an edition of one")
+        if not has_fingerprint(conn, object_row_id):
+            raise ValueError("Fingerprint the piece before you make it your legendary — "
+                             "that's how its collector proves they found it")
+        if len(legend) < LEGEND_MIN:
+            raise ValueError(f"Write its legend — at least {LEGEND_MIN} characters; the collector "
+                             "who claims it reads this")
+        if any(int(m.get("legendary") or 0) for m in mine):
+            raise ValueError("One legendary per maker per season — you've already placed yours")
+    else:
+        legend = ""
     cur = conn.execute(
         """INSERT INTO season_entries (season_id,object_row_id,artist_uid,artist_name,studio,title,
-           edition_size,price_note,image_url,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+           edition_size,price_note,image_url,status,created_at,solo,legendary,legend)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (season["id"], object_row_id, artist_uid, (artist_name or obj.get("maker") or "")[:200],
          (studio or "")[:200], (title or obj.get("title") or "Untitled")[:200],
-         max(1, int(edition_size or 1)), (price_note or "")[:200],
-         image_url or object_image_url(object_row_id), "pending", _now()))
+         ed, (price_note or "")[:200], image_url or object_image_url(object_row_id), "pending",
+         _now(), int(bool(solo)), int(bool(legendary)), legend[:2000]))
     conn.commit()
     return int(cur.lastrowid)
 
@@ -394,23 +629,34 @@ def enter(conn, season_id: int, *, object_row_id: str, artist_uid: str, artist_n
 def my_entries(conn, uid: str) -> list[dict]:
     rows = _rows(conn.execute(_ENTRY_SQL + " WHERE e.artist_uid=? ORDER BY e.created_at DESC, e.id DESC",
                               (uid,)))
-    return [_entry_shape(e) for e in rows]
+    return _shaped(conn, rows)
 
 
 def entries(conn, season_id: int, status: str | None = "approved") -> list[dict]:
     """Entries of a season (approved by default; None = every status), each with
-    vote_count, claim_count and image_url."""
+    vote_count, claim_count, image_url, rarity and points."""
     where, params = ["e.season_id=?"], [int(season_id)]
     if status:
         where.append("e.status=?"); params.append(status)
     rows = _rows(conn.execute(_ENTRY_SQL + " WHERE " + " AND ".join(where)
                               + " ORDER BY e.created_at, e.id", params))
-    return [_entry_shape(e) for e in rows]
+    return _shaped(conn, rows)
 
 
 def pending_entries(conn) -> list[dict]:
     rows = _rows(conn.execute(_ENTRY_SQL + " WHERE e.status='pending' ORDER BY e.created_at, e.id"))
-    return [_entry_shape(e) for e in rows]
+    return _shaped(conn, rows)
+
+
+def legendaries_out(conn, season_id: int | None = None) -> int:
+    """Approved legendaries nobody has claimed yet — "still out there"."""
+    sql = """SELECT COUNT(*) FROM season_entries e WHERE e.status='approved' AND e.legendary=1
+             AND NOT EXISTS (SELECT 1 FROM season_claims c WHERE c.object_row_id=e.object_row_id
+                             AND c.status IN ('verified','approved'))"""
+    params: tuple = ()
+    if season_id is not None:
+        sql += " AND e.season_id=?"; params = (int(season_id),)
+    return int(conn.execute(sql, params).fetchone()[0])
 
 
 def approve_entry(conn, entry_id: int, ok: bool = True) -> None:
@@ -469,6 +715,99 @@ def vote(conn, season_id: int, entry_id: int, voter_uid: str) -> dict:
     total = conn.execute("SELECT COUNT(*) FROM season_votes WHERE entry_id=?",
                          (int(entry_id),)).fetchone()[0]
     return {"voted": voted, "votes": int(total), "remaining": max(0, remaining)}
+
+
+# --- award votes --------------------------------------------------------------------
+def my_award_votes(conn, season_id: int, uid: str) -> dict[int, int]:
+    """{category_id: entry_id} — the caller's one pick per category."""
+    if not uid:
+        return {}
+    return {int(r[0]): int(r[1]) for r in conn.execute(
+        "SELECT category_id, entry_id FROM season_award_votes WHERE season_id=? AND voter_uid=?",
+        (int(season_id), uid)).fetchall()}
+
+
+def award_vote(conn, season_id: int, category_id: int, entry_id: int, voter_uid: str) -> dict:
+    """One pick per category per voter. Picking again swaps; picking the same entry
+    again removes the pick. Never your own piece. Returns
+    {"picked": bool, "entry_id", "votes": <that entry's picks in the category>}."""
+    if not voter_uid:
+        raise ValueError("Sign in to pick")
+    season = get_season(conn, int(season_id))
+    if not season:
+        raise ValueError("No such season")
+    if season["status"] not in ("open", "voting"):
+        raise ValueError("Voting is closed for this season")
+    cat = get_category(conn, season["id"], int(category_id))
+    if not cat:
+        raise ValueError("No such award")
+    if cat["kind"] != "vote":
+        raise ValueError(f"“{cat['title']}” is measured, not voted — the mat decides")
+    e = _one(conn.execute("SELECT id, status, artist_uid, solo FROM season_entries WHERE id=? AND season_id=?",
+                          (int(entry_id), season["id"])))
+    if not e or e["status"] != "approved":
+        raise ValueError("That entry isn't open for votes")
+    if e.get("artist_uid") and e["artist_uid"] == voter_uid:
+        raise ValueError("You can't pick your own piece — rule 5")
+    if cat.get("solo_only") and not int(e.get("solo") or 0):
+        raise ValueError(f"“{cat['title']}” is for pieces made solo")
+    prev = _one(conn.execute(
+        "SELECT id, entry_id FROM season_award_votes WHERE season_id=? AND category_id=? AND voter_uid=?",
+        (season["id"], cat["id"], voter_uid)))
+    if prev and int(prev["entry_id"]) == int(entry_id):
+        conn.execute("DELETE FROM season_award_votes WHERE id=?", (prev["id"],))
+        picked = False
+    elif prev:
+        conn.execute("UPDATE season_award_votes SET entry_id=?, created_at=? WHERE id=?",
+                     (int(entry_id), _now(), prev["id"]))
+        picked = True
+    else:
+        conn.execute("INSERT INTO season_award_votes (season_id, category_id, entry_id, voter_uid, "
+                     "created_at) VALUES (?,?,?,?,?)",
+                     (season["id"], cat["id"], int(entry_id), voter_uid, _now()))
+        picked = True
+    conn.commit()
+    n = conn.execute("SELECT COUNT(*) FROM season_award_votes WHERE category_id=? AND entry_id=?",
+                     (cat["id"], int(entry_id))).fetchone()[0]
+    return {"picked": picked, "entry_id": int(entry_id), "category_id": int(cat["id"]),
+            "category_slug": cat["slug"], "votes": int(n)}
+
+
+def _standing(e: dict) -> dict:
+    return {"entry_id": e["id"], "title": e["title"], "artist_name": e.get("artist_name") or "",
+            "studio": e.get("studio") or "", "image_url": e["image_url"], "rarity": e["rarity"]}
+
+
+def awards(conn, season_id: int) -> list[dict]:
+    """Every award category with its standings. Vote kinds: the top AWARD_TOP
+    entries by picks. Measured kinds: every eligible entry whose object carries a
+    mat-measured height, tallest first (unmeasured pieces simply aren't ranked)."""
+    rows = entries(conn, int(season_id), "approved")
+    counts: dict[tuple[int, int], int] = {}
+    for cid, eid, n in conn.execute(
+            "SELECT category_id, entry_id, COUNT(*) FROM season_award_votes WHERE season_id=? "
+            "GROUP BY category_id, entry_id", (int(season_id),)).fetchall():
+        counts[(int(cid), int(eid))] = int(n)
+    out = []
+    for c in categories(conn, season_id):
+        pool = [e for e in rows if not c.get("solo_only") or e["solo"]]
+        if c["kind"] == "measured":
+            ranked = sorted((e for e in pool if e.get("height_mm") is not None),
+                            key=lambda e: (-e["height_mm"], e["created_at"] or "", e["id"]))
+            st = [{**_standing(e), "height_mm": e["height_mm"]} for e in ranked]
+        else:
+            ranked = sorted((e for e in pool if counts.get((c["id"], e["id"]), 0) > 0),
+                            key=lambda e: (-counts[(c["id"], e["id"])], e["created_at"] or "", e["id"]))
+            st = [{**_standing(e), "votes": counts[(c["id"], e["id"])]} for e in ranked[:AWARD_TOP]]
+        for i, s in enumerate(st, 1):
+            s["rank"] = i
+        c = dict(c)
+        c["solo_only"] = int(c.get("solo_only") or 0)
+        c["standings"] = st
+        c["leader"] = st[0] if st else None
+        c["eligible"] = [e["id"] for e in pool]
+        out.append(c)
+    return out
 
 
 # --- claims -------------------------------------------------------------------------
@@ -673,7 +1012,27 @@ def leaderboard(conn, season_id: int) -> dict:
             e["rank"] = i
     for i, s in enumerate(board_studios, 1):
         s["rank"] = i
-    return {"peoples_choice": peoples, "most_collected": collected, "studios": board_studios}
+    # points: what each collector holds from this season, scored by rarity
+    by_id = {e["id"]: e for e in rows}
+    holders: dict[str, dict] = {}
+    for c in _rows(conn.execute(
+            """SELECT collector_uid, collector_name, entry_id FROM season_claims
+               WHERE season_id=? AND status IN ('verified','approved') AND entry_id IS NOT NULL""",
+            (int(season_id),))):
+        e = by_id.get(int(c["entry_id"]))
+        if not e:
+            continue
+        h = holders.setdefault(c["collector_uid"], {"collector_uid": c["collector_uid"],
+                                                    "collector_name": c.get("collector_name") or "A collector",
+                                                    "points": 0, "pieces": 0, "legendaries": 0})
+        h["points"] += e["points"]; h["pieces"] += 1
+        h["legendaries"] += int(e["rarity"] == "legendary")
+    board_points = sorted(holders.values(),
+                          key=lambda h: (-h["points"], -h["pieces"], h["collector_name"]))
+    for i, h in enumerate(board_points, 1):
+        h["rank"] = i
+    return {"peoples_choice": peoples, "most_collected": collected, "studios": board_studios,
+            "points": board_points}
 
 
 def collectors(conn) -> list[dict]:
@@ -726,11 +1085,14 @@ def award_badges(conn, uid: str) -> list[str]:
         return []
     new: list[str] = []
     claims = _rows(conn.execute(
-        """SELECT c.season_id, c.object_row_id, COALESCE(e.studio,'') AS studio
+        """SELECT c.season_id, c.object_row_id, COALESCE(e.studio,'') AS studio,
+                  COALESCE(e.legendary,0) AS legendary
            FROM season_claims c LEFT JOIN season_entries e ON e.id=c.entry_id
            WHERE c.collector_uid=? AND c.status IN ('verified','approved')""", (uid,)))
     if claims and _grant(conn, uid, "first-scan"):
         new.append("first-scan")
+    if any(int(c["legendary"] or 0) for c in claims) and _grant(conn, uid, "legend_hunter"):
+        new.append("legend_hunter")
     if len({c["studio"] for c in claims if c["studio"]}) >= 5 and _grant(conn, uid, "five-shops"):
         new.append("five-shops")
     if (len({c["season_id"] for c in claims if c["season_id"]}) >= 3
@@ -764,4 +1126,9 @@ def summary(conn) -> dict:
             "votes": n("SELECT COUNT(*) FROM season_votes"),
             "claims": n("SELECT COUNT(*) FROM season_claims WHERE status IN ('verified','approved')"),
             "pending_claims": n("SELECT COUNT(*) FROM season_claims WHERE status='pending'"),
-            "badges": n("SELECT COUNT(*) FROM season_badges")}
+            "badges": n("SELECT COUNT(*) FROM season_badges"),
+            "award_votes": n("SELECT COUNT(*) FROM season_award_votes"),
+            "legendaries_out": n(
+                "SELECT COUNT(*) FROM season_entries e WHERE e.status='approved' AND e.legendary=1 "
+                "AND NOT EXISTS (SELECT 1 FROM season_claims c WHERE c.object_row_id=e.object_row_id "
+                "AND c.status IN ('verified','approved'))")}

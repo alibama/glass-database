@@ -683,9 +683,22 @@ elif page == "Objects":
                                 if e.get("object_row_id") == pub["row_id"] and e.get("season_id") == cur["id"]]
                         if mine:
                             e = mine[0]
-                            st.success(f"Entered — status **{e.get('status')}**"
+                            st.success(f"Entered — status **{e.get('status')}** · "
+                                       f"{(e.get('rarity') or 'common').upper()}"
+                                       + (" · solo" if e.get("solo") else "")
+                                       + (" · ◆ **your legendary** (only you can see that)"
+                                          if e.get("legendary") else "")
                                        + (f" · {e.get('vote_count', 0)} votes" if e.get("vote_count") is not None else ""))
                         else:
+                            if not cur_fp:
+                                st.caption("Tip: a **fingerprinted** piece enters as Uncommon or better "
+                                           "(Rare at an edition of three or fewer) and can rank in the "
+                                           "measured awards. Capture one in the Fingerprint tab first.")
+                            legendary_on = st.checkbox(
+                                "This is my legendary for the season", key=f"season_leg_{oid}",
+                                help="One per maker per season: an edition of one, fingerprinted, with its "
+                                     "legend written. Nobody is told which piece it is — the collector who "
+                                     "claims it finds out, and it's worth 20 points to them.")
                             with st.form(f"season_enter_{oid}"):
                                 studio = st.text_input("Studio / shop it's sold from",
                                                        value=(profile_row()["nationality_base"] or "")[:80])
@@ -693,6 +706,15 @@ elif page == "Objects":
                                                           min_value=1, max_value=10000, value=1)
                                 price_note = st.text_input("Price / where to buy (optional)",
                                                            placeholder="$85 at the studio shop · ships")
+                                solo = st.checkbox("Made solo (no assistant)",
+                                                   help="Made without an assistant on the pipe — on your "
+                                                        "honour. Solo-only awards count it.")
+                                legend = ""
+                                if legendary_on:
+                                    legend = st.text_area(
+                                        f"Its legend (at least {_seasons.LEGEND_MIN} characters)", height=100,
+                                        placeholder="Where it was made, what nearly went wrong, why this is "
+                                                    "the one. The collector who claims it reads this.")
                                 ok = st.checkbox("This piece is mine (or I'm entering it for its maker) "
                                                  "and it may be shown on the Seasons page.")
                                 if st.form_submit_button("Enter this season", type="primary") and ok:
@@ -701,7 +723,9 @@ elif page == "Objects":
                                                        artist_uid=uid, artist_name=o["maker"] or display,
                                                        title=o["title"], studio=studio.strip(),
                                                        edition_size=int(edition), price_note=price_note.strip(),
-                                                       image_url=f"/api/objects/{pub['row_id']}/image")
+                                                       image_url=f"/api/objects/{pub['row_id']}/image",
+                                                       solo=bool(solo), legendary=bool(legendary_on),
+                                                       legend=legend.strip())
                                         st.success("Entered — an admin approves entries before they show.")
                                         st.rerun()
                                     except ValueError as ex:
