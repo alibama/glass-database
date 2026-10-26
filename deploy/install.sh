@@ -108,6 +108,12 @@ cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
 [ -f "$SRC/deploy/paper.css" ] && cp "$SRC/deploy/paper.css" "$APP_DIR/public/paper.css"
 # shared client helper for the static pages (sign-in chip, authenticated fetch, pairing tokens)
 [ -f "$SRC/deploy/site.js" ] && cp "$SRC/deploy/site.js" "$APP_DIR/public/site.js"
+# 3D view prototype: the page and the demo splat
+[ -f "$SRC/deploy/splat.html" ] && cp "$SRC/deploy/splat.html" "$APP_DIR/public/splat.html"
+if [ -d "$SRC/deploy/splat" ]; then
+    mkdir -p "$APP_DIR/public/splat"
+    cp "$SRC/deploy/splat/"* "$APP_DIR/public/splat/" 2>/dev/null || true
+fi
 # Homepage pictures (section cards, featured field note)
 if [ -d "$SRC/deploy/img" ]; then
     mkdir -p "$APP_DIR/public/img"

@@ -6,6 +6,14 @@ All notable changes are documented here. This project distinguishes
 proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
+### Added
+- **3D views (prototype)** — `/splat.html` shows a Gaussian splat of a piece, rotatable, with
+  a procedural demo pumpkin so testers see it work before they own a scan. Makers train the
+  splat on their own phone (Scaniverse, Polycam) or laptop (Brush, OpenSplat), crop it in
+  SuperSplat, and upload it for one of their Glowtbook pieces (`POST /api/splats?object=`,
+  .splat/.ply/.ksplat, 150 MB cap, one per piece); the share link `/splat.html?s=<id>` opens
+  it for anyone. Splats are pictures: never signed into credentials, never fingerprints.
+  `docs/SPLATS.md`.
 ### Changed
 - **New theme: paper** — the site moves from the dark amber "Field Data" look to a light,
   editorial one: paper ground (#F4EEE4), ink text, one red accent (#B3261E), Fraunces headings,

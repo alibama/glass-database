@@ -68,12 +68,14 @@ from api import events as _events  # noqa: E402
 from api import graph_ext as _graph_ext  # noqa: E402
 from api import me as _me  # noqa: E402
 from api import seasons as _seasons  # noqa: E402
+from api import splats as _splats  # noqa: E402
 
 app.include_router(_auth.router)
 app.include_router(_me.router)
 app.include_router(_seasons.router)
 app.include_router(_events.router)
 app.include_router(_graph_ext.router)
+app.include_router(_splats.router)
 
 
 @app.on_event("startup")
