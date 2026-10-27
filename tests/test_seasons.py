@@ -695,3 +695,20 @@ def test_api_me_claims_is_the_makers_inbox(demo_db):
     shelf = cl.get("/me/collection", headers=collector).json()
     assert shelf["collection"][0]["verified"] is True
     assert {b["badge"] for b in shelf["badges"]} == {"first-scan"}
+
+
+def test_categories_backfill_for_seasons_made_before_awards(demo_db):
+    """A season from before awards existed has no categories; the first read gives it
+    its theme's defaults, unless it is closed."""
+    c = connect()
+    sid = _season(c, title="Old Pumpkin Patch", theme="pumpkins everywhere")
+    sid = sid["id"] if isinstance(sid, dict) else sid
+    c.execute("DELETE FROM season_categories WHERE season_id=?", (sid,)); c.commit()
+    assert S.categories(c, sid, backfill=False) == []
+    cats = S.categories(c, sid)
+    assert [x["title"] for x in cats][:2] == ["Best stem", "Best colour"]
+    assert S.categories(c, sid) == cats          # idempotent
+    closed = _season(c, title="Closed Long Ago", theme="pumpkins", status="closed")
+    closed = closed["id"] if isinstance(closed, dict) else closed
+    c.execute("DELETE FROM season_categories WHERE season_id=?", (closed,)); c.commit()
+    assert S.categories(c, closed) == []

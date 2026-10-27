@@ -68,6 +68,7 @@ for name in STREAMLIT:
     routes.append(Route(f"/{name}/", _redirect(name)))
     routes.append(Route(f"/{name}/{{tail:path}}", _redirect(name)))
 routes.append(Route("/{page}.html", page))
+routes.append(Route("/{page}", page))   # /games -> games.html, like the proxy
 
 site = Starlette(routes=routes)
 

@@ -137,12 +137,17 @@
   <div><p class="label"><span class="n">№ 06</span> Seasons</p>
    <h2 id="h-season" style="margin:1rem 0 1.2rem">Collect the season. <em>Prove it’s real.</em></h2>
    <p class="lede">Friendly, time-boxed calls for pieces. Makers enter a fingerprinted piece, collectors scan what they bought to claim it, everyone votes. Leaderboards and badges for completing a set across studios.</p>
-   <div class="btns"><a class="btn btn--red" href="/games.html">Open this season</a><a class="link" href="/fingerprint/verify.html">Scan a piece to claim it</a></div></div>
+   <p class="live" id="seasonLive" aria-live="polite"></p>
+   <div class="btns"><a class="btn btn--red" href="/games.html">Open this season</a><a class="link" href="/games.html#boards">See the standings</a><a class="link" href="/fingerprint/verify.html">Scan a piece to claim it</a></div></div>
   <div class="cal" role="list" id="seasonCal">
    <div class="on" role="listitem"><span class="label">Now · October</span><b>Pumpkins</b></div>
    <div role="listitem"><span class="label">December</span><b>Heirloom ornaments</b></div>
    <div role="listitem"><span class="label">Spring</span><b>Paperweights</b></div>
   </div>
+ </div>
+ <div class="wrap" id="seasonEntries" hidden>
+  <p class="label" style="margin-top:2.4rem">On the shelf now · ranked by votes</p>
+  <div class="cards" id="seasonCards"></div>
  </div>
 </section>
 
@@ -241,6 +246,16 @@ fetch('/api/seasons').then(r=>r.ok?r.json():null).then(j=>{
   const n=document.getElementById('notice');
   n.innerHTML=(c.status==='voting'?'Voting is open for ':'Season open: ')+'<a href="/games.html?season='+encodeURIComponent(c.slug)+'">'+c.title.replace(/</g,'&lt;')+'</a>. Vote, collect, prove it’s real.';
   n.hidden=false;
+  const live=document.getElementById('seasonLive');
+  if(live){ live.innerHTML='<b>'+(c.entry_count||0)+'</b> '+((c.entry_count||0)===1?'entry':'entries')+' · <b>'+(c.vote_count||0)+'</b> '+((c.vote_count||0)===1?'vote':'votes')+(c.votes_per_voter?' · everyone gets <b>'+c.votes_per_voter+'</b>':'')+(c.voting_closes?' · voting closes <b>'+c.voting_closes+'</b>':''); }
+  return fetch('/api/seasons/'+encodeURIComponent(c.slug)).then(r=>r.ok?r.json():null).then(d=>{
+    if(!d||!d.entries||!d.entries.length) return;
+    const es=d.entries.slice().sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,4);
+    const esc=t=>String(t||'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
+    const cls=es.length<4?'card third':'card';
+    document.getElementById('seasonCards').innerHTML=es.map((e,i)=>'<a class="'+cls+'" href="/games.html#entry-'+e.id+'"><div class="ph"><img src="'+esc(e.image_url)+'" alt="'+esc(e.title)+'" loading="lazy"></div><span class="label">#'+(i+1)+(e.rarity?' · '+esc(e.rarity):'')+'</span><h3>'+esc(e.title)+'</h3><p>'+esc(e.artist_name||'')+(e.studio?' · '+esc(e.studio):'')+'</p><span class="link">'+(e.vote_count||0)+' '+((e.vote_count||0)===1?'vote':'votes')+' · vote</span></a>').join('');
+    document.getElementById('seasonEntries').hidden=false;
+  });
 }).catch(()=>{});
 fetch('/api/events').then(r=>r.ok?r.json():null).then(j=>{
   const el=document.getElementById('evLive'); if(!el||!j||!j.events) return;

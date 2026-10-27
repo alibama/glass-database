@@ -338,9 +338,20 @@ def add_categories(conn, season_id: int, cats: list[dict]) -> list[int]:
     return ids
 
 
-def categories(conn, season_id: int) -> list[dict]:
-    return _rows(conn.execute("SELECT * FROM season_categories WHERE season_id=? ORDER BY sort, id",
-                              (int(season_id),)))
+def categories(conn, season_id: int, backfill: bool = True) -> list[dict]:
+    """A season's award categories. A season created before awards existed has none;
+    unless it is closed, give it the defaults for its theme the first time anyone asks."""
+    q = "SELECT * FROM season_categories WHERE season_id=? ORDER BY sort, id"
+    rows = _rows(conn.execute(q, (int(season_id),)))
+    if not rows and backfill:
+        s = get_season(conn, int(season_id))
+        if s and s.get("status") != "closed":
+            cats = default_categories(f"{s.get('theme') or ''} {s.get('title') or ''}")
+            if cats:
+                add_categories(conn, int(season_id), cats)
+                conn.commit()
+                rows = _rows(conn.execute(q, (int(season_id),)))
+    return rows
 
 
 def get_category(conn, season_id: int, slug_or_id) -> dict | None:

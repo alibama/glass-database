@@ -81,6 +81,18 @@
 
   /* entries */
   .cards { margin-top: 2rem; }
+  .three-up { grid-template-columns: 1fr 1fr 1fr; }
+  @media (max-width: 900px) { .three-up { grid-template-columns: 1fr; } }
+  .standings { list-style: none; margin: 1.6rem 0 0; padding: 0; border-top: 1px solid var(--ink); }
+  .standings li { display: grid; grid-template-columns: 2.6rem 56px 1fr auto; gap: .4rem 1rem; align-items: center; padding: .7rem 0; border-bottom: 1px solid var(--rule); }
+  .standings li a { text-decoration: none; color: inherit; }
+  .standings .rk { font: 500 13px var(--mono); color: var(--red); }
+  .standings .th { width: 56px; height: 56px; object-fit: cover; border: 1px solid var(--rule); background: var(--paper-2); display: block; }
+  .standings .t { font: 500 16px/1.3 var(--sans); }
+  .standings .w { font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: .25rem; }
+  .standings .v { font: 500 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
+  .standings .v b { font: 600 18px/1 var(--serif); color: var(--ink); margin-right: .3rem; }
+  @media (max-width: 680px) { .standings li { grid-template-columns: 2.2rem 44px 1fr; } .standings .v { grid-column: 3; } .standings .th { width: 44px; height: 44px; } }
   .card { position: relative; }
   .card .ph { aspect-ratio: 4 / 3; margin-bottom: 1rem; background: var(--paper-2); }
   .card .ph img { mix-blend-mode: normal; }
@@ -178,8 +190,9 @@
 <section class="s" id="how" aria-labelledby="h-how">
  <div class="wrap">
   <div class="s-head"><p class="label"><span class="n">№ 02</span> How it works</p>
-   <div><h2 id="h-how">Make it. Buy it. <em>Vote.</em></h2><p class="lede">A time-boxed call for pieces. Makers enter fingerprinted work, collectors scan what they bought to claim it, and everyone spends a few votes.</p></div></div>
-  <div class="two">
+   <div><h2 id="h-how">Make it. Buy it. <em>Vote.</em></h2><p class="lede">A time-boxed call for pieces. Makers enter fingerprinted work, collectors scan what they bought to claim it, and everyone spends a few votes.</p>
+   <p class="lede" style="margin-top:.8rem"><strong>Getting in takes a Google sign-in and nothing to install.</strong> <a href="/glowtbook/">Glowtbook</a> (your private registry) and <a href="/fingerprint/verify.html">Verify</a> (the scanner) are web pages that work on a phone. Voting needs the same sign-in and nothing else.</p></div></div>
+  <div class="two three-up">
    <div>
     <p class="label">For makers</p>
     <ul class="list how">
@@ -195,6 +208,15 @@
      <li><span>Scan</span><p>Open <a href="/fingerprint/verify.html">Verify</a>, point your phone at the piece, and let the confidence climb. 70+ across a few angles is a match.</p></li>
      <li><span>Claim</span><p>Claim it to your collection. It's now an authenticated piece with a real provenance trail — yours.</p></li>
      <li><span>Vote</span><p>Spend your votes on the entries you'd take home. Swap them as often as you like until voting closes.</p></li>
+    </ul>
+   </div>
+   <div>
+    <p class="label">For shops &amp; hosts</p>
+    <ul class="list how">
+     <li><span>List</span><p>Get your studio on the record: <a href="/explore/?view=submit">submit it</a> in Explore, or claim the listing if it's already there.</p></li>
+     <li><span>Host</span><p>Running an ornament day or a pop-up? Open <a href="/glowtbook/?page=events">Glowtbook → Events</a>, make the event, print the QR for the table. Buyers register their piece on the spot.</p></li>
+     <li><span>Enter</span><p>Every maker at your table enters their own pieces from their own Glowtbook — up to five each, one legendary. The studio board adds them up.</p></li>
+     <li><span>Ask</span><p>Want a season themed around your shop or show? Propose it on the <a href="https://discord.gg/9ek2UxvPT">Discord</a>.</p></li>
     </ul>
    </div>
   </div>
@@ -241,6 +263,7 @@
  <div class="wrap">
   <div class="s-head"><p class="label"><span class="n">№ 03</span> Entries</p>
    <div><h2 id="entriesTitle">This season's <em>pieces.</em></h2><p class="live" id="voteCounter" aria-live="polite" style="margin-top:1rem"></p></div></div>
+  <ol class="standings" id="standings" aria-label="Standings by votes" hidden></ol>
   <div class="cards" id="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
  </div>
 </section>
@@ -442,10 +465,21 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     var rank = {};
     (S.lb && S.lb.peoples_choice || []).forEach(function (r) { rank[r.id] = r.rank; });
     g.innerHTML = S.entries.map(function (e) { e.rank = rank[e.id]; return card(e); }).join("");
+    renderStandings();
     g.querySelectorAll("[data-vote]").forEach(function (b) {
       b.addEventListener("click", function () { onVote(+b.getAttribute("data-vote"), b); });
     });
     paintVotes();
+  }
+  function renderStandings() {
+    var ol = $("#standings"); if (!ol) return;
+    if (!S.season || !S.entries.length) { ol.hidden = true; ol.innerHTML = ""; return; }
+    var es = S.entries.slice().sort(function (a, b) { return (b.vote_count || 0) - (a.vote_count || 0) || (a.id - b.id); });
+    ol.innerHTML = es.map(function (e, i) {
+      return '<li><span class="rk">' + (i + 1) + '</span><a href="#entry-' + e.id + '"><img class="th" src="' + esc(e.image_url) + '" alt="" loading="lazy"></a>' +
+        '<div><a class="t" href="#entry-' + e.id + '">' + esc(e.title) + "</a><div class=\"w\">" + esc(e.artist_name || "") + (e.studio ? " · " + esc(e.studio) : "") + (e.rarity ? " · " + esc(e.rarity) : "") + "</div></div>" +
+        '<span class="v"><b>' + (e.vote_count || 0) + "</b> " + ((e.vote_count || 0) === 1 ? "vote" : "votes") + "</span></li>"; }).join("");
+    ol.hidden = false;
   }
   function paintVotes() {
     var cap = (S.season && S.season.votes_per_voter) || 3;
@@ -456,11 +490,12 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       b.innerHTML = (on ? "Voted" : "Vote") + ' <span class="n">' + e.vote_count + "</span>";
     });
     var c = $("#voteCounter");
-    if (!S.canVote) { c.innerHTML = S.season.status === "closed" ? "<span>Voting has closed — the boards below are final.</span>" : ""; return; }
+    var closes = S.season.voting_closes ? " · voting closes <b>" + esc(S.season.voting_closes) + "</b>" : "";
+    if (!S.canVote) { c.innerHTML = S.season.status === "closed" ? "<span>Voting has closed — the boards below are final.</span>" : "<span>Everyone gets <b>" + cap + "</b> votes once voting opens" + closes + "</span>"; return; }
     var dots = ""; for (var i = 0; i < cap; i++) dots += "<i" + (i < S.myVotes.length ? ' class="on"' : "") + "></i>";
     c.innerHTML = S.signedIn
-      ? '<span class="dots" aria-hidden="true">' + dots + "</span><span><b>" + S.remaining + "</b> of " + cap + " votes left · tap again to take one back</span>"
-      : '<span><a href="' + esc(GDB.loginUrl(location.pathname + location.search)) + '">Sign in</a> to cast your ' + cap + " votes.</span>";
+      ? '<span class="dots" aria-hidden="true">' + dots + "</span><span><b>" + S.remaining + "</b> of your " + cap + " votes left · tap again to take one back" + closes + "</span>"
+      : '<span>Everyone gets <b>' + cap + '</b> votes · <a href="' + esc(GDB.loginUrl(location.pathname + location.search)) + '">sign in</a> to cast yours' + closes + "</span>";
   }
   function onVote(id, btn) {
     if (!S.signedIn) { location.href = GDB.loginUrl(location.pathname + location.search + "#entry-" + id); return; }
@@ -596,7 +631,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function refreshBoards() {
     if (!S.season) return;
     GDB.json("/seasons/" + encodeURIComponent(S.season.slug) + "/leaderboard").then(function (lb) {
-      S.lb = lb; renderBoards();
+      S.lb = lb; renderBoards(); renderStandings();
       var rank = {}; (lb.peoples_choice || []).forEach(function (r) { rank[r.id] = r.rank; });
       S.entries.forEach(function (e) {
         var el = document.querySelector('#entry-' + e.id + ' .rank'); var r = rank[e.id];

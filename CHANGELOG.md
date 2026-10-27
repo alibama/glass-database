@@ -7,6 +7,14 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Seasons, first live game feedback** — a ranked **standings** list with thumbnails at the top
+  of the entries (visible from the first entry), the homepage shows the season's pieces as
+  pictures ranked by votes with the counts and closing date, the games page says how to get in
+  (a Google sign-in, nothing to install; a third column for shops and hosts) and always states
+  how many votes everyone gets and when voting closes. Seasons created before awards existed
+  get their theme's default categories on first read, so the categories section is never empty
+  for an open season. `/games`, `/events`, `/register`, `/graph`, `/studios`, `/shop`,
+  `/shop-costs` and `/splat` work without `.html` (Apache redirect + dev server route).
 - **Seasons: awards, rarity and rules (first draft)** — each season has award categories, voted
   (Best stem, Best hook, Best colour…) or measured from the capture mat (Biggest pumpkin, and a
   solo-made variant); one pick per award per person, no voting for your own piece. Every entry
