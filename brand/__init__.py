@@ -23,17 +23,20 @@ import streamlit as st
 
 # text lockup matching the homepage `.brand` (Fraunces, the italic word in red)
 _MARK = 'Glass <i>Database</i>'
-# the tagline that sits under the brand everywhere it appears as a header (docs/NAMING.md)
-TAGLINE = "A home for every piece of glass and the people who make it."
+from central import nav as _nav  # noqa: E402  (the one menu definition, shared with site.js)
 
-# key, label, href — keys and hrefs are stable; labels are what people read
-_NAV = [
-    ("home", "Home", "/"),
-    ("explore", "Find Artists & Studios", "/explore/"),
-    ("games", "Collecting Events", "/games.html"),
-    ("glowtbook", "Glowtbook", "/glowtbook/"),
-    ("admin", "Admin", "/admin/"),
-]
+TAGLINE = _nav.TAGLINE
+_ADMIN = [("admin", "Admin", "/admin/")]   # shown only inside the admin console
+
+_NAV_CSS = """
+<style>
+.gdb-nav { display:flex; align-items:center; justify-content:space-between; gap:1rem; flex-wrap:wrap;
+  min-height:56px; border-bottom:1px solid var(--ink); margin:0 0 1.2rem; }
+.gdb-nav ul { display:flex; gap:clamp(.9rem,2vw,1.8rem); list-style:none; margin:0; padding:0; flex-wrap:wrap; }
+.gdb-nav ul a { text-decoration:none; font:400 15px var(--sans); color:var(--ink-2); }
+.gdb-nav ul a:hover, .gdb-nav ul a.on { color:var(--red); }
+</style>
+"""
 
 _CSS = """
 <style>
@@ -255,8 +258,6 @@ hr { border-color:var(--rule) !important; }
 .gdb-brand i { color:var(--red); font-style:italic; }
 .gdb-brand:hover { color:var(--ink); }
 .gdb-brand:hover i { color:var(--red-dk); }
-.gdb-tagline { font-family:var(--mono); font-size:.72rem; letter-spacing:.04em; color:var(--muted);
-  margin:-.3rem 0 .7rem; line-height:1.3; }
 .gdb-rule { height:1px; margin:.25rem 0 1.1rem; background:var(--rule); }
 </style>
 """
@@ -267,13 +268,10 @@ def apply_theme(active: str = "") -> None:
     'explore' | 'glowtbook' | 'admin' and gets the red-filled primary style;
     the others are ink-outlined. The text lockup doubles as the Home link."""
     st.html(_CSS)
-    st.html(f'<a class="gdb-brand" href="/" target="_self">{_MARK}</a>'
-            f'<div class="gdb-tagline">{TAGLINE}</div>')
-    cols = st.columns(len(_NAV))
-    for col, (key, label, href) in zip(cols, _NAV):
-        col.link_button(label, href, use_container_width=True,
-                        type="primary" if key == active else "secondary")
-    st.html('<div class="gdb-rule"></div>')
+    extra = _ADMIN if active == "admin" else None
+    st.html(_NAV_CSS + f'<nav class="gdb-nav" aria-label="Primary">'
+            f'<a class="gdb-brand" href="/" target="_self">{_MARK}</a>'
+            f'<ul>{_nav.menu_html(active, extra)}</ul></nav>')
 
 
 def _client_ip() -> str:

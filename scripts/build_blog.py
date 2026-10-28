@@ -185,10 +185,9 @@ FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="
          '<script src="/site.js"></script>')
 
 # The site's primary menu, as on the homepage (deploy/landing-index.html).
-TAGLINE = "A home for every piece of glass and the people who make it."
-NAV = [("Find Artists &amp; Studios", "/explore/"), ("Collecting Events", "/games.html"),
-       ("Glass ID", "/fingerprint/enroll.html"), ("Glowtbook", "/glowtbook/"),
-       ("Field notes", "/blog/"), ("About", "/#about")]
+from central import nav as _nav_src  # noqa: E402  (the one menu definition)
+
+TAGLINE = _nav_src.TAGLINE
 
 # Page-specific rules only; everything shared lives in /paper.css (one owner).
 CSS = """
@@ -262,11 +261,10 @@ SUBSCRIBE_JS = """<script>
 
 def _nav(active: str = "Field notes", index_on: bool = False) -> str:
     """The site header (as on the homepage) plus the Field-notes sub-nav row."""
-    items = "".join(f'<li><a href="{h}"{" class=on" if label == active else ""}>{label}</a></li>' for label, h in NAV)
     return ('<a class="skip" href="#main">Skip to content</a>\n'
             '<header class="site"><nav class="nav wrap" aria-label="Primary">'
-            f'<a class="brand" href="/">Glass <i>Database</i><small class="tag">{TAGLINE}</small></a>'
-            f'<ul id="menu">{items}</ul>'
+            '<a class="brand" href="/">Glass <i>Database</i></a>'
+            f'{_nav_src.menu_placeholder("notes")}'
             '<div class="right"><span id="chip" class="signin gdb-chip"></span>'
             '<button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>'
             '</nav></header>\n'

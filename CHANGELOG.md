@@ -33,6 +33,12 @@ proof-of-concept features from production-ready ones in its docs.
   it for anyone. Splats are pictures: never signed into credentials, never fingerprints.
   `docs/SPLATS.md`.
 ### Changed
+- **One menu, everywhere** — the primary menu is defined once in `central/nav.py`; static pages
+  carry an empty `<ul id="menu" data-nav>` that `site.js` fills, the blog generator and the
+  Streamlit brand render the same list, and `tests/test_nav.py` fails if any copy drifts. The
+  Streamlit apps now show the same six items as the rest of the site (Admin appears only
+  inside the admin console). The tagline is gone from the header so the menu flows on one line;
+  it stays in the homepage hero.
 - **Named after what people do** — the site's words follow `docs/NAMING.md`: Find Artists &
   Studios (was Registry/Explore), Who Worked With Whom (graph), Jobs, Calls & Classes
   (opportunities and boards), For Researchers (datasets, API, CC BY, under one heading), Glass ID
