@@ -1,3 +1,5 @@
+People see this as **3D Photo** (see docs/NAMING.md); the code and URLs keep the old words.
+
 # 3D views (Gaussian splats) — prototype
 
 A **Gaussian splat** is a 3D photograph: a cloud of soft, coloured blobs trained from a

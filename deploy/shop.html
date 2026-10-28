@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Document your shop — Glass Database</title>
-<meta name="description" content="Describe a hot shop by its components: a scene sketch, an electrical one-line, a P&ID and a bill of materials with real part numbers, generated from a plain-language description.">
+<title>Studio docs — Glass Database</title>
+<meta name="description" content="Describe a glass studio by its components: a scene sketch, an electrical one-line, a P&ID and a bill of materials with real part numbers, generated from a plain-language description.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/paper.css">
@@ -30,39 +30,43 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
  <nav class="nav wrap" aria-label="Primary">
-  <a class="brand" href="/">Glass <i>Database</i></a>
+  <a class="brand" href="/">Glass <i>Database</i><small class="tag">A home for every piece of glass and the people who make it.</small></a>
   <ul id="menu">
-   <li><a href="/explore/">Registry</a></li><li><a href="/events.html">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li>
+   <li><a href="/explore/">Find Artists &amp; Studios</a></li><li><a href="/games.html">Collecting Events</a></li><li><a href="/fingerprint/enroll.html" class="on">Glass ID</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/#about">About</a></li>
   </ul>
   <div class="right"><span id="chip" class="signin gdb-chip" aria-live="polite"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
  </nav>
 </header>
 <div class="wrap">
- <nav class="subnav" aria-label="Tools">
-  <span class="crumb">Tools</span>
-  <a href="/fingerprint/enroll.html">Capture app</a>
-  <a href="/shop.html" class="on" aria-current="page">Shop docs</a>
-  <a href="/shop-costs.html">Shop costs</a>
+ <nav class="subnav" aria-label="Glass ID">
+  <span class="crumb">Glass ID</span>
+  <a href="/fingerprint/enroll.html">Register Your Piece</a>
+  <a href="/fingerprint/verify.html">Check a Piece</a>
+  <a href="/splat.html">3D Photo</a>
+  <a href="/fingerprint/capture-mat.pdf">Photo Mat</a>
+  <a href="/shop.html" class="on" aria-current="page">Studio docs</a>
+  <a href="/shop-costs.html">Studio Cost Calculator</a>
  </nav>
 </div>
 <main id="main">
 
 <section class="hero intro">
  <div class="wrap">
-  <p class="label"><span class="n">№ 07</span> Open shop documentation</p>
-  <h1>Describe a shop through its <em>components.</em></h1>
+  <p class="label"><span class="n">№ 07</span> Studio docs</p>
+  <h1>Describe a studio through its <em>components.</em></h1>
   <p class="lede">A hot shop is a system — gas, air, power, heat, exhaust, and the controls that tie
      it together. Documenting yours as a scene sketch, an electrical one-line, a piping
      &amp; instrumentation (P&amp;ID) diagram, and a <strong>bill of materials with real
      part numbers</strong> makes it far easier to fix, order, insure, and teach. You
-     don't draw any of it by hand: describe your shop to an AI and have it render the
+     don't draw any of it by hand: describe your studio to an AI and have it render the
      diagrams and the parts list. Then publish it here so the next person can find the
      part in one search.</p>
   <p class="note"><strong>Safety first.</strong> These are schematic documentation,
      not engineering drawings. Gas and high-current electrical work must be designed,
      installed, and inspected by licensed professionals to your local code. Mark
      anything uncertain as <strong>TBD</strong> — the examples do.</p>
-  <div class="btns"><a class="btn btn--red" href="/explore/?view=submit">Publish your shop →</a><a class="btn btn--line" href="/shop-costs.html">Estimate running costs →</a></div>
+  <div class="btns"><a class="btn btn--red" href="/explore/?view=submit">Publish your studio →</a><a class="btn btn--line" href="/shop-costs.html">Estimate running costs →</a></div>
+  <p class="note" style="margin-top:.8rem">Publish your studio sends your sketch, diagrams and parts list to us for review; Estimate running costs opens the Studio Cost Calculator.</p>
  </div>
 </section>
 
@@ -83,8 +87,8 @@
  <div class="wrap">
   <div class="s-head"><p class="label"><span class="n">02</span> Prompts</p>
    <div><h2 id="h-prompts">Four prompts to <em>get you started.</em></h2>
-    <p class="lede">Copy a prompt, fill in the bracketed parts for your shop, and paste it into your
-     AI of choice. Start with the scene, then the diagrams, then the parts list.</p></div></div>
+    <p class="lede">Copy a prompt, fill in the bracketed parts for your studio, and paste it into your
+     AI of choice. Start with the scene, then the diagrams, then the parts list. Each Copy button puts that prompt on your clipboard.</p></div></div>
 
   <div class="prompt"><span class="lbl">1 · Describe the space</span><button class="copy" onclick="cp(this)">Copy</button>Draw a schematic top-down floor plan (not to scale) of my glass studio. The space is [24 × 24 ft]. The glory hole is in [one corner], with forced/combustion air along [the back wall] from a [squirrel-cage blower] in [a closet outside], plus [natural gas from the city]. The furnace is [to the right of the glory hole], with [4 × SiC elements] wired through breakers to an [SCR] controlled by a [Novus PID] with a [K-type thermocouple]; [160 lb] crucible; crucible access via a [pneumatic lift] fed by [a small quiet compressor in the opposite corner]. To the right are [three annealers: a 40″ coil unit on a 60 A breaker and two Paragons on 60 A breakers with mercury 60 A relays, all on one Novus controller]. Ventilation above the hot equipment is a [large exhaust motor behind the utility wall]. The bench is [between glory hole and furnace, facing the equipment]; the marver is [3′×2′, ~5′ right of the bench]; viewing area [~8′ back at the wall]. Label each device; show gas / air / power / exhaust in different colors; mark unknowns TBD. Output one clean SVG.</div>
 
@@ -103,12 +107,13 @@
 <section class="s" aria-labelledby="h-publish">
  <div class="wrap two">
   <div><p class="label"><span class="n">03</span> Publish it</p>
-   <h2 id="h-publish" style="margin:1rem 0 1.2rem">A shared library of how shops <em>are actually built.</em></h2>
+   <h2 id="h-publish" style="margin:1rem 0 1.2rem">A shared library of how studios <em>are actually built.</em></h2>
    <p class="lede">Got a description, diagrams, and a BOM? Add them under
-     <a href="/explore/?view=submit">Explore → Add to the database → Shop</a>.
+     <a href="/explore/?view=submit">The Directory → Add to the database → Studio</a>.
      Everything is reviewed before it appears; contact details stay private.</p>
-   <div class="btns"><a class="btn btn--red" href="/explore/?view=submit">Publish your shop →</a><a class="link" href="/shop-costs.html">Estimate running costs</a></div></div>
-  <div><p class="label">What a published shop carries</p>
+   <div class="btns"><a class="btn btn--red" href="/explore/?view=submit">Publish your studio →</a><a class="link" href="/shop-costs.html">Estimate running costs</a></div>
+   <p class="note" style="margin-top:.8rem">Publish your studio opens the submission form; your entry is reviewed before it appears.</p></div>
+  <div><p class="label">What a published studio carries</p>
    <ul class="list">
     <li><span>i.</span>A scene sketch: where the heat, air, gas and people are</li>
     <li><span>ii.</span>An electrical one-line with amperages, unknowns marked TBD</li>
@@ -123,9 +128,10 @@
   <div class="fgrid">
    <div><p class="label"><span class="n">№ 10</span> Come say hi</p><h2 style="margin:1rem 0">A record kept by the field, <em>for the field.</em></h2>
     <p>Nothing is published until it’s reviewed; anything can be corrected or removed on request.</p></div>
-   <div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>
-   <div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>
-   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
   </div>
   <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
  </div>

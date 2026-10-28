@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Events — Glass Database</title>
-<meta name="description" content="Maker-hosted events — ornament days, pop-ups, demos — where the piece you buy can be registered on the spot: provenance from the moment of sale, in your Glowtbook, ready to fingerprint.">
-<meta property="og:title" content="Events — Glass Database">
-<meta property="og:description" content="Buy a piece at the table, register it, and it's on the record: made by the maker, acquired by you.">
+<title>Shows &amp; Sales — Glass Database</title>
+<meta name="description" content="Shows and sales hosted by makers — ornament days, pop-ups, demos — where the piece you buy joins your collection on the spot: provenance from the moment of sale, in your Glowtbook, ready for its Glass ID.">
+<meta property="og:title" content="Shows &amp; Sales — Glass Database">
+<meta property="og:description" content="Buy a piece at the table, add it to your collection, and it's on the record: made by the maker, found by you.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/paper.css">
@@ -24,7 +24,10 @@
 
   .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 20ch; }
   .hero .live { display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; margin-top: 1.4rem; }
-  .hero .btns { margin-top: 1.8rem; }
+  .hero .btns { margin-top: 1.8rem; align-items: flex-start; }
+  /* a button and the one sentence that says what it does */
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
   button.link { background: none; border: 0; border-bottom: 1px solid currentColor; cursor: pointer; padding: 0 0 3px; }
   button.link[aria-expanded]::after { content: " ▾"; }
   button.link[aria-expanded="true"]::after { content: " ▴"; }
@@ -86,7 +89,7 @@
     .list.how li { grid-template-columns: 1fr; gap: .3rem; }
     .rows .main { grid-template-columns: 1fr; }
     .pieces { grid-template-columns: repeat(2, 1fr); }
-    .hero .btns .btn { width: 100%; justify-content: center; }
+    .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; }
   }
 </style>
 </head>
@@ -94,25 +97,25 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
  <nav class="nav wrap" aria-label="Primary">
-  <a class="brand" href="/">Glass <i>Database</i></a>
+  <a class="brand" href="/">Glass <i>Database</i><small class="tag">A home for every piece of glass and the people who make it.</small></a>
   <ul id="menu">
-   <li><a href="/explore/">Registry</a></li><li><a href="/events.html" class="on">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li>
+   <li><a href="/explore/">Find Artists &amp; Studios</a></li><li><a href="/games.html" class="on">Collecting Events</a></li><li><a href="/fingerprint/enroll.html">Glass ID</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/#about">About</a></li>
   </ul>
   <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
  </nav>
 </header>
-<div class="subnav wrap"><span class="crumb">Collect</span><a href="/register.html">Add a find</a><a href="/events.html" class="on" aria-current="page">Events</a><a href="/games.html">Seasons</a><a href="/glowtbook/?page=events">Host an event</a></div>
+<div class="subnav wrap"><span class="crumb">Collecting Events</span><a href="/games.html">Court of the Gourds</a><a href="/events.html" class="on" aria-current="page">Shows &amp; Sales</a><a href="/register.html">Add to My Collection</a><a href="/fingerprint/verify.html">Check a Piece</a></div>
 
 <main id="main">
 <section class="hero" id="hero">
  <div class="wrap">
-  <p class="label"><span class="n">№ 01</span> Events</p>
+  <p class="label"><span class="n">№ 01</span> Shows &amp; Sales</p>
   <h1>Found a treasure at the table? <em>Start a collection you can prove.</em></h1>
-  <p class="lede">Makers host events — ornament days, pop-ups, demos. The piece you take home joins your collection the same afternoon, with its story attached: made by the maker, found by you, ready to fingerprint and prove.</p>
+  <p class="lede">Makers host shows and sales — ornament days, pop-ups, demos. The piece you take home joins your collection the same afternoon, with its story attached: made by the maker, found by you, ready for its Glass ID so you can prove it's this one.</p>
   <p class="live" id="heroMeta" aria-live="polite"></p>
   <div class="btns">
-   <a class="btn btn--red" href="/register.html">Add a find to my collection</a>
-   <a class="btn btn--line" href="/glowtbook/?page=events">Host an event</a>
+   <div class="act"><a class="btn btn--red" href="/register.html">Add to My Collection</a><small>It joins your collection with its story attached.</small></div>
+   <div class="act"><a class="btn btn--line" href="/glowtbook/?page=events">Host a show or sale</a><small>Make the event, print the QR for the table.</small></div>
   </div>
  </div>
 </section>
@@ -120,24 +123,24 @@
 <section class="s" id="how" aria-labelledby="h-how">
  <div class="wrap">
   <div class="s-head"><p class="label"><span class="n">№ 02</span> How it works</p>
-   <div><h2 id="h-how">Find it. Claim it. <em>Prove it.</em></h2><p class="lede">A minute at the table for the collector; a QR and a confirmation for the maker. Names stay private unless you say otherwise.</p></div></div>
+   <div><h2 id="h-how">Find it. Add it. <em>Prove it.</em></h2><p class="lede">A minute at the table for the collector; a QR and a confirmation for the maker. Names stay private unless you say otherwise.</p></div></div>
   <div class="two">
    <div>
     <p class="label">For collectors</p>
     <ul class="list how">
-     <li><span>Find</span><p>Find a piece at the event — the table, the gallery, the demo. The maker gets paid; that's the point.</p></li>
-     <li><span>Claim it</span><p>Scan the QR on the table or open <a href="/register.html">Add to your collection</a>. Sign in, say what you found, snap a photo. A minute, standing up.</p></li>
-     <li><span>Maker confirms</span><p>The maker sees it in Glowtbook and confirms it came from their table — usually the same day.</p></li>
-     <li><span>In your collection</span><p>The registry publishes it with provenance: made by the maker at the event, collected by you. Your name stays private unless you choose otherwise.</p></li>
-     <li><span>Prove it</span><p>It's already in your <a href="/glowtbook/">Glowtbook</a>. Capture its fingerprint and any phone can prove <em>this</em> piece is the one in your collection — not one like it.</p></li>
+     <li><span>Find</span><p>Find a piece at the show — the table, the gallery, the demo. The maker gets paid; that's the point.</p></li>
+     <li><span>Add it</span><p>Scan the QR on the table or open <a href="/register.html">Add to My Collection</a>. Sign in, say what you found, snap a photo. A minute, standing up.</p></li>
+     <li><span>Maker confirms</span><p>The maker sees it in Glowtbook — their studio notebook — and confirms it came from their table, usually the same day.</p></li>
+     <li><span>In your collection</span><p>The directory publishes it with provenance: made by the maker at the show, collected by you. Your name stays private unless you choose otherwise.</p></li>
+     <li><span>Prove it</span><p>It's already in your <a href="/glowtbook/">Glowtbook</a>. <a href="/fingerprint/enroll.html">Register it</a> for its Glass ID and any phone can prove <em>this</em> piece is the one in your collection — not one like it.</p></li>
     </ul>
    </div>
    <div>
     <p class="label">For makers</p>
     <ul class="list how">
-     <li><span>Host</span><p>Open <a href="/glowtbook/?page=events">Glowtbook → Events</a> and add the sale: venue, date, what you're making. It works the moment you save it.</p></li>
-     <li><span>QR on the table</span><p>Print the registration link and its QR. Buyers scan it with the piece in their hand.</p></li>
-     <li><span>Approve</span><p>After the event, approve the registrations in bulk — or reject the one that wasn't yours.</p></li>
+     <li><span>Host</span><p>Open <a href="/glowtbook/?page=events">Glowtbook → Shows &amp; Sales</a> and add the sale: venue, date, what you're making. It works the moment you save it.</p></li>
+     <li><span>QR on the table</span><p>Print the link and its QR. Buyers scan it with the piece in their hand.</p></li>
+     <li><span>Approve</span><p>After the show, approve the pieces in bulk — or reject the one that wasn't yours.</p></li>
      <li><span>Published</span><p>The site reviews and publishes them. Each piece becomes part of someone's collection with your name on it — and a reason to come back for the next one.</p></li>
     </ul>
    </div>
@@ -148,7 +151,7 @@
 <section class="s alt" id="yours" hidden aria-labelledby="h-yours">
  <div class="wrap">
   <div class="s-head"><p class="label"><span class="n">№ —</span> From your link</p>
-   <div><h2 id="h-yours">The event <em>you were sent to.</em></h2></div></div>
+   <div><h2 id="h-yours">The show <em>you were sent to.</em></h2></div></div>
   <div class="cards" id="yoursGrid"></div>
  </div>
 </section>
@@ -163,7 +166,7 @@
 
 <section class="s alt" id="past" hidden aria-labelledby="h-past">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 04</span> Past events</p>
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Past shows &amp; sales</p>
    <div><h2 id="h-past">What's been <em>collected.</em></h2></div></div>
   <div class="rows" id="pastList"></div>
  </div>
@@ -171,10 +174,10 @@
 
 <section class="s" id="host" aria-labelledby="h-host">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 05</span> Host an event</p>
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Host a show or sale</p>
    <div><h2 id="h-host">Provenance starts <em>at the till.</em></h2>
-    <p class="lede">A certificate in a drawer gets lost; a record made at the moment of sale doesn't. Hosting an event costs nothing: add it in Glowtbook, print the QR, and every piece that leaves the table can carry your name, the date and the place for as long as it exists. The collectors come back, and — quietly — it's a census of who is making what, where, and what it sells for. Data stays open under CC&nbsp;BY&nbsp;4.0.</p>
-    <div class="btns"><a class="btn btn--red" href="/glowtbook/?page=events">Open Glowtbook → Events</a><a class="link" href="https://discord.gg/9ek2UxvPT">Ask on Discord</a></div></div></div>
+    <p class="lede">A certificate in a drawer gets lost; a record made at the moment of sale doesn't. Hosting a show or sale costs nothing: add it in Glowtbook, print the QR, and every piece that leaves the table can carry your name, the date and the place for as long as it exists. The collectors come back, and — quietly — it's a census of who is making what, where, and what it sells for. Data stays open under CC&nbsp;BY&nbsp;4.0.</p>
+    <div class="btns"><div class="act"><a class="btn btn--red" href="/glowtbook/?page=events">Host a show or sale</a><small>Make the event, print the QR for the table.</small></div><a class="link" href="https://discord.gg/9ek2UxvPT">Ask on Discord</a></div></div></div>
  </div>
 </section>
 </main>
@@ -183,9 +186,10 @@
  <div class="wrap">
   <div class="fgrid">
    <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
-   <div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>
-   <div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>
-   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
   </div>
   <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
  </div>
@@ -239,10 +243,10 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function galleryHtml(ev, full) {
     var pieces = (full && full.pieces) || [];
     var head = '<div class="head"><span class="label">' + (pieces.length ? plural(pieces.length, "published piece") : "published pieces") + "</span>" +
-      (ev.can_register ? '<a class="link" href="' + esc(registerUrl(ev)) + '">Register yours →</a>' : "") + "</div>";
+      (ev.can_register ? '<a class="link" href="' + esc(registerUrl(ev)) + '">Add yours →</a>' : "") + "</div>";
     if (!pieces.length) {
-      var why = ev.published > 0 ? "The host keeps this event's pieces private." :
-        (ev.registered > 0 ? plural(ev.registered, "piece") + " registered — in review. Published pieces appear here." : "No pieces published yet" + (ev.can_register ? " — be the first." : "."));
+      var why = ev.published > 0 ? "The host keeps this show's pieces private." :
+        (ev.registered > 0 ? plural(ev.registered, "piece") + " added — in review. Published pieces appear here." : "No pieces published yet" + (ev.can_register ? " — be the first." : "."));
       return head + '<div class="empty small">' + esc(why) + "</div>";
     }
     return head + '<div class="pieces">' + pieces.map(pieceHtml).join("") + "</div>";
@@ -277,13 +281,13 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       '<div class="tags">' +
         (ev.piece_type ? "<span><b>" + esc(ev.piece_type) + "</b></span>" : "") +
         (ev.price_note ? "<span>" + esc(ev.price_note) + "</span>" : "") +
-        "<span><b>" + n + "</b> " + (n === 1 ? "piece" : "pieces") + " registered</span>" +
-        (ev.can_register ? '<span class="pill red">open</span>' : '<span class="pill ink">registrations closed</span>') +
+        "<span><b>" + n + "</b> " + (n === 1 ? "piece" : "pieces") + " added</span>" +
+        (ev.can_register ? '<span class="pill red">open</span>' : '<span class="pill ink">closed to new pieces</span>') +
         (opts.unlisted ? '<span class="pill">not in the directory yet</span>' : "") +
       "</div>" +
       (ev.description ? '<p class="desc">' + esc(ev.description) + "</p>" : "") +
       '<div class="acts">' +
-        (ev.can_register ? '<a class="btn btn--red sm" href="' + esc(registerUrl(ev)) + '">Add my find</a>' : "") +
+        (ev.can_register ? '<span class="act"><a class="btn btn--red sm" href="' + esc(registerUrl(ev)) + '">Add to My Collection</a><small>It joins your collection with its story attached.</small></span>' : "") +
         '<button type="button" class="link" data-gallery aria-expanded="false">See the pieces' + (ev.published ? " (" + ev.published + ")" : "") + "</button>" +
       "</div></article>";
   }
@@ -303,8 +307,8 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     var g = $("#grid");
     if (!open.length) {
       g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">' + (S.events.length
-        ? "Nothing is open for registration right now. The next sale goes up here as soon as a host adds it — or scan the QR at a table you're standing at; that works without the directory."
-        : 'The first events are being set up — hosts: open <a href="/glowtbook/?page=events">Glowtbook → Events</a>, add your sale, and the registration link works at once. It shows here after a quick review.') +
+        ? "Nothing is open right now. The next show or sale goes up here as soon as a host adds it — or scan the QR at a table you're standing at; that works without the directory."
+        : 'The first shows and sales are being set up — hosts: open <a href="/glowtbook/?page=events">Glowtbook → Shows &amp; Sales</a>, add your sale, and the link for the table works at once. It shows here after a quick review.') +
         "</div>";
       return;
     }
@@ -329,7 +333,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     var pieces = list.reduce(function (a, e) { return a + (e.published || 0); }, 0);
     var regs = list.reduce(function (a, e) { return a + (e.registered || 0); }, 0);
     $("#heroMeta").innerHTML = list.length
-      ? "<span><b>" + plural(open, "event") + "</b> open</span><span><b>" + plural(regs, "piece") + "</b> registered</span><span><b>" + pieces + "</b> published</span>"
+      ? "<span><b>" + open + (open === 1 ? " show" : " shows") + "</b> open</span><span><b>" + plural(regs, "piece") + "</b> added</span><span><b>" + pieces + "</b> published</span>"
       : "";
   }
 
@@ -353,7 +357,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       sec.scrollIntoView({ block: "start" });
     }).catch(function () {
       var g = $("#yoursGrid"); $("#yours").hidden = false;
-      g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">We couldn\'t find that event — the link may be old. Ask the host for a fresh one, or pick from the list below.</div>';
+      g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">We couldn\'t find that show — the link may be old. Ask the host for a fresh one, or pick from the list below.</div>';
     });
   }
 

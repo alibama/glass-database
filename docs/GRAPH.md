@@ -1,3 +1,5 @@
+People see this as **Who Worked With Whom** (see docs/NAMING.md); the code and URLs keep the old words.
+
 # The relationship graph
 
 *Who taught whom, who made what, which pieces look alike.* The graph is built on

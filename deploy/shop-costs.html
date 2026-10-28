@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Operating cost estimator — Glass Database</title>
-<meta name="description" content="A rough monthly running-cost estimate for a hot shop: power, hours and duty cycle per device, priced at your own utility rates. Runs entirely in your browser.">
+<title>Studio Cost Calculator — Glass Database</title>
+<meta name="description" content="A rough monthly running-cost estimate for a glass studio: power, hours and duty cycle per device, priced at your own utility rates. Runs entirely in your browser.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/paper.css">
@@ -48,27 +48,30 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
  <nav class="nav wrap" aria-label="Primary">
-  <a class="brand" href="/">Glass <i>Database</i></a>
+  <a class="brand" href="/">Glass <i>Database</i><small class="tag">A home for every piece of glass and the people who make it.</small></a>
   <ul id="menu">
-   <li><a href="/explore/">Registry</a></li><li><a href="/events.html">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li>
+   <li><a href="/explore/">Find Artists &amp; Studios</a></li><li><a href="/games.html">Collecting Events</a></li><li><a href="/fingerprint/enroll.html" class="on">Glass ID</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/#about">About</a></li>
   </ul>
   <div class="right"><span id="chip" class="signin gdb-chip" aria-live="polite"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
  </nav>
 </header>
 <div class="wrap">
- <nav class="subnav" aria-label="Tools">
-  <span class="crumb">Tools</span>
-  <a href="/fingerprint/enroll.html">Capture app</a>
-  <a href="/shop.html">Shop docs</a>
-  <a href="/shop-costs.html" class="on" aria-current="page">Shop costs</a>
+ <nav class="subnav" aria-label="Glass ID">
+  <span class="crumb">Glass ID</span>
+  <a href="/fingerprint/enroll.html">Register Your Piece</a>
+  <a href="/fingerprint/verify.html">Check a Piece</a>
+  <a href="/splat.html">3D Photo</a>
+  <a href="/fingerprint/capture-mat.pdf">Photo Mat</a>
+  <a href="/shop.html">Studio docs</a>
+  <a href="/shop-costs.html" class="on" aria-current="page">Studio Cost Calculator</a>
  </nav>
 </div>
 <main id="main">
 
 <section class="hero intro">
  <div class="wrap">
-  <p class="label"><span class="n">№ 07</span> Shop tools · Calculator</p>
-  <h1>What does it cost to <em>run the shop?</em></h1>
+  <p class="label"><span class="n">№ 07</span> Studio Cost Calculator</p>
+  <h1>What does it cost to <em>run the studio?</em></h1>
   <p class="lede">A rough monthly estimate from how you actually use the equipment: enter each device's
      power, the hours it runs, and a duty cycle (the share of that time the elements or burner
      are firing to hold temperature). Start from the presets, then tune to your bill. Nothing
@@ -90,6 +93,7 @@
 
   <p class="label lbl"><span class="n">02</span> Equipment</p>
   <div class="presets" id="presets"></div>
+  <p style="margin:.6rem 0 0;font-size:.85rem;color:var(--muted)">Each preset adds a typical device to the table with sensible starting numbers.</p>
   <div class="tbl">
   <table>
     <thead><tr>
@@ -102,6 +106,7 @@
   </table>
   </div>
   <button class="add" onclick="addRow()">+ Add device</button>
+  <p style="margin:.5rem 0 0;font-size:.85rem;color:var(--muted)">Add device puts an empty row in the table for you to fill in; the × on a row removes it.</p>
 
   <div class="totals">
     <div class="grand"><small>Estimated monthly total</small><span id="grand">$0</span></div>
@@ -109,8 +114,9 @@
   </div>
 
   <div class="after">
-  <div class="btns"><a class="btn btn--line" href="/shop.html">← Back to shop documentation</a><a class="link" href="/explore/?view=submit">Publish your shop</a></div>
-  <p style="margin-top:1.4rem;font-size:.95rem;color:var(--ink-2)">Documenting your shop's <a href="/shop.html">components and part numbers</a>
+  <div class="btns"><a class="btn btn--line" href="/shop.html">← Back to Studio docs</a><a class="link" href="/explore/?view=submit">Publish your studio</a></div>
+  <p class="note" style="margin-top:.8rem">Back to Studio docs returns to the page on describing a studio; Publish your studio opens the submission form.</p>
+  <p style="margin-top:1.4rem;font-size:.95rem;color:var(--ink-2)">Documenting your studio's <a href="/shop.html">components and part numbers</a>
      makes these numbers easy to fill in — the power draw is on the nameplate.</p>
   </div>
  </div>
@@ -121,9 +127,10 @@
   <div class="fgrid">
    <div><p class="label"><span class="n">№ 10</span> Come say hi</p><h2 style="margin:1rem 0">A record kept by the field, <em>for the field.</em></h2>
     <p>Nothing is published until it’s reviewed; anything can be corrected or removed on request.</p></div>
-   <div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>
-   <div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>
-   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
   </div>
   <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
  </div>
@@ -171,7 +178,7 @@ function render(){
       `<td class="hrs"><input type="number" step="1" value="${r.hrs}" oninput="upd(${i},'hrs',this.value)"></td>`+
       `<td class="duty"><input type="number" step="1" value="${r.duty}" oninput="upd(${i},'duty',this.value)"></td>`+
       `<td class="cost">${money(c.cost)}</td>`+
-      `<td><button class="x" onclick="del(${i})" title="remove">×</button></td>`;
+      `<td><button class="x" onclick="del(${i})" title="Remove this device" aria-label="Remove this device">×</button></td>`;
     tb.appendChild(tr);
   });
   $("#grand").textContent = money(total);

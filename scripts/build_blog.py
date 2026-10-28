@@ -185,8 +185,10 @@ FONTS = ('<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="
          '<script src="/site.js"></script>')
 
 # The site's primary menu, as on the homepage (deploy/landing-index.html).
-NAV = [("Registry", "/explore/"), ("Collect", "/events.html"), ("Field notes", "/blog/"),
-       ("Glowtbook", "/glowtbook/"), ("Tools", "/fingerprint/enroll.html"), ("About", "/#about")]
+TAGLINE = "A home for every piece of glass and the people who make it."
+NAV = [("Find Artists &amp; Studios", "/explore/"), ("Collecting Events", "/games.html"),
+       ("Glass ID", "/fingerprint/enroll.html"), ("Glowtbook", "/glowtbook/"),
+       ("Field notes", "/blog/"), ("About", "/#about")]
 
 # Page-specific rules only; everything shared lives in /paper.css (one owner).
 CSS = """
@@ -263,7 +265,7 @@ def _nav(active: str = "Field notes", index_on: bool = False) -> str:
     items = "".join(f'<li><a href="{h}"{" class=on" if label == active else ""}>{label}</a></li>' for label, h in NAV)
     return ('<a class="skip" href="#main">Skip to content</a>\n'
             '<header class="site"><nav class="nav wrap" aria-label="Primary">'
-            '<a class="brand" href="/">Glass <i>Database</i></a>'
+            f'<a class="brand" href="/">Glass <i>Database</i><small class="tag">{TAGLINE}</small></a>'
             f'<ul id="menu">{items}</ul>'
             '<div class="right"><span id="chip" class="signin gdb-chip"></span>'
             '<button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>'
@@ -278,13 +280,16 @@ def _footer() -> str:
             '<div><p class="label">Glass Database</p>'
             '<p>A record kept by the field, for the field. Writing and data under CC BY 4.0, '
             'with attribution kept and removal on request; code under Apache 2.0.</p></div>'
-            '<div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li>'
-            '<li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>'
-            '<div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li>'
-            '<li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>'
+            '<div><p class="label">Find</p><ul><li><a href="/explore/">The Directory</a></li><li><a href="/graph.html">Who Worked With Whom</a></li>'
+            '<li><a href="/studios.html">Studios on a map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li>'
+            '<li><a href="/api/docs">For Researchers</a></li></ul></div>'
+            '<div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li>'
+            '<li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>'
+            '<div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li>'
+            '<li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>'
             '<div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li>'
             '<li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li>'
-            '<li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li>'
+            '<li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li>'
             '<li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>'
             '</div><div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>'
             '</div></footer>')

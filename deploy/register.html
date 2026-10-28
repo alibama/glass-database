@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Add to your collection — Glass Database</title>
-<meta name="description" content="Bought a piece at a maker's event? Register it: it goes on the record with provenance, lands in your Glowtbook, and can be fingerprinted so you can prove it's yours later.">
-<meta property="og:title" content="Add to your collection — Glass Database">
-<meta property="og:description" content="Register the piece you just bought at the table. The host confirms it, the site publishes it, and it's yours on the record.">
+<title>Add to My Collection — Glass Database</title>
+<meta name="description" content="Bought a piece at a maker's show or sale? Add it to your collection: it goes on the record with provenance, lands in your Glowtbook, and can get its Glass ID so you can prove it's yours later.">
+<meta property="og:title" content="Add to My Collection — Glass Database">
+<meta property="og:description" content="Add the piece you just bought at the table to your collection. The host confirms it, the site publishes it, and it's yours on the record.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/paper.css">
@@ -73,7 +73,11 @@
   #photoClear { align-self: flex-start; }
   .check { display: flex; gap: .8rem; align-items: flex-start; margin-top: 1.4rem; cursor: pointer; font-size: 15px; line-height: 1.45; }
   .check input { width: 1.25rem; height: 1.25rem; margin: .1rem 0 0; accent-color: var(--red); flex: none; cursor: pointer; }
-  .acts { display: flex; gap: .8rem 1.2rem; flex-wrap: wrap; align-items: center; margin-top: 1.6rem; }
+  .acts { display: flex; gap: .8rem 1.2rem; flex-wrap: wrap; align-items: flex-start; margin-top: 1.6rem; }
+  /* a button and the one sentence that says what it does */
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
+  .act .btn.big { margin-top: 0; }
   .btn.big { width: 100%; justify-content: center; padding: 1.1rem 1.4rem; font-size: 16px; margin-top: 1.4rem; }
   .err { border-left: 2px solid var(--red); padding: .4rem 0 .4rem 1.2rem; margin-top: 1.2rem; color: var(--red); font-size: 15px; }
   .err .btn { margin-top: .7rem; }
@@ -106,7 +110,7 @@
 
   @media (max-width: 680px) {
     .hero .lede { font-size: 1rem; }
-    .acts .btn { width: 100%; justify-content: center; }
+    .acts .act, .acts .btn { width: 100%; justify-content: center; }
     .list.pick a.row { grid-template-columns: 1fr; gap: .4rem; }
     .reg { grid-template-columns: 60px 1fr; gap: .8rem; }
     .reg img, .reg .ph { width: 60px; height: 60px; }
@@ -117,21 +121,21 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
  <nav class="nav wrap" aria-label="Primary">
-  <a class="brand" href="/">Glass <i>Database</i></a>
+  <a class="brand" href="/">Glass <i>Database</i><small class="tag">A home for every piece of glass and the people who make it.</small></a>
   <ul id="menu">
-   <li><a href="/explore/">Registry</a></li><li><a href="/events.html" class="on">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li>
+   <li><a href="/explore/">Find Artists &amp; Studios</a></li><li><a href="/games.html" class="on">Collecting Events</a></li><li><a href="/fingerprint/enroll.html">Glass ID</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/#about">About</a></li>
   </ul>
   <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
  </nav>
 </header>
-<div class="subnav wrap"><span class="crumb">Collect</span><a href="/register.html" class="on" aria-current="page">Add a find</a><a href="/events.html">Events</a><a href="/games.html">Seasons</a></div>
+<div class="subnav wrap"><span class="crumb">Collecting Events</span><a href="/games.html">Court of the Gourds</a><a href="/events.html">Shows &amp; Sales</a><a href="/register.html" class="on" aria-current="page">Add to My Collection</a><a href="/fingerprint/verify.html">Check a Piece</a></div>
 
 <main id="main">
 <section class="hero" id="hero">
  <div class="wrap">
-  <p class="label"><span class="n">№ 01</span> Add to your collection</p>
+  <p class="label"><span class="n">№ 01</span> Add to My Collection</p>
   <h1 id="h1">Found a new treasure? <em>Add it to your collection.</em></h1>
-  <p class="lede" id="lede">Say what you found, add a photo if you like, and it joins your collection with its story attached: made by the maker for this event, found by you today. The maker confirms it, the registry keeps it, and it sits in your Glowtbook ready to fingerprint.</p>
+  <p class="lede" id="lede">Say what you found, add a photo if you like, and it joins your collection with its story attached: made by the maker for this show, found by you today. The maker confirms it, the directory keeps it, and it sits in your Glowtbook (your studio notebook) ready for its Glass ID.</p>
  </div>
 </section>
 
@@ -170,10 +174,10 @@
     <label for="fPrice">Price paid <small>Optional and private — never shown; it feeds the census of what glass actually sells for.</small></label>
     <input id="fPrice" type="text" inputmode="decimal" maxlength="80" placeholder="$65" enterkeyhint="done">
    </div>
-   <label class="check"><input id="fShow" type="checkbox"><span>Show my name on the event page <small>Names are private by default. Leave this off and the piece is listed as acquired by "a collector".</small></span></label>
+   <label class="check"><input id="fShow" type="checkbox"><span>Show my name on the show's page <small>Names are private by default. Leave this off and the piece is listed as acquired by "a collector".</small></span></label>
    <div class="err" id="err" hidden role="alert"></div>
-   <div class="acts"><button class="btn btn--red" id="submit" type="submit">Add it to my collection</button></div>
-   <p class="note" id="formNote">The maker confirms it came from their table, then the registry publishes it with its provenance. Watch it under <a href="#mine">My collection</a> below.</p>
+   <div class="acts"><div class="act"><button class="btn btn--red" id="submit" type="submit">Add to My Collection</button><small>It joins your collection with its story attached.</small></div></div>
+   <p class="note" id="formNote">The maker confirms it came from their table, then the directory publishes it with its provenance. Watch it under <a href="#mine">My collection</a> below.</p>
   </form>
 
   <div id="done" hidden></div>
@@ -183,7 +187,7 @@
 <section class="s alt" id="mine" hidden aria-labelledby="h-mine">
  <div class="wrap">
   <div class="s-head"><p class="label"><span class="n">№ 02</span> My collection</p>
-   <div><h2 id="h-mine">What you've <em>registered.</em></h2></div></div>
+   <div><h2 id="h-mine">What you've <em>added.</em></h2></div></div>
   <div id="mineBody"></div>
  </div>
 </section>
@@ -193,9 +197,10 @@
  <div class="wrap">
   <div class="fgrid">
    <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
-   <div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>
-   <div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>
-   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
   </div>
   <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
  </div>
@@ -211,8 +216,8 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   var $ = function (s) { return document.querySelector(s); };
   var esc = GDB.esc;
   var S = { slug: GDB.param("event"), ev: null, me: null, signedIn: false, photo: null, busy: false };
-  var LABEL = { pending_host: "waiting for the maker to confirm", host_approved: "confirmed by the maker — joining the registry",
-                approved: "in the registry", rejected_host: "the maker didn't recognise it", rejected: "not added to the registry" };
+  var LABEL = { pending_host: "waiting for the maker to confirm", host_approved: "confirmed by the maker — being published",
+                approved: "published", rejected_host: "the maker didn't recognise it", rejected: "not published" };
   /* status -> paper pill: default while pending, ink once published, red outline when turned down */
   var PILL = { pending_host: "pill", host_approved: "pill", approved: "pill ink", rejected_host: "pill bad", rejected: "pill bad" };
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -250,7 +255,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function renderHead() {
     var ev = S.ev, w = where(ev), d = fmtDate(ev.starts, ev.ends);
     $("#eventHead").innerHTML = '<div class="block">' +
-      '<p class="label"><span class="n">Event</span></p>' +
+      '<p class="label"><span class="n">Show or sale</span></p>' +
       "<h2>" + esc(ev.title) + "</h2>" +
       '<p class="who">' + esc(who(ev)) + "</p>" +
       '<div class="meta">' +
@@ -259,12 +264,12 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
         (ev.piece_type ? "<span>pieces <b>" + esc(ev.piece_type) + "</b></span>" : "") +
       "</div>" +
       '<div class="status">' +
-        '<span class="' + (ev.can_register ? "pill red" : "pill ink") + '">' + (ev.can_register ? "registrations open" : "registrations closed") + "</span>" +
+        '<span class="' + (ev.can_register ? "pill red" : "pill ink") + '">' + (ev.can_register ? "open to new pieces" : "closed to new pieces") + "</span>" +
         (ev.can_register && ev.registration_closes ? "<span>until " + esc(fmtDate(ev.registration_closes)) + "</span>" : "") +
         (ev.published ? "<span>" + plural(ev.published, "piece") + " published</span>" : "") +
       "</div>" +
       (ev.description ? '<p class="desc">' + esc(ev.description) + "</p>" : "") +
-      '<p class="note"><a href="/events.html?event=' + encodeURIComponent(ev.slug) + '">Event page</a> · <a href="/register.html">Different event?</a></p>' +
+      '<p class="note"><a href="/events.html?event=' + encodeURIComponent(ev.slug) + '">Show page</a> · <a href="/register.html">Different show?</a></p>' +
       "</div>";
     show("#eventHead", true);
   }
@@ -277,9 +282,9 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     GDB.json("/events").then(function (d) {
       var open = (d.events || []).filter(function (e) { return e.can_register; });
       if (!open.length) {
-        $("#picker").innerHTML = '<div class="empty">No events are open for registration right now. ' +
-          "If you're holding a QR or link from the table, use that — it works even before the event is listed. " +
-          '<br><a class="btn btn--line" href="/events.html">See all events</a></div>';
+        $("#picker").innerHTML = '<div class="empty">No shows or sales are open right now. ' +
+          "If you're holding a QR or link from the table, use that — it works even before the show is listed. " +
+          '<div class="act" style="margin-top:1rem"><a class="btn btn--line" href="/events.html">See all shows &amp; sales</a><small>Opens the list of shows, open and past.</small></div></div>';
         return;
       }
       $("#picker").innerHTML = '<p class="label" style="margin-top:1rem"><span class="n">Where did you find it?</span></p>' +
@@ -287,7 +292,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
           var sub = [who(e), where(e), fmtDate(e.starts, e.ends)].filter(Boolean).join(" · ");
           return '<li><a class="row" href="?event=' + encodeURIComponent(e.slug) + '"><p>' + esc(e.title) +
             "<small>" + esc(sub) + "</small></p>" +
-            '<span class="val">' + (e.registered ? plural(e.registered, "piece") + " registered · " : "") + "register →</span></a></li>";
+            '<span class="val">' + (e.registered ? plural(e.registered, "piece") + " added · " : "") + "add yours →</span></a></li>";
         }).join("") + "</ul>" +
         '<p class="note">Not listed yet? Ask the host for the link or QR on the table — it works before the directory does.</p>';
     }).catch(function (err) {
@@ -300,11 +305,11 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     var ev = S.ev;
     show("#done", false);
     if (!ev.can_register) {
-      var why = ev.status !== "open" ? "This event isn't taking registrations"
-        : (ev.registration_opens && new Date() < parseDay(ev.registration_opens) ? "Registration opens " + fmtDate(ev.registration_opens)
-        : "Registration for this event has closed" + (ev.registration_closes ? " (it ran until " + fmtDate(ev.registration_closes) + ")" : ""));
+      var why = ev.status !== "open" ? "This show isn't taking new pieces"
+        : (ev.registration_opens && new Date() < parseDay(ev.registration_opens) ? "This show opens to new pieces on " + fmtDate(ev.registration_opens)
+        : "This show has closed to new pieces" + (ev.registration_closes ? " (it ran until " + fmtDate(ev.registration_closes) + ")" : ""));
       $("#closed").innerHTML = '<div class="empty">' + esc(why) + ". If you bought a piece there, ask the host — they can reopen it from Glowtbook. " +
-        '<br><a class="btn btn--line" href="/events.html">See other events</a></div>';
+        '<div class="act" style="margin-top:1rem"><a class="btn btn--line" href="/events.html">See other shows &amp; sales</a><small>Opens the list of shows, open and past.</small></div></div>';
       show("#closed", true); show("#auth", false); show("#form", false);
       return;
     }
@@ -313,7 +318,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       $("#auth").innerHTML = '<div class="block">' +
         '<p class="label"><span class="n">Make it yours</span></p>' +
         '<p class="why">Sign in so the piece is tied to you — that\'s what turns a photo on your phone into a collection you can prove.</p>' +
-        loginBtn("Sign in to add it") +
+        '<div class="act">' + loginBtn("Sign in to add it") + "<small>Signs you in with Google and brings you back to this form.</small></div>" +
         '<p class="note">Your name stays private unless you choose to show it. Your email is never shown.</p></div>';
       show("#auth", true); show("#form", false);
     } else {
@@ -356,7 +361,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   }
   function busy(on) {
     S.busy = on; var b = $("#submit"); b.disabled = on;
-    b.innerHTML = on ? '<span class="spin" aria-hidden="true"></span> Registering…' : "Register this piece";
+    b.innerHTML = on ? '<span class="spin" aria-hidden="true"></span> Adding…' : "Add to My Collection";
   }
   $("#form").addEventListener("submit", function (ev) {
     ev.preventDefault();
@@ -377,7 +382,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
           S.signedIn = false;
           error("Your sign-in has expired — sign in again and the form will still be here.", "<br>" + loginBtn("Sign in to add it"));
         } else if (e.status === 413) error("That photo is too big even after resizing — try a smaller one or skip it.");
-        else if (e.status === 404) error("That event has gone away — ask the host for a fresh link.");
+        else if (e.status === 404) error("That show has gone away — ask the host for a fresh link.");
         else error(e.message || "That didn't go through — check your connection and try again.");
       });
   });
@@ -393,14 +398,14 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       '<p class="label" style="margin-top:1.6rem">What happens next</p>' +
       '<ol class="next">' +
         "<li><span><b>" + esc(ev.host_name || ev.studio || "The maker") + "</b> confirms it came from their table — usually the same day.</span></li>" +
-        "<li><span>The registry publishes it with its provenance: made by the maker for this event, collected by you.</span></li>" +
-        "<li><span>Fingerprint it, and any phone can match <em>this</em> piece to its record — the difference between a collection and a shelf of glass.</span></li>" +
+        "<li><span>The directory publishes it with its provenance: made by the maker for this show, collected by you.</span></li>" +
+        "<li><span>Register it for its Glass ID, and any phone can match <em>this</em> piece to its record — the difference between a collection and a shelf of glass.</span></li>" +
       "</ol>" +
-      (r.fingerprint_url ? '<a class="btn btn--red big" href="' + esc(r.fingerprint_url) + '">Fingerprint it now</a>' +
-        '<p class="note">A minute while it\'s in your hand: a few photos on a plain background, and the piece can be recognised later — not one like it, this one.</p>' : "") +
+      (r.fingerprint_url ? '<div class="act" style="margin-top:1.4rem"><a class="btn btn--red big" href="' + esc(r.fingerprint_url) + '">Register Your Piece</a>' +
+        '<small style="max-width:none">Walk around it with your phone; it gets its Glass ID. A minute while it\'s in your hand, on a plain background, and the piece can be recognised later — not one like it, this one.</small></div>' : "") +
       '<div class="acts">' +
-        '<a class="btn btn--line" href="' + esc(r.glowtbook_url || "/glowtbook/") + '">Open in Glowtbook</a>' +
-        '<button type="button" class="btn btn--line" id="again">Add another find</button>' +
+        '<div class="act"><a class="btn btn--line" href="' + esc(r.glowtbook_url || "/glowtbook/") + '">Open in Glowtbook</a><small>See it in your studio notebook.</small></div>' +
+        '<div class="act"><button type="button" class="btn btn--line" id="again">Add another find</button><small>Clears the form for the next piece.</small></div>' +
       "</div></div>";
     show("#done", true);
     $("#again").addEventListener("click", function () {
@@ -415,10 +420,10 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function regRow(r) {
     var sub = [r.event_title, r.host_name, r.venue, r.starts ? fmtDate(r.starts) : "", r.piece_ref ? "piece " + r.piece_ref : ""].filter(Boolean).join(" · ");
     var links = "";
-    if (r.fingerprint_url) links += link("Fingerprint", r.fingerprint_url);
+    if (r.fingerprint_url) links += link("Register Your Piece", r.fingerprint_url);
     if (r.glowtbook_url) links += link("Glowtbook", r.glowtbook_url);
     if (r.status === "approved" && r.object_url) links += link("View published", r.object_url);
-    if (r.event_slug) links += link("Event", "/events.html?event=" + encodeURIComponent(r.event_slug));
+    if (r.event_slug) links += link("Show page", "/events.html?event=" + encodeURIComponent(r.event_slug));
     var note = r.status === "rejected_host" && r.host_note ? r.host_note : (r.status === "rejected" && r.admin_note ? r.admin_note : "");
     return '<article class="reg">' +
       (r.image_url ? '<img src="' + esc(r.image_url) + '" alt="" loading="lazy" onerror="this.style.opacity=.15">' : '<span class="ph" aria-hidden="true"></span>') +
@@ -433,7 +438,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     GDB.json("/me/registrations").then(function (d) {
       var regs = d.registrations || [];
       if (!regs.length) {
-        $("#mineBody").innerHTML = '<div class="empty" style="margin-top:0">Nothing registered yet. Pieces you register at events land here with their status — waiting for the host, waiting for the site, published.</div>';
+        $("#mineBody").innerHTML = '<div class="empty" style="margin-top:0">Nothing added yet. Pieces you add at shows and sales land here with their status — waiting for the host, waiting for the site, published.</div>';
         return;
       }
       var waiting = regs.filter(function (r) { return r.status === "pending_host" || r.status === "host_approved"; }).length;
@@ -442,7 +447,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
         '<div class="regs">' + regs.map(regRow).join("") + "</div>";
     }).catch(function (err) {
       if (err.status === 401) { S.signedIn = false; show("#mine", false); return; }
-      $("#mineBody").innerHTML = '<div class="empty" style="margin-top:0">Couldn\'t load your registrations (' + esc(err.message || "offline") + ").</div>";
+      $("#mineBody").innerHTML = '<div class="empty" style="margin-top:0">Couldn\'t load your collection (' + esc(err.message || "offline") + ").</div>";
     });
   }
 
@@ -453,12 +458,12 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     GDB.json("/events/" + encodeURIComponent(S.slug)).then(function (ev) {
       S.ev = ev;
       document.title = "Your new treasure from " + ev.title + " — Glass Database";
-      $("#h1").innerHTML = "Register your new treasure from <em>" + esc(ev.title) + ".</em>";
+      $("#h1").innerHTML = "Found a new treasure at <em>" + esc(ev.title) + "?</em> Add it to your collection.";
       show("#picker", false); renderHead(); decide();
     }).catch(function (err) {
       if (err.status === 404) {
         S.slug = null; S.ev = null;
-        $("#lede").textContent = "We couldn't find that event — the link may be old. Pick it from the list below, or ask the host for a fresh QR.";
+        $("#lede").textContent = "We couldn't find that show — the link may be old. Pick it from the list below, or ask the host for a fresh QR.";
         loadPicker(); return;
       }
       $("#picker").innerHTML = '<div class="empty">Couldn\'t reach the API (' + esc(err.message || "network") + "). Try again in a moment.</div>";

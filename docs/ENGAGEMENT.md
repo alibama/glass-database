@@ -1,3 +1,5 @@
+People see this as **Find Artists & Studios** and **Add to My Collection** (see docs/NAMING.md); the code and URLs keep the old words.
+
 # Getting people in: the profile push, claiming listings, and the CMS question
 
 *Design note, October 2026. Nothing here is built yet except where marked.*

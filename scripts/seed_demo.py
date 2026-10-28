@@ -119,11 +119,12 @@ def seed() -> str:
     return str(local_path())
 
 
-# --- demo objects + a demo season ------------------------------------------------
-# Three published pieces (so Explore shows "Verify" and Seasons has something to
-# enter), then "Pumpkin Patch 2026" with two approved entries, a few votes and one
-# verified claim. Everything here is prefixed demo-/obj-demo- and deleted before
-# it is re-inserted, so re-running the seed is idempotent.
+# --- demo objects + a demo collecting event (a "season" in the code) --------------
+# Three published pieces (so the Directory shows "Check a Piece" and the collecting
+# event has something to enter), then "Court of the Gourds" (slug pumpkin-patch-2026)
+# with two approved entries, a few votes and one piece checked into a collection.
+# Everything here is prefixed demo-/obj-demo- and deleted before it is re-inserted,
+# so re-running the seed is idempotent.
 DEMO_OBJECTS = [
     dict(row_id="obj-demo-0001", title="Harvest Pumpkin No. 4", maker="Rae Sutter", year="2026",
          colour=("orange", "#e8a44a"), uid="demo-maker-rae", studio="Blue Ridge Hot Glass",
@@ -135,7 +136,7 @@ DEMO_OBJECTS = [
          colour=("violet", "#967ad2"), uid="demo-maker-ivo", studio="Murano Vetro Collettivo",
          edition=1, price="", dims=""),
 ]
-# the demo legendary's story (the collector who claims it reads this)
+# the demo legendary's story (the collector who adds it to their collection reads this)
 DEMO_LEGEND = ("Blown on the last night of the Murano residency, from the end of a reticello cane "
                "pulled for something else entirely. The twist runs the wrong way. There is one.")
 
@@ -210,7 +211,7 @@ def _seed_objects_and_season(c) -> None:
         c.execute("INSERT INTO object_images (object_row_id, role, caption, image_b64) "
                   "VALUES (?,?,?,?)", (o["row_id"], "primary", o["title"],
                                        _demo_png_b64(o["colour"][1])))
-        # the review-queue row that says who published it (ownership for Seasons)
+        # the review-queue row that says who published it (ownership for collecting events)
         c.execute("""INSERT INTO object_submissions (content_hash, submitted_uid, submitted_by,
                      title, maker, year, techniques, status) VALUES (?,?,?,?,?,?,?,?)""",
                   (chash, o["uid"], o["maker"], o["title"], o["maker"], o["year"],
@@ -221,21 +222,21 @@ def _seed_objects_and_season(c) -> None:
               "WHERE tbl='objects'", (NOW,))
     c.commit()
 
-    # --- season ---------------------------------------------------------------
+    # --- the collecting event (slug unchanged so links and tests keep working) ----
     sid = seasons.create_season(
-        c, title="Pumpkin Patch 2026", slug="pumpkin-patch-2026",
-        theme="Blown-glass pumpkins from every shop",
-        description="October is pumpkin season in every hot shop we know. Enter yours, send "
+        c, title="Court of the Gourds", slug="pumpkin-patch-2026",
+        theme="Blown-glass pumpkins from every studio",
+        description="October is pumpkin time in every hot shop we know. Enter yours, send "
                     "collectors to your shop, and let the crowd pick a favourite.",
         starts="2026-10-01", entries_close="2026-10-25", voting_closes="2026-10-31",
         ends="2026-11-02", votes_per_voter=3, status="open",
         rules="One entry per piece, and the piece must already be published through Glowtbook "
-              "(fingerprinted, credentialed, approved). Editions are welcome — say how many. "
-              "Collectors claim a piece by scanning it with Verify; a match of 70+ counts "
-              "straight away, anything lower waits for the artist or an admin. Three votes "
-              "per person, swap them as often as you like until voting closes.",
+              "(registered with a Glass ID and approved). Editions are welcome — say how many. "
+              "Collectors add a piece to their collection by checking it with Check a Piece; "
+              "a match of 70+ counts straight away, anything lower waits for the artist or an "
+              "admin. Three votes per person, swap them as often as you like until voting closes.",
         prize_note="Bragging rights, a homepage feature, and the Crowd Favourite badge")
-    # the theme ("pumpkin") gives the season its default award categories:
+    # the theme ("pumpkin") gives the collecting event its default award categories:
     # Best stem · Best colour · Biggest pumpkin · Biggest pumpkin, solo (+ People's choice)
     entry_ids = []
     for i, o in enumerate(DEMO_OBJECTS[:2]):
@@ -244,7 +245,7 @@ def _seed_objects_and_season(c) -> None:
                             edition_size=o["edition"], price_note=o["price"], solo=(i == 0))
         seasons.approve_entry(c, eid, True)
         entry_ids.append(eid)
-    # the legendary: Ivo's fingerprinted one-of-one with its legend — still out there
+    # the legendary: Ivo's one-of-one (it has a Glass ID) with its legend — still out there
     leg = DEMO_OBJECTS[2]
     eid = seasons.enter(c, sid, object_row_id=leg["row_id"], artist_uid=leg["uid"],
                         artist_name=leg["maker"], title=leg["title"], studio=leg["studio"],

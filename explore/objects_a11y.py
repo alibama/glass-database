@@ -11,8 +11,10 @@ mDLAUG situations addressed (tagged in markup with data-mdlaug-ok):
   ACC4 collection items as a named list NAV3 per-item position
   ACC2 descriptive alt text on images   ACC1 file links w/ format+size
   RED4 unavailable features say why      ACC3 structured data as tables
-Verify is surfaced up top (a callout) and on each fingerprinted card (a prominent
-"Verify this piece" action) instead of being buried at the bottom.
+Check a piece is surfaced up top (a callout) and on each card that has a Glass ID (a
+prominent "Check a piece" action) instead of being buried at the bottom. Words follow
+docs/NAMING.md: people read "Glass ID" and "Check a piece"; the code, URLs and the
+`fingerprint` dict key keep the old names.
 """
 from __future__ import annotations
 
@@ -83,6 +85,7 @@ _CSS = """
 .gdb-a11y .gdb-fp{background:var(--paper-2);border:1px solid var(--rule);border-radius:0;padding:.45rem .6rem;font-size:.86rem;color:var(--ink-2)}
 .gdb-a11y .gdb-fp strong{color:var(--ink)}
 .gdb-a11y .gdb-fp a{font-weight:500;color:var(--red);font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid currentColor}
+.gdb-a11y .gdb-fp small{display:block;margin-top:.25rem;color:var(--muted);font-family:var(--mono);font-size:.74rem}
 .gdb-a11y .gdb-cred-badge{font-size:.76rem;color:var(--red);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase}
 .gdb-a11y .gdb-unverified{color:var(--muted);font-size:.78rem;font-family:var(--mono)}
 .gdb-a11y details{border-top:1px solid var(--rule);margin-top:.2rem}
@@ -109,29 +112,30 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
     if n == 0:
         return (_CSS + '<section class="gdb-a11y">'
                 '<p role="status" aria-live="polite" data-mdlaug-ok="RED1">'
-                'No objects have been published yet. '
-                '<a href="/glowtbook/">Add one in Glowtbook</a>.</p></section>')
+                'No pieces have been published yet. '
+                '<a href="/glowtbook/">Register one in Glowtbook, your studio notebook</a>.</p></section>')
 
     any_fp = any((o.get("fingerprint") or {}).get("rating") is not None for o in objects)
     out = [_CSS, '<section class="gdb-a11y" aria-labelledby="gdb-obj-h">']
-    out.append('<a class="gdb-skip" href="#gdb-objects" data-mdlaug-ok="COM1">Skip to the objects</a>')
-    out.append('<h2 id="gdb-obj-h">Published glass objects</h2>')
+    out.append('<a class="gdb-skip" href="#gdb-objects" data-mdlaug-ok="COM1">Skip to the pieces</a>')
+    out.append('<h2 id="gdb-obj-h">Published pieces</h2>')
     out.append(f'<p role="status" aria-live="polite" data-mdlaug-ok="RED1">'
-               f'{n} object{"s" if n != 1 else ""} found.</p>')
+               f'{n} piece{"s" if n != 1 else ""} found.</p>')
 
-    # Verify surfaced UP TOP (was buried at the bottom before).
+    # Check a piece surfaced UP TOP (was buried at the bottom before).
     if any_fp:
-        out.append('<aside class="gdb-verify-callout" aria-label="Verify a physical piece">'
-                   '<h3>Have a physical piece?</h3>'
-                   '<p>Pieces with a fingerprint show a <strong>Verify this piece</strong> button — '
-                   'capture the object with your phone camera and match it against the fingerprint on '
-                   'file, right in your browser. Nothing you capture leaves your device.</p></aside>')
+        out.append('<aside class="gdb-verify-callout" aria-label="Check a piece you hold">'
+                   '<h3>Holding a piece?</h3>'
+                   '<p>Pieces with a Glass ID show a <strong>Check a piece</strong> button — '
+                   'point your phone at it to see who made it. The match happens in your browser; '
+                   'nothing you capture leaves your device.</p></aside>')
     else:
-        out.append('<p>Pieces contributed through Glowtbook — a condensed public rendition; originals '
-                   'stay with the contributor. <a href="/glowtbook/">Add your own piece</a>.</p>')
+        out.append('<p>Pieces registered through Glowtbook, your studio notebook — a condensed public '
+                   'version; the originals stay with the maker. '
+                   '<a href="/glowtbook/">Add your own piece</a>.</p>')
 
     out.append('<ul id="gdb-objects" role="list" class="gdb-grid" '
-               'aria-label="Contributed glass objects" data-mdlaug-ok="ACC4">')
+               'aria-label="Published pieces" data-mdlaug-ok="ACC4">')
     for i, o in enumerate(objects, 1):
         oid = _esc(o["id"])
         title = o.get("title") or "Untitled"
@@ -165,20 +169,22 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
         if o.get("techniques"):
             out.append(f'<p class="gdb-tech">{_esc(o["techniques"])}</p>')
 
-        # Fingerprint + Verify — prominent, on the card
+        # Glass ID + Check a piece — prominent, on the card
         fp = o.get("fingerprint")
         if fp and fp.get("rating") is not None:
-            out.append('<p class="gdb-fp" data-mdlaug-ok="EVA1"><strong>Physical fingerprint:</strong> '
+            out.append('<p class="gdb-fp" data-mdlaug-ok="EVA1"><strong>Glass ID:</strong> '
                        f'{_esc(fp.get("rating"))}/100 ({_esc(fp.get("tier") or "")}) — '
-                       f'<a href="/fingerprint/verify.html?object={oid}">Verify this piece'
-                       '<span class="visually-hidden"> (opens the camera capture app in a new browser '
-                       'tab)</span></a></p>')
+                       f'<a href="/fingerprint/verify.html?object={oid}">Check a piece'
+                       '<span class="visually-hidden"> (opens the camera app in a new browser '
+                       'tab)</span></a>'
+                       '<small>Point your phone at it to see who made it.</small></p>')
 
-        # Credentials badge (visible), detail lives in the disclosure below
+        # Credential badge (visible); the technical words live in its tooltip and the disclosure
         if o.get("has_credentials") and o.get("creds"):
             vs = o["creds"].get("validation_state") or "signed"
-            out.append(f'<p class="gdb-cred-badge">🔐 Content Credentials — {_esc(vs)}</p>')
-        out.append(f'<p class="gdb-unverified" data-mdlaug-ok="RED4">Provenance: '
+            out.append(f'<p class="gdb-cred-badge" title="Content Credentials (C2PA): {_esc(vs)}">'
+                       f'🔐 Glass ID · credential — {_esc(vs)}</p>')
+        out.append(f'<p class="gdb-unverified" data-mdlaug-ok="RED4">Story: '
                    f'{_esc(o.get("sourcing") or "self-reported")} — unverified.</p>')
 
         # Everything heavy in an accessible disclosure so the grid stays scannable
@@ -198,7 +204,7 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
         events = o.get("events") or []
         if events:
             det.append('<table data-mdlaug-ok="ACC3">'
-                       f'<caption>Provenance events for {_esc(title)}</caption>'
+                       f'<caption>The story of {_esc(title)}</caption>'
                        '<thead><tr><th scope="col">Event</th><th scope="col">Date</th>'
                        '<th scope="col">Actor</th><th scope="col">Place</th></tr></thead><tbody>')
             for e in events:
@@ -216,10 +222,12 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
                           ("Actions", " → ".join(creds.get("actions") or []) or None),
                           ("Validation", creds.get("validation_state"))]
             cred_pairs = [(k, v) for k, v in cred_pairs if v]
-            det.append('<div class="gdb-cred"><strong>Content Credentials (C2PA)</strong><dl>'
+            det.append('<div class="gdb-cred"><strong>Glass ID credential</strong><dl>'
                        + "".join(f'<dt>{_esc(k)}</dt><dd>{_esc(v)}</dd>' for k, v in cred_pairs)
-                       + '</dl><p>Self-signed test certificate — reads as untrusted until a '
-                       'C2PA Trust-List certificate is installed.</p></div>')
+                       + '</dl><p><small>The Glass ID is stored as a fingerprint of the glass itself '
+                       'and signed into the photo\'s Content Credentials (C2PA). Self-signed test '
+                       'certificate — reads as untrusted until a C2PA Trust-List certificate is '
+                       'installed.</small></p></div>')
 
         # ACC1: downloads via API URLs (data: URIs get stripped by st.html's sanitizer)
         base = (verify_base or "").rstrip("/")
@@ -234,20 +242,20 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
                          f'Download the signed image ({_fmt}, {_kb(primary[2])} KB)</a></li>')
         if o.get("manifest_json"):
             files.append(f'<li><a href="{base}/api/objects/{oid}/manifest.json" download>'
-                         'Download the provenance manifest (JSON)</a></li>')
+                         'Download the piece\'s record (JSON)</a></li>')
         if o.get("has_credentials"):
-            files.append('<li>Verify the Content Credentials — download the image above, then drop '
+            files.append('<li>Check the credential yourself — download the image above, then drop '
                          'it into <a href="https://verify.contentauthenticity.org/" target="_blank" '
                          'rel="noopener">Content Authenticity Verify<span class="visually-hidden"> '
                          '(opens in a new browser tab)</span></a> or '
                          '<a href="https://c2paviewer.com/" target="_blank" rel="noopener">C2PA Viewer'
                          '<span class="visually-hidden"> (opens in a new browser tab)</span></a>.</li>')
         if files:
-            det.append(f'<ul class="gdb-files" aria-label="Downloads and verification for {_esc(title)}" '
+            det.append(f'<ul class="gdb-files" aria-label="Downloads and checks for {_esc(title)}" '
                        f'data-mdlaug-ok="ACC1">{"".join(files)}</ul>')
 
         if det:
-            out.append(f'<details><summary>Provenance, credentials &amp; downloads</summary>'
+            out.append(f'<details><summary>Story, credential &amp; downloads</summary>'
                        f'{"".join(det)}</details>')
         out.append('</div></article></li>')
     out.append('</ul></section>')

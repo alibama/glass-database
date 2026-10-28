@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>3D view — Glass Database</title>
-<meta name="description" content="Turn a piece of glass in your hands on screen: a Gaussian splat you trained on your own phone, uploaded here and shared with a link. A prototype for testers.">
-<meta property="og:title" content="3D view — Glass Database">
-<meta property="og:description" content="A rotatable 3D view of a piece, made on your phone and shared with a link.">
+<title>3D Photo — Glass Database</title>
+<meta name="description" content="Turn a piece of glass in your hands on screen: a 3D Photo you made on your own phone, uploaded here and shared with a link. A prototype for testers.">
+<meta property="og:title" content="3D Photo — Glass Database">
+<meta property="og:description" content="A 3D Photo of a piece you can turn on screen, made on your phone and shared with a link.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/paper.css">
@@ -22,8 +22,11 @@
   .stage .tag { position: absolute; left: 12px; top: 10px; font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--paper); border: 1px solid var(--rule); padding: .4rem .6rem; pointer-events: none; }
   .stage .hint { position: absolute; right: 12px; bottom: 10px; font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); pointer-events: none; }
   .stage .msg { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 2rem; color: var(--muted); }
-  .ctl { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-top: 1rem; }
+  .ctl { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: flex-start; margin-top: 1rem; }
   .ctl .btn { padding: .6rem .9rem; }
+  /* a button and the one sentence that says what it does */
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 26ch; }
   .two { display: grid; grid-template-columns: 1.4fr 1fr; gap: 2.5rem; align-items: start; }
   @media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
   .steps { list-style: none; padding: 0; margin: 0; counter-reset: s; }
@@ -46,21 +49,21 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
  <nav class="nav wrap" aria-label="Primary">
-  <a class="brand" href="/">Glass <i>Database</i></a>
+  <a class="brand" href="/">Glass <i>Database</i><small class="tag">A home for every piece of glass and the people who make it.</small></a>
   <ul id="menu">
-   <li><a href="/explore/">Registry</a></li><li><a href="/events.html">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html" class="on">Tools</a></li><li><a href="/#about">About</a></li>
+   <li><a href="/explore/">Find Artists &amp; Studios</a></li><li><a href="/games.html">Collecting Events</a></li><li><a href="/fingerprint/enroll.html" class="on">Glass ID</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/#about">About</a></li>
   </ul>
   <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
  </nav>
 </header>
-<div class="subnav wrap"><span class="crumb">Tools</span><a href="/fingerprint/enroll.html">Capture app</a><a href="/fingerprint/verify.html">Verify</a><a href="/splat.html" class="on" aria-current="page">3D view</a><a href="/shop.html">Shop docs</a><a href="/shop-costs.html">Shop costs</a></div>
+<div class="subnav wrap"><span class="crumb">Glass ID</span><a href="/fingerprint/enroll.html">Register Your Piece</a><a href="/fingerprint/verify.html">Check a Piece</a><a href="/splat.html" class="on" aria-current="page">3D Photo</a><a href="/fingerprint/capture-mat.pdf">Photo Mat</a><a href="/shop.html">Studio docs</a><a href="/shop-costs.html">Studio Cost Calculator</a></div>
 
 <main id="main">
 <section class="s" aria-labelledby="h1">
  <div class="wrap">
-  <p class="label">№ 05 · 3D view · prototype, for testers</p>
+  <p class="label">№ 05 · 3D Photo · prototype, for testers</p>
   <h1 id="h1" style="max-width:20ch">Turn it <em>in your hands.</em></h1>
-  <p class="lede" style="max-width:60ch">A Gaussian splat is a 3D photograph: it keeps the shine and the colour shifts that make glass hard to photograph, and you can rotate it. Your phone does the work; this page just shows it and gives you a link to share.</p>
+  <p class="lede" style="max-width:60ch">A 3D Photo keeps the shine and the colour shifts that make glass hard to photograph, and you can turn it on screen. Your phone does the work; this page just shows it and gives you a link to share.</p>
 
   <div class="two">
    <div>
@@ -70,34 +73,34 @@
      <div class="msg" id="msg" hidden></div>
     </div>
     <div class="ctl">
-     <button class="btn" id="demoBtn" type="button">Demo pumpkin</button>
-     <label class="btn" for="localFile" style="cursor:pointer">Open a file from this device</label>
+     <div class="act"><button class="btn" id="demoBtn" type="button">Demo pumpkin</button><small>See how a 3D Photo turns.</small></div>
+     <div class="act"><label class="btn" for="localFile" style="cursor:pointer">Open a file from this device</label><small>Preview a scan without uploading it.</small></div>
      <input id="localFile" type="file" accept=".splat,.ply,.ksplat" hidden>
-     <button class="btn" id="flipBtn" type="button" title="If the piece shows upside down">Flip</button>
+     <div class="act"><button class="btn" id="flipBtn" type="button" title="If the piece shows upside down">Flip</button><small>Turn it the right way up if it loaded upside down.</small></div>
      <span class="label" id="shareOut" style="margin:0"></span>
     </div>
-    <p class="note" style="margin-top:1.2rem"><strong>What this is not.</strong> A splat is a picture. It is never signed into a piece's Content Credentials and never used as a fingerprint. Anyone can upload a splat of anything, so treat it as a maker's own rendering of their work, nothing more.</p>
+    <p class="note" style="margin-top:1.2rem"><strong>What this is not.</strong> A 3D Photo (a Gaussian splat, technically) is a picture. It is never signed into a piece's record and never used to tell one piece from another; that is what the Glass ID does. Anyone can upload one of anything, so treat it as a maker's own rendering of their work, nothing more.</p>
    </div>
 
    <div>
     <p class="label">How to make one</p>
     <ol class="steps">
-     <li><h4>Scan it on your phone</h4><p><a href="https://scaniverse.com/">Scaniverse</a> (free, iOS and Android) trains the splat on the phone itself: pick <em>Splat</em>, orbit the piece slowly at two or three heights with the light behind you, then export <em>Gaussian Splat → PLY</em>. <a href="https://poly.cam/">Polycam</a> works too. On a laptop, <a href="https://github.com/ArthurBrussee/brush">Brush</a> or <a href="https://github.com/pierotofy/OpenSplat">OpenSplat</a> turn a folder of photos into one.</p></li>
+     <li><h4>Scan it on your phone</h4><p><a href="https://scaniverse.com/">Scaniverse</a> (free, iOS and Android) builds the 3D Photo on the phone itself: pick its 3D-photo mode (the app calls it <em>Splat</em>), orbit the piece slowly at two or three heights with the light behind you, then export it as a <em>PLY</em> file. <a href="https://poly.cam/">Polycam</a> works too. On a laptop, <a href="https://github.com/ArthurBrussee/brush">Brush</a> or <a href="https://github.com/pierotofy/OpenSplat">OpenSplat</a> turn a folder of photos into one.</p></li>
      <li><h4>Crop it</h4><p>Open the file in <a href="https://superspl.at/editor">SuperSplat</a> in your browser, delete the table and the room, keep the piece, and export as PLY or SPLAT. Under 150 MB uploads here; under 30 MB loads fast on a phone.</p></li>
-     <li><h4>Upload and share</h4><p>Sign in, pick the piece it belongs to, upload. You get a link that opens this page with your piece turning. One splat per piece; uploading again replaces it.</p></li>
+     <li><h4>Upload and share</h4><p>Sign in, pick the piece it belongs to, upload. You get a link that opens this page with your piece turning. One 3D Photo per piece; uploading again replaces it.</p></li>
     </ol>
 
     <div class="share" id="share">
      <p class="label" style="margin:0">Share one of your pieces</p>
-     <div id="needSign"><p style="margin:.8rem 0 0">Sign in to upload a splat for a piece in your Glowtbook.</p><p style="margin:.6rem 0 0"><a class="btn btn--red" id="signin" href="#">Sign in</a></p></div>
+     <div id="needSign"><p style="margin:.8rem 0 0">Sign in to upload a 3D Photo for a piece in your Glowtbook (your studio notebook).</p><div class="act" style="margin:.6rem 0 0"><a class="btn btn--red" id="signin" href="#">Sign in</a><small>Signs you in with Google and brings you back here.</small></div></div>
      <form id="upForm" hidden onsubmit="return false">
       <label for="piece">Which piece</label>
       <select id="piece"></select>
-      <label for="upFile">The splat file (.splat, .ply or .ksplat)</label>
+      <label for="upFile">The file (.splat, .ply or .ksplat)</label>
       <input id="upFile" type="file" accept=".splat,.ply,.ksplat" required>
-      <div class="btns" style="margin-top:1rem"><button class="btn btn--red" id="upBtn" type="button">Upload</button><span class="label" id="upStatus" style="margin:0" role="status" aria-live="polite"></span></div>
+      <div class="btns" style="margin-top:1rem;align-items:flex-start"><div class="act"><button class="btn btn--red" id="upBtn" type="button">Upload</button><small>Attach it to this piece and get a link to share.</small></div><span class="label" id="upStatus" style="margin:0" role="status" aria-live="polite"></span></div>
       <p class="out" id="upOut"></p>
-      <p class="label" style="margin-top:1.4rem">Your 3D views</p>
+      <p class="label" style="margin-top:1.4rem">Your 3D Photos</p>
       <ul class="mine" id="mine" style="list-style:none;padding:0;margin:0"></ul>
      </form>
     </div>
@@ -111,9 +114,10 @@
  <div class="wrap">
   <div class="fgrid">
    <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
-   <div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>
-   <div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>
-   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
   </div>
   <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
  </div>
@@ -160,11 +164,11 @@ async function show(url, fmt, label){
     frame();
     viewer.start();
     const n = viewer.getSplatMesh().getSplatCount();
-    tag.textContent = label + ' · ' + n.toLocaleString() + ' splats';
+    tag.textContent = label + ' · ' + n.toLocaleString() + ' points';
   } catch (e) {
     console.error(e);
     tag.textContent = 'Could not load';
-    say((/WebGL|GPU/i.test(String(e)) ? 'This browser has no WebGL, so nothing can be drawn here. ' : 'That file could not be read as a splat. ') + String(e.message || e).slice(0, 160));
+    say((/WebGL|GPU/i.test(String(e)) ? 'This browser has no WebGL, so nothing can be drawn here. ' : 'That file could not be read as a 3D Photo. ') + String(e.message || e).slice(0, 160));
   }
 }
 
@@ -192,13 +196,13 @@ $('#localFile').onchange = e => {
   show(URL.createObjectURL(f), fmt, f.name);
 };
 
-// ?s=<id> → a shared splat
+// ?s=<id> → a shared 3D Photo
 const sid = GDB.param('s');
 if (sid) {
   GDB.json('/splats/' + encodeURIComponent(sid) + '/meta').then(m => {
     show('/api/splats/' + encodeURIComponent(sid), m.fmt, m.title || 'Shared piece');
     $('#shareOut').textContent = 'Shared link';
-  }).catch(() => { tag.textContent = 'Not found'; say('That share link does not point at a splat any more.'); });
+  }).catch(() => { tag.textContent = 'Not found'; say('That share link does not point at a 3D Photo any more.'); });
 } else {
   show('/splat/demo-pumpkin.splat', 'splat', 'Demo pumpkin');
 }
@@ -212,7 +216,7 @@ async function mine(){
     const li = document.createElement('li');
     li.innerHTML = '<span><a href="' + s.share + '">' + GDB.esc(s.title || ('Piece ' + s.oid)) + '</a> <span class="label" style="display:inline;margin:0 0 0 .5rem">' + s.fmt + ' · ' + (s.bytes / 1e6).toFixed(1) + ' MB</span></span>';
     const x = document.createElement('button'); x.className = 'x'; x.type = 'button'; x.textContent = 'Remove';
-    x.onclick = async () => { if (!confirm('Remove this 3D view?')) return; await fetch(GDB.API + '/splats/' + s.id, { method: 'DELETE', headers: GDB.headers() }); mine(); };
+    x.onclick = async () => { if (!confirm('Remove this 3D Photo?')) return; await fetch(GDB.API + '/splats/' + s.id, { method: 'DELETE', headers: GDB.headers() }); mine(); };
     li.appendChild(x); ul.appendChild(li);
   }
 }
