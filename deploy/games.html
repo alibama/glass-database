@@ -112,6 +112,14 @@
   .vote.on:disabled:hover { background: var(--red); color: #fff; }
   .vote .n { font-variant-numeric: tabular-nums; }
   .card.hit { outline: 2px solid var(--red); outline-offset: 10px; }
+  /* share: a Share button opens the kit under the card's actions */
+  .card .share-slot { flex-basis: 100%; border-top: 1px solid var(--rule); margin-top: .6rem; padding-top: .2rem; }
+  .card .share-slot .sh { display: block; margin-top: .6rem; font: 400 13px/1.45 var(--sans); color: var(--muted); }
+  .cshare { margin-top: 2.2rem; border-top: 1px solid var(--ink); padding-top: 1rem; max-width: 62ch; }
+  .cshare p { margin: .5rem 0 0; font-size: 15px; color: var(--ink-2); }
+  .cshare .lnk { font: 400 13px/1.5 var(--mono); word-break: break-all; }
+  .cshare .lnk a { color: var(--ink); } .cshare .lnk a:hover { color: var(--red); }
+  .cshare .acts { display: flex; gap: .8rem 1.6rem; flex-wrap: wrap; align-items: flex-start; margin-top: 1rem; }
   .dots { display: inline-flex; gap: 5px; vertical-align: middle; margin-right: .6rem; }
   .dots i { width: 9px; height: 9px; border-radius: 50%; border: 1px solid var(--red); display: inline-block; }
   .dots i.on { background: var(--red); }
@@ -385,6 +393,27 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function mm(h) { return (Math.round(h * 10) / 10) + " mm"; }
   function cardUrl(id) { return GDB.API + "/seasons/entries/" + id + "/card.png"; }
   function verifyUrl(rid) { return VERIFY_URL + "?object=" + encodeURIComponent(rid); }
+  /* share: a Share button + a slot the kit renders into the first time it opens */
+  function shareBtn(o) { return '<button type="button" class="link" data-share="' + esc(JSON.stringify(o)) + '" aria-expanded="false">Share</button>'; }
+  function shareSlot() { return '<div class="share-slot" hidden><small class="sh">Copy the link, save the card, or post it: wherever the link lands, the preview shows the card.</small><div class="kit"></div></div>'; }
+  function entryShare(e) {
+    return { kind: "entry", ref: e.id, title: e.title,
+      text: e.title + (e.artist_name ? " by " + e.artist_name : "") + (e.season_title || (S.season && S.season.title) ? " · " + (e.season_title || S.season.title) : "") + " on the Glass Database",
+      url: "/games.html#entry-" + e.id, image: "/api/seasons/entries/" + e.id + "/card.png" };
+  }
+  function wireShare(root) {
+    root.querySelectorAll("button[data-share]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var card = b.closest(".card, .cshare"), slot = card && card.querySelector(".share-slot"); if (!slot) return;
+        var open = slot.hidden; slot.hidden = !open; b.setAttribute("aria-expanded", open);
+        if (open && !slot.getAttribute("data-ready")) {
+          slot.setAttribute("data-ready", "1");
+          var o = {}; try { o = JSON.parse(b.getAttribute("data-share")); } catch (_) {}
+          GDB.share(slot.querySelector(".kit") || slot, o);
+        }
+      });
+    });
+  }
   /* status -> paper pill: red while something is open, ink once it's closed */
   function pillClass(status) { return status === "open" || status === "voting" ? "pill red" : status === "closed" ? "pill ink" : "pill"; }
 
@@ -449,7 +478,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
         '<button class="vote' + (on ? " on" : "") + '" data-vote="' + e.id + '" aria-pressed="' + on + '"' + (S.canVote ? "" : " disabled") + ">" +
           (on ? "Voted" : "Vote") + ' <span class="n">' + e.vote_count + "</span></button>" +
         '<a class="link" href="' + esc(verifyUrl(e.object_row_id)) + '">Check it to add it</a>' +
-        '<a class="link" href="' + esc(cardUrl(e.id)) + '" target="_blank" rel="noopener">Share card</a>' +
+        shareBtn(entryShare(e)) + shareSlot() +
       "</div></article>";
   }
   function renderEntries() {
@@ -471,6 +500,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     g.querySelectorAll("[data-vote]").forEach(function (b) {
       b.addEventListener("click", function () { onVote(+b.getAttribute("data-vote"), b); });
     });
+    wireShare(g);
     paintVotes();
   }
   function renderStandings() {
@@ -674,10 +704,12 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
             "<h3>" + esc(c.title) + "</h3>" +
             '<p class="who">' + esc(c.artist_name || c.maker || "") + (c.studio ? " · " + esc(c.studio) : "") + "</p>" +
             '<p class="ed">' + (c.season_title ? esc(c.season_title) + " · " : "") + "check " + Math.round(c.confidence || 0) + "/100" + (c.location ? " · " + esc(c.location) : "") + "</p>" +
-            '<div class="acts">' + (c.entry_id ? '<a class="link" href="' + esc(cardUrl(c.entry_id)) + '" target="_blank" rel="noopener">Share card</a>' : "") +
-            '<a class="link" href="' + esc(verifyUrl(c.object_row_id)) + '">Check it again</a></div></article>';
+            '<div class="acts"><a class="link" href="' + esc(verifyUrl(c.object_row_id)) + '">Check it again</a>' +
+            (c.entry_id ? shareBtn(entryShare({ id: c.entry_id, title: c.title, artist_name: c.artist_name || c.maker, season_title: c.season_title })) + shareSlot() : "") +
+            "</div></article>";
         }).join("") + "</div>";
       }
+      html += '<div class="cshare" id="collShare"><p class="label">Share my collection</p><div class="body"><div class="skel" style="height:60px"></div></div></div>';
       var all = d.all_badges || {};
       html += '<p class="label" style="margin-top:2.6rem">Badges</p><div class="badges">' +
         Object.keys(all).map(function (k) {
@@ -693,8 +725,44 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
               e.status === "approved" ? "/games.html?season=" + encodeURIComponent(e.season_slug) + "#entry-" + e.id : null); }).join("") + "</div>";
       }
       el.innerHTML = html;
+      wireShare(el);
+      renderCollectionShare(coll.length);
     }).catch(function (err) {
       el.innerHTML = '<div class="empty" style="margin-top:0">Couldn\'t load your collection (' + esc(err.message || "offline") + ").</div>";
+    });
+  }
+  /* the public link to my collection: make it, share it, withdraw it */
+  function renderCollectionShare(n) {
+    var box = document.querySelector("#collShare .body"); if (!box) return;
+    GDB.json("/social/collections/mine").then(function (d) {
+      if (!d.shared) {
+        box.innerHTML = '<p>Your collection is private. Make it public and you get a page anyone can open — your pieces, their makers and the collecting events, with your name on it and nothing else.</p>' +
+          '<div class="acts"><div class="act"><button type="button" class="btn btn--line" id="collPub">Make my collection public</button><small>Creates a link anyone can open; you can withdraw it any time.</small></div></div>';
+        $("#collPub").addEventListener("click", function () {
+          this.disabled = true;
+          GDB.json("/social/collections/share", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: (S.me && S.me.name) || "" }) })
+            .then(function () { toast("Your collection is public."); renderCollectionShare(n); })
+            .catch(function (err) { toast(err.message || "That didn't work."); renderCollectionShare(n); });
+        });
+        return;
+      }
+      var name = d.name || (S.me && S.me.name) || "My";
+      var pageUrl = d.url || ("/collection.html?c=" + encodeURIComponent(d.share_id));
+      box.innerHTML = '<p>Your collection is public at</p><p class="lnk"><a href="' + esc(pageUrl) + '">' + esc(location.origin + pageUrl) + "</a></p>" +
+        '<div class="share-slot"></div>' +
+        '<div class="acts"><div class="act"><button type="button" class="btn btn--line" id="collOff">Withdraw the link</button><small>Takes the page down; the link stops working.</small></div></div>';
+      GDB.share(box.querySelector(".share-slot"), { kind: "collection", ref: d.share_id, title: name + "'s collection",
+        text: name + "'s collection on the Glass Database · " + plural(n || 0, "piece"),
+        url: pageUrl, image: "/api/social/collections/" + encodeURIComponent(d.share_id) + "/card.png" });
+      $("#collOff").addEventListener("click", function () {
+        this.disabled = true;
+        GDB.json("/social/collections/share", { method: "DELETE" })
+          .then(function () { toast("Link withdrawn."); renderCollectionShare(n); })
+          .catch(function (err) { toast(err.message || "That didn't work."); renderCollectionShare(n); });
+      });
+    }).catch(function (err) {
+      box.innerHTML = '<p>Couldn\'t check your collection\'s link (' + esc(err.message || "offline") + ").</p>";
     });
   }
 

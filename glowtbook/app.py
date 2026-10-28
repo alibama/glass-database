@@ -875,11 +875,20 @@ elif page == "objects":
                 if not minio_on:
                     st.caption("MinIO not configured — bags are written locally under data/aip_bags/.")
 
-            with st.expander("Also post to Bluesky (optional receipt)"):
-                bsky_on = st.checkbox("Post this object to Bluesky when I publish")
-                bsky_handle = st.text_input("Handle", placeholder="you.bsky.social")
-                bsky_pw = st.text_input("App password", type="password",
-                                        help="Create one in Bluesky → Settings → App Passwords. Not stored.")
+            # Bluesky: posts with the account connected in My profile (never asks for a password here)
+            _sc = _central()
+            try:
+                from central import social as _social
+                _bsky_connected = bool(_sc is not None and
+                                       (_social.status(_sc, uid).get("bluesky") or {}).get("connected"))
+            except Exception:  # noqa: BLE001
+                _social, _bsky_connected = None, False
+            if _bsky_connected:
+                bsky_on = st.checkbox("Post to Bluesky when I publish")
+                st.caption("Uses your connected account; the post carries the share card.")
+            else:
+                bsky_on = False
+                st.caption("Connect Bluesky in [My profile](?page=profile) to post when you publish.")
 
             a = st.checkbox("I want this piece published to the public registry (data under CC BY 4.0).")
             b = st.checkbox("The story I've recorded is accurate to the best of my knowledge.")
@@ -931,21 +940,54 @@ elif page == "objects":
                             st.json(rec, expanded=False)
                     elif rec and rec.get("error"):
                         st.warning(f"AIP archiving failed: {rec['error']}")
-                    if bsky_on and bsky_handle and bsky_pw:
-                        from glowtbook import bluesky
+                    # --- share: the public row id once it's published, the share card, the links ---
+                    _rid = None
+                    if not manifest.get("_pending") and _sc is not None:
                         try:
-                            url = bluesky.publish_object(
-                                bsky_handle.strip(), bsky_pw,
-                                title=o["title"], maker=o["maker"] or display,
-                                content_hash=manifest["content_hash"],
-                                image_bytes=primary_bytes,          # the actual provenance image
-                                link=f"{PUBLIC_BASE}/explore")
-                            st.success(f"Posted to Bluesky (with image): {url}")
-                            if signed:
+                            _rid = gstore.publication_status(_sc, conn, uid, oid).get("row_id")
+                        except Exception:  # noqa: BLE001
+                            _rid = None
+                    _share_link = (f"{PUBLIC_BASE}/api/social/share/object/{_rid}" if _rid
+                                   else f"{PUBLIC_BASE}/explore/")
+                    if _rid:
+                        st.markdown("**Share**")
+                        st.code(_share_link, language=None)
+                        st.caption("Copy the link; wherever you paste it, the preview shows the card. "
+                                   f"[The share card]({PUBLIC_BASE}/api/social/objects/{_rid}/card.png) · "
+                                   f"[The piece]({PUBLIC_BASE}/explore/?view=objects#obj-{_rid})")
+                    if bsky_on and _social is not None:
+                        from glowtbook import bluesky
+                        _creds = _social.credentials(_sc, uid, "bluesky")
+                        try:
+                            if not _creds:
+                                raise ValueError("Bluesky isn't connected any more (My profile)")
+                            _card = None
+                            if _rid:
+                                try:
+                                    from api.social import object_card_png as _ocard
+                                    _card = _ocard(_sc, _rid, PUBLIC_BASE)
+                                except Exception:  # noqa: BLE001
+                                    _card = None
+                            from central import cards as _cards
+                            _img = _cards.to_jpeg(_card) if _card else primary_bytes
+                            _mime = "image/png" if (_img or b"")[:4] == b"\x89PNG" else "image/jpeg"
+                            _text = (f"{o['title']} · made by {o['maker'] or display} · on the Glass Database"
+                                     f"\n{_share_link}")
+                            url = bluesky.post(_creds[0], _creds[1], _text, _img, _mime,
+                                               alt=o["title"] or "A piece of glass", links=[_share_link])
+                            _social.mark_used(_sc, uid, "bluesky")
+                            _social.log_share(_sc, uid, "bluesky", "object",
+                                              _rid or manifest["content_hash"], url)
+                            st.success(f"Posted to Bluesky: {url}")
+                            if signed and not _card:
                                 st.caption("Note: Bluesky re-encodes images, which usually strips the "
                                            "Glass ID credential from the copy it hosts. The checkable "
                                            "original stays in the registry.")
                         except Exception as bex:  # noqa: BLE001
+                            try:
+                                _social.mark_used(_sc, uid, "bluesky", str(bex))
+                            except Exception:  # noqa: BLE001
+                                pass
                             st.warning(f"Saved here, but Bluesky post failed: {bex}")
                 except Exception as ex:  # noqa: BLE001
                     st.error(f"Couldn't submit: {ex}")
@@ -1136,3 +1178,86 @@ else:  # My profile
                         techniques=?,contributions=?,career_highlights=? WHERE user_id=?""",
                      (name, web, nat, "|".join(techs), "|".join(contribs), hi, uid))
         conn.commit(); st.success("Saved.")
+
+    # --- connected accounts: Bluesky posts for you from the Share buttons and on publish ---
+    st.divider()
+    st.subheader("Connected accounts")
+    st.caption("Connect Bluesky once and every Share button on the site can post for you; "
+               "the post carries the share card and a link back to the piece.")
+    _sc = _central()
+    try:
+        from central import social as _social
+    except Exception:  # noqa: BLE001
+        _social = None
+    if _sc is None or _social is None:
+        st.info("Connected accounts aren't available on this server yet.")
+    else:
+        _bsky = _social.status(_sc, uid).get("bluesky") or {"connected": False}
+        _msg = st.session_state.pop("social_msg", None)
+        if _msg:
+            st.success(_msg)
+        if not _bsky.get("connected"):
+            with st.form("bsky_connect"):
+                st.markdown("**Bluesky**")
+                bsky_handle = st.text_input("Handle", placeholder="you.bsky.social")
+                bsky_pw = st.text_input("App password", type="password")
+                st.caption("Create an app password in Bluesky → Settings → App Passwords. It is stored "
+                           "encrypted and only used to post for you; revoke it there any time.")
+                if st.form_submit_button("Connect Bluesky", type="primary"):
+                    try:
+                        _social.connect_bluesky(_sc, uid, bsky_handle, bsky_pw)
+                        st.session_state["social_msg"] = "Bluesky connected."
+                        st.rerun()
+                    except ValueError as ex:
+                        st.error(str(ex))
+                st.caption("Checks the handle and app password with Bluesky, then keeps them encrypted here.")
+        else:
+            st.markdown(f"**Bluesky** · @{_bsky.get('handle', '')}")
+            _last = _bsky.get("last_used")
+            st.caption(("Last used " + str(_last)[:16].replace("T", " ")) if _last else "Not used yet.")
+            if _bsky.get("last_error"):
+                st.warning(f"The last post failed: {_bsky['last_error']}")
+            b1, b2 = st.columns(2)
+            if b1.button("Post a test"):
+                _creds = _social.credentials(_sc, uid, "bluesky")
+                try:
+                    from glowtbook import bluesky as _bsky_mod
+                    _url = _bsky_mod.post(_creds[0], _creds[1], "Testing my Glass Database connection")
+                    _social.mark_used(_sc, uid, "bluesky")
+                    _social.log_share(_sc, uid, "bluesky", "test", "", _url)
+                    st.session_state["social_msg"] = f"Posted: {_url}"
+                    st.rerun()
+                except Exception as ex:  # noqa: BLE001
+                    _social.mark_used(_sc, uid, "bluesky", str(ex))
+                    st.error(f"Bluesky didn't take the post: {ex}")
+            b1.caption("Posts “Testing my Glass Database connection” from your account.")
+            if b2.button("Disconnect"):
+                _social.disconnect(_sc, uid, "bluesky")
+                st.session_state["social_msg"] = "Bluesky disconnected."
+                st.rerun()
+            b2.caption("Forgets the app password here; revoke it in Bluesky too if you like.")
+
+        # --- share my collection: a public page at an unguessable link ---
+        st.divider()
+        st.subheader("Share my collection")
+        _sh = _social.my_collection_share(_sc, uid)
+        if not _sh:
+            st.write("Your collection is private. Make it public and you get a page anyone can open: "
+                     "your pieces, their makers and the collecting events, with your name on it and nothing else.")
+            if st.button("Make my collection public"):
+                _social.share_collection(_sc, uid, (p["display_name"] or display or "").strip())
+                st.session_state["social_msg"] = "Your collection is public."
+                st.rerun()
+            st.caption("Creates a link anyone can open; you can withdraw it any time.")
+        else:
+            _curl = f"{PUBLIC_BASE}/collection.html?c={_sh['share_id']}"
+            st.write("Your collection is public at")
+            st.code(_curl, language=None)
+            st.caption("Copy the link; wherever you paste it, the preview shows the card. "
+                       f"[Open the page]({_curl}) · "
+                       f"[The share card]({PUBLIC_BASE}/api/social/collections/{_sh['share_id']}/card.png)")
+            if st.button("Withdraw the link"):
+                _social.unshare_collection(_sc, uid)
+                st.session_state["social_msg"] = "Link withdrawn."
+                st.rerun()
+            st.caption("Takes the page down; the link stops working.")

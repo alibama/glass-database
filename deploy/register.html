@@ -107,6 +107,11 @@
   .reg .hostnote { color: var(--ink-2); font-size: 14px; margin: .3rem 0 0; }
   .reg .links { display: flex; gap: .4rem 1.2rem; flex-wrap: wrap; margin-top: .6rem; }
   .pill.bad { color: var(--red); border-color: var(--red); }
+  /* share: a Share button opens the kit under the row or the receipt */
+  .share-slot { border-top: 1px solid var(--rule); margin-top: .8rem; padding-top: .2rem; }
+  .share-slot .sh, .share-wait { display: block; margin-top: .6rem; font: 400 13px/1.45 var(--sans); color: var(--muted); }
+  .share-wait { margin-top: 1.2rem; }
+  .reg .links button.link { font: inherit; }
 
   @media (max-width: 680px) {
     .hero .lede { font-size: 1rem; }
@@ -248,6 +253,30 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     return '<a class="link" href="' + esc(href) + '">' + label + "</a>";
   }
   function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
+
+  /* --- share: a Share button + a slot the kit renders into the first time it opens --- */
+  function objectShare(r) {
+    var maker = r.host_name || r.studio || "";
+    return { kind: "object", ref: r.object_row_id, title: r.title,
+      text: r.title + (maker ? " by " + maker : "") + (r.event_title ? " · found at " + r.event_title : "") + " · on the Glass Database",
+      url: r.object_url || ("/explore/?view=objects#obj-" + encodeURIComponent(r.object_row_id)),
+      image: "/api/social/objects/" + encodeURIComponent(r.object_row_id) + "/card.png" };
+  }
+  function shareBtn(o) { return '<button type="button" class="link" data-share="' + esc(JSON.stringify(o)) + '" aria-expanded="false">Share</button>'; }
+  function shareSlot() { return '<div class="share-slot" hidden><small class="sh">Copy the link, save the card, or post it: wherever the link lands, the preview shows the card.</small><div class="kit"></div></div>'; }
+  function wireShare(root) {
+    root.querySelectorAll("button[data-share]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var box = b.closest(".reg, .done"), slot = box && box.querySelector(".share-slot"); if (!slot) return;
+        var open = slot.hidden; slot.hidden = !open; b.setAttribute("aria-expanded", open);
+        if (open && !slot.getAttribute("data-ready")) {
+          slot.setAttribute("data-ready", "1");
+          var o = {}; try { o = JSON.parse(b.getAttribute("data-share")); } catch (_) {}
+          GDB.share(slot.querySelector(".kit") || slot, o);
+        }
+      });
+    });
+  }
 
   /* --- event header ---------------------------------------------------- */
   function renderHead() {
@@ -404,8 +433,13 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       '<div class="acts">' +
         '<div class="act"><a class="btn btn--line" href="' + esc(r.glowtbook_url || "/glowtbook/") + '">Open in Glowtbook</a><small>See it in your studio notebook.</small></div>' +
         '<div class="act"><button type="button" class="btn btn--line" id="again">Add another find</button><small>Clears the form for the next piece.</small></div>' +
-      "</div></div>";
+      "</div>" +
+      (r.status === "approved" && r.object_row_id
+        ? '<p class="label" style="margin-top:1.6rem">Share it</p><div class="links">' + shareBtn(objectShare(r)) + "</div>" + shareSlot()
+        : '<small class="share-wait">Once the maker confirms and it\'s published you can share it from here.</small>') +
+      "</div>";
     show("#done", true);
+    wireShare($("#done"));
     $("#again").addEventListener("click", function () {
       $("#form").reset(); setPhoto(null); error(null);
       show("#done", false); show("#form", true);
@@ -422,12 +456,14 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     if (r.glowtbook_url) links += link("Glowtbook", r.glowtbook_url);
     if (r.status === "approved" && r.object_url) links += link("View published", r.object_url);
     if (r.event_slug) links += link("Show page", "/events.html?event=" + encodeURIComponent(r.event_slug));
+    var shareable = r.status === "approved" && r.object_row_id;
+    if (shareable) links += shareBtn(objectShare(r));
     var note = r.status === "rejected_host" && r.host_note ? r.host_note : (r.status === "rejected" && r.admin_note ? r.admin_note : "");
     return '<article class="reg">' +
       (r.image_url ? '<img src="' + esc(r.image_url) + '" alt="" loading="lazy" onerror="this.style.opacity=.15">' : '<span class="ph" aria-hidden="true"></span>') +
       '<div><div class="top"><h3>' + esc(r.title) + '</h3><span class="' + (PILL[r.status] || "pill") + '">' + esc(LABEL[r.status] || r.status) + "</span></div>" +
       '<p class="sub">' + esc(sub) + "</p>" + (note ? '<p class="hostnote">' + esc(note) + "</p>" : "") +
-      '<div class="links">' + links + "</div></div></article>";
+      '<div class="links">' + links + "</div>" + (shareable ? shareSlot() : "") + "</div></article>";
   }
   function loadMine() {
     if (!S.signedIn) { show("#mine", false); return; }
@@ -443,6 +479,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       $("#mineBody").innerHTML = '<p class="live" style="margin-top:0">' + plural(regs.length, "piece") +
         (waiting ? " · <b>" + waiting + "</b> in review" : "") + "</p>" +
         '<div class="regs">' + regs.map(regRow).join("") + "</div>";
+      wireShare($("#mineBody"));
     }).catch(function (err) {
       if (err.status === 401) { S.signedIn = false; show("#mine", false); return; }
       $("#mineBody").innerHTML = '<div class="empty" style="margin-top:0">Couldn\'t load your collection (' + esc(err.message || "offline") + ").</div>";

@@ -7,6 +7,16 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Promote work and collections** — a Share kit on every entry, published piece, shared
+  collection and 3D Photo: Copy link, Save image (a 1080×1350 share card on the paper ground),
+  Share… (the phone's share sheet, where Instagram lives), Facebook, Bluesky and an Instagram
+  tip. Links hand out an Open Graph landing page (`/api/social/share/<kind>/<id>`) so previews
+  show the card. **Bluesky is connected once**, in Glowtbook → My profile, with an app password
+  stored encrypted (Fernet, key from `GLASSDB_SOCIAL_KEY` or the session secret); the Share
+  button and the publish step then post for you, card attached, links clickable. **Public
+  collections**: a collector opts in to an unguessable link (`/collection.html?c=…`) with its
+  own card, and can withdraw it. `central/social.py`, `central/cards.py`, `api/social.py`,
+  `docs/SHARING.md`. Entry share cards moved to the paper palette.
 - **Seasons, first live game feedback** — a ranked **standings** list with thumbnails at the top
   of the entries (visible from the first entry), the homepage shows the season's pieces as
   pictures ranked by votes with the counts and closing date, the games page says how to get in

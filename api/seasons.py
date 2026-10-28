@@ -26,7 +26,6 @@ posted by ``central.seasons`` itself (best effort), not here.
 from __future__ import annotations
 
 import base64
-import io
 import os
 import sys
 from pathlib import Path
@@ -100,124 +99,34 @@ def _bad(ex: ValueError):
 
 
 # --- share card (registered first so /seasons/entries/… never reads as a slug) --
-def _font(size: int, serif: bool = True):
-    from PIL import ImageFont
-    names = (["DejaVuSerif.ttf", "georgia.ttf", "Georgia.ttf", "times.ttf",
-              "/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf"] if serif else
-             ["DejaVuSans.ttf", "arial.ttf", "Arial.ttf", "segoeui.ttf",
-              "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"])
-    for n in names:
+def primary_image_bytes(conn, object_row_id: str) -> bytes | None:
+    """The stored primary image of a public object, as bytes (None if none)."""
+    row = conn.execute(
+        "SELECT image_b64 FROM object_images WHERE object_row_id=? ORDER BY "
+        "CASE role WHEN 'primary' THEN 0 ELSE 1 END, id LIMIT 1", (object_row_id,)).fetchone()
+    if row and row["image_b64"]:
         try:
-            return ImageFont.truetype(n, size)
+            return base64.b64decode(row["image_b64"])
         except Exception:  # noqa: BLE001
-            continue
-    try:
-        return ImageFont.load_default(size)
-    except Exception:  # noqa: BLE001
-        return ImageFont.load_default()
-
-
-def _wrap(draw, text: str, font, width: int, max_lines: int = 2) -> list[str]:
-    words, lines, cur = (text or "").split(), [], ""
-    for w in words:
-        t = (cur + " " + w).strip()
-        if draw.textlength(t, font=font) <= width:
-            cur = t
-        else:
-            if cur:
-                lines.append(cur)
-            cur = w
-    if cur:
-        lines.append(cur)
-    if len(lines) > max_lines:
-        lines = lines[:max_lines]
-        lines[-1] = lines[-1].rstrip(".,;:") + "…"
-    return lines
+            return None
+    return None
 
 
 def render_card(conn, entry: dict, season: dict, link: str) -> bytes:
-    """A 1080×1350 (4:5) share card on the Field Data ground: the piece in a
-    rounded frame, title, maker · studio, the season and a QR back to the entry."""
-    from PIL import Image, ImageDraw, ImageOps
-
-    W, H = 1080, 1350
-    bg_top, bg_base = (10, 13, 17), (26, 20, 15)
-    amber, bone, dim, faint = (232, 164, 74), (238, 231, 219), (168, 162, 154), (110, 102, 92)
-    grad = Image.linear_gradient("L").resize((W, H))
-    card = ImageOps.colorize(grad, black=bg_top, white=bg_base).convert("RGB")
-    draw = ImageDraw.Draw(card)
-
-    # frame + picture
-    fx0, fy0, fx1, fy1 = 72, 128, W - 72, 896
-    draw.rounded_rectangle((fx0, fy0, fx1, fy1), radius=28, outline=(42, 40, 36), width=2,
-                           fill=(5, 7, 10))
-    img = None
-    row = conn.execute(
-        "SELECT image_b64 FROM object_images WHERE object_row_id=? ORDER BY "
-        "CASE role WHEN 'primary' THEN 0 ELSE 1 END, id LIMIT 1", (entry["object_row_id"],)).fetchone()
-    if row and row["image_b64"]:
-        try:
-            img = Image.open(io.BytesIO(base64.b64decode(row["image_b64"]))).convert("RGB")
-        except Exception:  # noqa: BLE001
-            img = None
-    if img is not None:
-        pad = 18
-        box = (fx1 - fx0 - 2 * pad, fy1 - fy0 - 2 * pad)
-        img = ImageOps.contain(img, box)
-        mask = Image.new("L", img.size, 0)
-        ImageDraw.Draw(mask).rounded_rectangle((0, 0, img.width - 1, img.height - 1), radius=18,
-                                               fill=255)
-        ox = fx0 + pad + (box[0] - img.width) // 2
-        oy = fy0 + pad + (box[1] - img.height) // 2
-        card.paste(img, (ox, oy), mask)
-    else:
-        f = _font(30, serif=False)
-        msg = "No photo yet"
-        draw.text(((W - draw.textlength(msg, font=f)) / 2, (fy0 + fy1) / 2 - 15), msg,
-                  fill=faint, font=f)
-
-    # eyebrow
-    eyebrow = f"SEASON  ·  {(season.get('title') or '').upper()}"
-    draw.text((72, 64), eyebrow, fill=amber, font=_font(24, serif=False))
-
-    # title / maker / studio / theme
-    y = 940
-    tf = _font(60)
-    for line in _wrap(draw, entry.get("title") or "Untitled", tf, W - 144, 2):
-        draw.text((72, y), line, fill=bone, font=tf); y += 70
-    y += 6
-    who = " · ".join(x for x in [entry.get("artist_name"), entry.get("studio")] if x)
-    if who:
-        draw.text((72, y), who, fill=dim, font=_font(32, serif=False)); y += 46
+    """A 1080×1350 share card for an entry: the piece, title, maker · studio, the
+    collecting event, and a QR back to the entry (central.cards, paper palette)."""
+    from central import cards
     ed = int(entry.get("edition_size") or 1)
     meta = ("Edition of %d" % ed) if ed > 1 else "One of one"
     if entry.get("price_note"):
         meta += f"  ·  {entry['price_note']}"
-    draw.text((72, y), meta, fill=faint, font=_font(24, serif=False)); y += 40
-    theme = season.get("theme") or ""
-    if theme:
-        for line in _wrap(draw, theme, _font(28), W - 144 - 230, 2):
-            draw.text((72, y), line, fill=amber, font=_font(28)); y += 36
-
-    # footer + QR
-    draw.line((72, H - 118, W - 72, H - 118), fill=(36, 34, 31), width=1)
-    draw.text((72, H - 92), "glassdatabase.org/games.html", fill=amber, font=_font(26, serif=False))
-    draw.text((72, H - 54), "Scan to see the entry · vote · claim yours", fill=faint,
-              font=_font(20, serif=False))
-    try:
-        import segno
-        qr = segno.make(link, error="m")
-        buf = io.BytesIO()
-        qr.save(buf, kind="png", scale=6, border=1, dark="#0A0D11", light="#EEE7DB")
-        buf.seek(0)
-        q = Image.open(buf).convert("RGB").resize((200, 200), Image.NEAREST)
-        card.paste(q, (W - 72 - 200, H - 118 - 200 - 18))
-    except Exception:  # noqa: BLE001
-        pass
-
-    out = io.BytesIO()
-    card.save(out, "PNG", optimize=True)
-    return out.getvalue()
+    who = " · ".join(x for x in [entry.get("artist_name"), entry.get("studio")] if x)
+    return cards.render_piece(primary_image_bytes(conn, entry["object_row_id"]),
+                              eyebrow=f"Collecting event  ·  {season.get('title') or ''}",
+                              title=entry.get("title") or "Untitled", who=who, meta=meta,
+                              note=season.get("theme") or "", link=link,
+                              footer_url="glassdatabase.org/games",
+                              footer_note="Scan to see the piece · vote · add it to your collection")
 
 
 @router.get("/seasons/entries/{entry_id}/card.png", summary="Share card for an entry (1080×1350 PNG)")
