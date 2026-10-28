@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Glass Database — the open record for glass</title>
-<meta name="description" content="A shared, open registry for glass: makers, studios, objects and opportunities.">
+<title>Glass Database — a home for every piece of glass</title>
+<meta name="description" content="A home for every piece of glass and the people who make it: find artists and studios, give your pieces a Glass ID, build a collection you can check, and join a collecting event.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/paper.css">
@@ -16,7 +16,8 @@
 .about-grid .who{border-top:1px solid var(--rule);padding-top:1.2rem;margin-top:1.2rem}
 .ways .card{grid-column:span 4}
 .ways .card p{min-height:0}
-@media (max-width:980px){.about-grid{grid-template-columns:1fr}.ways .card{grid-column:span 6}}
+.how-grid{display:grid;grid-template-columns:7fr 5fr;gap:clamp(2rem,4vw,4rem);align-items:center}
+@media (max-width:980px){.about-grid,.how-grid{grid-template-columns:1fr}.ways .card{grid-column:span 6}}
 @media (max-width:680px){.ways .card{grid-column:span 12}}
 </style>
 </head>
@@ -25,9 +26,9 @@
 <div class="notice" id="notice" hidden></div>
 <header class="site">
  <nav class="nav wrap" aria-label="Primary">
-  <a class="brand" href="/">Glass <i>Database</i></a>
+  <a class="brand" href="/">Glass <i>Database</i><small class="tag">A home for every piece of glass and the people who make it.</small></a>
   <ul id="menu">
-   <li><a href="#registry">Registry</a></li><li><a href="#collect">Collect</a></li><li><a href="#notes">Field notes</a></li><li><a href="#provenance">Glowtbook</a></li><li><a href="#tools">Tools</a></li><li><a href="#about">About</a></li>
+   <li><a href="/explore/">Find Artists &amp; Studios</a></li><li><a href="/games.html">Collecting Events</a></li><li><a href="/fingerprint/enroll.html">Glass ID</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/blog/">Field notes</a></li><li><a href="#about">About</a></li>
   </ul>
   <div class="right"><span id="chip" class="signin"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
  </nav>
@@ -37,110 +38,85 @@
  <div class="wrap">
   <div class="hero-grid">
    <div>
-    <p class="label"><span class="n">№ 00</span> — The open record for glass</p>
+    <p class="label"><span class="n">№ 00</span> — A home for every piece of glass</p>
     <h1>Every piece has a story. <em>Give it one that lasts.</em></h1>
-    <p class="lede">A shared, open registry for glass: the makers, the studios, the objects, and the opportunities that move the field forward. Corrected, argued over, and grown by the people who use it.</p>
-    <div class="cta"><a class="btn btn--red" href="/explore/">Explore the registry →</a><a class="link" href="/glowtbook/">Open Glowtbook</a></div>
+    <p class="lede">Who made it, where, and what happened to it since. The Glass Database keeps that record for handmade glass and the people who make it, and it is kept by the people who use it.</p>
+    <div class="cta"><a class="btn btn--red" href="#doors">Pick your door ↓</a><a class="link" href="/explore/">Find artists &amp; studios</a></div>
    </div>
-   <figure><div class="ph"><img src="/barcoding/capture.jpg" alt="A glass piece on the printed capture mat, being photographed from every angle"></div><figcaption>Fig. 1 — Capturing a piece on the printed mat. Data CC BY 4.0 · Code Apache 2.0</figcaption></figure>
+   <figure><div class="ph"><img src="/barcoding/capture.jpg" alt="A glass piece on the printed Photo Mat, being photographed from every angle"></div><figcaption>Fig. 1 — Registering a piece on the Photo Mat: walk around it until the bar fills up.</figcaption></figure>
   </div>
   <div class="claim">
-   <span class="tag">New</span>
-   <p><strong>Bought a piece at a show?</strong> Scan the QR on the table and add it to your collection, story attached, in about a minute.</p>
-   <a class="btn btn--line" href="/register.html">Claim it →</a>
+   <span class="tag">At a show?</span>
+   <p><strong>Bought a piece at the table?</strong> Scan the QR on the table and it joins your collection, story attached, in about a minute.</p>
+   <a class="btn btn--line" href="/register.html">Add to My Collection →</a>
   </div>
  </div>
 </section>
-<nav class="index wrap" aria-label="Registry index">
- <a href="/explore/?view=datasets">Artists <span>01</span></a><a href="/explore/?view=datasets">Studios <span>02</span></a><a href="/explore/?view=objects">Objects <span>03</span></a><a href="/explore/?view=opportunities">Opportunities <span>04</span></a><a href="/explore/?view=community">Exchange <span>05</span></a><a href="/explore/?view=community">Jobs <span>06</span></a><a href="/explore/?view=community">Resources <span>07</span></a>
+<nav class="index wrap" aria-label="Quick links">
+ <a href="/explore/">Artists <span>01</span></a><a href="/explore/">Studios <span>02</span></a><a href="/explore/?view=objects">Pieces <span>03</span></a><a href="/explore/?view=opportunities">Jobs, calls &amp; classes <span>04</span></a><a href="/studios.html">Studios on a map <span>05</span></a><a href="/graph.html">Who worked with whom <span>06</span></a><a href="/games.html">Collecting events <span>07</span></a>
 </nav>
 
-<section class="s" id="collect" aria-labelledby="h-collect">
+<section class="s" id="doors" aria-labelledby="h-doors">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 01</span> Events &amp; collecting</p>
-   <div><h2 id="h-collect">Find it. Claim it. <em>Prove it.</em></h2><p class="lede">Makers host events: ornament days, pop-ups, demos. The piece you take home joins your collection that same afternoon, made by the maker, found by you. Names stay private unless you say otherwise.</p></div></div>
-  <ol class="steps" style="list-style:none;margin:0;padding:0">
-   <li class="step"><div class="big">1</div><h3>Find</h3><p>Buy it at the table, the gallery, the demo. The maker gets paid. That’s the point.</p></li>
-   <li class="step"><div class="big">2</div><h3>Claim</h3><p>Scan the QR, sign in, say what you found, snap a photo. A minute, standing up.</p></li>
-   <li class="step"><div class="big">3</div><h3>Prove</h3><p>The maker confirms, the registry keeps it, and a fingerprint lets any phone match <em>this</em> piece later.</p></li>
-  </ol>
-  <p class="live" id="evLive" aria-live="polite"></p>
-  <div class="btns"><a class="btn btn--red" href="/register.html">Add a find to my collection</a><a class="link" href="/events.html">See the events</a><a class="link" href="/glowtbook/?page=events">Host an event</a></div>
- </div>
-</section>
-
-<section class="s alt" id="registry" aria-labelledby="h-reg">
- <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 02</span> Open data</p>
-   <div><h2 id="h-reg">See the whole field, then <em>take it with you.</em></h2><p class="lede">Browse and filter artists, studios, objects, opportunities and the community boards, then export any view. Everything is also served by a <a href="/api/docs">read-only API</a>.</p></div></div>
-  <div class="cards">
-   <a class="card" href="/explore/"><div class="ph"><img src="/img/home/datasets.jpg" alt="Glass pieces on a table with a stack of index cards, a ledger sheet and a brass plate" loading="lazy"></div><span class="label">Datasets</span><h3>Filterable tables of the field</h3><p>Artists, studios, objects and more. Export any view. Names and birth dates stay out of the per-row view.</p><span class="link">Open the explorer</span></a>
-   <a class="card" href="/graph.html"><div class="ph"><img src="/img/home/graph.jpg" alt="Glass beads joined by red thread into a network" loading="lazy"></div><span class="label">Relationship graph</span><h3>A living network</h3><p>Artists, mentors, techniques, studios and pieces, connected. Who taught whom, what touches what.</p><span class="link">Open the graph</span></a>
-   <a class="card" id="opportunities" href="/explore/?view=opportunities"><div class="ph"><img src="/img/home/opportunities.jpg" alt="A desk calendar with circled dates, a sealed envelope and a glass paperweight" loading="lazy"></div><span class="label">Opportunities</span><h3>Open calls, residencies, grants</h3><p>One calendar, with an ICS feed (/api/opportunities.ics) so new listings land in yours.</p><span class="link">Browse the calendar</span></a>
-   <a class="card" id="community" href="/explore/?view=community"><div class="ph"><img src="/img/home/community.jpg" alt="A cork notice board in a hot shop, the furnace glowing behind it" loading="lazy"></div><span class="label">Community boards</span><h3>Exchange, Jobs, Resources</h3><p>Sell, want or trade work; gaffer, assistant and teaching openings; suppliers and know-how.</p><span class="link">Open the boards</span></a>
-  </div>
- </div>
-</section>
-
-<section class="s" id="notes" aria-labelledby="h-notes">
- <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 03</span> Field notes</p>
-   <div><h2 id="h-notes">On the <em>business</em> of glass.</h2><p class="lede">What a hot shop costs to build and run, where the buyers are, and what the data says. Studies and essays, published under CC BY.</p></div></div>
-  <!-- blog:latest -->
-<article class="feature"><div><p class="label">Latest · Theoretical studies · Oct 17, 2026 · 21 min read</p><h3>Blowing Glass in Lima</h3><p class="lede">Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.</p><div class="btns"><a class="link" href="/blog/blowing-glass-in-lima.html">Read the study</a><a class="link" href="/blog/">All field notes</a><a class="link" href="/blog/feed.xml">RSS</a></div></div><a class="ph" href="/blog/blowing-glass-in-lima.html" aria-label="Blowing Glass in Lima"><img src="/img/home/lima.jpg" alt="A molten amber gather of glass on the end of a blowpipe" loading="lazy"></a></article>
-      <!-- /blog:latest -->
- </div>
-</section>
-
-<section class="s alt" id="provenance" aria-labelledby="h-prov">
- <div class="wrap two">
-  <div><p class="label"><span class="n">№ 04</span> Provenance · Glowtbook</p>
-   <h2 id="h-prov" style="margin:1rem 0 1.2rem">From the hot shop <em>to the archive.</em></h2>
-   <p class="lede">The making is fleeting; the record shouldn’t be. Glowtbook is a bench journal and object registry: log a piece, photograph it off the pipe, record where it’s been. Installs on your phone.</p>
-   <div class="btns"><a class="btn btn--line" href="/glowtbook/">Open Glowtbook</a><a class="link" href="/games.html">Seasons</a></div></div>
-  <div><p class="label">What travels with a piece</p>
-   <ul class="list">
-    <li><span>i.</span>A preservation-grade archive of the originals (BagIt / OAIS)</li>
-    <li><span>ii.</span>Content Credentials (C2PA) signed into the image</li>
-    <li><span>iii.</span>A re-identification fingerprint to confirm the physical piece later</li>
-    <li><span>iv.</span>Style traits aligned to Getty AAT &amp; Wikidata</li>
-    <li><span>v.</span>A listing that’s screen-reader accessible from the start</li>
-   </ul></div>
- </div>
-</section>
-
-<section class="s" id="tools" aria-labelledby="h-bar">
- <div class="wrap two">
-  <div><p class="label"><span class="n">№ 05</span> Barcoding · <span class="n">Alpha — for testers</span></p>
-   <h2 id="h-bar" style="margin:1rem 0 1.2rem">A digital barcode for <em>one-of-a-kind</em> glass.</h2>
-   <p class="lede">A handmade piece has no barcode, so it can’t be told from a copy or reunited with its record. Orbit it on a printed mat and the app reads a fingerprint off the glass itself. Anyone can later confirm <em>this is the same piece</em>, in a browser.</p>
-   <div class="tabs" role="tablist" aria-label="How barcoding works">
-    <button role="tab" id="t1" aria-selected="true" aria-controls="p1">01 Capture</button>
-    <button role="tab" id="t2" aria-selected="false" aria-controls="p2" tabindex="-1">02 Fingerprint</button>
-    <button role="tab" id="t3" aria-selected="false" aria-controls="p3" tabindex="-1">03 Verify</button>
+  <div class="s-head"><p class="label"><span class="n">№ 01</span> Three doors</p>
+   <div><h2 id="h-doors">Which one <em>is you?</em></h2><p class="lede">Everything here is a web page: a Google sign-in and nothing to install. Pick a door and follow the three steps.</p></div></div>
+  <div class="doors">
+   <div class="door">
+    <p class="label">Door one</p><h3>I make glass</h3>
+    <p>Keep your work on the record, give each piece an ID, and let collectors find you.</p>
+    <ol>
+     <li><a href="/glowtbook/">Get your studio notebook</a><p>Glowtbook is your private notebook: log a piece, photograph it off the pipe, note where it went.</p></li>
+     <li><a href="/fingerprint/enroll.html">Register your pieces</a><p>Walk around a piece with your phone and it gets its Glass ID, a one-of-a-kind ID like a serial number for handmade glass.</p></li>
+     <li><a href="/games.html">Enter a collecting event, or host a show</a><p>Put a registered piece into this season's event, or set up a sale with a QR on the table.</p></li>
+    </ol>
    </div>
-   <div class="panel" role="tabpanel" id="p1" aria-labelledby="t1"><p>Sign in once, or pair your phone from Glowtbook with a QR, pick the piece, and orbit it until the rating reads Strong. The printable mat gives true scale and colour.</p></div>
-   <div class="panel" role="tabpanel" id="p2" aria-labelledby="t2" hidden><p>Every angle becomes one fingerprint, saved straight onto the piece in your registry, not lost in an export. An unsaved session is kept on the device until you save it.</p></div>
-   <div class="panel" role="tabpanel" id="p3" aria-labelledby="t3" hidden><p>Verify on the spot, then publish with the fingerprint signed into its C2PA Content Credentials, a tamper-evident record of what the piece is and when it was enrolled.</p></div>
-   <p class="note"><strong>Alpha, open to testers.</strong> Enrol and verify work today and are strongest on pieces with distinctive colour and detail; thresholds are still being calibrated on real pieces. Treat a match as strong evidence, not forensic proof. If you have a shelf of your own work and a phone, you’re exactly who we need.</p>
-   <div class="btns"><a class="btn btn--red" href="/fingerprint/enroll.html">Open the capture app</a><a class="link" href="/fingerprint/verify.html">Verify a piece</a><a class="link" href="/splat.html">Turn a piece in 3D</a><a class="link" href="/fingerprint/capture-mat.pdf">Print the mat</a></div>
-   <p class="label" style="margin-top:2.2rem">Join the alpha</p>
-   <form class="sign light" data-source="alpha-testers" onsubmit="return gdbSubscribe(event)"><label for="em-alpha" class="skip">Email address</label><input id="em-alpha" type="email" placeholder="you@studio.com" required><button type="submit">Count me in</button></form>
-   <p class="label" role="status" aria-live="polite" style="margin-top:.6rem"></p>
+   <div class="door">
+    <p class="label">Door two</p><h3>I collect glass</h3>
+    <p>Know what you own, keep its story, and show it off.</p>
+    <ol>
+     <li><a href="/fingerprint/verify.html">Check a piece</a><p>Point your phone at it to see who made it.</p></li>
+     <li><a href="/register.html">Add to my collection</a><p>The piece joins your collection with its story attached: who made it, where you found it.</p></li>
+     <li><a href="/games.html">Vote in the collecting event</a><p>Pick favourites, follow the standings, and complete a set across studios.</p></li>
+    </ol>
+   </div>
+   <div class="door">
+    <p class="label">Door three</p><h3>I'm just curious</h3>
+    <p>Wander the field: the people, the places, the connections, the stories.</p>
+    <ol>
+     <li><a href="/explore/">Find artists &amp; studios</a><p>Who makes glass, where, and how to reach them.</p></li>
+     <li><a href="/graph.html">Who worked with whom</a><p>Who taught whom, who shares a studio, what touches what, as a map you can pull on.</p></li>
+     <li><a href="/blog/">Read the field notes</a><p>Studies and essays on the business of glass.</p></li>
+    </ol>
+   </div>
   </div>
-  <figure style="margin:0"><div class="ph"><img src="/barcoding/capture.jpg" alt="Capture in progress: a piece on the mat with angle coverage shown" loading="lazy"></div><figcaption>Fig. 2 — Capture: orbit the piece until the rating reads Strong.</figcaption></figure>
  </div>
 </section>
 
-<section class="s alt" id="seasons" aria-labelledby="h-season">
+<section class="s alt" id="how" aria-labelledby="h-how">
+ <div class="wrap how-grid">
+  <div class="video" role="img" aria-label="How it works, a two-minute video, coming soon">
+   <div><div class="play" aria-hidden="true"></div><h3>How it works</h3><p>Two minutes · video coming soon</p></div>
+  </div>
+  <div><p class="label"><span class="n">№ 02</span> How it works</p>
+   <h2 id="h-how" style="margin:1rem 0 1.2rem">Two minutes, <em>start to finish.</em></h2>
+   <p class="lede">A maker gives a pumpkin its Glass ID on the Photo Mat. A collector buys it at a show, scans the code on the table, and the pumpkin joins their collection with the maker's name on it. Later, anyone can check the piece with a phone and see who made it.</p>
+   <p class="lede">Until the video is up, the three doors above are the walkthrough.</p>
+  </div>
+ </div>
+</section>
+
+<section class="s" id="collecting" aria-labelledby="h-season">
  <div class="wrap season">
-  <div><p class="label"><span class="n">№ 06</span> Seasons</p>
-   <h2 id="h-season" style="margin:1rem 0 1.2rem">Collect the season. <em>Prove it’s real.</em></h2>
-   <p class="lede">Friendly, time-boxed calls for pieces. Makers enter a fingerprinted piece, collectors scan what they bought to claim it, everyone votes. Leaderboards and badges for completing a set across studios.</p>
+  <div><p class="label"><span class="n">№ 03</span> Collecting Events</p>
+   <h2 id="h-season" style="margin:1rem 0 1.2rem">Collect the season. <em>Keep the story.</em></h2>
+   <p class="lede">Friendly, time-boxed collecting games. Makers enter registered pieces, collectors add what they bought to their collection, everyone votes. Awards, a leaderboard, and badges for completing a set across studios.</p>
    <p class="live" id="seasonLive" aria-live="polite"></p>
-   <div class="btns"><a class="btn btn--red" href="/games.html">Open this season</a><a class="link" href="/games.html#boards">See the standings</a><a class="link" href="/fingerprint/verify.html">Scan a piece to claim it</a></div></div>
+   <div class="btns">
+    <div class="b"><a class="btn btn--red" href="/games.html">Open this collecting event</a><small>See the pieces, the standings and the awards.</small></div>
+    <div class="b"><a class="link" href="/fingerprint/verify.html">Check a piece to add it</a><small>Point your phone at a piece you bought; it joins your collection.</small></div>
+   </div></div>
   <div class="cal" role="list" id="seasonCal">
-   <div class="on" role="listitem"><span class="label">Now · October</span><b>Pumpkins</b></div>
+   <div class="on" role="listitem"><span class="label">Now · October</span><b>Court of the Gourds</b></div>
    <div role="listitem"><span class="label">December</span><b>Heirloom ornaments</b></div>
    <div role="listitem"><span class="label">Spring</span><b>Paperweights</b></div>
   </div>
@@ -151,36 +127,128 @@
  </div>
 </section>
 
+<section class="s alt" id="shows" aria-labelledby="h-collect">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Shows &amp; Sales</p>
+   <div><h2 id="h-collect">Find it. Add it. <em>Keep it.</em></h2><p class="lede">Makers host shows and sales: ornament days, pop-ups, demos. The piece you take home joins your collection that same afternoon, made by the maker, found by you. Names stay private unless you say otherwise.</p></div></div>
+  <ol class="steps" style="list-style:none;margin:0;padding:0">
+   <li class="step"><div class="big">1</div><h3>Find</h3><p>Buy it at the table, the gallery, the demo. The maker gets paid. That's the point.</p></li>
+   <li class="step"><div class="big">2</div><h3>Add</h3><p>Scan the QR, sign in, say what you found, snap a photo. A minute, standing up.</p></li>
+   <li class="step"><div class="big">3</div><h3>Keep</h3><p>The maker confirms, the record keeps it, and its Glass ID lets any phone recognise <em>this</em> piece later.</p></li>
+  </ol>
+  <p class="live" id="evLive" aria-live="polite"></p>
+  <div class="btns">
+   <div class="b"><a class="btn btn--red" href="/register.html">Add to My Collection</a><small>It joins your collection with its story attached.</small></div>
+   <div class="b"><a class="link" href="/events.html">See the shows &amp; sales</a><small>Where makers are selling in person, and what people found there.</small></div>
+   <div class="b"><a class="link" href="/glowtbook/?page=events">Host a show or sale</a><small>Make the event, print the QR for the table.</small></div>
+  </div>
+ </div>
+</section>
+
+<section class="s" id="find" aria-labelledby="h-reg">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Find Artists &amp; Studios</p>
+   <div><h2 id="h-reg">See the whole field, then <em>take it with you.</em></h2><p class="lede">Who makes glass, where, and how to reach them. Nothing is public until it has been reviewed, and names and birth dates stay out of the per-row views.</p></div></div>
+  <div class="cards">
+   <a class="card" href="/explore/"><div class="ph"><img src="/img/home/datasets.jpg" alt="Glass pieces on a table with a stack of index cards, a ledger sheet and a brass plate" loading="lazy"></div><span class="label">The Directory</span><h3>Find artists &amp; studios</h3><p>Browse and filter the people and places, see their work, follow the links to their own sites.</p><span class="link">Open the directory</span></a>
+   <a class="card" href="/graph.html"><div class="ph"><img src="/img/home/graph.jpg" alt="Glass beads joined by red thread into a network" loading="lazy"></div><span class="label">Connections</span><h3>Who worked with whom</h3><p>Who taught whom, who shares a studio, what touches what, as a map you can pull on.</p><span class="link">See the connections</span></a>
+   <a class="card" id="opportunities" href="/explore/?view=opportunities"><div class="ph"><img src="/img/home/opportunities.jpg" alt="A desk calendar with circled dates, a sealed envelope and a glass paperweight" loading="lazy"></div><span class="label">Jobs, Calls &amp; Classes</span><h3>Open calls, residencies, jobs, teaching</h3><p>One calendar you can subscribe to, so new listings land in yours.</p><span class="link">Browse the calendar</span></a>
+   <a class="card" href="/studios.html"><div class="ph"><img src="/img/home/map.jpg" alt="A linen world map with red glass beads marking studios" loading="lazy"></div><span class="label">On a map</span><h3>Studios worldwide</h3><p>Every studio we know of. Filter by type, search by city or country.</p><span class="link">Open the map</span></a>
+  </div>
+  <p class="fine"><strong>For researchers.</strong> Every table is filterable and exportable, and everything is served by a <a href="/api/docs">read-only API</a>. Data under <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, code under Apache 2.0. Start at <a href="/explore/?view=datasets">the tables</a>.</p>
+ </div>
+</section>
+
+<section class="s alt" id="glassid" aria-labelledby="h-bar">
+ <div class="wrap two">
+  <div><p class="label"><span class="n">№ 06</span> Glass ID · <span class="n">Alpha — for testers</span></p>
+   <h2 id="h-bar" style="margin:1rem 0 1.2rem">A one-of-a-kind ID <em>for handmade glass.</em></h2>
+   <p class="lede">Like a serial number, except nothing is stamped on the piece. Set it on the Photo Mat, walk around it with your phone until the bar fills up, and it has a Glass ID. Later, anyone can point a phone at the piece and see who made it.</p>
+   <div class="tabs" role="tablist" aria-label="How Glass ID works">
+    <button role="tab" id="t1" aria-selected="true" aria-controls="p1">01 Register</button>
+    <button role="tab" id="t2" aria-selected="false" aria-controls="p2" tabindex="-1">02 Keep</button>
+    <button role="tab" id="t3" aria-selected="false" aria-controls="p3" tabindex="-1">03 Check</button>
+   </div>
+   <div class="panel" role="tabpanel" id="p1" aria-labelledby="t1"><p>Sign in once, or pair your phone from Glowtbook with a QR, pick the piece, and walk around it until the bar fills up. The printable Photo Mat gives true size and colour.</p></div>
+   <div class="panel" role="tabpanel" id="p2" aria-labelledby="t2" hidden><p>The Glass ID is saved straight onto the piece in your Glowtbook, not lost in an export. An unsaved session is kept on your phone until you save it.</p></div>
+   <div class="panel" role="tabpanel" id="p3" aria-labelledby="t3" hidden><p>Point a phone at the piece and it is recognised. A likely match is strong evidence, not proof, and the check travels with the piece's story.</p></div>
+   <p class="note"><strong>Alpha, open to testers.</strong> Registering and checking work today and are strongest on pieces with distinctive colour and detail; the thresholds are still being calibrated on real pieces. If you have a shelf of your own work and a phone, you're exactly who we need.</p>
+   <div class="btns">
+    <div class="b"><a class="btn btn--red" href="/fingerprint/enroll.html">Register Your Piece</a><small>Walk around it with your phone; it gets its Glass ID.</small></div>
+    <div class="b"><a class="link" href="/fingerprint/verify.html">Check a Piece</a><small>Point your phone at it to see who made it.</small></div>
+    <div class="b"><a class="link" href="/splat.html">Make a 3D Photo</a><small>Turn a piece in your hands on screen; your phone makes it.</small></div>
+    <div class="b"><a class="link" href="/fingerprint/capture-mat.pdf">Print the Photo Mat</a><small>The sheet you set the piece on for true size and colour.</small></div>
+   </div>
+   <p class="label" style="margin-top:2.2rem">Join the alpha</p>
+   <form class="sign light" data-source="alpha-testers" onsubmit="return gdbSubscribe(event)"><label for="em-alpha" class="skip">Email address</label><input id="em-alpha" type="email" placeholder="you@studio.com" required><button type="submit">Count me in</button></form>
+   <p class="label" role="status" aria-live="polite" style="margin-top:.6rem"></p>
+   <p class="fine">Under the hood, a Glass ID is a fingerprint of the glass itself, stored as numbers rather than photos, and signed into the piece's pictures as Content Credentials (C2PA).</p>
+  </div>
+  <figure style="margin:0"><div class="ph"><img src="/barcoding/capture.jpg" alt="Registering a piece: it sits on the Photo Mat while the phone circles it and the bar fills up" loading="lazy"></div><figcaption>Fig. 2 — Register: walk around the piece until the bar fills up.</figcaption></figure>
+ </div>
+</section>
+
+<section class="s" id="glowtbook" aria-labelledby="h-prov">
+ <div class="wrap two">
+  <div><p class="label"><span class="n">№ 07</span> Glowtbook · your studio notebook</p>
+   <h2 id="h-prov" style="margin:1rem 0 1.2rem">From the hot shop <em>to the archive.</em></h2>
+   <p class="lede">The making is fleeting; the record shouldn't be. Glowtbook is your studio notebook: log a piece, photograph it off the pipe, record where it has been. Private until you publish. Works on your phone.</p>
+   <div class="btns">
+    <div class="b"><a class="btn btn--line" href="/glowtbook/">Open Glowtbook</a><small>Your private notebook and the list of your pieces.</small></div>
+    <div class="b"><a class="link" href="/games.html">Enter a collecting event</a><small>Put one of your registered pieces into this season's event.</small></div>
+   </div></div>
+  <div><p class="label">What travels with a piece</p>
+   <ul class="list">
+    <li><span>i.</span>Its story: made, sold, found, checked, with dates and names</li>
+    <li><span>ii.</span>Its Glass ID, so any phone can recognise it later</li>
+    <li><span>iii.</span>Its pictures, with the maker's name sealed in</li>
+    <li><span>iv.</span>Its style, in words that museums and Wikipedia also use</li>
+    <li><span>v.</span>A listing that works with a screen reader from the start</li>
+   </ul>
+   <p class="fine">The fine print: originals are archived as BagIt bags, pictures carry Content Credentials (C2PA), and style terms are aligned to Getty AAT and Wikidata.</p></div>
+ </div>
+</section>
+
+<section class="s alt" id="notes" aria-labelledby="h-notes">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 08</span> Field notes</p>
+   <div><h2 id="h-notes">On the <em>business</em> of glass.</h2><p class="lede">What a studio costs to build and run, where the buyers are, and what the data says. Studies and essays, free to share.</p></div></div>
+  <!-- blog:latest -->
+<article class="feature"><div><p class="label">Latest · Theoretical studies · Oct 17, 2026 · 21 min read</p><h3>Blowing Glass in Lima</h3><p class="lede">Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.</p><div class="btns"><a class="link" href="/blog/blowing-glass-in-lima.html">Read the study</a><a class="link" href="/blog/">All field notes</a><a class="link" href="/blog/feed.xml">RSS</a></div></div><a class="ph" href="/blog/blowing-glass-in-lima.html" aria-label="Blowing Glass in Lima"><img src="/img/home/lima.jpg" alt="A molten amber gather of glass on the end of a blowpipe" loading="lazy"></a></article>
+      <!-- /blog:latest -->
+ </div>
+</section>
+
 <section class="s" aria-labelledby="h-vis">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 07</span> Visualizations &amp; shops</p>
-   <div><h2 id="h-vis">The field on a map, a shop <em>on a spreadsheet.</em></h2></div></div>
+  <div class="s-head"><p class="label"><span class="n">№ 09</span> Studio tools</p>
+   <div><h2 id="h-vis">A studio on a spreadsheet, a piece <em>in your hands.</em></h2></div></div>
   <div class="cards">
-   <a class="card third" href="/studios.html"><div class="ph"><img src="/img/home/map.jpg" alt="A linen world map with red glass beads marking studios" loading="lazy"></div><span class="label">Map</span><h3>Studios worldwide</h3><p>Every studio we know of. Filter by type, search by city or country.</p><span class="link">Open the map</span></a>
-   <a class="card third" href="/shop-costs.html"><div class="ph"><img src="/img/home/calculator.jpg" alt="A calculator, a pencil, a ledger sheet and a red glass cup" loading="lazy"></div><span class="label">Calculator</span><h3>Shop cost calculator</h3><p>Gas, power, rent, people, consumables, by the month and by the piece.</p><span class="link">Run the numbers</span></a>
-   <a class="card third" href="/shop.html"><div class="ph"><img src="/img/home/shop-docs.jpg" alt="A blueprint-style drawing of a furnace, burner and exhaust hood" loading="lazy"></div><span class="label">Open shop docs</span><h3>Describe a shop by its components</h3><p>Gas, air, power, heat, exhaust and controls, as diagrams and a bill of materials with real part numbers.</p><span class="link">Document your shop</span></a>
+   <a class="card third" href="/shop-costs.html"><div class="ph"><img src="/img/home/calculator.jpg" alt="A calculator, a pencil, a ledger sheet and a red glass cup" loading="lazy"></div><span class="label">Studio Cost Calculator</span><h3>What it costs to run the studio</h3><p>Gas, power, rent, people, consumables, by the month and by the piece.</p><span class="link">Run the numbers</span></a>
+   <a class="card third" href="/shop.html"><div class="ph"><img src="/img/home/shop-docs.jpg" alt="A blueprint-style drawing of a furnace, burner and exhaust hood" loading="lazy"></div><span class="label">Studio docs</span><h3>Describe a studio by its parts</h3><p>Gas, air, power, heat, exhaust and controls, as diagrams and a parts list with real part numbers.</p><span class="link">Document your studio</span></a>
+   <a class="card third" href="/splat.html"><div class="ph"><img src="/splat/demo-pumpkin.jpg" alt="A 3D Photo of a blown-glass pumpkin" loading="lazy" onerror="this.parentNode.style.background='linear-gradient(160deg,#E7CDB4,#C9A98A)';this.remove()"></div><span class="label">3D Photo · prototype</span><h3>Turn a piece in your hands</h3><p>Your phone makes a 3D Photo of a piece; upload it here and share a link that lets anyone turn it.</p><span class="link">Try the demo</span></a>
   </div>
  </div>
 </section>
 
 <section class="s alt" id="about" aria-labelledby="h-about">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 08</span> About</p>
+  <div class="s-head"><p class="label"><span class="n">№ 10</span> About</p>
    <div><h2 id="h-about">Craft and capital, <em>in one open record.</em></h2><p class="lede">The Glass Database was started by Jason Bauer to look at the glass world from both sides at once: the craft and the capital. What a studio costs to build and run, who taught whom, where the work goes and what it sells for. It picked up attention, and it is now an open-source project open to glassblowers, collectors and researchers interested in the emerging, evolving space of studio art glass.</p></div></div>
   <div class="about-grid">
    <div>
     <p class="label">Founder</p>
     <h3>Jason Robert Bauer</h3>
-    <p>Artist and founder of the Glass Database (b. 1986). Trained as a furnace glassmaker and a lifelong craft enthusiast, he works mainly with light, and also with sound and time, through a futurist aesthetic designed to shift the viewer’s perception. He works intuitively, often building from parts made on separate occasions. With his wife and partner Romina Gonzales he co-founded J &amp; R Bauer Inc. and The Third Room. Based between north-western New York and western Peru.</p>
+    <p>Artist and founder of the Glass Database (b. 1986). Trained as a furnace glassmaker and a lifelong craft enthusiast, he works mainly with light, and also with sound and time, through a futurist aesthetic designed to shift the viewer's perception. He works intuitively, often building from parts made on separate occasions. With his wife and partner Romina Gonzales he co-founded J &amp; R Bauer Inc. and The Third Room. Based between north-western New York and western Peru.</p>
     <div class="who"><p class="label">Maintainer</p>
     <h3>Anson Parker</h3>
     <p>Keeps the furnace running at <a href="https://ragingbuffaloglass.com">Raging Buffalo Glass</a> and has spent almost thirty years building open-source software for libraries.</p></div>
    </div>
    <div>
-    <p class="label">How it’s run</p>
+    <p class="label">How it's run</p>
     <ul class="list">
      <li><span>i.</span>Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0 on <a href="https://github.com/alibama/glass-database">GitHub</a>.</li>
-     <li><span>ii.</span>Nothing is public until it’s reviewed: every row passes an approval gate, and names and birth dates stay out of the per-row views.</li>
+     <li><span>ii.</span>Nothing is public until it's reviewed: every row passes an approval gate, and names and birth dates stay out of the per-row views.</li>
      <li><span>iii.</span>Standards where they exist: C2PA for credentials, BagIt and OAIS for the archive, SKOS aligned to Getty AAT and Wikidata for style.</li>
      <li><span>iv.</span>Conversation happens on the <a href="https://discord.gg/9ek2UxvPT">Discord</a>; the roadmap and changelog live in the repository.</li>
     </ul>
@@ -191,17 +259,17 @@
 
 <section class="s" id="involved" aria-labelledby="h-ways">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 09</span> Ways in</p>
+  <div class="s-head"><p class="label"><span class="n">№ 11</span> Ways in</p>
    <div><h2 id="h-ways">Pick a door. <em>Any of them helps.</em></h2><p class="lede">The record is only as good as the people in it. Ten minutes on any of these makes the field more visible to itself.</p></div></div>
   <div class="cards ways">
-   <a class="card" href="/explore/?view=submit"><span class="label">Listings</span><h3>Add yourself or your studio</h3><p>Already listed? Tell us what’s changed. Not yet? Five minutes, reviewed before it’s public.</p><span class="link">Add or update</span></a>
-   <a class="card" href="/glowtbook/?page=events"><span class="label">Events</span><h3>Host an event</h3><p>A sale, a demo, an ornament day. A QR on the table and buyers register their pieces on the spot.</p><span class="link">Set one up</span></a>
-   <a class="card" href="/fingerprint/enroll.html"><span class="label">Alpha</span><h3>Test the barcode</h3><p>Fingerprint a few pieces, try to fool it with a sibling, report back. Testers steer the thresholds.</p><span class="link">Open the capture app</span></a>
-   <a class="card" href="/games.html"><span class="label">Seasons</span><h3>Enter a season</h3><p>Pumpkins in October, ornaments in December. Makers enter, collectors scan and vote, shops get found.</p><span class="link">This season</span></a>
-   <a class="card" href="/explore/?view=submit"><span class="label">Lineage</span><h3>Map who taught whom</h3><p>A name and a year turns into a line on the graph.</p><span class="link">Submit a link</span></a>
-   <a class="card" href="/shop.html"><span class="label">Shops</span><h3>Document your shop</h3><p>Diagrams and a parts list with real part numbers, so the next person can fix, insure or build one.</p><span class="link">Open the guide</span></a>
-   <a class="card" href="/blog/"><span class="label">Field notes</span><h3>Write a study</h3><p>What a hot shop costs somewhere specific, what sells where, what a residency pays. Published under your name.</p><span class="link">See the blog</span></a>
-   <a class="card" href="/api/vocab/glass-traits.ttl"><span class="label">Vocabulary</span><h3>Review the thesaurus</h3><p>Curators, registrars, teachers: the style-trait vocabulary is aligned to Getty AAT and Wikidata and wants correcting.</p><span class="link">Read the SKOS</span></a>
+   <a class="card" href="/explore/?view=submit"><span class="label">Listings</span><h3>Add yourself or your studio</h3><p>Already listed? Tell us what's changed. Not yet? Five minutes, reviewed before it's public.</p><span class="link">Add or update</span></a>
+   <a class="card" href="/glowtbook/?page=events"><span class="label">Shows &amp; Sales</span><h3>Host a show or sale</h3><p>A sale, a demo, an ornament day. A QR on the table and buyers add their pieces to their collections on the spot.</p><span class="link">Set one up</span></a>
+   <a class="card" href="/fingerprint/enroll.html"><span class="label">Alpha</span><h3>Test Glass ID</h3><p>Register a few pieces, try to fool it with a sibling, report back. Testers steer the thresholds.</p><span class="link">Register a piece</span></a>
+   <a class="card" href="/games.html"><span class="label">Collecting Events</span><h3>Enter the collecting event</h3><p>Pumpkins in October, ornaments in December. Makers enter, collectors check and vote, studios get found.</p><span class="link">This season</span></a>
+   <a class="card" href="/explore/?view=submit"><span class="label">Connections</span><h3>Map who taught whom</h3><p>A name and a year turns into a line on the map of connections.</p><span class="link">Submit a link</span></a>
+   <a class="card" href="/shop.html"><span class="label">Studios</span><h3>Document your studio</h3><p>Diagrams and a parts list with real part numbers, so the next person can fix, insure or build one.</p><span class="link">Open the guide</span></a>
+   <a class="card" href="/blog/"><span class="label">Field notes</span><h3>Write a study</h3><p>What a studio costs somewhere specific, what sells where, what a residency pays. Published under your name.</p><span class="link">See the field notes</span></a>
+   <a class="card" href="/api/vocab/glass-traits.ttl"><span class="label">For researchers</span><h3>Review the vocabulary</h3><p>Curators, registrars, teachers: the style vocabulary is aligned to Getty AAT and Wikidata and wants correcting.</p><span class="link">Read the thesaurus</span></a>
    <a class="card" href="https://github.com/alibama/glass-database"><span class="label">Code</span><h3>Contribute</h3><p>Python, FastAPI, Streamlit, plain HTML. A test suite and a read-only API to build against.</p><span class="link">GitHub</span></a>
   </div>
  </div>
@@ -210,13 +278,14 @@
 <footer>
  <div class="wrap">
   <div class="fgrid">
-   <div><p class="label"><span class="n">№ 10</span> Come say hi</p><h2 style="margin:1rem 0">A record kept by the field, <em>for the field.</em></h2>
-    <p>Open calls and new features in your inbox. Nothing is published until it’s reviewed; anything can be corrected or removed on request.</p>
+   <div><p class="label"><span class="n">№ 12</span> Come say hi</p><h2 style="margin:1rem 0">A record kept by the field, <em>for the field.</em></h2>
+    <p>Open calls and new features in your inbox. Nothing is published until it's reviewed; anything can be corrected or removed on request.</p>
     <form class="sign" data-source="homepage" onsubmit="return gdbSubscribe(event)"><label for="em" class="skip">Email address</label><input id="em" type="email" placeholder="you@studio.com" required><button type="submit">Subscribe</button></form>
     <p class="label" role="status" aria-live="polite" style="margin-top:.6rem"></p></div>
-   <div><p class="label">Registry</p><ul><li><a href="/explore/">Explorer</a></li><li><a href="/graph.html">Graph</a></li><li><a href="/api/docs">API</a></li><li><a href="/studios.html">Map</a></li><li><a href="/shop-costs.html">Shop costs</a></li></ul></div>
-   <div><p class="label">Collect</p><ul><li><a href="/register.html">Add a find</a></li><li><a href="/events.html">Events</a></li><li><a href="/games.html">Seasons</a></li><li><a href="/fingerprint/enroll.html">Capture app</a></li><li><a href="/glowtbook/">Glowtbook</a></li></ul></div>
-   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Blog</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="#about">About</a></li></ul></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">The Directory</a></li><li><a href="/graph.html">Who Worked With Whom</a></li><li><a href="/studios.html">Studios on a map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="#about">About</a></li></ul></div>
   </div>
   <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
  </div>
@@ -239,15 +308,16 @@ async function gdbSubscribe(e){
   }catch(_){msg.textContent="Network error — please try again.";}
   return false;
 }
-// live bits: sign-in chip, the season notice, the events line
+// live bits: sign-in chip, the collecting-event notice, the shows line
 if(window.GDB){GDB.chip('#chip',{compact:true,next:'/'});}
 fetch('/api/seasons').then(r=>r.ok?r.json():null).then(j=>{
   const c=j&&j.current; if(!c) return;
   const n=document.getElementById('notice');
-  n.innerHTML=(c.status==='voting'?'Voting is open for ':'Season open: ')+'<a href="/games.html?season='+encodeURIComponent(c.slug)+'">'+c.title.replace(/</g,'&lt;')+'</a>. Vote, collect, prove it’s real.';
+  n.innerHTML=(c.status==='voting'?'Voting is open in ':'Collecting event open: ')+'<a href="/games.html?season='+encodeURIComponent(c.slug)+'">'+c.title.replace(/</g,'&lt;')+'</a>. Vote, collect, keep the story.';
   n.hidden=false;
   const live=document.getElementById('seasonLive');
   if(live){ live.innerHTML='<b>'+(c.entry_count||0)+'</b> '+((c.entry_count||0)===1?'entry':'entries')+' · <b>'+(c.vote_count||0)+'</b> '+((c.vote_count||0)===1?'vote':'votes')+(c.votes_per_voter?' · everyone gets <b>'+c.votes_per_voter+'</b>':'')+(c.voting_closes?' · voting closes <b>'+c.voting_closes+'</b>':''); }
+  const cal=document.querySelector('#seasonCal .on b'); if(cal&&c.title) cal.textContent=c.title;
   return fetch('/api/seasons/'+encodeURIComponent(c.slug)).then(r=>r.ok?r.json():null).then(d=>{
     if(!d||!d.entries||!d.entries.length) return;
     const es=d.entries.slice().sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,4);
@@ -259,9 +329,9 @@ fetch('/api/seasons').then(r=>r.ok?r.json():null).then(j=>{
 }).catch(()=>{});
 fetch('/api/events').then(r=>r.ok?r.json():null).then(j=>{
   const el=document.getElementById('evLive'); if(!el||!j||!j.events) return;
-  if(!j.events.length){el.innerHTML='No events listed yet — hosts: <a class="link" href="/glowtbook/?page=events">open Glowtbook → Events</a>.';return;}
+  if(!j.events.length){el.innerHTML='No shows listed yet — hosts: <a class="link" href="/glowtbook/?page=events">open Glowtbook → Shows &amp; Sales</a>.';return;}
   const open=j.events.filter(e=>e.can_register).length, reg=j.events.reduce((n,e)=>n+(e.registered||0),0), pub=j.events.reduce((n,e)=>n+(e.published||0),0);
-  el.innerHTML='<b>'+open+'</b> event'+(open===1?'':'s')+' open · <b>'+reg+'</b> piece'+(reg===1?'':'s')+' registered · <b>'+pub+'</b> in the registry';
+  el.innerHTML='<b>'+open+'</b> show'+(open===1?'':'s')+' open · <b>'+reg+'</b> piece'+(reg===1?'':'s')+' added · <b>'+pub+'</b> on the record';
 }).catch(()=>{});
 </script>
 </body>

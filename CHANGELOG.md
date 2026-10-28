@@ -33,6 +33,17 @@ proof-of-concept features from production-ready ones in its docs.
   it for anyone. Splats are pictures: never signed into credentials, never fingerprints.
   `docs/SPLATS.md`.
 ### Changed
+- **Named after what people do** — the site's words follow `docs/NAMING.md`: Find Artists &
+  Studios (was Registry/Explore), Who Worked With Whom (graph), Jobs, Calls & Classes
+  (opportunities and boards), For Researchers (datasets, API, CC BY, under one heading), Glass ID
+  (fingerprint/C2PA, now fine print), Register Your Piece (enrol) and Check a Piece (verify),
+  Add to My Collection (claim), Photo Mat (capture mat) with "walk around your piece until the
+  bar fills up", Collecting Events (seasons; this one is Court of the Gourds), Shows & Sales
+  (maker-hosted events), 3D Photo (splat), Studio Cost Calculator and Studio docs. The tagline
+  "A home for every piece of glass and the people who make it." sits under the brand on every
+  page. URLs, code and API paths are unchanged. The homepage opens with three doors (I make
+  glass / I collect glass / I'm just curious), every button has one sentence under it, and a
+  two-minute How-it-works video has its placeholder.
 - **New theme: paper** — the site moves from the dark amber "Field Data" look to a light,
   editorial one: paper ground (#F4EEE4), ink text, one red accent (#B3261E), Fraunces headings,
   Inter body, IBM Plex Mono labels with "№" section numbering, square ink-bordered buttons and

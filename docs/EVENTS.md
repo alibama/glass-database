@@ -1,11 +1,13 @@
-# Events — registering the piece at the point of sale
+# Shows & Sales — adding the piece to a collection at the point of sale
 
-A maker **hosts an event** — an ornament day at a gallery, a pop-up at the market, a demo
-with a sale table. Someone who **buys a piece there registers it** online, with the piece
-still in their hand: sign in, say what it is, snap a photo. The host confirms it was theirs,
-the site publishes it, and the piece is in the public registry with provenance from the
-moment of sale — *created by the maker at the event, acquired by the buyer* — and in the
-buyer's own Glowtbook, ready to fingerprint.
+On the site these are **Shows & Sales** (the code says events; see `docs/NAMING.md`). A
+maker **hosts a show or sale** — an ornament day at a gallery, a pop-up at the market, a
+demo with a sale table. Someone who **buys a piece there adds it to their collection**
+online, with the piece still in their hand: sign in, say what it is, snap a photo. The host
+confirms it was theirs, the site publishes it, and the piece is in the public directory with
+provenance from the moment of sale — *created by the maker at the event, acquired by the
+buyer* — and in the buyer's own Glowtbook, ready for its Glass ID. The rest of this document
+uses the code's words (event, registration, fingerprint) because it describes the code.
 
 Public pages: `/events.html` (directory) · `/register.html?event=<slug>` (the buyer's page,
 the one behind the QR) · host side: **Glowtbook → Events** · admin: **Admin → Review queue →

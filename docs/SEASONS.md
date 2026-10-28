@@ -1,11 +1,14 @@
-# Seasons — seasonal games for makers and collectors
+# Collecting Events — time-boxed collecting games for makers and collectors
 
-A **season** is a themed, time-boxed call for artists ("Pumpkin Patch 2026: blown-glass
-pumpkins from every shop") that doubles as a collecting game. Makers enter pieces they have
-already published through Glowtbook; collectors buy them from the shops, **scan** them with
-the verify app and **claim** them; signed-in visitors **vote**; it all rolls up into
-leaderboards and badges. Think gotta-catch-'em-all, but every "catch" is an authenticated
-piece of glass in a real collection and a sale for an independent maker.
+On the site these are **Collecting Events** (the code and URLs still say seasons/games; see
+`docs/NAMING.md`). A collecting event is a themed, time-boxed call for artists ("Court of
+the Gourds: blown-glass pumpkins from every studio") that doubles as a collecting game.
+Makers enter pieces they have already published through Glowtbook and registered for a
+Glass ID; collectors buy them from the shops, **check** them with Check a Piece and **add
+them to their collection**; signed-in visitors **vote**; it all rolls up into leaderboards
+and badges. Think gotta-catch-'em-all, but every "catch" is a checked piece of glass in a
+real collection and a sale for an independent maker. The rest of this document uses the
+code's words (season, claim, verify, fingerprint) because it describes the code.
 
 Public page: `/games.html` · admin: **🎃 Seasons** · code: `central/seasons.py`,
 `api/seasons.py` · demo data: `scripts/seed_demo.py`.
@@ -47,7 +50,7 @@ scan ─▶ authenticate ─▶ collect ─▶ vote ─▶ share ─▶ (someone
 
 | When | Season | Theme |
 |---|---|---|
-| October | **Pumpkin Patch** | Blown-glass pumpkins from every shop |
+| October | **Court of the Gourds** | Blown-glass pumpkins from every studio |
 | December | **Heirloom Ornaments** | The ones that go on the tree every year |
 | Spring | **Paperweights** | Murrine, millefiori, the lampworked garden |
 | Summer | **Drinkware** | Tumblers, stemware — the glass you actually use |
@@ -144,29 +147,32 @@ meaning `claim_count > 0`.
 
 ## Rules of play
 
-The same text sits behind "Rules of play" on `/games.html`.
+The same text sits behind "Rules of play" on `/games.html`, in the site's words (collecting
+event, Glass ID, add to your collection).
 
 **Makers**
 
-1. Enter your own work, made for this season.
-2. Up to five entries per season.
-3. Fingerprint a piece before you enter it: that is what makes it Uncommon or better and
-   what the measured awards use.
-4. One legendary per maker per season: an edition of one, fingerprinted, with its legend
-   written. Don't say which piece it is; the collector finds out when they claim it.
+1. Enter your own work, made for this collecting event.
+2. Up to five entries per collecting event.
+3. Register a piece (give it its Glass ID) before you enter it: that is what makes it
+   Uncommon or better and what the measured awards use.
+4. One legendary per maker per collecting event: an edition of one, with a Glass ID and its
+   legend written. Don't say which piece it is; the collector finds out when they add it to
+   their collection.
 5. You can't vote for your own pieces.
 6. "Solo" means made without an assistant on the pipe, on your honour.
 
 **Collectors**
 
 1. One pick per award, plus your People's choice votes.
-2. A claim needs the piece in your hands (a fingerprint match) or the maker's confirmation.
-3. One claim per piece per person.
+2. Adding a piece to your collection needs the piece in your hands (its Glass ID matches) or
+   the maker's confirmation.
+3. Each piece can be added to your collection once.
 4. Points: common 1, uncommon 2, rare 5, legendary 20.
-5. Complete a set (one piece from every studio in the season) for the badge.
+5. Complete a set (one piece from every studio in the collecting event) for the badge.
 
-**Everyone:** the game never handles money; buy from the maker. Admins can remove entries or
-claims that break the rules; disputes go to the Discord.
+**Everyone:** the collecting event never handles money; buy from the maker. Admins can remove
+entries or collected pieces that break the rules; disputes go to the Discord.
 
 Enforced in code: entries per maker (`MAX_ENTRIES = 5`), the legendary conditions, no self
 picks, one pick per award, one claim per piece per person. The rest is honour and admins.

@@ -20,6 +20,11 @@ the same files become a managed cloud DB — no rewrite.
 
 ---
 
+> **Names.** On the site, things are named after what people do, not the technology:
+> Find Artists & Studios, Glass ID, Register Your Piece, Check a Piece, Add to My Collection,
+> Collecting Events, Shows & Sales, 3D Photo. The code, URLs and this README keep the older
+> technical words; the mapping is in [`docs/NAMING.md`](docs/NAMING.md).
+
 ## What's inside
 
 Five small pieces share one database:

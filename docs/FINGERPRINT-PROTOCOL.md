@@ -1,3 +1,5 @@
+People see this as **Glass ID** (see docs/NAMING.md); the code and URLs keep the old words.
+
 # Glass Object Fingerprinting Protocol
 
 *A protocol for re-identifying a physical glass object from photographs, and

@@ -76,7 +76,7 @@ st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'
 st.sidebar.caption("[GitHub repo](https://github.com/alibama/glass-database)")
 section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue",
                                        "🧹 Duplicates", "💬 Discord", "📮 Feedback", "📊 Analytics",
-                                       "👥 Users", "🌾 Harvest", "🛰 Studio data", "🎃 Seasons"],
+                                       "👥 Users", "🌾 Harvest", "🛰 Studio data", "🎃 Collecting Events"],
                            label_visibility="collapsed")
 from brand import track as _track
 
@@ -460,7 +460,7 @@ elif section == "✅ Approvals":
 # ===========================================================================
 elif section == "🛡️ Review queue":
     st.header("Review queue")
-    tab_obj, tab_prof, tab_events = st.tabs(["🪟 Objects", "🧑\u200d🎨 Artist profiles", "🎟 Event registrations"])
+    tab_obj, tab_prof, tab_events = st.tabs(["🪟 Pieces","🧑\u200d🎨 Artist profiles", "🎟 Shows & Sales"])
 
     # ---- Objects -----------------------------------------------------------
     with tab_obj:
@@ -476,7 +476,7 @@ elif section == "🛡️ Review queue":
         if not subs:
             st.info("Nothing here.")
         for s in subs:
-            cred = " · 🔐 Content Credentials" if s["has_credentials"] else ""
+            cred = " · 🔐 Glass ID credential" if s["has_credentials"] else ""
             head = f"{s['title'] or '(untitled)'} — {s['maker'] or s['submitted_by'] or 'unknown'}{cred}"
             with st.expander(f"{head} · {s['received_at']} · {s['status']}"):
                 imgs = conn.execute("SELECT role,caption,image_b64 FROM object_submission_images WHERE submission_id=?",
@@ -562,14 +562,15 @@ elif section == "🛡️ Review queue":
         c2.metric("Published", s["approved"])
         c3.metric("Waiting for hosts", s["pending_host"])
         c4.metric("Listings pending", s["listings_pending"])
-        st.caption("Makers host events; buyers register purchases; the host approves first (Glowtbook → "
-                   "Events); approving here publishes the piece to the registry with provenance.")
+        st.caption("Makers host shows and sales; buyers add what they bought to their collection; the host "
+                   "approves first (Glowtbook → Shows & Sales); approving here publishes the piece to the "
+                   "registry with its story.")
 
-        st.subheader("Event listings")
+        st.subheader("Show & sale listings")
         listings = _ev.pending_listings(conn)
         if not listings:
-            st.caption("No event listings waiting. (Events work by link as soon as a host creates them; "
-                       "approval here puts them in the public directory.)")
+            st.caption("No show or sale listings waiting. (They work by link as soon as a host creates "
+                       "them; approval here puts them in the public directory.)")
         for ev in listings:
             with st.expander(f"{ev['title']} — {ev['host_name']} · {ev['venue'] or '—'} · {ev['starts'] or '—'}"):
                 st.write({k: ev.get(k) for k in ("studio", "venue", "city", "region", "country", "starts", "ends",
@@ -828,41 +829,42 @@ elif section == "🛰 Studio data":
 # ===========================================================================
 # SEASONS — seasonal games (calls for artists, collecting, voting)
 # ===========================================================================
-elif section == "🎃 Seasons":
+elif section == "🎃 Collecting Events":
     import datetime as _dt
 
     from central import seasons as _seasons
     _seasons.ensure(conn)
-    st.header("Seasons — friendly competitions & collecting")
-    st.caption("A season is a themed call for artists (pumpkins in October, ornaments in December). "
-               "Makers enter pieces they've already published through Glowtbook, collectors scan "
-               "and **claim** them with Verify, signed-in visitors vote. Public page: "
-               "[/games.html](/games.html) · design + runbook: `docs/SEASONS.md`.")
+    st.header("Collecting Events — friendly competitions & collecting")
+    st.caption("A collecting event is a themed call for artists (pumpkins in October, ornaments in "
+               "December). Makers enter pieces they've already published through Glowtbook, collectors "
+               "scan a piece with Check a Piece to **add it to their collection**, signed-in visitors "
+               "vote. Public page: [/games.html](/games.html) · design + runbook: `docs/SEASONS.md` "
+               "(the code still calls these *seasons*).")
     _msg = st.session_state.pop("seasons_msg", None)
     if _msg:
         st.success(_msg)
     _sm = _seasons.summary(conn)
     m1, m2, m3, m4, m5 = st.columns(5)
-    m1.metric("Seasons", _sm["seasons"], help="All seasons, drafts included")
+    m1.metric("Collecting events", _sm["seasons"], help="All collecting events, drafts included")
     m2.metric("Live", _sm["live"], help="Open for entries or in voting")
     m3.metric("Pending entries", _sm["pending_entries"])
-    m4.metric("Pending claims", _sm["pending_claims"])
-    m5.metric("Votes · claims", f'{_sm["votes"]} · {_sm["claims"]}')
+    m4.metric("Pending collection requests", _sm["pending_claims"])
+    m5.metric("Votes · collection requests", f'{_sm["votes"]} · {_sm["claims"]}')
 
-    with st.expander("➕ Create a season", expanded=_sm["seasons"] == 0):
+    with st.expander("➕ Create a collecting event", expanded=_sm["seasons"] == 0):
         _today = _dt.date.today()
         _preset = st.selectbox(
             "Award preset (prefills the categories in the form)", ["Pumpkins", "Ornaments", "General"],
             help="People's choice is always on. Edit the lines freely — one award per line: "
                  "`title | vote` or `title | measured | solo`. 'measured' ranks by the height the "
-                 "fingerprint mat wrote onto the piece; 'solo' limits an award to pieces made solo.")
+                 "Photo Mat wrote onto the piece; 'solo' limits an award to pieces made solo.")
         _preset_theme = {"Pumpkins": "pumpkin", "Ornaments": "ornament"}.get(_preset, "")
         with st.form("season_create", clear_on_submit=True):
-            s_title = st.text_input("Title", placeholder="Pumpkin Patch 2026")
+            s_title = st.text_input("Title", placeholder="Court of the Gourds")
             s_theme = st.text_input("Theme (one line, shown in italics on the page)",
                                     placeholder="Blown-glass pumpkins from every shop")
             s_desc = st.text_area("Description", height=80,
-                                  placeholder="What the season is, who should enter, where to buy.")
+                                  placeholder="What the collecting event is, who should enter, where to buy.")
             d1, d2, d3, d4 = st.columns(4)
             s_starts = d1.date_input("Starts", _today)
             s_eclose = d2.date_input("Entries close", _today + _dt.timedelta(days=21))
@@ -871,9 +873,9 @@ elif section == "🎃 Seasons":
             s_rules = st.text_area(
                 "Rules", height=90,
                 value="One entry per piece; the piece must already be published through Glowtbook "
-                      "(fingerprinted, credentialed, approved). Editions welcome — say how many. "
-                      "Collectors claim by scanning with Verify (a match of 70+ counts straight "
-                      "away). Votes can be swapped until voting closes.")
+                      "(with its Glass ID, credentialed, approved). Editions welcome — say how many. "
+                      "Collectors add a piece to their collection by scanning it with Check a Piece "
+                      "(a match of 70+ counts straight away). Votes can be swapped until voting closes.")
             s_prize = st.text_input(
                 "Prize note",
                 value="Bragging rights, a homepage feature, and the Crowd Favourite badge")
@@ -885,7 +887,7 @@ elif section == "🎃 Seasons":
                 help="Leave blank to use the theme's defaults (pumpkin → stems, colour, biggest; "
                      "ornament → hook, colour, the cat; otherwise best in show + best colour).")
             s_open = st.checkbox("Open for entries right away", value=False)
-            if st.form_submit_button("Create season", type="primary"):
+            if st.form_submit_button("Create collecting event", type="primary"):
                 if not (s_title or "").strip():
                     st.error("A title, at least.")
                 else:
@@ -902,11 +904,11 @@ elif section == "🎃 Seasons":
                     except ValueError as ex:
                         st.error(str(ex))
 
-    st.subheader("Seasons")
+    st.subheader("Collecting events")
     _all = _seasons.list_seasons(conn, include_draft=True)
     if not _all:
-        st.info("No seasons yet — create the first one above. Suggested calendar: Pumpkin Patch "
-                "(Oct), Heirloom Ornaments (Dec), Paperweights (spring), Drinkware (summer).")
+        st.info("No collecting events yet — create the first one above. Suggested calendar: Court of "
+                "the Gourds (Oct), Heirloom Ornaments (Dec), Paperweights (spring), Drinkware (summer).")
     for s in _all:
         with st.container(border=True):
             c1, c2 = st.columns([3, 2])
@@ -915,7 +917,7 @@ elif section == "🎃 Seasons":
                        f"{s['starts'] or '—'} → entries close {s['entries_close'] or '—'} → "
                        f"voting closes {s['voting_closes'] or '—'} → ends {s['ends'] or '—'}")
             c1.caption(f"{s['entry_count']} approved entries · {s['vote_count']} votes · "
-                       f"{s['claim_count']} claims · {s['votes_per_voter']} votes per voter · "
+                       f"{s['claim_count']} collection requests · {s['votes_per_voter']} votes per voter · "
                        f"{s.get('legendaries_out') or 0} legendaries still out · "
                        f"[public page](/games.html?season={s['slug']})")
             _cats = _seasons.categories(conn, s["id"])
@@ -930,7 +932,7 @@ elif section == "🎃 Seasons":
                 _seasons.set_status(conn, s["id"], "voting"); st.rerun()
             if s["status"] in ("open", "voting") and b3.button(
                     "Close", key=f"sc_{s['id']}",
-                    help="Closes the season and awards Crowd Favourite + Set Complete"):
+                    help="Closes the collecting event and awards Crowd Favourite + Set Complete"):
                 _res = _seasons.close_season(conn, s["id"])
                 _cf = _res.get("crowd_favourite")
                 st.session_state["seasons_msg"] = (
@@ -948,7 +950,7 @@ elif section == "🎃 Seasons":
                         e1, e2 = st.columns([5, 1])
                         e1.caption(f"**{e['title']}** — {e['artist_name'] or '—'} · "
                                    f"{e['studio'] or 'Independent'} · edition of {e['edition_size']}"
-                                   f" · {e['vote_count']} votes · {e['claim_count']} claims · "
+                                   f" · {e['vote_count']} votes · {e['claim_count']} collection requests · "
                                    f"{(e.get('rarity') or 'common').upper()}"
                                    + (" · solo" if e.get("solo") else "")
                                    + (" · :red[**LEGENDARY**]" if e.get("legendary") else ""))
@@ -977,8 +979,8 @@ elif section == "🎃 Seasons":
                         + (" · solo" if e.get("solo") else ""))
             cm.caption(f"{e['studio'] or 'Independent'} · edition of {e['edition_size']} · "
                        f"{e['price_note'] or 'no price note'} · "
-                       f"{'fingerprinted' if e.get('fingerprinted') else 'no fingerprint'} · "
-                       f"season **{e['season_title']}** · "
+                       f"{'has a Glass ID' if e.get('fingerprinted') else 'no Glass ID'} · "
+                       f"collecting event **{e['season_title']}** · "
                        f"object `{e['object_row_id']}` · {str(e['created_at'] or '')[:10]}")
             if e.get("legendary") and e.get("legend"):
                 cm.caption(f"Legend: *{e['legend']}*")
@@ -988,15 +990,15 @@ elif section == "🎃 Seasons":
                 _seasons.approve_entry(conn, e["id"], False); st.rerun()
 
     _pc = _seasons.pending_claims(conn)
-    st.subheader(f"Pending claims ({len(_pc)})")
+    st.subheader(f"Pending collection requests ({len(_pc)})")
     st.caption("Scans under 70 confidence wait here. Approve if you — or the artist — can vouch "
-               "that this person holds the piece.")
+               "that this person holds the piece; it then joins their collection.")
     if not _pc:
-        st.caption("No claims waiting.")
+        st.caption("No collection requests waiting.")
     for cl in _pc:
         with st.container(border=True):
             cm, cb = st.columns([4, 1])
-            cm.markdown(f"**{cl['title']}** — claimed by {cl['collector_name'] or '—'}")
+            cm.markdown(f"**{cl['title']}** — {cl['collector_name'] or '—'} wants to add it to their collection")
             cm.caption(f"confidence {float(cl.get('confidence') or 0):.0f} · "
                        f"{cl.get('maker') or ''} · {cl.get('studio') or ''} · "
                        f"{cl.get('location') or ''} · object `{cl['object_row_id']}` · "

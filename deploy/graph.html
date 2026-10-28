@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Relationship graph — Glass Database</title>
-<meta name="description" content="Who taught whom, who made what, which pieces look alike — the Glass Database relationship graph. Artists, techniques, studios, pieces and collectors, with a path finder.">
+<title>Who Worked With Whom — Glass Database</title>
+<meta name="description" content="Who taught whom, who made what, which pieces look alike — Who Worked With Whom on the Glass Database. Artists, techniques, studios, pieces and collectors, with a path finder.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/paper.css">
@@ -104,6 +104,8 @@
   footer.slim .row{display:flex;flex-wrap:wrap;gap:.6rem 1.6rem;justify-content:space-between;align-items:center;font:400 12px var(--mono);color:#B9AE9F}
   footer.slim a{color:var(--paper);text-decoration:none}footer.slim a:hover{color:#F2B8A8}
   footer.slim .links{display:flex;flex-wrap:wrap;gap:.4rem 1.2rem}
+  footer.slim .links b{font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#8E8578;margin-left:.6rem}
+  footer.slim .links b:first-child{margin-left:0}
   @media (max-width:720px){
     #app{flex-direction:column;height:auto;min-height:calc(100vh - 112px)}
     #panel{width:auto;max-height:46vh;border-right:0;border-bottom:1px solid var(--rule);transition:max-height .2s}
@@ -122,29 +124,31 @@
 <a class="skip" href="#main">Skip to content</a>
 <header class="site">
  <nav class="nav wrap" aria-label="Primary">
-  <a class="brand" href="/">Glass <i>Database</i></a>
+  <a class="brand" href="/">Glass <i>Database</i><small class="tag">A home for every piece of glass and the people who make it.</small></a>
   <ul id="menu">
-   <li><a href="/explore/">Registry</a></li><li><a href="/events.html">Collect</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Tools</a></li><li><a href="/#about">About</a></li>
+   <li><a href="/explore/" class="on">Find Artists &amp; Studios</a></li><li><a href="/games.html">Collecting Events</a></li><li><a href="/fingerprint/enroll.html">Glass ID</a></li><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/blog/">Field notes</a></li><li><a href="/#about">About</a></li>
   </ul>
   <div class="right"><span id="chip" class="signin gdb-chip" aria-live="polite"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
  </nav>
 </header>
 <div class="wrap">
- <nav class="subnav" aria-label="Registry">
-  <span class="crumb">Registry</span>
-  <a href="/explore/">Explorer</a>
-  <a href="/graph.html" class="on" aria-current="page">Graph</a>
-  <a href="/api/docs">API</a>
+ <nav class="subnav" aria-label="Find Artists &amp; Studios">
+  <span class="crumb">Find Artists &amp; Studios</span>
+  <a href="/explore/">The Directory</a>
+  <a href="/graph.html" class="on" aria-current="page">Who Worked With Whom</a>
+  <a href="/studios.html">Studios on a map</a>
+  <a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a>
+  <a href="/api/docs">For Researchers</a>
  </nav>
 </div>
 <main id="main">
 <div id="app">
-  <aside id="panel" aria-label="Graph controls">
-    <p class="label"><span class="n">№ 02</span> Relationship graph</p>
-    <h1>Who taught whom, <em>what touches what</em></h1>
+  <aside id="panel" aria-label="Connection controls">
+    <p class="label"><span class="n">№ 02</span> Who Worked With Whom</p>
+    <h1>Who worked with whom, <em>what touches what</em></h1>
     <p class="count" id="counts">loading…</p>
     <div class="rule"></div>
-    <input id="q" type="text" placeholder="Search a name, piece, technique…" aria-label="Search the graph" autocomplete="off">
+    <input id="q" type="text" placeholder="Search a name, piece, technique…" aria-label="Search the connections" autocomplete="off">
 
     <p class="label lbl">Mode</p>
     <div class="pills" id="modePills">
@@ -152,6 +156,7 @@
       <button class="pill mode" data-mode="lineage" aria-pressed="false">Lineage</button>
       <label class="opt" id="piecesOpt" hidden><input type="checkbox" id="withPieces"> + pieces</label>
     </div>
+    <p class="hint">Everything shows every link; Lineage keeps only who studied under whom, with their pieces if you tick the box.</p>
 
     <p class="label lbl">Show</p>
     <div class="pills" id="typePills"></div>
@@ -161,9 +166,10 @@
     <p class="label lbl">How are they connected?</p>
     <div class="pathbox">
       <input id="pa" type="text" list="labels" placeholder="From — a person, piece, studio…" aria-label="Path from" autocomplete="off">
-      <input id="pb" type="text" list="labels" placeholder="To — anyone or anything in the graph" aria-label="Path to" autocomplete="off">
+      <input id="pb" type="text" list="labels" placeholder="To — anyone or anything here" aria-label="Path to" autocomplete="off">
       <datalist id="labels"></datalist>
       <div class="actions"><button id="pathBtn" class="primary">Find path</button><button id="clearBtn">Clear</button></div>
+      <p class="hint">Find path draws the shortest chain between the two; Clear empties both boxes.</p>
       <p id="pathOut" class="pathout" aria-live="polite"></p>
     </div>
 
@@ -182,24 +188,25 @@
       <span><i class="ln dot" style="border-color:#4A423A"></i>collected by</span>
     </div>
     <div class="actions"><button id="fitBtn">Fit</button><button id="relayoutBtn">Re-layout</button></div>
-    <p class="hint">Structured links (reviewed lineage, published pieces, fingerprints) are drawn solid; name
+    <p class="hint">Fit brings the whole picture into view; Re-layout spreads it out afresh.</p>
+    <p class="hint">Structured links (reviewed lineage, published pieces, Glass IDs) are drawn solid; name
       matches found in free text are marked <span class="conf">text-match</span>. Export:
       <a href="/api/graph.jsonld">graph.jsonld</a> · <a href="/api/graph.json">graph.json</a></p>
   </aside>
 
   <div id="stage">
     <button id="panelToggle" aria-expanded="true" aria-controls="panel">Hide controls</button>
-    <div id="cy" role="img" aria-label="Relationship graph"></div>
+    <div id="cy" role="img" aria-label="Who worked with whom"></div>
     <div id="empty" hidden>
       <div class="card">
         <p class="label"><span class="n">Nothing to draw yet</span></p>
-        <h2 id="emptyTitle">The graph grows from three things.</h2>
+        <h2 id="emptyTitle">The connections grow from three things.</h2>
         <p id="emptyBody"><b>Who taught whom</b> — add a mentor/student link under
-          <a href="/explore/?view=submit">Explore → Submit → Lineage</a>.<br>
+          <a href="/explore/?view=submit">The Directory → Submit → Lineage</a>.<br>
           <b>Who works how</b> — add an artist with techniques and mentors under
-          <a href="/explore/?view=submit">Explore → Submit → Artist</a>.<br>
-          <b>What was made</b> — publish a piece in <a href="/glowtbook/">Glowtbook</a>; its maker,
-          techniques and fingerprint join the graph once approved.</p>
+          <a href="/explore/?view=submit">The Directory → Submit → Artist</a>.<br>
+          <b>What was made</b> — publish a piece in <a href="/glowtbook/">Glowtbook</a>, your studio notebook; its maker,
+          techniques and Glass ID join the connections once approved.</p>
       </div>
     </div>
   </div>
@@ -214,13 +221,14 @@
       <a id="dOpen" class="btn sm" href="#">Open ↗</a>
       <button id="dFrom" class="btn sm">Find connections from here</button>
     </div>
+    <p class="hint" style="margin:0 0 .6rem">Open goes to the full record; Find connections from here starts a path at this one.</p>
     <div class="hood" id="dHood"></div>
   </aside>
 </div>
 </main>
 <footer class="slim">
  <div class="wrap row">
-  <span class="links"><a href="/explore/">Explorer</a><a href="/api/docs">API</a><a href="/studios.html">Map</a><a href="/shop-costs.html">Shop costs</a><a href="https://github.com/alibama/glass-database">GitHub</a></span>
+  <span class="links"><b>Find</b><a href="/explore/">Directory</a><a href="/graph.html">Connections</a><a href="/studios.html">Map</a><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a><a href="/api/docs">For Researchers</a><b>Collect</b><a href="/games.html">Collecting Events</a><a href="/events.html">Shows &amp; Sales</a><a href="/register.html">Add to My Collection</a><a href="/fingerprint/verify.html">Check a Piece</a><b>Make</b><a href="/glowtbook/">Glowtbook</a><a href="/fingerprint/enroll.html">Register Your Piece</a><a href="/splat.html">3D Photo</a><a href="/shop.html">Studio docs</a><a href="/shop-costs.html">Studio Cost Calculator</a><b>Elsewhere</b><a href="https://discord.gg/9ek2UxvPT">Discord</a><a href="https://www.instagram.com/glassdatabase/">Instagram</a><a href="/blog/">Field notes</a><a href="https://github.com/alibama/glass-database">GitHub</a><a href="/#about">About</a></span>
   <span>Data CC BY 4.0 · Software Apache 2.0 · glassdatabase.org</span>
  </div>
 </footer>
@@ -343,7 +351,7 @@
     });
     const vis = cy.elements().not(".hidden");
     if (lin && !lin.artists.size) {
-      $("#pathOut").innerHTML = 'No lineage links yet — add one under <a href="/explore/?view=submit">Explore → Submit → Lineage</a>.';
+      $("#pathOut").innerHTML = 'No lineage links yet — add one under <a href="/explore/?view=submit">The Directory → Submit → Lineage</a>.';
     }
     if (relayout) runLayout(vis, lin);
   }
@@ -408,7 +416,7 @@
       if (m.techniques && m.techniques.length) rows.push(["Techniques", tags(m.techniques)]);
       if (m.dominant_color) rows.push(["Colour", esc(m.dominant_color)]);
       if (m.traits && m.traits.length) rows.push(["Traits", tags(m.traits)]);
-      rows.push(["Fingerprint", m.fingerprinted ? "enrolled (DINOv2 + colour)" : "none"]);
+      rows.push(["Glass ID", m.fingerprinted ? "registered" : "none"]);
     } else if (n.type === "artist") {
       rows.push(["Source", esc(SOURCE_LABEL[m.source] || m.source || "—")]);
     } else if (n.type === "studio") {
@@ -552,10 +560,10 @@
   async function main(){
     buildPills();
     const data = await load();
-    if (!data) { $("#counts").textContent = "couldn't load the graph"; return; }
+    if (!data) { $("#counts").textContent = "couldn't load the connections"; return; }
     DATA = data; DATA.nodes = DATA.nodes || []; DATA.edges = DATA.edges || [];
     $("#counts").innerHTML = countsLine(DATA.counts);
-    if (!DATA.nodes.length) { $("#empty").hidden = false; $("#counts").textContent = "no relationships yet"; return; }
+    if (!DATA.nodes.length) { $("#empty").hidden = false; $("#counts").textContent = "no connections yet"; return; }
 
     DATA.nodes.forEach(n => { byId[n.id] = n; adj[n.id] = []; });
     DATA.edges.forEach(e => {

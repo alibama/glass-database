@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>Glass Fingerprint — capture</title>
+<title>Register Your Piece — Glass Database</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -230,7 +230,10 @@
   .toast.warn{border-color:#5a2b28; color:var(--danger)}
   .toast.ok{border-color:#2f5a56; color:var(--ok)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
-  @media (max-width:430px){#hint{display:none} #tools{flex:none}}
+  .toolhint{position:absolute; right:18px; bottom:calc(92px + env(safe-area-inset-bottom)); max-width:46vw; margin:0; text-align:right;
+    font-size:11px; line-height:1.35; color:var(--ink-dim); text-shadow:0 1px 6px #000}
+  .btnhint{margin:8px 0 0!important; font-size:12px!important; color:var(--ink-faint)!important}
+  @media (max-width:430px){#hint,.toolhint{display:none} #tools{flex:none}}
 </style>
 </head>
 <body>
@@ -262,37 +265,40 @@
     <div class="chip target none" id="targetChip">Saving to <b>— export only</b></div>
     <div class="chip">Frames <b id="total">0</b></div>
     <button class="icon-btn" id="review" disabled>Review</button>
+    <span class="chip" style="font-weight:400;font-size:11px;color:var(--ink-dim)">Review shows the shots you have taken so far.</span>
   </div>
 
   <div id="reticle"></div>
   <div id="objlabel"></div>
 
   <div id="bar">
-    <div id="hint">Keep the piece centred and circle it slowly. The ring around the shutter turns red when a shot will count.</div>
+    <div id="hint">Walk around your piece until the bar fills up. The big button takes a shot; its ring turns red when a shot will count.</div>
     <div id="shutWrap">
       <svg id="shutRing" viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="fg" cx="50" cy="50" r="45"/></svg>
-      <div id="shutter" role="button" aria-label="capture"></div>
+      <div id="shutter" role="button" aria-label="Take a shot"></div>
     </div>
     <div id="tools">
       <button class="tool" id="autoBtn">Auto</button>
       <button class="tool" id="flipBtn">Flip</button>
       <button class="tool on" id="lensBtn">Lens</button>
       <button class="tool" id="aiBtn">AI: off</button>
-      <select id="camSel" class="tool" style="display:none;max-width:150px" aria-label="camera"></select>
+      <select id="camSel" class="tool" style="display:none;max-width:150px" aria-label="Choose a camera"></select>
     </div>
   </div>
+  <p class="toolhint">Auto takes shots for you as you walk; Flip swaps cameras; Lens shows what the camera has picked out; AI adds a slower, sharper read of the glass.</p>
 
   <div id="film">
     <div id="filmReview">
-      <h2>Captured frames</h2>
-      <p id="filmMeta">Nothing captured yet.</p>
+      <h2>Your shots</h2>
+      <p id="filmMeta">No shots yet.</p>
       <div class="grid" id="grid"></div>
       <div class="filmbtns">
-        <button class="primary" id="saveBtn" hidden>Save to piece</button>
+        <button class="primary" id="saveBtn" hidden>Give it its Glass ID</button>
         <button class="ghost" id="exportBtn">Export .zip</button>
-        <button class="ghost" id="closeFilm">Keep capturing</button>
-        <button class="ghost warn" id="clearBtn">Clear all</button>
+        <button class="ghost" id="closeFilm">Keep going</button>
+        <button class="ghost warn" id="clearBtn">Start over</button>
       </div>
+      <p class="btnhint">The red button saves the Glass ID onto your piece; Export .zip downloads the shots to import later; Keep going returns to the camera; Start over throws the shots away.</p>
       <p id="saveHint" style="margin:10px 0 0;font-size:12px;color:var(--ink-faint)"></p>
     </div>
     <div id="filmReceipt" class="receipt" hidden></div>
@@ -302,16 +308,17 @@
 <div id="gate">
   <div class="wrap">
     <div class="gate-top">
-      <a class="back" href="/glowtbook/">&larr; Glowtbook</a>
+      <a class="back" href="/glowtbook/">&larr; Glowtbook, your studio notebook</a>
       <span id="chip"></span>
     </div>
     <svg class="mark" viewBox="0 0 44 44" fill="none">
       <path d="M22 3C15 14 15 30 22 41C29 30 29 14 22 3Z" stroke="#B3261E" stroke-width="2.2" stroke-linejoin="round"/>
       <ellipse cx="22" cy="22" rx="19" ry="8" stroke="#1F1A16" stroke-width="1.6" opacity=".8"/>
     </svg>
-    <p class="eyebrow">Digital barcoding · <span style="color:var(--violet)">alpha, for testers</span></p>
-    <h1>Glass <em>fingerprint</em></h1>
-    <p class="lede">Capture a piece from enough angles to build a fingerprint strong enough to re-identify it later. A live rating climbs as coverage, sharpness and distinctive detail add up — capture until it reads <b>Strong</b>, then save it onto the piece. <span style="color:var(--violet)">This is an alpha:</span> thresholds are still being calibrated on real pieces, so treat a verdict as evidence and tell us on the Discord what you saw.</p>
+    <p class="eyebrow">Register Your Piece · <span style="color:var(--violet)">alpha, for testers</span></p>
+    <h1>Glass <em>ID</em></h1>
+    <p class="lede">A one-of-a-kind ID for your piece, like a serial number for handmade glass. Walk around your piece with your phone and it gets its Glass ID. A live rating climbs as you go; when it reads <b>Strong</b>, give the ID to the piece. <span style="color:var(--violet)">This is an alpha:</span> thresholds are still being calibrated on real pieces, so treat a verdict as evidence and tell us on the Discord what you saw.</p>
+    <p class="fine" style="font-size:12.5px;color:var(--ink-faint);margin:-12px 0 20px">Your Glass ID is a fingerprint of the glass itself, stored as numbers, not photos.</p>
 
     <div id="draft" class="banner" hidden></div>
 
@@ -322,21 +329,23 @@
 
     <section class="step" id="stepPiece" hidden>
       <div class="step-h"><span class="n">2</span><b>Which piece</b><span class="st" id="pieceSt"></span></div>
-      <p>The fingerprint saves straight onto a piece in your Glowtbook registry.</p>
+      <p>The Glass ID goes straight onto a piece in your Glowtbook.</p>
       <div class="pieces" id="pieces"><p class="fine">Loading your pieces…</p></div>
       <div class="newpiece">
         <input id="newTitle" placeholder="New piece — title" maxlength="200">
         <input id="newMaker" placeholder="Maker (optional)" maxlength="200">
         <button class="btn" id="newBtn">Add</button>
       </div>
+      <p class="fine" style="margin-top:.6rem">Add makes a new piece with that title and picks it for you.</p>
     </section>
 
     <section class="step" id="stepCapture">
-      <div class="step-h"><span class="n">3</span><b>Capture</b></div>
-      <div class="check"><div class="n">a</div><div><b>Kill reflections</b><p>Dark, matte, neutral surroundings so moving highlights don't get baked in. Shooting on the <a href="/fingerprint/capture-mat.pdf" style="color:var(--hot)">printed mat</a> also measures real dimensions.</p></div></div>
-      <div class="check"><div class="n">b</div><div><b>Circle it slowly, at a few heights</b><p>Keep it centred and orbit, then again higher and lower. Blurry or repeat angles are ignored, so move deliberately.</p></div></div>
-      <div class="check"><div class="n">c</div><div><b>Feed the detail score</b><p>Move in close on the pontil, any signature and cold-working, and take a backlit angle or two to record the internal bubbles.</p></div></div>
+      <div class="step-h"><span class="n">3</span><b>Register</b></div>
+      <div class="check"><div class="n">a</div><div><b>Kill reflections</b><p>Dark, matte, neutral surroundings so moving highlights don't get baked in. Setting the piece on the Photo Mat also measures its real size: <a href="/fingerprint/capture-mat.pdf" style="color:var(--hot)">Print the Photo Mat</a>.</p></div></div>
+      <div class="check"><div class="n">b</div><div><b>Walk around your piece until the bar fills up.</b><p>Keep it centred and circle it slowly, then again higher and lower. Blurry or repeat angles are ignored, so move deliberately.</p></div></div>
+      <div class="check"><div class="n">c</div><div><b>Get in close</b><p>Move in on the pontil, any signature and cold-working, and take a backlit angle or two to record the internal bubbles.</p></div></div>
       <button id="start">Enable camera</button>
+      <p class="fine" style="margin-top:.6rem">Enable camera opens your phone's camera; nothing is saved until you choose to.</p>
       <div id="err"></div>
     </section>
   </div>
@@ -497,7 +506,7 @@
     const ti=tierIdx(r.total); $("#tier").textContent=TIERS[ti][1];
     const g=$("#gauge");
     const nowReady=r.total>=READY;
-    if(nowReady&&!S.ready){S.ready=true; toast(S.target?"Fingerprint ready — save it, or keep going to strengthen it":"Fingerprint ready — keep going to strengthen it","ok"); buzz([30,40,30]);}
+    if(nowReady&&!S.ready){S.ready=true; toast(S.target?"Glass ID ready — give it to the piece, or keep going to strengthen it":"Glass ID ready — keep going to strengthen it","ok"); buzz([30,40,30]);}
     if(!nowReady&&S.ready){S.ready=false;}
     g.classList.toggle("ready",nowReady);
 
@@ -532,7 +541,7 @@
     const nov=a.novelty;
     if(!manual && nov<NOVELTY_MIN) return;                 // auto skips duplicates silently
     if(manual && nov<NOVELTY_MIN) toast("Already have this angle","warn");
-    let blob; try{blob=await grab();}catch(_){toast("Capture failed","warn"); return;}
+    let blob; try{blob=await grab();}catch(_){toast("Couldn't take that shot","warn"); return;}
     if(!blob) return;
     const band=S.orient? (S.orient.beta<35?0:S.orient.beta<65?1:2) : 0;
     const seq=++S.seq;
@@ -544,7 +553,7 @@
     // stop — colour + dHash keep running on every frame.
     if(S.aiEmbed && (S.embCount||0) < EMB_CAP){
       embedFromBlob(f.blob).then(e=>{ if(e){ f.emb=e; S.embCount=(S.embCount||0)+1; markDirty();
-        if(S.embCount>=EMB_CAP){ toast("AI samples captured ("+EMB_CAP+" views) — capture speeds up now"); } } }).catch(()=>{}); }
+        if(S.embCount>=EMB_CAP){ toast("AI samples taken ("+EMB_CAP+" views) — shots speed up now"); } } }).catch(()=>{}); }
     markDirty(); paintRing(); updateRating(); refresh(); flash();
     if(!manual||nov>=NOVELTY_MIN) buzz(12);
   }
@@ -659,9 +668,9 @@
       const hot=a&&(a.worthy||a.hit);
       ovx.strokeStyle=hot?"rgba(232,164,74,0.95)":"rgba(236,231,221,0.55)"; ovx.lineWidth=Math.max(2,W/300);
       rr(ovx,cx-rx,cy-ry,rx*2,ry*2,16); ovx.stroke();
-      objLabel.textContent=hot?"Locked on — good angle, capture it":"Object in view";
+      objLabel.textContent=hot?"Locked on — good angle, take the shot":"Piece in view";
       objLabel.classList.add("show");
-    } else { objLabel.textContent="Point at the object and fill the frame"; objLabel.classList.add("show"); }
+    } else { objLabel.textContent="Point at the piece and fill the frame"; objLabel.classList.add("show"); }
   }
   (function(){ const lb=$("#lensBtn"); if(lb) lb.onclick=()=>{ S.overlay=!S.overlay; lb.classList.toggle("on",S.overlay);
     if(!S.overlay){ ovx.clearRect(0,0,ov.width,ov.height); objLabel.classList.remove("show"); } }; })();
@@ -728,14 +737,15 @@
     const d=await draftGet(); const box=$("#draft");
     if(!d||!(d.frames||[]).length){ box.hidden=true; return null; }
     box.hidden=false;
-    box.innerHTML=`<span class="mini" style="color:var(--hot)">Unsaved capture</span><br>
-      <b>${d.frames.length} frames</b> ${d.objectTitle?`for <b>${esc(d.objectTitle)}</b>`:"(no piece chosen)"} · rating ${d.rating||"?"} · ${ago(d.savedAt)}
-      <div class="row"><button class="btn primary" id="resumeBtn">Resume capture</button><button class="btn" id="discardBtn">Discard</button></div>`;
-    $("#discardBtn").onclick=async()=>{ if(!confirm("Discard the unsaved capture?")) return; await draftClear(); box.hidden=true; toast("Draft discarded"); };
+    box.innerHTML=`<span class="mini" style="color:var(--hot)">Unsaved shots</span><br>
+      <b>${d.frames.length} shots</b> ${d.objectTitle?`for <b>${esc(d.objectTitle)}</b>`:"(no piece chosen)"} · rating ${d.rating||"?"} · ${ago(d.savedAt)}
+      <div class="row"><button class="btn primary" id="resumeBtn">Pick up where you left off</button><button class="btn" id="discardBtn">Discard</button></div>
+      <p class="fine" style="margin:.6rem 0 0">Pick up where you left off reopens the camera with these shots; Discard throws them away.</p>`;
+    $("#discardBtn").onclick=async()=>{ if(!confirm("Discard the unsaved shots?")) return; await draftClear(); box.hidden=true; toast("Draft discarded"); };
     $("#resumeBtn").onclick=async()=>{
       if(d.objectId && S.user){ const p=S.pieces.find(x=>x.id===d.objectId); if(p) setTarget(p); }
       const ok=await openCamera(); if(!ok) return;
-      restoreDraft(d); $("#film").classList.add("open"); toast("Capture restored — review it, then save","ok");
+      restoreDraft(d); $("#film").classList.add("open"); toast("Shots restored — review them, then give the piece its Glass ID","ok");
     };
     return d;
   }
@@ -747,15 +757,15 @@
     [...document.querySelectorAll(".piece")].forEach(el=>el.classList.toggle("sel",!!p&&+el.dataset.id===p.id));
     const chip=$("#targetChip");
     if(p){ chip.classList.remove("none"); chip.innerHTML=`Saving to <b>${esc(p.title)}</b>`; $("#pieceSt").textContent="chosen"; $("#pieceSt").classList.add("ok");
-      $("#saveBtn").hidden=false; $("#saveBtn").textContent="Save to “"+p.title+"”";
-      $("#saveHint").textContent = p.fingerprint ? `“${p.title}” already has a fingerprint (${p.fingerprint.rating}/100, ${p.fingerprint.tier}) — saving replaces it.` : "";
+      $("#saveBtn").hidden=false; $("#saveBtn").textContent="Give “"+p.title+"” its Glass ID";
+      $("#saveHint").textContent = p.fingerprint ? `“${p.title}” already has a Glass ID (${p.fingerprint.rating}/100, ${p.fingerprint.tier}) — saving replaces it.` : "";
     } else { chip.classList.add("none"); chip.innerHTML="Saving to <b>— export only</b>"; $("#pieceSt").textContent=""; $("#pieceSt").classList.remove("ok");
       $("#saveBtn").hidden=true; $("#saveHint").textContent=""; }
     try{ sessionStorage.setItem("gdb_fp_target", p?String(p.id):""); }catch(_){}
   }
   function pieceTags(p){
     const t=[];
-    t.push(p.fingerprint?`<span class="tag fp">FP ${p.fingerprint.rating}</span>`:`<span class="tag">no fingerprint</span>`);
+    t.push(p.fingerprint?`<span class="tag fp">Glass ID ${p.fingerprint.rating}</span>`:`<span class="tag">no Glass ID</span>`);
     const st=(p.publication||{}).state;
     if(st==="published") t.push('<span class="tag pub">published</span>');
     else if(st==="pending") t.push('<span class="tag pend">in review</span>');
@@ -785,18 +795,19 @@
     if(S.user){
       st.textContent="signed in"; st.classList.add("ok");
       body.innerHTML=`<div class="who on"><span class="dot"></span><span>Signed in as <b>${esc(S.user.name||S.user.email)}</b>${S.user.kind==="pair"?' <span class="tag pub">paired</span>':""}</span></div>
-        <p class="fine" style="margin-top:.5rem">Fingerprints save straight onto your pieces in Glowtbook, and are signed into the piece's Content Credentials when you publish it.</p>`;
+        <p class="fine" style="margin-top:.5rem">Glass IDs go straight onto your pieces in Glowtbook, and are signed into the piece's Content Credentials when you publish it.</p>`;
       $("#stepPiece").hidden=false; loadPieces();
     } else {
       st.textContent="not signed in"; st.classList.remove("ok");
-      body.innerHTML=`<div class="who"><span class="dot"></span><span>Not signed in — captures can only be exported as a .zip.</span></div>
+      body.innerHTML=`<div class="who"><span class="dot"></span><span>Not signed in — your shots can only be exported as a .zip.</span></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin:.7rem 0 .5rem"><a class="btn primary" id="signin" href="${G?esc(G.loginUrl()):'#'}">Sign in</a>
-        <button class="btn" id="skipAuth">Capture without saving</button></div>
-        <p class="fine" id="pairHint">Faster on a phone: in Glowtbook open <b>Objects → Fingerprint → Pair this phone</b> and scan the code — this page opens already signed in, with the piece chosen.</p>`;
+        <button class="btn" id="skipAuth">Try it without saving</button></div>
+        <p class="fine">Sign in lets the Glass ID save onto your piece; Try it without saving lets you practise and export a .zip instead.</p>
+        <p class="fine" id="pairHint">Faster on a phone: in Glowtbook open <b>Objects → Glass ID → Pair this phone</b> and scan the code — this page opens already signed in, with the piece chosen.</p>`;
       $("#stepPiece").hidden=true; setTarget(null);
       $("#skipAuth").onclick=()=>{ $("#stepCapture").scrollIntoView({behavior:"smooth"}); toast("Export-only mode — you can import the .zip in Glowtbook later"); };
       if(G){ G.json("/auth/providers").then(p=>{ if(!p.configured){ const a=$("#signin"); a.textContent="Sign-in not set up here"; a.classList.remove("primary"); a.removeAttribute("href"); a.setAttribute("aria-disabled","true");
-          $("#pairHint").innerHTML="This server has no Google sign-in for the capture app yet — <b>pair from Glowtbook</b> instead (Objects → Fingerprint → Pair this phone), or capture and export the .zip."; } }).catch(()=>{}); }
+          $("#pairHint").innerHTML="This server has no Google sign-in for Register Your Piece yet — <b>pair from Glowtbook</b> instead (Objects → Glass ID → Pair this phone), or take your shots and export the .zip."; } }).catch(()=>{}); }
     }
   }
   async function initAccount(){
@@ -818,20 +829,21 @@
     const seasonHint=document.createElement("span");
     $("#filmReview").hidden=true;
     const r=$("#filmReceipt"); r.hidden=false;
-    r.innerHTML=`<h2>Saved to “${esc(o.title||S.target.title)}” ✓</h2>
+    r.innerHTML=`<h2>“${esc(o.title||S.target.title)}” has its Glass ID ✓</h2>
       <dl><dt>Strength</dt><dd>${j.rating}/100 · ${esc(j.tier)}</dd>
           <dt>Views</dt><dd>${j.views}</dd>
           <dt>Measured</dt><dd>${j.dimensions?esc(j.dimensions)+(j.dimensions_set?" — set on the piece":""):"no mat detected (dimensions not measured)"}</dd>
-          <dt>Status</dt><dd>${pub==="published"?"published — the credential will carry this fingerprint when you re-publish":pub==="pending"?"in the review queue":"private — publish it from Glowtbook when it's ready"}</dd></dl>
+          <dt>Status</dt><dd>${pub==="published"?"published — the Glass ID goes out with it when you re-publish":pub==="pending"?"in the review queue":"private — publish it from Glowtbook when it's ready"}</dd></dl>
       <div class="filmbtns">
-        <a class="primary" href="/fingerprint/verify.html?mine=${o.id}">Verify it now</a>
+        <a class="primary" href="/fingerprint/verify.html?mine=${o.id}">Check it now</a>
         <a class="ghost teal" href="/glowtbook/?page=objects&object=${o.id}">Open in Glowtbook</a>
-        <button class="ghost" id="anotherBtn">Fingerprint another piece</button>
+        <button class="ghost" id="anotherBtn">Register another piece</button>
       </div>
-      <p class="fine" id="nextStep">Next: in Glowtbook → Objects → <b>Contribute</b> the piece — the fingerprint is signed into its Content Credentials so anyone can verify it from Explore.</p>`;
+      <p class="fine">Check it now opens Check a Piece with this piece loaded; Open in Glowtbook shows the piece's page; Register another piece starts again.</p>
+      <p class="fine" id="nextStep">Next: in Glowtbook → Objects → <b>Contribute</b> the piece — its Glass ID is published with it so anyone can check it from The Directory.</p>`;
     $("#anotherBtn").onclick=()=>{ resetSession(); $("#film").classList.remove("open"); $("#gate").hidden=false; $("#gate").style.display=""; $("#hud").hidden=true; stopCamera(); loadPieces(); };
     if(G){ G.json("/seasons").then(s=>{ const cur=s&&s.current; if(cur){ $("#nextStep").insertAdjacentHTML("beforeend",
-      ` Then <a href="/games.html?season=${esc(cur.slug)}">enter it in <b>${esc(cur.title)}</b></a> — this season's call for pieces is open.`); } }).catch(()=>{}); }
+      ` Then <a href="/games.html?season=${esc(cur.slug)}">enter it in <b>${esc(cur.title)}</b></a> — this collecting event's call for pieces is open.`); } }).catch(()=>{}); }
   }
   function resetSession(){
     S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.pseudo=0; S.here=-1; S.ready=false; S.prevTierIdx=4; S.embCount=0; S.dirty=false; S.saved=null;
@@ -841,7 +853,7 @@
   $("#saveBtn").onclick=async()=>{
     if(!S.frames.length){ toast("Nothing to save","warn"); return; }
     if(!S.target||!G){ toast("Choose a piece first","warn"); return; }
-    if(S.rating<READY && !confirm(`The fingerprint is only ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]}). Save anyway? You can keep capturing to strengthen it.`)) return;
+    if(S.rating<READY && !confirm(`The Glass ID is only ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]}). Save anyway? You can keep going to strengthen it.`)) return;
     const b=$("#saveBtn"); b.disabled=true; const label=b.textContent; b.textContent="Packing…";
     try{
       const {blob}=await buildZip(); b.textContent="Saving…";
@@ -850,7 +862,7 @@
       const p=S.pieces.find(x=>x.id===S.target.id); if(p&&j.object){ Object.assign(p,j.object); }
       toast("Saved — "+j.rating+"/100 "+j.tier,"ok"); buzz([30,40,30]); showReceipt(j);
     }catch(e){
-      if(e.status===401){ toast("Your sign-in expired — sign in again, your capture is kept locally","warn"); S.user=null; renderWho(); }
+      if(e.status===401){ toast("Your sign-in expired — sign in again, your shots are kept on this phone","warn"); S.user=null; renderWho(); }
       else toast("Save failed: "+e.message,"warn");
     } finally{ b.disabled=false; b.textContent=label; }
   };
@@ -858,7 +870,7 @@
   /* ---------- ui ---------- */
   function refresh(){ $("#total").textContent=S.frames.length; $("#review").disabled=!S.frames.length;
     const _dc=dominantColor(aggChist(S.frames));
-    $("#filmMeta").innerHTML=S.frames.length? `${S.frames.length} frames — rating ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]})`+(_dc?` · <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${_dc.hex};border:1px solid #0006"></span> ${_dc.name}`:"")+(S.dirty?' · <span style="color:var(--hot)">not saved</span>':"") :"Nothing captured yet.";
+    $("#filmMeta").innerHTML=S.frames.length? `${S.frames.length} shots — rating ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]})`+(_dc?` · <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${_dc.hex};border:1px solid #0006"></span> ${_dc.name}`:"")+(S.dirty?' · <span style="color:var(--hot)">not saved</span>':"") :"No shots yet.";
     const g=$("#grid"); g.innerHTML="";
     S.frames.slice().reverse().forEach(f=>{const d=document.createElement("div"); d.className="thumb";
       const tag=f.sharp<SHARP_MIN?"blurry":f.noveltyAtCapture<NOVELTY_MIN?"dup":"kept";
@@ -872,22 +884,22 @@
 
   $("#shutWrap").onclick=()=>capture(true);
   $("#autoBtn").onclick=e=>{S.auto=!S.auto; S.lastAuto=0; e.target.classList.toggle("on",S.auto);
-    $("#shutWrap").classList.toggle("auto",S.auto); toast(S.auto?"Auto-capture on":"Auto-capture off");};
+    $("#shutWrap").classList.toggle("auto",S.auto); toast(S.auto?"Auto on — it takes shots for you as you walk":"Auto off");};
   $("#flipBtn").onclick=async()=>{ await cycleCamera(); };
   $("#aiBtn").onclick=async()=>{ S.aiEmbed=!S.aiEmbed; $("#aiBtn").classList.toggle("on",S.aiEmbed); $("#aiBtn").textContent="AI: "+(S.aiEmbed?"on":"off");
     if(S.aiEmbed){ toast("Loading AI model (first run downloads it)…"); const ok=await getEmbedder();
-      if(ok){ toast("AI on — samples DINOv2 on the next "+EMB_CAP+" views, then stops"); } else { toast("AI model failed to load","warn"); S.aiEmbed=false; $("#aiBtn").classList.remove("on"); $("#aiBtn").textContent="AI: off"; } } };
+      if(ok){ toast("AI on — it takes a closer read of the next "+EMB_CAP+" views, then stops"); } else { toast("AI model failed to load","warn"); S.aiEmbed=false; $("#aiBtn").classList.remove("on"); $("#aiBtn").textContent="AI: off"; } } };
   $("#camSel").onchange=async(e)=>{ S.deviceId=e.target.value; try{await startCamera();}catch(_){toast("Couldn't switch camera","warn");} };
   $("#review").onclick=()=>$("#film").classList.add("open");
   $("#closeFilm").onclick=()=>$("#film").classList.remove("open");
-  $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Delete all captured frames?"))return; resetSession(); };
+  $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Delete all your shots?"))return; resetSession(); };
 
   $("#exportBtn").onclick=async()=>{
     if(!S.frames.length){toast("Nothing to export","warn"); return;}
     const b=$("#exportBtn"); b.disabled=true; b.textContent="Zipping…";
     try{ const {blob}=await buildZip(); const url=URL.createObjectURL(blob), a=document.createElement("a");
       a.href=url; a.download=`glass-fingerprint-${new Date().toISOString().slice(0,19).replace(/[:T]/g,"-")}.zip`; a.click();
-      setTimeout(()=>URL.revokeObjectURL(url),4000); toast(S.target?"Exported — the .zip can also be imported in Glowtbook":"Exported — import the .zip in Glowtbook → Objects → Fingerprint","ok");
+      setTimeout(()=>URL.revokeObjectURL(url),4000); toast(S.target?"Exported — the .zip can also be imported in Glowtbook":"Exported — import the .zip in Glowtbook → Objects → Glass ID","ok");
     }catch(e){console.error(e); toast("Export failed","warn");} finally{b.disabled=false; b.textContent="Export .zip";}
   };
 
@@ -909,13 +921,13 @@
       $("#err").textContent=msg; btn.disabled=false; btn.textContent=label; return false;}
     btn.disabled=false; btn.textContent=label; $("#err").textContent="";
     const ok=await enableMotion();
-    $("#hint").textContent=ok?"Circle the piece slowly. The shutter ring turns amber when a shot will count.":
-      "No compass here — coverage tracks by how different each view looks instead. Move to a new angle for each shot.";
+    $("#hint").textContent=ok?"Walk around your piece until the bar fills up. The ring turns amber when a shot will count.":
+      "No compass here — the bar fills by how different each view looks instead. Move to a new angle for each shot.";
     $("#gate").hidden=true; $("#gate").style.display="none"; $("#hud").hidden=false; paintRing(); updateRating(); refresh(); requestAnimationFrame(loop);
     return true;
   }
   $("#start").onclick=async()=>{
-    if(S.user && !S.target && S.pieces.length && !confirm("No piece chosen — capture in export-only mode? (Pick a piece above to save straight to Glowtbook.)")) { $("#stepPiece").scrollIntoView({behavior:"smooth"}); return; }
+    if(S.user && !S.target && S.pieces.length && !confirm("No piece chosen — go on without saving? (Pick a piece above to give it its Glass ID.)")) { $("#stepPiece").scrollIntoView({behavior:"smooth"}); return; }
     await openCamera();
   };
 

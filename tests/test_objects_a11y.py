@@ -29,13 +29,13 @@ def _sample(n=2):
 def test_empty_state_has_live_region():
     html = build_objects_html([])
     assert 'role="status"' in html and 'aria-live="polite"' in html
-    assert "No objects" in html
+    assert "No pieces" in html
 
 
 def test_named_list_and_count():
     html = build_objects_html(_sample(3))
     assert 'role="list"' in html                         # ACC4 collection items
-    assert "3 objects found" in html                     # RED1 result count
+    assert "3 pieces found" in html                      # RED1 result count
     assert 'role="status"' in html
 
 
@@ -89,8 +89,8 @@ def test_user_content_is_escaped():
 def test_grid_layout_and_verify_callout():
     html = build_objects_html(_sample(2))
     assert "gdb-grid" in html                                  # grid, not a long list
-    assert 'aria-label="Verify a physical piece"' in html      # verify surfaced up top
-    assert "Have a physical piece?" in html
+    assert 'aria-label="Check a piece you hold"' in html       # check-a-piece surfaced up top
+    assert "Holding a piece?" in html and "Check a piece" in html
     assert "Objects on this page" not in html                  # old Contents list is gone
 
 
@@ -101,5 +101,6 @@ def test_details_disclosure_holds_the_heavy_content():
 
 def test_fingerprint_line_present():
     html = build_objects_html(_sample(1))
-    assert "Physical fingerprint:" in html and "84/100 (Strong)" in html
-    assert "/fingerprint/verify.html" in html
+    assert "Glass ID:" in html and "84/100 (Strong)" in html      # people read "Glass ID"
+    assert "/fingerprint/verify.html" in html                     # the URL keeps the old word
+    assert "Point your phone at it to see who made it." in html   # the button's sentence

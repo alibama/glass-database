@@ -87,11 +87,55 @@ def pumpkin(n_body: int = 36000, n_stem: int = 2600, n_ground: int = 1800) -> by
     return bytes(out)
 
 
+STILL = OUT.with_suffix(".jpg")
+
+
+def render_still(data: bytes, width: int = 960, height: int = 640) -> None:
+    """A still of the same splats for the homepage card: orthographic, depth-sorted,
+    each splat a soft Gaussian composited over paper. numpy + Pillow only."""
+    import numpy as np
+    from PIL import Image
+
+    n = len(data) // 32
+    arr = np.frombuffer(data, dtype=np.uint8).reshape(n, 32)
+    pos = arr[:, 0:12].copy().view("<f4").reshape(n, 3)
+    scl = arr[:, 12:24].copy().view("<f4").reshape(n, 3)[:, 0]
+    rgba = arr[:, 24:28].astype(np.float32) / 255.0
+    # camera: turn 28° around y, look down 18°
+    ay, ax = math.radians(28), math.radians(18)
+    x = pos[:, 0] * math.cos(ay) + pos[:, 2] * math.sin(ay)
+    z0 = -pos[:, 0] * math.sin(ay) + pos[:, 2] * math.cos(ay)
+    y = pos[:, 1] * math.cos(ax) - z0 * math.sin(ax)
+    depth = pos[:, 1] * math.sin(ax) + z0 * math.cos(ax)
+    px = 0.36 * height                          # world unit -> pixels
+    sx = width / 2 + x * px
+    sy = height * 0.55 - y * px
+    rad = np.clip(scl * px * 1.6, 1.2, 12)
+    order = np.argsort(depth)                   # far first
+    buf = np.empty((height, width, 3), dtype=np.float32)
+    buf[:] = (0.957, 0.933, 0.894)              # paper
+    for i in order:
+        r = float(rad[i]); cx, cy = float(sx[i]), float(sy[i])
+        x0, x1 = int(max(0, cx - 2 * r)), int(min(width, cx + 2 * r + 1))
+        y0, y1 = int(max(0, cy - 2 * r)), int(min(height, cy + 2 * r + 1))
+        if x1 <= x0 or y1 <= y0:
+            continue
+        yy, xx = np.mgrid[y0:y1, x0:x1]
+        k = np.exp(-((xx - cx) ** 2 + (yy - cy) ** 2) / (2 * (r * 0.6) ** 2)) * rgba[i, 3]
+        buf[y0:y1, x0:x1] = buf[y0:y1, x0:x1] * (1 - k[..., None]) + rgba[i, :3] * k[..., None]
+    Image.fromarray((np.clip(buf, 0, 1) * 255).astype(np.uint8)).save(STILL, "JPEG", quality=85, optimize=True)
+
+
 def main() -> None:
     data = pumpkin()
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_bytes(data)
     print(f"wrote {OUT} ({len(data) // 32} splats, {len(data) / 1e6:.2f} MB)")
+    try:
+        render_still(data)
+        print(f"wrote {STILL}")
+    except Exception as ex:  # noqa: BLE001  (numpy/Pillow are optional for the .splat itself)
+        print(f"still skipped: {ex}")
 
 
 if __name__ == "__main__":

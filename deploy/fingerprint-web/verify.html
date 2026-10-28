@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<title>Glass Verify — confirm a piece</title>
+<title>Check a Piece — Glass Database</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -196,7 +196,10 @@
   .toast.warn{border-color:#5a2b28; color:var(--danger)}
   .toast.ok{border-color:#2f5a56; color:var(--ok)}
   @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
-  @media (max-width:430px){#hint{display:none} #tools{flex:none}}
+  .toolhint{position:absolute; right:18px; bottom:calc(92px + env(safe-area-inset-bottom)); max-width:46vw; margin:0; text-align:right;
+    font-size:11px; line-height:1.35; color:var(--ink-dim); text-shadow:0 1px 6px #000}
+  .btnhint{margin:8px 0 0!important; font-size:12px!important; color:var(--ink-faint)!important}
+  @media (max-width:430px){#hint,.toolhint{display:none} #tools{flex:none}}
 </style>
 </head>
 <body>
@@ -224,25 +227,27 @@
     <div class="chip target" id="targetChip">Against <b>reference</b></div>
     <div class="chip">Shots <b id="total">0</b><br><span id="matched">0 matched</span></div>
     <button class="icon-btn" id="review" disabled>Pairs</button>
+    <span class="chip" style="font-weight:400;font-size:11px;color:var(--ink-dim)">Pairs shows each shot beside the one on file.</span>
   </div>
 
   <div id="reticle"></div>
   <div id="objlabel"></div>
 
   <div id="bar">
-    <div id="hint">Circle the piece. The shutter turns teal when your view lines up with a reference shot — those are the frames that decide it.</div>
+    <div id="hint">Point your phone at the piece and circle it. The big button takes a shot; it turns teal when your view lines up with one on file.</div>
     <div id="shutWrap">
       <svg id="shutRing" viewBox="0 0 100 100"><circle class="bg" cx="50" cy="50" r="45"/><circle class="fg" cx="50" cy="50" r="45"/></svg>
-      <div id="shutter" role="button" aria-label="capture"></div>
+      <div id="shutter" role="button" aria-label="Take a shot"></div>
     </div>
     <div id="tools">
       <button class="tool" id="autoBtn">Auto</button>
       <button class="tool" id="flipBtn">Flip</button>
       <button class="tool on" id="lensBtn">Lens</button>
       <button class="tool" id="descBtn">Match: Colour</button>
-      <select id="camSel" class="tool" style="display:none;max-width:150px" aria-label="camera"></select>
+      <select id="camSel" class="tool" style="display:none;max-width:150px" aria-label="Choose a camera"></select>
     </div>
   </div>
+  <p class="toolhint">Auto takes shots for you as you circle; Flip swaps cameras; Lens shows what the camera has picked out; Match switches how shots are compared.</p>
 
   <div id="film">
     <h2>Matched pairs</h2>
@@ -251,33 +256,35 @@
     <div id="pairs"></div>
     <div class="filmbtns">
       <button class="ghost" id="exportBtn">Export result (.json)</button>
-      <button class="ghost" id="closeFilm">Keep capturing</button>
-      <button class="ghost warn" id="clearBtn">Reset shots</button>
+      <button class="ghost" id="closeFilm">Keep going</button>
+      <button class="ghost warn" id="clearBtn">Start over</button>
     </div>
+    <p class="btnhint">Export result downloads this check as a small file; Keep going returns to the camera; Start over throws the shots away.</p>
   </div>
 </div>
 
 <div id="gate">
   <div class="wrap">
     <div class="gate-top">
-      <a class="back" href="/explore/?view=objects">&larr; Explore objects</a>
+      <a class="back" href="/explore/?view=objects">&larr; Pieces in The Directory</a>
       <span id="chip"></span>
     </div>
     <svg class="mark" viewBox="0 0 44 44" fill="none">
       <path d="M22 3C15 14 15 30 22 41C29 30 29 14 22 3Z" stroke="#B3261E" stroke-width="2.2" stroke-linejoin="round"/>
       <ellipse cx="22" cy="22" rx="19" ry="8" stroke="#1F1A16" stroke-width="1.6" opacity=".8"/>
     </svg>
-    <p class="eyebrow">Digital barcoding · <span style="color:var(--violet)">alpha, for testers</span></p>
-    <h1>Verify <em>a piece</em></h1>
-    <p class="lede">Load a piece's enrolled fingerprint, then capture the piece in front of you. Each shot is matched against the reference — the confidence rises as your angles line up with the ones on file. Nothing you capture leaves this device. <span style="color:var(--violet)">Alpha:</span> a verdict is decision support, not proof, and the thresholds are still being tuned with testers' help.</p>
+    <p class="eyebrow">Glass ID · <span style="color:var(--violet)">alpha, for testers</span></p>
+    <h1>Check <em>a piece</em></h1>
+    <p class="lede">Point your phone at it to see who made it. Load the piece's registered Glass ID, then take shots of the piece in front of you; the confidence rises as your angles line up with the ones on file. Nothing you shoot leaves this device. A likely match means this is the registered piece. It is strong evidence, not proof. <span style="color:var(--violet)">Alpha:</span> the thresholds are still being tuned with testers' help.</p>
+    <p class="fine" style="font-size:12.5px;color:var(--ink-faint);margin:-10px 0 18px">A Glass ID is a fingerprint of the glass itself, stored as numbers, not photos.</p>
 
     <section class="src" id="srcRegistry" hidden>
-      <div class="src-h"><span class="n">1</span><b>From the registry</b></div>
+      <div class="src-h"><span class="n">1</span><b>From The Directory</b></div>
       <div id="refCard">
         <div class="rt" id="refTitle">Reference loaded</div>
-        <div class="row"><span>Enrolled</span><b id="refDate">—</b></div>
+        <div class="row"><span>Registered</span><b id="refDate">—</b></div>
         <div class="row"><span>Reference strength</span><b id="refRating">—</b></div>
-        <div class="row"><span>Reference frames</span><b id="refFrames">—</b></div>
+        <div class="row"><span>Reference shots</span><b id="refFrames">—</b></div>
         <div class="row"><span>Dominant colour</span><b id="refColor">—</b></div>
         <div class="row" id="refBoundRow" hidden><span>Content Credentials</span><b id="refBound">—</b></div>
       </div>
@@ -285,22 +292,23 @@
 
     <section class="src" id="srcMine" hidden>
       <div class="src-h"><span class="n">2</span><b>One of my pieces</b></div>
-      <p>Fingerprinted pieces in your Glowtbook registry — confirm a piece against its own record, and log the check in its provenance.</p>
+      <p>Pieces with a Glass ID in Glowtbook, your studio notebook. Tap one to check the piece against its own record and note the check on it.</p>
       <div class="pieces" id="pieces"></div>
     </section>
 
     <section class="src" id="srcFile">
       <div class="src-h"><span class="n">3</span><b>From a file</b></div>
       <label class="drop" id="drop">
-        <b>Load a fingerprint export</b>
-        <span>The <code>glass-fingerprint-….zip</code> from the capture app (or its fingerprint.json)</span>
+        <b>Load a Glass ID export</b>
+        <span>The <code>glass-fingerprint-….zip</code> saved from Register Your Piece (or its fingerprint.json)</span>
         <input id="file" type="file" accept=".zip,.json,application/zip,application/json" hidden>
       </label>
-      <p class="fine" style="margin-top:.6rem">Looking for a piece? Every published, fingerprinted piece in <a href="/explore/?view=objects">Explore → Objects</a> has a <b>Verify this piece</b> button that opens this app with its reference loaded.</p>
+      <p class="fine" style="margin-top:.6rem">Looking for a piece? Every published piece with a Glass ID in <a href="/explore/?view=objects">The Directory</a> has a <b>Check a Piece</b> button that opens this page with its record loaded.</p>
     </section>
 
     <div id="refCardFile"></div>
     <button id="start">Enable camera</button>
+    <p class="fine" id="startHint" style="margin-top:.6rem;display:none">Enable camera opens your phone's camera so you can take shots of the piece.</p>
     <div id="err"></div>
   </div>
 </div>
@@ -460,7 +468,7 @@
     const delta=S.conf-S.prevConf;
     if(delta>0){ g.classList.remove("bump"); void g.offsetWidth; g.classList.add("bump");
       const pl=$("#plus"); pl.textContent="+"+delta; pl.classList.remove("go"); void pl.offsetWidth; pl.classList.add("go"); buzz(12);
-      if(cls==="match" && S.prevConf<MATCH_READY){ toast("Match likely — open Pairs to record or claim it","ok"); buzz([30,40,30]); } }
+      if(cls==="match" && S.prevConf<MATCH_READY){ toast("Match likely — open Pairs to note it on the piece or add it to your collection","ok"); buzz([30,40,30]); } }
     refresh();
   }
 
@@ -475,7 +483,7 @@
     const a=S.live;
     if(a.sharp<SHARP_MIN){ toast("Too blurry — hold steady","warn"); return; }
     if(!manual && a.cnov<NOVELTY_MIN) return;
-    let blob; try{blob=await grab();}catch(_){toast("Capture failed","warn"); return;}
+    let blob; try{blob=await grab();}catch(_){toast("Couldn't take that shot","warn"); return;}
     if(!blob) return;
     const m=matchFrame(a);
     const f={blob,url:URL.createObjectURL(blob),seq:++S.seq,sharp:a.sharp,dhash:a.dhash,chist:a.chist,emb:a.emb,match:m,t:new Date().toISOString()};
@@ -574,9 +582,9 @@
       const hot=a&&(a.worthy||a.hit);
       ovx.strokeStyle=hot?"rgba(232,164,74,0.95)":"rgba(236,231,221,0.55)"; ovx.lineWidth=Math.max(2,W/300);
       rr(ovx,cx-rx,cy-ry,rx*2,ry*2,16); ovx.stroke();
-      objLabel.textContent=hot?"Locked on — good angle, capture it":"Object in view";
+      objLabel.textContent=hot?"Locked on — good angle, take the shot":"Piece in view";
       objLabel.classList.add("show");
-    } else { objLabel.textContent="Point at the object and fill the frame"; objLabel.classList.add("show"); }
+    } else { objLabel.textContent="Point at the piece and fill the frame"; objLabel.classList.add("show"); }
   }
   (function(){ const lb=$("#lensBtn"); if(lb) lb.onclick=()=>{ S.overlay=!S.overlay; lb.classList.toggle("on",S.overlay);
     if(!S.overlay){ ovx.clearRect(0,0,ov.width,ov.height); objLabel.classList.remove("show"); } }; })();
@@ -605,27 +613,27 @@
     let html=`<h3>${esc(label)} — ${r.conf}/100 against ${who}</h3>`;
     if(cls!=="match"){ html+=`<p class="fine">${cls==="inconc"?"Keep circling — line up with more of the reference angles (teal shutter) to decide it.":"These shots don't line up with the reference. Check lighting and that you're on the same piece."}</p>`; box.innerHTML=html; return; }
     if(S.refKind==="mine"){
-      html+= S.recorded ? `<p>✓ Verification recorded in this piece's provenance.</p>`
-        : `<p>Log this check in the piece's provenance timeline (date, confidence, views matched).</p><div class="filmbtns" style="margin-top:0"><button class="primary" id="recordBtn">Record verification</button></div>`;
+      html+= S.recorded ? `<p>✓ This check is noted on the piece.</p>`
+        : `<div class="filmbtns" style="margin-top:0"><button class="primary" id="recordBtn">Note this check on the piece</button></div><p class="fine">It adds today's date, the confidence and the views matched to the piece's history.</p>`;
     } else if(S.refKind==="public"){
-      if(!S.user){ html+=`<p>Holding this piece? Sign in to <b>claim it for your collection</b> — a verified scan is how a collection proves it's authentic.</p><div class="filmbtns" style="margin-top:0"><a class="primary" href="${G?esc(G.loginUrl()):'#'}">Sign in to claim</a></div>`; }
-      else if(S.claimed){ html+=`<p>✓ ${S.claimed.status==="verified"?"Claimed — it's in your collection.":"Claim recorded — pending review."} <a href="/games.html#collection" style="color:var(--hot)">Open my collection</a></p>`; }
-      else { html+=`<p>Holding this piece? <b>Claim it for your collection</b> — the match confidence travels with the claim.</p><div class="filmbtns" style="margin-top:0"><button class="primary" id="claimBtn">Claim for my collection</button></div>`; }
+      if(!S.user){ html+=`<p>Holding this piece? Sign in and it can join your collection — a checked scan is how a collection shows a piece is the real thing.</p><div class="filmbtns" style="margin-top:0"><a class="primary" href="${G?esc(G.loginUrl()):'#'}">Sign in to add it to your collection</a></div><p class="fine">You come back here signed in, with this check kept.</p>`; }
+      else if(S.claimed){ html+=`<p>✓ ${S.claimed.status==="verified"?"Added — it's in your collection.":"Added — pending review."} <a href="/games.html#collection" style="color:var(--hot)">Open my collection</a></p>`; }
+      else { html+=`<p>Holding this piece?</p><div class="filmbtns" style="margin-top:0"><button class="primary" id="claimBtn">Add to My Collection</button></div><p class="fine">It joins your collection with its story attached, and this check's confidence travels with it.</p>`; }
     } else {
-      html+=`<p class="fine">Loaded from a file — to record or claim, open the piece from <a href="/explore/?view=objects">Explore</a> or from your Glowtbook pieces.</p>`;
+      html+=`<p class="fine">Loaded from a file — to note a check or add the piece to your collection, open it from <a href="/explore/?view=objects">The Directory</a> or from your Glowtbook pieces.</p>`;
     }
     box.innerHTML=html;
     const rb=$("#recordBtn"); if(rb) rb.onclick=async()=>{ rb.disabled=true;
       try{ const rep=report(); await G.json(`/me/objects/${S.refId}/events`,{method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({event_type:"verified", event_date:new Date().toISOString().slice(0,10), actor:S.user.name||"",
-            note:`Verify app: ${rep.verdict}, confidence ${rep.confidence}/100, ${rep.referenceViewsMatched} reference views matched (${rep.descriptor}).`})});
-        S.recorded=true; toast("Recorded in the piece's provenance","ok"); renderActions();
-      }catch(e){ toast("Couldn't record: "+e.message,"warn"); rb.disabled=false; } };
+            note:`Check a Piece: ${rep.verdict}, confidence ${rep.confidence}/100, ${rep.referenceViewsMatched} reference views matched (${rep.descriptor}).`})});
+        S.recorded=true; toast("Noted on the piece","ok"); renderActions();
+      }catch(e){ toast("Couldn't note it: "+e.message,"warn"); rb.disabled=false; } };
     const cb=$("#claimBtn"); if(cb) cb.onclick=async()=>{ cb.disabled=true;
       try{ const rep=report(); const j=await G.json("/claims",{method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({object_row_id:S.refId, confidence:rep.confidence, report:rep, location:""})});
-        S.claimed=j.claim||j; toast(S.claimed.status==="verified"?"Claimed — it's in your collection":"Claim recorded, pending review","ok"); buzz([30,40,30]); renderActions();
-      }catch(e){ toast(e.status===404?"Collections aren't enabled on this server yet":"Couldn't claim: "+e.message,"warn"); cb.disabled=false; } };
+        S.claimed=j.claim||j; toast(S.claimed.status==="verified"?"Added — it's in your collection":"Added — pending review","ok"); buzz([30,40,30]); renderActions();
+      }catch(e){ toast(e.status===404?"Collections aren't enabled on this server yet":"Couldn't add it: "+e.message,"warn"); cb.disabled=false; } };
   }
 
   /* ui */
@@ -651,14 +659,14 @@
   function buzz(p){try{navigator.vibrate&&navigator.vibrate(p);}catch(_){}}
 
   $("#shutWrap").onclick=()=>capture(true);
-  $("#autoBtn").onclick=e=>{S.auto=!S.auto; S.lastAuto=0; e.target.classList.toggle("on",S.auto); $("#shutWrap").classList.toggle("auto",S.auto); toast(S.auto?"Auto-capture on":"Auto-capture off");};
+  $("#autoBtn").onclick=e=>{S.auto=!S.auto; S.lastAuto=0; e.target.classList.toggle("on",S.auto); $("#shutWrap").classList.toggle("auto",S.auto); toast(S.auto?"Auto on — it takes shots for you as you circle":"Auto off");};
   $("#flipBtn").onclick=async()=>{ await cycleCamera(); };
-  const DESCS=[["color","Colour"],["dhash","Shape"],["dino","AI (DINOv2)"]];
+  const DESCS=[["color","Colour"],["dhash","Shape"],["dino","AI"]];
   $("#descBtn").onclick=async()=>{
     let i=DESCS.findIndex(d=>d[0]===S.descriptor); i=(i+1)%DESCS.length; S.descriptor=DESCS[i][0];
     $("#descBtn").textContent="Match: "+DESCS[i][1];
     if(S.descriptor==="dino"){
-      if(!S.hasEmb){ toast("Reference has no AI embeddings — re-enroll with AI on","warn"); }
+      if(!S.hasEmb){ toast("This record has no AI samples — register the piece again with AI on","warn"); }
       else { toast("Loading AI model…"); const missing=S.frames.filter(f=>!f.emb);
         for(const f of missing){ f.emb=await embedCanvas_fromBlob(f.blob); }
       }
@@ -671,7 +679,7 @@
   $("#camSel").onchange=async(e)=>{ S.deviceId=e.target.value; try{await startCamera();}catch(_){toast("Couldn't switch camera","warn");} };
   $("#review").onclick=()=>$("#film").classList.add("open");
   $("#closeFilm").onclick=()=>$("#film").classList.remove("open");
-  $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Discard captured shots?"))return;
+  $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Discard your shots?"))return;
     S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.recorded=false; update(); };
 
   $("#exportBtn").onclick=()=>{
@@ -700,24 +708,24 @@
   };
 
   function applyRef(ref, title){
-    if(!ref||!Array.isArray(ref.frames)||!ref.frames.length) throw new Error("no frames in fingerprint");
+    if(!ref||!Array.isArray(ref.frames)||!ref.frames.length) throw new Error("no shots in this Glass ID");
     // normalise dhash to [hi,lo] numbers
     ref.frames.forEach(f=>{ if(f.dhash&&f.dhash.length===2){ f.dhash=[f.dhash[0]>>>0,f.dhash[1]>>>0]; } if(f.sector==null)f.sector=-1; if(f.cell==null)f.cell="c"+f.file; });
     S.ref=ref; S.recorded=false; S.claimed=null;
     $("#srcRegistry").hidden=false;
-    $("#refTitle").textContent = title ? "Verifying: "+title : "Reference loaded";
+    $("#refTitle").textContent = title ? "Checking: "+title : "Reference loaded";
     $("#targetChip").innerHTML="Against <b>"+esc(title||"reference")+"</b>";
     $("#refDate").textContent=(ref.created||"").slice(0,10)||"unknown";
     $("#refRating").textContent=(ref.rating!=null?ref.rating+"/100":"—")+(ref.tier?" ("+ref.tier+")":"");
-    $("#refFrames").textContent=ref.frames.length+(Object.keys(S.refByFile).length?"":" (descriptors only — no images)");
+    $("#refFrames").textContent=ref.frames.length+(Object.keys(S.refByFile).length?"":" (numbers only — no images)");
     const dc=(ref.metadata&&ref.metadata.dominantColor)||dominantColor(aggChist(ref.frames));
     $("#refColor").innerHTML = dc? `<span style="display:inline-block;width:11px;height:11px;border-radius:3px;background:${dc.hex};vertical-align:middle;margin-right:6px;border:1px solid #0006"></span>${dc.name}` : "—";
     S.hasEmb = ref.frames.some(f=>f.emb&&f.emb.length);
     // Prefer the AI (DINOv2) descriptor when the reference carries embeddings —
     // colour alone can't separate similar-coloured pieces; texture can.
-    if(S.hasEmb){ S.descriptor="dino"; const el=$("#descBtn"); if(el) el.textContent="Match: AI (DINOv2)"; }
+    if(S.hasEmb){ S.descriptor="dino"; const el=$("#descBtn"); if(el) el.textContent="Match: AI"; }
     else { S.descriptor="color"; const el=$("#descBtn"); if(el) el.textContent="Match: Colour"; }
-    $("#refCard").classList.add("show"); $("#start").classList.add("show");
+    $("#refCard").classList.add("show"); $("#start").classList.add("show"); const sh=$("#startHint"); if(sh) sh.style.display="";
     [...document.querySelectorAll(".piece")].forEach(el=>el.classList.toggle("sel", S.refKind==="mine" && String(el.dataset.id)===String(S.refId)));
     toast("Reference loaded","ok");
   }
@@ -725,7 +733,7 @@
   async function loadPublic(objId){
     try{
       const res=await fetch(G?G.API+"/objects/"+encodeURIComponent(objId)+"/fingerprint":"/api/objects/"+encodeURIComponent(objId)+"/fingerprint");
-      if(!res.ok) throw new Error("no fingerprint registered for this object");
+      if(!res.ok) throw new Error("no Glass ID registered for this piece");
       const ref=await res.json();
       S.refKind="public"; S.refId=objId; S.refTitle=""; S.refMaker="";
       try{ const o=await (G?G.json("/datasets/objects/"+encodeURIComponent(objId)):fetch("/api/datasets/objects/"+encodeURIComponent(objId)).then(r=>r.json()));
@@ -735,30 +743,30 @@
         const v = await (await fetch((G?G.API:"/api")+"/objects/"+encodeURIComponent(objId)+"/fingerprint/verify")).json();
         S.bound = !!v.bound; const row=$("#refBoundRow"); row.hidden=false;
         if(v.bound){ $("#refBound").textContent="✓ bound to the signed credential"+(v.signer?" · "+v.signer:""); $("#refBound").style.color="var(--cool)"; }
-        else if(v.signed_sha256){ $("#refBound").textContent="⚠ does NOT match the signed fingerprint"; $("#refBound").style.color="var(--danger)"; toast("This fingerprint does not match the signed one"+(v.reason?" ("+v.reason+")":""),"warn"); }
+        else if(v.signed_sha256){ $("#refBound").textContent="⚠ does NOT match the signed Glass ID"; $("#refBound").style.color="var(--danger)"; toast("This Glass ID does not match the signed one"+(v.reason?" ("+v.reason+")":""),"warn"); }
         else { $("#refBound").textContent="unsigned"; }
       }catch(_){}
-    }catch(err){ $("#err").textContent="Couldn't load the registered fingerprint: "+(err.message||err); }
+    }catch(err){ $("#err").textContent="Couldn't load the registered Glass ID: "+(err.message||err); }
   }
   async function loadMine(id){
     if(!G) return;
     try{ const ref=await G.json("/me/objects/"+encodeURIComponent(id)+"/fingerprint");
       const p=S.pieces.find(x=>String(x.id)===String(id)); S.refKind="mine"; S.refId=+id; S.refTitle=p?p.title:("my piece "+id); S.refMaker=p?(p.maker||""):"";
       applyRef(ref, S.refTitle); $("#refBoundRow").hidden=true;
-    }catch(e){ $("#err").textContent="Couldn't load that piece's fingerprint: "+e.message; }
+    }catch(e){ $("#err").textContent="Couldn't load that piece's Glass ID: "+e.message; }
   }
   function renderPieces(){
     const sec=$("#srcMine"), box=$("#pieces");
     const mine=S.pieces.filter(p=>p.fingerprint);
     if(!S.user){ sec.hidden=true; return; }
     sec.hidden=false;
-    if(!mine.length){ box.innerHTML='<p class="fine">None of your pieces has a fingerprint yet — <a href="/fingerprint/enroll.html" style="color:var(--hot)">capture one</a>.</p>'; return; }
+    if(!mine.length){ box.innerHTML='<p class="fine">None of your pieces has a Glass ID yet — <a href="/fingerprint/enroll.html" style="color:var(--hot)">register one</a>.</p>'; return; }
     box.innerHTML="";
     for(const p of mine){
       const b=document.createElement("button"); b.type="button"; b.className="piece"; b.dataset.id=p.id;
       const st=(p.publication||{}).state;
       b.innerHTML=`<span class="t">${esc(p.title)}<small>${esc([p.maker,p.year].filter(Boolean).join(" · ")||"—")}</small></span>
-        <span class="tag fp">FP ${p.fingerprint.rating}</span>${st==="published"?'<span class="tag pub">published</span>':""}`;
+        <span class="tag fp">Glass ID ${p.fingerprint.rating}</span>${st==="published"?'<span class="tag pub">published</span>':""}`;
       b.onclick=()=>loadMine(p.id);
       box.appendChild(b);
     }
@@ -774,7 +782,7 @@
     if(objId) loadPublic(objId);
   }
 
-  $("#start").onclick=async()=>{ if(!S.ref){$("#err").textContent="Load a reference first."; return;} $("#err").textContent="";
+  $("#start").onclick=async()=>{ if(!S.ref){$("#err").textContent="Load a piece's record first."; return;} $("#err").textContent="";
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("#err").textContent="No camera API here. Use Chrome or Safari over https (or localhost)."; return;}
     if(!window.isSecureContext){showInsecureHelp(); return;}
     const btn=$("#start"), label=btn.textContent; btn.disabled=true; btn.textContent="Starting camera…"; $("#err").textContent="Requesting camera — allow access when prompted.";

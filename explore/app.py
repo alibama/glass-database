@@ -74,7 +74,9 @@ def _render_intake(key):
                 vals[name] = str(d) if d else ""
             else:
                 vals[name] = st.text_input(lbl, help=help_)
-        if st.form_submit_button("Submit for review", type="primary"):
+        submitted = st.form_submit_button("Submit for review", type="primary")
+        st.caption("An admin reads it first; it appears once approved.")
+        if submitted:
             missing = [fd["label"] for fd in intake.data_fields(key)
                        if fd["required"] and not (vals.get(fd["name"]) if isinstance(vals.get(fd["name"]), list)
                                                   else (vals.get(fd["name"]) or "").strip())]
@@ -110,7 +112,8 @@ def _render_opp_list(rows, _opp):
             st.markdown(" · ".join(links))
         st.divider()
 
-st.set_page_config(page_title="Explore · Glass Database", page_icon="📊", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Find Artists & Studios · Glass Database", page_icon="📊", layout="wide",
+                   initial_sidebar_state="expanded")
 
 from brand import apply_theme  # noqa: E402
 
@@ -163,22 +166,39 @@ from explore.dataclean import (  # noqa: E402,F401
 
 # --- sidebar: dataset picker ----------------------------------------------
 reg = registry()
-st.sidebar.title("📊 Explore")
-st.sidebar.caption("Public data from the Glass Database. Play with it, filter it, take it.")
+st.sidebar.title("Find Artists & Studios")
+st.sidebar.caption("Who makes glass, where, and how to reach them.")
 if st.sidebar.button("↻ Refresh data"):
     st.cache_data.clear(); st.rerun()
+st.sidebar.caption("Reloads the tables from the database.")
 
-_VIEWS = ["Datasets", "Objects (provenance)", "Opportunities", "Community", "Submit"]
-_VALIAS = {"datasets": "Datasets", "objects": "Objects (provenance)",
-           "opportunities": "Opportunities", "community": "Community", "submit": "Submit"}
+# The view keys are what `?view=` deep links use and what the code branches on; the
+# labels and captions are what people read (docs/NAMING.md). Keys never change.
+_VIEW_KEYS = ["datasets", "objects", "opportunities", "community", "submit"]
+_VIEW_LABELS = {
+    "datasets": "The Directory",
+    "objects": "Pieces",
+    "opportunities": "Jobs, Calls & Classes",
+    "community": "Community boards",
+    "submit": "Add yourself or your studio",
+}
+_VIEW_CAPTIONS = {
+    "datasets": "Artists, studios and more: browse, filter, export.",
+    "objects": "Registered pieces, their stories and who made them.",
+    "opportunities": "Open calls, residencies, grants and shows, on a calendar.",
+    "community": "Buy, sell and trade · jobs · suppliers and services.",
+    "submit": "Everything is reviewed before it appears.",
+}
 try:
     _qp = (st.query_params.get("view") or "").lower()
 except Exception:
     _qp = ""
-_vdefault = _VIEWS.index(_VALIAS[_qp]) if _qp in _VALIAS else 0
-mode = st.sidebar.radio("View", _VIEWS, index=_vdefault, label_visibility="collapsed")
-st.sidebar.link_button("🕸 Relationship graph", "/graph.html", use_container_width=True,
-                       help="Who taught whom, what touches what — the registry as a network.")
+_vdefault = _VIEW_KEYS.index(_qp) if _qp in _VIEW_KEYS else 0
+mode = st.sidebar.radio("View", _VIEW_KEYS, index=_vdefault, label_visibility="collapsed",
+                        format_func=lambda k: _VIEW_LABELS[k],
+                        captions=[_VIEW_CAPTIONS[k] for k in _VIEW_KEYS])
+st.sidebar.link_button("Who Worked With Whom", "/graph.html", use_container_width=True)
+st.sidebar.caption("Who taught whom, who shares a studio, what touches what.")
 from brand import track as _track
 
 _track("explore", mode)
@@ -188,7 +208,9 @@ with st.sidebar.expander("💬 Send feedback"):
         fb_msg = st.text_area("What's on your mind?", label_visibility="collapsed",
                               placeholder="Bug, idea, correction…")
         fb_email = st.text_input("Email (optional, if you'd like a reply)")
-        if st.form_submit_button("Send") and fb_msg.strip():
+        fb_sent = st.form_submit_button("Send")
+        st.caption("Goes to the team; your email is only used to reply.")
+        if fb_sent and fb_msg.strip():
             from central import feedback as _fb
             _fb.submit(_conn(), fb_msg, fb_email, page=mode)
             st.success("Thanks — sent to the team.")
@@ -196,8 +218,8 @@ with st.sidebar.expander("💬 Send feedback"):
 # ===========================================================================
 # SUBMIT — public intake sheets (artist / studio / event) → pending + Discord
 # ===========================================================================
-if mode == "Submit":
-    st.title("Add to the database")
+if mode == "submit":
+    st.title("Add yourself or your studio")
     st.caption("Everything is reviewed before it appears publicly. Contact details stay private.")
     labels = {"Artist": "artist", "Studio": "studio", "Event / exhibition": "event",
               "Lineage (who taught whom)": "lineage",
@@ -208,17 +230,18 @@ if mode == "Submit":
     pick = st.pills("What are you submitting?", list(labels), selection_mode="single",
                     default="Artist", label_visibility="collapsed", key="submit_kind") or "Artist"
     _render_intake(labels[pick])
-    st.caption("Open calls, residencies, or grants with a deadline go under **Opportunities** so "
-               "they land on the calendar.")
+    st.caption("Open calls, residencies, or grants with a deadline go under **Jobs, Calls & Classes** "
+               "so they land on the calendar.")
     st.stop()
 
 # ===========================================================================
 # COMMUNITY — exchange (buy/sell/trade), jobs, and resources
 # ===========================================================================
-if mode == "Community":
+if mode == "community":
     from central import approvals as _appr
     from central import intake as _intake
-    st.title("Community")
+    st.title("Community boards")
+    st.caption("Buy, sell and trade; gaffer and assistant openings; suppliers, services and classes.")
     tab = st.radio("Board", ["Exchange", "Jobs", "Resources"], horizontal=True,
                    label_visibility="collapsed")
     key = {"Exchange": "exchange", "Jobs": "job", "Resources": "resource"}[tab]
@@ -231,7 +254,7 @@ if mode == "Community":
         'ORDER BY _imported_at DESC', (tbl,)).fetchall()
     rows = [dict(r) for r in rows]
     if not rows:
-        st.info(f"No {tab.lower()} listings yet — post one under **Submit**.")
+        st.info(f"No {tab.lower()} listings yet — post one under **Add yourself or your studio**.")
     for r in rows:
         if key == "exchange":
             badge = r.get("listing_type", "")
@@ -267,11 +290,11 @@ if mode == "Community":
 # ===========================================================================
 # OPPORTUNITIES — calendar (display + .ics + Google Calendar) and public intake
 # ===========================================================================
-if mode == "Opportunities":
+if mode == "opportunities":
     from central import opportunities as _opp
     _opp.ensure_opportunities(_conn())
-    st.title("Artist opportunities")
-    st.caption("Open calls, residencies, grants, and shows. Subscribe once and new "
+    st.title("Jobs, Calls & Classes")
+    st.caption("Open calls, residencies, grants, teaching and shows. Subscribe once and new "
                "approved listings appear in your calendar automatically.")
     rows = _opp.approved(_conn())
 
@@ -281,12 +304,13 @@ if mode == "Opportunities":
     c1, c2 = st.columns([1, 2])
     c1.download_button("⬇ Download calendar (.ics)", ics, file_name="glass-opportunities.ics",
                        mime="text/calendar", width="stretch")
+    c1.caption("Saves a calendar file you can open in any calendar app.")
     c2.markdown(f"**Subscribe:** [add to Apple/Outlook calendar]({webcal}) · in Google Calendar, "
                 f"*Other calendars → From URL* → `{ics_url}`")
     st.divider()
 
     if not rows:
-        st.info("No opportunities published yet — be the first to submit one below.")
+        st.info("Nothing listed yet — be the first to post one below.")
     else:
         view = st.radio("Show", ["Calendar", "List"], horizontal=True, label_visibility="collapsed")
         if view == "Calendar":
@@ -301,12 +325,13 @@ if mode == "Opportunities":
                 st.session_state.opp_ym = [_dt.date.today().year, _dt.date.today().month]; st.rerun()
             if nav4.button("▶", help="Next month"):
                 st.session_state.opp_ym = [y + 1, 1] if m == 12 else [y, m + 1]; st.rerun()
+            st.caption("◀ and ▶ move a month at a time; Today jumps back to this month.")
             st.html(_opp.month_grid_html(rows, y, m))
             st.caption("Amber = deadlines · violet = residencies/grants. Tap an entry for details.")
         else:
             _render_opp_list(rows, _opp)
 
-    with st.expander("➕ Submit an opportunity  (reviewed before it appears)"):
+    with st.expander("➕ Post a job, call or class  (reviewed before it appears)"):
         with st.form("opp_intake", clear_on_submit=True):
             title = st.text_input("Title *")
             a, b = st.columns(2)
@@ -322,7 +347,9 @@ if mode == "Opportunities":
             desc = st.text_area("Description")
             contact = st.text_input("Contact email  🔒 kept private")
             by = st.text_input("Your name or email  🔒 kept private")
-            if st.form_submit_button("Submit for review", type="primary"):
+            opp_sent = st.form_submit_button("Submit for review", type="primary")
+            st.caption("An admin reads it first; it appears here and on the calendar once approved.")
+            if opp_sent:
                 if not title.strip() or deadline is None:
                     st.error("Title and application deadline are required.")
                 else:
@@ -337,11 +364,12 @@ if mode == "Opportunities":
 # ===========================================================================
 # OBJECTS — render contributed objects with images + provenance timeline
 # ===========================================================================
-if mode == "Objects (provenance)":
+if mode == "objects":
     import json as _json
 
     from explore.objects_a11y import build_objects_html
-    st.title("Glass objects — provenance")
+    st.title("Pieces")
+    st.caption("Registered pieces with their stories: who made each one and where it has been.")
     try:
         rows = _conn().execute("SELECT * FROM objects ORDER BY published_at DESC").fetchall()
     except Exception:
@@ -394,7 +422,7 @@ if not reg:
         appr = c.execute("SELECT COUNT(*) FROM _approvals WHERE status='approved'").fetchone()[0]
     except Exception:
         appr = 0
-    st.title("Glass Database — explore the data")
+    st.title("Find artists & studios")
     st.info("No published datasets yet. Everything stays private until it's approved.")
     st.markdown("**To publish:** open the admin console → **✅ Approvals** → "
                 "**“Approve ALL pending content”** (or approve per dataset), then hit "
@@ -416,7 +444,9 @@ tbl = ds["tbl"]
 
 # --- header metrics --------------------------------------------------------
 total_rows = sum(d["row_count"] for d in reg)
-st.title("Glass Database — explore the data")
+st.title("Find artists & studios")
+st.caption("Who makes glass, where, and how to reach them. Pick a table on the left, filter it, "
+           "take it with you.")
 m1, m2, m3 = st.columns(3)
 m1.metric("Public datasets", len(reg))
 m2.metric("Total public rows", f"{total_rows:,}")
@@ -524,5 +554,7 @@ pretty = df.drop(columns=[c for c in _hidden_per_row if c in df.columns]).rename
 st.dataframe(pretty, width="stretch", hide_index=True)
 st.download_button("⬇ Download this view (CSV)", pretty.to_csv(index=False),
                    file_name=f"{tbl}.csv", mime="text/csv")
-st.caption("Data is published under a Creative Commons license. "
+st.caption("Saves the rows shown here, with your filters applied, as a spreadsheet file.")
+st.caption("For researchers: the same tables are available through the read API (/api/docs). "
+           "Data is published under CC BY 4.0. "
            "To correct or remove a listing, see the Removal & Correction Policy.")

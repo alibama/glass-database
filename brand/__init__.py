@@ -5,7 +5,9 @@ One shared look and a cross-app nav for the three Streamlit surfaces (Explore,
 Glowtbook, Admin), so they read as one product and match the homepage: the
 paper palette (warm off-white ground, ink text, a single red accent), Fraunces
 headings, Inter body, Plex Mono labels, and a row of square buttons that jump
-between Home, Explore, Glowtbook, and Admin.
+between Home, Find Artists & Studios, Collecting Events, Glowtbook, and Admin.
+Names follow docs/NAMING.md; the keys ('explore', 'glowtbook', 'admin') and the
+URLs keep the old words.
 
 The nav uses native `st.link_button`s (not HTML anchors) so the whole button is
 clickable; the active page is red-filled, the others are ink-outlined.
@@ -21,11 +23,14 @@ import streamlit as st
 
 # text lockup matching the homepage `.brand` (Fraunces, the italic word in red)
 _MARK = 'Glass <i>Database</i>'
+# the tagline that sits under the brand everywhere it appears as a header (docs/NAMING.md)
+TAGLINE = "A home for every piece of glass and the people who make it."
 
-# key, label, href
+# key, label, href — keys and hrefs are stable; labels are what people read
 _NAV = [
     ("home", "Home", "/"),
-    ("explore", "Explore", "/explore/"),
+    ("explore", "Find Artists & Studios", "/explore/"),
+    ("games", "Collecting Events", "/games.html"),
     ("glowtbook", "Glowtbook", "/glowtbook/"),
     ("admin", "Admin", "/admin/"),
 ]
@@ -250,6 +255,8 @@ hr { border-color:var(--rule) !important; }
 .gdb-brand i { color:var(--red); font-style:italic; }
 .gdb-brand:hover { color:var(--ink); }
 .gdb-brand:hover i { color:var(--red-dk); }
+.gdb-tagline { font-family:var(--mono); font-size:.72rem; letter-spacing:.04em; color:var(--muted);
+  margin:-.3rem 0 .7rem; line-height:1.3; }
 .gdb-rule { height:1px; margin:.25rem 0 1.1rem; background:var(--rule); }
 </style>
 """
@@ -260,7 +267,8 @@ def apply_theme(active: str = "") -> None:
     'explore' | 'glowtbook' | 'admin' and gets the red-filled primary style;
     the others are ink-outlined. The text lockup doubles as the Home link."""
     st.html(_CSS)
-    st.html(f'<a class="gdb-brand" href="/" target="_self">{_MARK}</a>')
+    st.html(f'<a class="gdb-brand" href="/" target="_self">{_MARK}</a>'
+            f'<div class="gdb-tagline">{TAGLINE}</div>')
     cols = st.columns(len(_NAV))
     for col, (key, label, href) in zip(cols, _NAV):
         col.link_button(label, href, use_container_width=True,

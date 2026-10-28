@@ -1,3 +1,5 @@
+People see this as **Glass ID — Register Your Piece** (see docs/NAMING.md); the code and URLs keep the old words.
+
 # The fingerprint workflow — from "open the app" to "it's on the piece"
 
 *Companion to [FINGERPRINT-PROTOCOL.md](FINGERPRINT-PROTOCOL.md) (which covers
