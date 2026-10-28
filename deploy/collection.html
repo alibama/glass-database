@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A collection — Glass Database</title>
+<meta name="description" content="A collector's shelf on the Glass Database: every piece checked against its Glass ID, with its maker, studio and the collecting event it came from.">
+<meta property="og:title" content="A collection — Glass Database">
+<meta property="og:description" content="Every piece checked against its Glass ID, with its maker and the collecting event it came from.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav ul a.on { color: var(--red); }
+  /* site.js injects its own (field-data) chip rules after paper.css; outrank them here */
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+
+  /* hero */
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 18ch; overflow-wrap: anywhere; }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; }
+  .hero .sharebox { margin-top: 1.6rem; max-width: 62ch; }
+  .hero .sharebox .sh { display: block; font: 400 13px/1.45 var(--sans); color: var(--muted); }
+  /* a button and the one sentence that says what it does */
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
+  button.btn { background: var(--paper); cursor: pointer; }
+
+  /* rarity */
+  .pill.rar { border-color: var(--ink); color: var(--ink); }
+  .pill.rar.common { border-color: var(--rule); color: var(--muted); }
+  .pill.rar.legendary { background: var(--red); border-color: var(--red); color: #fff; }
+
+  /* pieces */
+  .cards { margin-top: 2rem; }
+  .card { position: relative; }
+  .card .ph { aspect-ratio: 4 / 3; margin-bottom: 1rem; background: var(--paper-2); }
+  .card .ph img { mix-blend-mode: normal; }
+  .card .marks { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .6rem; min-height: 0; }
+  .card .who { margin: 0; color: var(--ink-2); font-size: 16px; }
+  .card .ed { margin: .3rem 0 0; font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+  .card .acts { display: flex; gap: .6rem 1.2rem; flex-wrap: wrap; align-items: center; margin-top: auto; padding-top: 1.1rem; }
+  .empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .empty a { color: var(--ink); } .empty a:hover { color: var(--red); }
+  .skel { height: 220px; background: linear-gradient(90deg, var(--paper-2), var(--paper-3), var(--paper-2)); background-size: 200% 100%; animation: sh 1.4s infinite; grid-column: span 4; }
+  @keyframes sh { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+  @media (max-width: 680px) { .skel { grid-column: span 12; } .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active="games"></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">Collecting Events</span><a href="/games.html">Court of the Gourds</a><a href="/events.html">Shows &amp; Sales</a><a href="/register.html">Add to My Collection</a><a href="/fingerprint/verify.html">Check a Piece</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> A collection</p>
+  <h1 id="heroTitle">Loading the collection…</h1>
+  <p class="lede" id="heroLede"></p>
+  <p class="live" id="heroMeta" aria-live="polite"></p>
+  <div class="sharebox" id="shareBox" hidden><p class="label">Share this collection</p><small class="sh">Copy the link, save the card, or post it: wherever the link lands, the preview shows the card.</small><div id="shareKit"></div></div>
+ </div>
+</section>
+
+<section class="s alt" id="pieces" aria-labelledby="piecesTitle">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> Pieces</p>
+   <div><h2 id="piecesTitle">On the <em>shelf.</em></h2><p class="lede" id="piecesLede">Each piece was checked against its Glass ID in the collector's hands, or confirmed by the maker.</p></div></div>
+  <div class="cards" id="grid"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+ </div>
+</section>
+
+<section class="s" id="yours" aria-labelledby="h-yours">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> Yours</p>
+   <div><h2 id="h-yours">Start a collection <em>of your own.</em></h2>
+    <p class="lede">Buy a piece from a working shop, open Check a Piece on your phone, and it joins your collection with its maker and its story. Make it public from the Collecting Events page whenever you like.</p>
+    <div class="btns"><div class="act"><a class="btn btn--red" href="/fingerprint/verify.html">Check a Piece</a><small>Point your phone at it to see who made it.</small></div>
+     <div class="act"><a class="btn btn--line" href="/games.html#mine">My collection</a><small>Opens your own shelf on the Collecting Events page.</small></div></div></div></div>
+ </div>
+</section>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  var sid = GDB.param("c");
+
+  function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
+  function rarityPill(r) { r = r || "common"; return '<span class="pill rar ' + esc(r) + '">' + esc(r) + "</span>"; }
+  function pieceUrl(p) { return "/explore/?view=objects#obj-" + encodeURIComponent(p.object_row_id || ""); }
+
+  function card(p) {
+    var who = esc(p.artist_name || p.maker || "") + (p.studio ? " · " + esc(p.studio) : "");
+    return '<article class="card third">' +
+      '<a href="' + esc(pieceUrl(p)) + '" class="ph" style="display:block"><img src="' + esc(p.image_url || "") + '" alt="' + esc(p.title || "") + '" loading="lazy" onerror="this.style.opacity=.15"></a>' +
+      '<div class="marks">' + rarityPill(p.rarity) + (p.points ? '<span class="pill">' + plural(p.points, "point") + "</span>" : "") + "</div>" +
+      "<h3>" + esc(p.title || "Untitled") + "</h3>" +
+      '<p class="who">' + who + "</p>" +
+      '<p class="ed">' + esc(p.season_title || "") + (p.created_at ? (p.season_title ? " · " : "") + "added " + esc(String(p.created_at).slice(0, 10)) : "") + "</p>" +
+      '<div class="acts"><a class="link" href="' + esc(pieceUrl(p)) + '">See the piece</a></div></article>';
+  }
+
+  function notFound() {
+    document.title = "No such collection — Glass Database";
+    $("#heroTitle").innerHTML = "No collection <em>here.</em>";
+    $("#heroLede").textContent = "That link doesn't point at a public collection any more. Collectors can withdraw their link at any time, and old or mistyped links land here.";
+    $("#heroMeta").innerHTML = "";
+    $("#piecesTitle").innerHTML = "Nothing to <em>show.</em>";
+    $("#piecesLede").textContent = "";
+    $("#grid").innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">If someone sent you this link, ask them for a fresh one. In the meantime, the <a href="/games.html">collecting event</a> has every entered piece and the leaderboards.</div>';
+  }
+
+  function render(c) {
+    var name = c.name || "A collector";
+    document.title = name + "'s collection — Glass Database";
+    $("#heroTitle").innerHTML = esc(name) + "'s <em>collection.</em>";
+    $("#heroLede").textContent = "Every piece here was added after a check against its Glass ID, or confirmed by the maker who made it.";
+    $("#heroMeta").innerHTML = "<span><b>" + plural(c.count || 0, "piece") + "</b></span><span><b>" + plural(c.points || 0, "point") + "</b></span>";
+    $("#shareBox").hidden = false;
+    GDB.share($("#shareKit"), { kind: "collection", ref: sid, title: name + "'s collection",
+      text: name + "'s collection on the Glass Database · " + plural(c.count || 0, "piece"),
+      url: "/collection.html?c=" + encodeURIComponent(sid),
+      image: "/api/social/collections/" + encodeURIComponent(sid) + "/card.png" });
+    var g = $("#grid");
+    if (!c.pieces || !c.pieces.length) {
+      $("#piecesTitle").innerHTML = "An empty <em>shelf, for now.</em>";
+      g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">' + esc(name) + " hasn't added a piece yet. Pieces land here once they are checked against their Glass ID or confirmed by the maker.</div>";
+      return;
+    }
+    g.innerHTML = c.pieces.map(card).join("");
+  }
+
+  if (!sid) { notFound(); }
+  else {
+    GDB.json("/social/collections/" + encodeURIComponent(sid)).then(render).catch(function (err) {
+      if (err.status === 404) { notFound(); return; }
+      $("#heroTitle").innerHTML = "The collection is <em>offline.</em>";
+      $("#heroLede").textContent = "Couldn't reach the API (" + (err.message || "network") + "). Try again in a moment.";
+      $("#grid").innerHTML = "";
+    });
+  }
+  GDB.chip("#chip", { next: location.pathname + location.search, compact: true });
+})();
+</script>
+</body>
+</html>

@@ -137,6 +137,84 @@
   function renderMenus() { var els = document.querySelectorAll("ul#menu[data-nav]"); for (var i = 0; i < els.length; i++) menu(els[i]); }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderMenus); else renderMenus();
 
-  window.GDB = { API: API, api: api, json: json, me: me, token: token, headers: headers, NAV: NAV, menu: menu,
+
+  /* ---- share kit ---------------------------------------------------------
+     GDB.share(el, {kind:"entry"|"object"|"collection"|"splat", ref, title, text, image})
+     renders: Copy link · Save image · Share… (phone share sheet: Instagram lives there)
+     · Facebook · Bluesky (posts with the connected account, else opens Bluesky's
+     composer) · Instagram tip. The link handed to networks is the Open Graph
+     landing page /api/social/share/<kind>/<ref>, so previews show the card. */
+  var SHARE_CSS = ".gdb-share{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.8rem}" +
+    ".gdb-share button,.gdb-share a.sb{font:500 11px/1 var(--mono,'IBM Plex Mono',ui-monospace,monospace);letter-spacing:.08em;text-transform:uppercase;" +
+    "color:var(--ink,#1F1A16);background:none;border:1px solid var(--ink,#1F1A16);padding:.5rem .7rem;cursor:pointer;text-decoration:none}" +
+    ".gdb-share button:hover,.gdb-share a.sb:hover{background:var(--ink,#1F1A16);color:var(--paper,#F4EEE4)}" +
+    ".gdb-share .msg{font:400 13px/1.4 var(--sans,Inter,system-ui,sans-serif);color:var(--muted,#6B6157);flex-basis:100%}";
+  function ensureShareCss() {
+    if (document.getElementById("gdb-share-css")) return;
+    var s = document.createElement("style"); s.id = "gdb-share-css"; s.textContent = SHARE_CSS; document.head.appendChild(s);
+  }
+  function share(el, o) {
+    if (typeof el === "string") el = document.querySelector(el);
+    if (!el || !o) return;
+    ensureShareCss();
+    var origin = location.origin;
+    var landing = origin + API + "/social/share/" + encodeURIComponent(o.kind) + "/" + encodeURIComponent(o.ref);
+    var page = o.url ? (o.url.indexOf("http") === 0 ? o.url : origin + o.url) : landing;
+    var image = o.image ? (o.image.indexOf("http") === 0 ? o.image : origin + o.image) : "";
+    var text = o.text || o.title || "";
+    var caption = text + (text ? "\n" : "") + landing;
+    el.classList.add("gdb-share");
+    el.innerHTML = '<button type="button" data-s="copy">Copy link</button>' +
+      (image ? '<a class="sb" data-s="save" href="' + esc(image) + '" download>Save image</a>' : "") +
+      (navigator.share ? '<button type="button" data-s="native">Share…</button>' : "") +
+      '<a class="sb" data-s="fb" target="_blank" rel="noopener" href="https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(landing) + '">Facebook</a>' +
+      '<button type="button" data-s="bsky">Bluesky</button>' +
+      '<button type="button" data-s="ig">Instagram</button>' +
+      '<span class="msg" role="status" aria-live="polite"></span>';
+    var msg = el.querySelector(".msg");
+    function say(t) { msg.textContent = t; }
+    el.querySelector('[data-s="copy"]').onclick = function () {
+      navigator.clipboard.writeText(landing).then(function () { say("Link copied. Paste it anywhere: the preview shows the card."); },
+        function () { say(landing); });
+    };
+    var nat = el.querySelector('[data-s="native"]');
+    if (nat) nat.onclick = function () {
+      var data = { title: o.title || "", text: text, url: landing };
+      if (image && navigator.canShare) {
+        fetch(image).then(function (r) { return r.blob(); }).then(function (b) {
+          var f = new File([b], (o.kind || "share") + ".png", { type: b.type || "image/png" });
+          if (navigator.canShare({ files: [f] })) return navigator.share({ files: [f], title: data.title, text: caption });
+          return navigator.share(data);
+        }).catch(function () { navigator.share(data).catch(function () {}); });
+      } else navigator.share(data).catch(function () {});
+    };
+    el.querySelector('[data-s="ig"]').onclick = function () {
+      navigator.clipboard && navigator.clipboard.writeText(caption).catch(function () {});
+      say("Instagram has no web posting. Caption copied. On a phone, tap Share… and pick Instagram; on a computer, save the image and post it from the app.");
+    };
+    el.querySelector('[data-s="bsky"]').onclick = function () {
+      var btn = this; btn.disabled = true; say("Posting to Bluesky…");
+      var body = { text: caption, links: [landing] };
+      if (o.kind === "entry") body.image = "entry:" + o.ref;
+      else if (o.kind === "object") body.image = "object:" + o.ref;
+      else if (o.kind === "collection") body.image = "collection";
+      api("/social/bluesky/post", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, status: r.status, j: j }; }); })
+        .then(function (x) {
+          btn.disabled = false;
+          if (x.ok) { say("Posted."); msg.innerHTML = 'Posted to Bluesky: <a href="' + esc(x.j.url) + '" target="_blank" rel="noopener">see it</a>'; return; }
+          if (x.status === 401 || x.status === 409) {
+            var compose = "https://bsky.app/intent/compose?text=" + encodeURIComponent(caption);
+            msg.innerHTML = (x.status === 401 ? 'Not signed in. ' : 'Bluesky isn\'t connected yet. ') +
+              '<a href="' + esc(compose) + '" target="_blank" rel="noopener">Open Bluesky\'s composer</a> with the text, or ' +
+              '<a href="/glowtbook/?page=profile">connect your account</a> once so this button posts for you.';
+            return;
+          }
+          say((x.j && x.j.detail) || "That didn't work.");
+        }).catch(function () { btn.disabled = false; say("Network error."); });
+    };
+  }
+
+  window.GDB = { API: API, api: api, json: json, me: me, token: token, headers: headers, NAV: NAV, menu: menu, share: share,
     loginUrl: loginUrl, logout: logout, chip: chip, param: param, frag: frag, esc: esc };
 })();

@@ -40,6 +40,8 @@
   .share select, .share input[type=file] { width: 100%; font: 400 15px/1.3 var(--sans); padding: .55rem .6rem; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); }
   .share input[type=file] { padding: .45rem; }
   .out { font: 400 14px/1.5 var(--mono); word-break: break-all; }
+  .sharebox { margin-top: 1.2rem; border-top: 1px solid var(--rule); padding-top: .9rem; }
+  .sharebox .sh { display: block; margin-top: .5rem; font: 400 13px/1.45 var(--sans); color: var(--muted); }
   .mine li { display: flex; gap: .8rem; align-items: baseline; justify-content: space-between; padding: .6rem 0; border-top: 1px solid var(--rule); }
   .mine li:last-child { border-bottom: 1px solid var(--rule); }
   .x { background: none; border: none; color: var(--red); font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; cursor: pointer; }
@@ -77,6 +79,7 @@
      <div class="act"><button class="btn" id="flipBtn" type="button" title="If the piece shows upside down">Flip</button><small>Turn it the right way up if it loaded upside down.</small></div>
      <span class="label" id="shareOut" style="margin:0"></span>
     </div>
+    <div class="sharebox" id="shareBox" hidden><p class="label" style="margin:0">Share this 3D Photo</p><small class="sh">Copy the link or post it; the link opens this page with the piece turning.</small><div id="shareKit"></div></div>
     <p class="note" style="margin-top:1.2rem"><strong>What this is not.</strong> A 3D Photo (a Gaussian splat, technically) is a picture. It is never signed into a piece's record and never used to tell one piece from another; that is what the Glass ID does. Anyone can upload one of anything, so treat it as a maker's own rendering of their work, nothing more.</p>
    </div>
 
@@ -185,12 +188,22 @@ function frame(){
   if (viewer.controls) { viewer.controls.target.copy(centre); viewer.controls.update(); }
 }
 
-$('#demoBtn').onclick = () => { history.replaceState(null, '', location.pathname); $('#shareOut').textContent = ''; show('/splat/demo-pumpkin.splat', 'splat', 'Demo pumpkin'); };
+// The share kit for a 3D Photo that has a link (uploaded or opened from one); hidden for the demo and local files.
+function shareSplat(id, title){
+  const box = $('#shareBox'), kit = $('#shareKit');
+  if (!id) { box.hidden = true; kit.innerHTML = ''; return; }
+  const t = title || 'A piece';
+  kit.innerHTML = ''; kit.className = '';
+  GDB.share(kit, { kind: 'splat', ref: String(id), title: t + ' · 3D Photo', text: t + ' · 3D Photo on the Glass Database', url: '/splat.html?s=' + encodeURIComponent(id) });
+  box.hidden = false;
+}
+
+$('#demoBtn').onclick = () => { history.replaceState(null, '', location.pathname); $('#shareOut').textContent = ''; shareSplat(null); show('/splat/demo-pumpkin.splat', 'splat', 'Demo pumpkin'); };
 $('#flipBtn').onclick = () => { up = -up; if (current) show(current.url, current.fmt, current.label); };
 $('#localFile').onchange = e => {
   const f = e.target.files[0]; if (!f) return;
   const fmt = fmtOf(f.name); if (!fmt) { say('Choose a .splat, .ply or .ksplat file.'); return; }
-  $('#shareOut').textContent = '';
+  $('#shareOut').textContent = ''; shareSplat(null);
   show(URL.createObjectURL(f), fmt, f.name);
 };
 
@@ -200,6 +213,7 @@ if (sid) {
   GDB.json('/splats/' + encodeURIComponent(sid) + '/meta').then(m => {
     show('/api/splats/' + encodeURIComponent(sid), m.fmt, m.title || 'Shared piece');
     $('#shareOut').textContent = 'Shared link';
+    shareSplat(sid, m.title);
   }).catch(() => { tag.textContent = 'Not found'; say('That share link does not point at a 3D Photo any more.'); });
 } else {
   show('/splat/demo-pumpkin.splat', 'splat', 'Demo pumpkin');
@@ -243,6 +257,7 @@ $('#upBtn').onclick = async () => {
     $('#upOut').innerHTML = 'Share link: <a href="' + j.splat.share + '">' + link + '</a>';
     show('/api/splats/' + j.splat.id, j.splat.fmt, j.splat.title || f.name);
     history.replaceState(null, '', j.splat.share);
+    shareSplat(j.splat.id, j.splat.title || f.name);
     mine();
   } catch (e) { st.textContent = 'Failed: ' + e.message; }
 };

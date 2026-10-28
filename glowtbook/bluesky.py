@@ -43,6 +43,58 @@ def compose_text(title: str, maker: str, content_hash: str, link: str) -> str:
     return txt[:300]  # Bluesky post limit
 
 
+def verify_login(handle: str, app_password: str, pds: str = PDS, timeout: float = 15.0) -> str:
+    """Create a session to prove the handle + app password work; returns the DID."""
+    with httpx.Client(base_url=pds, timeout=timeout) as client:
+        r = client.post("/xrpc/com.atproto.server.createSession",
+                        json={"identifier": handle, "password": app_password})
+        r.raise_for_status()
+        return r.json().get("did", "")
+
+
+def link_facets(text: str, links: list[str]) -> list[dict]:
+    """Byte-offset facets so URLs in the text are clickable (Bluesky's rich text)."""
+    out = []
+    for url in links:
+        i = text.find(url)
+        if i < 0:
+            continue
+        start = len(text[:i].encode("utf-8"))
+        out.append({"index": {"byteStart": start, "byteEnd": start + len(url.encode("utf-8"))},
+                    "features": [{"$type": "app.bsky.richtext.facet#link", "uri": url}]})
+    return out
+
+
+def post(handle: str, app_password: str, text: str, image_bytes: bytes | None = None,
+         image_mime: str = "image/jpeg", alt: str = "", links: list[str] | None = None,
+         pds: str = PDS, timeout: float = 25.0) -> str:
+    """Post text (+ one image) to Bluesky; returns the post's web URL. Raises on failure."""
+    text = (text or "")[:300]
+    with httpx.Client(base_url=pds, timeout=timeout) as client:
+        r = client.post("/xrpc/com.atproto.server.createSession",
+                        json={"identifier": handle, "password": app_password})
+        r.raise_for_status()
+        sess = r.json()
+        jwt, did = sess["accessJwt"], sess["did"]
+        auth = {"Authorization": f"Bearer {jwt}"}
+        blob = None
+        if image_bytes:
+            up = client.post("/xrpc/com.atproto.repo.uploadBlob",
+                             headers={**auth, "Content-Type": image_mime}, content=image_bytes)
+            up.raise_for_status()
+            blob = up.json().get("blob")
+        record = build_post_record(text, blob, alt=alt)
+        facets = link_facets(text, links or [])
+        if facets:
+            record["facets"] = facets
+        cr = client.post("/xrpc/com.atproto.repo.createRecord", headers=auth, json={
+            "repo": did, "collection": "app.bsky.feed.post", "record": record})
+        cr.raise_for_status()
+        uri = cr.json().get("uri", "")
+        rkey = uri.rsplit("/", 1)[-1] if uri else ""
+        return f"https://bsky.app/profile/{handle}/post/{rkey}" if rkey else uri
+
+
 def publish_object(handle: str, app_password: str, title: str, maker: str,
                    content_hash: str, image_bytes: bytes | None = None,
                    link: str = "", pds: str = PDS, timeout: float = 20.0) -> str:
