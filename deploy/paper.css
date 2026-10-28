@@ -143,9 +143,6 @@ footer p{color:#D9CFC1}
 .live{font:500 12px/1.6 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:1.5rem}.live b{color:var(--red);font-weight:500}
 
 /* brand tagline (every header), buttons with a sentence, the three doors, the video slot */
-.brand{display:inline-block}
-.brand .tag{display:block;font:400 11px/1.3 var(--mono);letter-spacing:.02em;color:var(--muted);margin-top:.35rem;white-space:nowrap}
-@media (max-width:900px){.brand .tag{display:none}}
 .btns .b{display:flex;flex-direction:column;gap:.4rem;max-width:22rem}
 .btns .b small{font:400 13px/1.45 var(--sans);color:var(--muted)}
 .btns .b .btn,.btns .b .link{align-self:flex-start}

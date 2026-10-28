@@ -123,6 +123,20 @@
     });
   }
 
-  window.GDB = { API: API, api: api, json: json, me: me, token: token, headers: headers,
+  /* The primary menu — the SAME list as central/nav.py (tests/test_nav.py keeps them equal).
+     Pages carry <ul id="menu" data-nav data-active="key"></ul> and this fills it. */
+  var NAV = [["explore","Find Artists & Studios","/explore/"],["games","Collecting Events","/games.html"],["glassid","Glass ID","/fingerprint/enroll.html"],["glowtbook","Glowtbook","/glowtbook/"],["notes","Field notes","/blog/"],["about","About","/#about"]];
+  function menu(el, active) {
+    if (typeof el === "string") el = document.querySelector(el);
+    if (!el) return;
+    active = active || el.getAttribute("data-active") || "";
+    el.innerHTML = NAV.map(function (n) {
+      return '<li><a href="' + esc(n[2]) + '"' + (n[0] === active ? ' class="on"' : "") + ">" + esc(n[1]) + "</a></li>";
+    }).join("");
+  }
+  function renderMenus() { var els = document.querySelectorAll("ul#menu[data-nav]"); for (var i = 0; i < els.length; i++) menu(els[i]); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderMenus); else renderMenus();
+
+  window.GDB = { API: API, api: api, json: json, me: me, token: token, headers: headers, NAV: NAV, menu: menu,
     loginUrl: loginUrl, logout: logout, chip: chip, param: param, frag: frag, esc: esc };
 })();
