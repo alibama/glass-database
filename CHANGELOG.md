@@ -16,6 +16,9 @@ proof-of-concept features from production-ready ones in its docs.
   menu is spartan: *Find Artists & Studios* and the sign-in; *Glowtbook* and *My account* appear
   once signed in (`data-nav-show` / `data-nav-signed-in` on the menu placeholder, honoured by
   site.js; every other page keeps the full menu).
+- **The walkthrough short.** The YouTube short of registering a piece replaces the "video coming
+  soon" placeholder on the full tour (privacy-enhanced embed) and is linked from the front page's
+  Glowtbook-authentication entry, the capture app's intro and docs/FINGERPRINT-WORKFLOW.md.
 - **My account** (`/account.html`, in the primary menu with a red dot once signed in): everything
   a person added in one place — what is waiting on them as a numbered list of clicks, their pieces
   with a linked next step each, their entries and collection, connected accounts. The next step

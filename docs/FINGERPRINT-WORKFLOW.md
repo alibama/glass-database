@@ -2,6 +2,10 @@ People see this as **Glass ID — Register Your Piece** (see docs/NAMING.md); th
 
 # The fingerprint workflow — from "open the app" to "it's on the piece"
 
+*Watch it first:* [the walkthrough short](https://youtube.com/shorts/MjqwGRfsR_s) shows a piece being registered on the
+Photo Mat; it is embedded on [the full tour](https://glassdatabase.org/tour.html) and linked from
+the capture app and the front page.
+
 *Companion to [FINGERPRINT-PROTOCOL.md](FINGERPRINT-PROTOCOL.md) (which covers
 descriptors, calibration and thresholds). This page is about the **process**:
 who you are, which piece you're working on, where the capture goes, and what

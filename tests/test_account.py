@@ -72,3 +72,12 @@ def test_capture_app_puts_actions_before_the_shots():
     s = (DEPLOY / "fingerprint-web" / "enroll.html").read_text(encoding="utf-8")
     assert s.index('id="saveBtn"') < s.index('id="grid"')
     assert 'id="pctline"' in s and "S.overlay=false" in s
+
+
+def test_walkthrough_short_is_where_people_look():
+    short = "MjqwGRfsR_s"
+    tour = (DEPLOY / "tour.html").read_text(encoding="utf-8")
+    assert f"youtube-nocookie.com/embed/{short}" in tour and "coming soon" not in tour
+    assert short in (DEPLOY / "landing-index.html").read_text(encoding="utf-8")
+    assert short in (DEPLOY / "fingerprint-web" / "enroll.html").read_text(encoding="utf-8")
+    assert short in (ROOT / "docs" / "FINGERPRINT-WORKFLOW.md").read_text(encoding="utf-8")
