@@ -7,6 +7,12 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **The front page is the mission.** The homepage now carries the mission statement and the
+  seven ways we pursue it, each one linked into the part of the site where it happens (studio
+  docs and the cost calculator, the opportunities calendar and shows, field notes, collecting
+  events with the live season line, Glass ID and Glowtbook, the connections graph, the tables and
+  API). A short About keeps the `/#about` anchor, the menu and the *our own AI* note. The previous
+  long homepage lives on as **The full tour** (`/tour.html`, linked from the hero and the footer).
 - **My account** (`/account.html`, in the primary menu with a red dot once signed in): everything
   a person added in one place — what is waiting on them as a numbered list of clicks, their pieces
   with a linked next step each, their entries and collection, connected accounts. The next step
