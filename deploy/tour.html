@@ -16,7 +16,9 @@
 .about-grid .who{border-top:1px solid var(--rule);padding-top:1.2rem;margin-top:1.2rem}
 .ways .card{grid-column:span 4}
 .ways .card p{min-height:0}
-.how-grid{display:grid;grid-template-columns:7fr 5fr;gap:clamp(2rem,4vw,4rem);align-items:center}
+.how-grid{display:grid;grid-template-columns:5fr 7fr;gap:clamp(2rem,4vw,4rem);align-items:center}
+.video.short{aspect-ratio:9/16;width:min(100%,340px);justify-self:center;padding:0;background:#000;display:block}
+.video.short iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 @media (max-width:980px){.about-grid,.how-grid{grid-template-columns:1fr}.ways .card{grid-column:span 6}}
 @media (max-width:680px){.ways .card{grid-column:span 12}}
 </style>
@@ -92,13 +94,11 @@
 
 <section class="s alt" id="how" aria-labelledby="h-how">
  <div class="wrap how-grid">
-  <div class="video" role="img" aria-label="How it works, a two-minute video, coming soon">
-   <div><div class="play" aria-hidden="true"></div><h3>How it works</h3><p>Two minutes · video coming soon</p></div>
-  </div>
+  <div class="video short"><iframe src="https://www.youtube-nocookie.com/embed/MjqwGRfsR_s" title="Registering a piece: the Glass ID walkthrough" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
   <div><p class="label"><span class="n">№ 02</span> How it works</p>
-   <h2 id="h-how" style="margin:1rem 0 1.2rem">Two minutes, <em>start to finish.</em></h2>
+   <h2 id="h-how" style="margin:1rem 0 1.2rem">One short, <em>start to finish.</em></h2>
    <p class="lede">A maker gives a pumpkin its Glass ID on the Photo Mat. A collector buys it at a show, scans the code on the table, and the pumpkin joins their collection with the maker's name on it. Later, anyone can check the piece with a phone and see who made it.</p>
-   <p class="lede">Until the video is up, the three doors above are the walkthrough.</p>
+   <p class="lede">The short walks through registering a piece on the Photo Mat. If it does not play here, <a href="https://youtube.com/shorts/MjqwGRfsR_s">watch it on YouTube</a>; the three doors above are the written version.</p>
   </div>
  </div>
 </section>
