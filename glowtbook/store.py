@@ -197,6 +197,45 @@ def list_objects(store, central, uid: str) -> list[dict]:
     return [object_card(store, central, uid, o) for o in rows]
 
 
+def piece_url(oid: int, tab: str = "") -> str:
+    """The piece's page in Glowtbook (``?tab=`` keys are the stable deep-link words)."""
+    return f"/glowtbook/?page=objects&object={int(oid)}" + (f"&tab={tab}" if tab else "")
+
+
+def next_step(card: dict, *, season: dict | None = None, claims: dict | None = None,
+              entered: set[str] | None = None) -> dict:
+    """What this piece needs next, as something to click: ``{kind, label, url}``.
+
+    ONE definition for every surface (the Glowtbook home table, ``GET /api/me/objects``
+    and the My account page), so the words and the links never disagree.
+    ``claims`` is this piece's ``{"ok": n, "pending": n}`` from ``seasons.claim_counts``;
+    ``entered`` is the set of object row ids the person has entered in ``season``."""
+    oid = card["id"]
+    fp = card.get("fingerprint")
+    pub = card.get("publication") or {}
+    state = pub.get("state") or "private"
+    cc = claims or {"ok": 0, "pending": 0}
+    if not fp:
+        return {"kind": "register", "label": "Register it to get its Glass ID",
+                "url": f"/fingerprint/enroll.html?object={int(oid)}"}
+    if state == "rejected":
+        return {"kind": "publish", "label": "Fix it and publish again", "url": piece_url(oid, "contribute")}
+    if state == "private":
+        return {"kind": "publish", "label": "Publish it", "url": piece_url(oid, "contribute")}
+    if state == "pending":
+        return {"kind": "review", "label": "Waiting for review", "url": piece_url(oid, "contribute")}
+    if int(cc.get("pending") or 0):
+        n = int(cc["pending"])
+        return {"kind": "claims", "label": f"Confirm {n} collection request{'s' if n != 1 else ''}",
+                "url": piece_url(oid, "seasons")}
+    if season:
+        if pub.get("row_id") and pub["row_id"] in (entered or set()):
+            return {"kind": "entered", "label": f"Entered in {season['title']} · see the standings",
+                    "url": f"/games.html?season={season['slug']}"}
+        return {"kind": "enter", "label": f"Enter it in {season['title']}", "url": piece_url(oid, "seasons")}
+    return {"kind": "done", "label": "All set", "url": piece_url(oid)}
+
+
 def get_object(store, uid: str, oid: int):
     return store.execute("SELECT * FROM object WHERE id=? AND user_id=?", (oid, uid)).fetchone()
 

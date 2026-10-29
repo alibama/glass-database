@@ -27,7 +27,7 @@ header.site{border-bottom:1px solid var(--rule);background:var(--paper);position
 .nav{display:flex;align-items:center;justify-content:space-between;gap:1rem;min-height:68px}
 .brand{font:400 1.45rem/1 var(--serif);text-decoration:none;letter-spacing:-.01em}.brand i{color:var(--red)}
 .nav ul{display:flex;gap:clamp(1rem,2.4vw,2.2rem);list-style:none;margin:0;padding:0}
-.nav ul a{text-decoration:none;font-size:15px;color:var(--ink-2)}.nav ul a:hover{color:var(--red)}.nav ul a.on{color:var(--red)}
+.nav ul a{text-decoration:none;font-size:15px;color:var(--ink-2)}.nav ul a:hover{color:var(--red)}.nav ul a.on{color:var(--red)}.nav ul a.me{position:relative;padding-left:.9rem}.nav ul a.me::before{content:"";position:absolute;left:0;top:50%;width:7px;height:7px;margin-top:-3.5px;border-radius:50%;background:var(--red)}
 .nav .right{display:flex;gap:1.2rem;align-items:center}
 .nav .signin{font-size:15px;text-decoration:none}
 .menu-btn{display:none;background:none;border:1px solid var(--ink);padding:.5rem .8rem;font:500 13px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink)}

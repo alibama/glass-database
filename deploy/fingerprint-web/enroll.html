@@ -51,7 +51,13 @@
   #arc{fill:none; stroke:var(--hot); stroke-width:3.4; stroke-linecap:round;
     transition:stroke-dashoffset .5s cubic-bezier(.2,.8,.2,1), stroke .4s}
   #readyTick{stroke:var(--ink-dim); stroke-width:1.6}
-  #score{font-size:34px; font-weight:700; fill:var(--ink); letter-spacing:-.02em}
+  #score{font-size:27px; font-weight:700; fill:var(--ink); letter-spacing:-.02em}
+  /* the one line that says, in words, how far along the capture is */
+  #pctline{position:absolute; top:calc(max(12px,env(safe-area-inset-top)) + 178px); left:50%; transform:translateX(-50%);
+    background:#0A0D11cc; border:1px solid var(--line); border-radius:999px; padding:6px 12px; white-space:nowrap;
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.04em; color:var(--ink-dim); backdrop-filter:blur(8px)}
+  #pctline b{color:var(--hot); font-size:13px}
+  #pctline.ok b{color:var(--ok)}
   #tier{font-size:10px; font-weight:600; fill:var(--ink-dim); letter-spacing:.02em}
   #seal{opacity:0; transition:opacity .4s}
   #gauge.ready #arc{stroke:var(--ok)}
@@ -233,7 +239,7 @@
   .toolhint{position:absolute; right:18px; bottom:calc(92px + env(safe-area-inset-bottom)); max-width:46vw; margin:0; text-align:right;
     font-size:11px; line-height:1.35; color:var(--ink-dim); text-shadow:0 1px 6px #000}
   .btnhint{margin:8px 0 0!important; font-size:12px!important; color:var(--ink-faint)!important}
-  @media (max-width:430px){#hint,.toolhint{display:none} #tools{flex:none}}
+  @media (max-width:430px){#hint,.toolhint,#subs{display:none} #tools{flex:none}}
 </style>
 </head>
 <body>
@@ -260,6 +266,7 @@
     </svg>
     <div id="plus"></div>
   </div>
+  <div id="pctline" role="status" aria-live="polite"><b>0%</b> captured · ready at 75%</div>
 
   <div id="rail">
     <div class="chip target none" id="targetChip">Saving to <b>— export only</b></div>
@@ -280,7 +287,7 @@
     <div id="tools">
       <button class="tool" id="autoBtn">Auto</button>
       <button class="tool" id="flipBtn">Flip</button>
-      <button class="tool on" id="lensBtn">Lens</button>
+      <button class="tool" id="lensBtn">Lens</button>
       <button class="tool" id="aiBtn">AI: off</button>
       <select id="camSel" class="tool" style="display:none;max-width:150px" aria-label="Choose a camera"></select>
     </div>
@@ -289,10 +296,9 @@
 
   <div id="film">
     <div id="filmReview">
-      <h2>Your shots</h2>
+      <h2>What next?</h2>
       <p id="filmMeta">No shots yet.</p>
-      <div class="grid" id="grid"></div>
-      <div class="filmbtns">
+      <div class="filmbtns" style="margin-top:4px">
         <button class="primary" id="saveBtn" hidden>Give it its Glass ID</button>
         <button class="ghost" id="exportBtn">Export .zip</button>
         <button class="ghost" id="closeFilm">Keep going</button>
@@ -300,6 +306,11 @@
       </div>
       <p class="btnhint">The red button saves the Glass ID onto your piece; Export .zip downloads the shots to import later; Keep going returns to the camera; Start over throws the shots away.</p>
       <p id="saveHint" style="margin:10px 0 0;font-size:12px;color:var(--ink-faint)"></p>
+      <details id="shots" style="margin-top:14px">
+        <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--ink)">See the shots <span id="shotCount" style="color:var(--ink-dim);font-weight:400"></span></summary>
+        <p style="margin:8px 0 10px;font-size:12px;color:var(--ink-faint)">Tap × on a shot to drop it. You don't need to look through them: the number up top already says how much of the piece is captured.</p>
+        <div class="grid" id="grid"></div>
+      </details>
     </div>
     <div id="filmReceipt" class="receipt" hidden></div>
   </div>
@@ -502,8 +513,11 @@
     $("#fDet").style.width=(r.det*100)+"%";
     $("#fRob").style.width=(r.rob*100)+"%";
     $("#arc").style.strokeDashoffset=C*(1-r.total/100);
-    $("#score").textContent=r.total;
+    $("#score").textContent=r.total+"%";
     const ti=tierIdx(r.total); $("#tier").textContent=TIERS[ti][1];
+    const pl=$("#pctline"); if(pl){ pl.innerHTML=r.total>=READY
+      ? `<b>${r.total}%</b> captured · ready — keep going to strengthen it`
+      : `<b>${r.total}%</b> captured · ready at ${READY}%`; pl.classList.toggle("ok",r.total>=READY); }
     const g=$("#gauge");
     const nowReady=r.total>=READY;
     if(nowReady&&!S.ready){S.ready=true; toast(S.target?"Glass ID ready — give it to the piece, or keep going to strengthen it":"Glass ID ready — keep going to strengthen it","ok"); buzz([30,40,30]);}
@@ -635,7 +649,7 @@
 
   /* ---------- object spotlight overlay ---------- */
   const ov=$("#ov"), ovx=ov.getContext("2d"), objLabel=$("#objlabel");
-  S.overlay=true; S.subj=null; S.subjRaw=null;
+  S.overlay=false; S.subj=null; S.subjRaw=null;   // Lens is off by default: it dims the view and hid the progress
   function sizeOverlay(){ const vw=video.videoWidth||1280, vh=video.videoHeight||720;
     const s=Math.min(1,640/vw); ov.width=Math.round(vw*s); ov.height=Math.round(vh*s); }
   function setSubject(sx,sy,sxx,syy,cnt){
@@ -652,7 +666,7 @@
     if(raw){ if(!S.subj) S.subj={cx:raw.cx,cy:raw.cy,hw:raw.hw,hh:raw.hh,conf:raw.conf};
              else { const k=0.3; for(const key in raw) S.subj[key]+=(raw[key]-S.subj[key])*k; } }
     else if(S.subj){ S.subj.conf+=(0-S.subj.conf)*0.2; if(S.subj.conf<0.04) S.subj=null; }
-    ovx.fillStyle="rgba(8,11,13,0.5)"; ovx.fillRect(0,0,W,H);
+    ovx.fillStyle="rgba(8,11,13,0.3)"; ovx.fillRect(0,0,W,H);
     // central framing guide — keep the object inside this box (only the box is fingerprinted)
     (function(){const cw=W*0.6, ch=H*0.6, gx=(W-cw)/2, gy=(H-ch)/2;
       ovx.save(); ovx.setLineDash&&ovx.setLineDash([Math.max(4,W/90),Math.max(4,W/90)]);
@@ -840,7 +854,7 @@
         <button class="ghost" id="anotherBtn">Register another piece</button>
       </div>
       <p class="fine">Check it now opens Check a Piece with this piece loaded; Open in Glowtbook shows the piece's page; Register another piece starts again.</p>
-      <p class="fine" id="nextStep">Next: in Glowtbook → Objects → <b>Contribute</b> the piece — its Glass ID is published with it so anyone can check it from The Directory.</p>`;
+      <p class="fine" id="nextStep">Next: <a href="/glowtbook/?page=objects&object=${o.id}&tab=contribute"><b>publish the piece</b></a> (Glowtbook → My pieces → Publish) — its Glass ID goes out with it so anyone can check it from The Directory. Everything you've added is on <a href="/account.html">My account</a>.</p>`;
     $("#anotherBtn").onclick=()=>{ resetSession(); $("#film").classList.remove("open"); $("#gate").hidden=false; $("#gate").style.display=""; $("#hud").hidden=true; stopCamera(); loadPieces(); };
     if(G){ G.json("/seasons").then(s=>{ const cur=s&&s.current; if(cur){ $("#nextStep").insertAdjacentHTML("beforeend",
       ` Then <a href="/games.html?season=${esc(cur.slug)}">enter it in <b>${esc(cur.title)}</b></a> — this collecting event's call for pieces is open.`); } }).catch(()=>{}); }
@@ -871,6 +885,7 @@
   function refresh(){ $("#total").textContent=S.frames.length; $("#review").disabled=!S.frames.length;
     const _dc=dominantColor(aggChist(S.frames));
     $("#filmMeta").innerHTML=S.frames.length? `${S.frames.length} shots — rating ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]})`+(_dc?` · <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${_dc.hex};border:1px solid #0006"></span> ${_dc.name}`:"")+(S.dirty?' · <span style="color:var(--hot)">not saved</span>':"") :"No shots yet.";
+    const sc=$("#shotCount"); if(sc) sc.textContent=S.frames.length?`(${S.frames.length})`:"";
     const g=$("#grid"); g.innerHTML="";
     S.frames.slice().reverse().forEach(f=>{const d=document.createElement("div"); d.className="thumb";
       const tag=f.sharp<SHARP_MIN?"blurry":f.noveltyAtCapture<NOVELTY_MIN?"dup":"kept";

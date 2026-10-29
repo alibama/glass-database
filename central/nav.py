@@ -26,6 +26,7 @@ NAV: list[tuple[str, str, str]] = [
     ("glowtbook", "Glowtbook", "/glowtbook/"),
     ("notes", "Field notes", "/blog/"),
     ("about", "About", "/#about"),
+    ("account", "My account", "/account.html"),
 ]
 
 TAGLINE = "A home for every piece of glass and the people who make it."
