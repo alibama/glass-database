@@ -23,22 +23,94 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import logging
 import os
 import secrets
 import sys
 import time
+from html import escape
 from pathlib import Path
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 from fastapi import APIRouter, HTTPException, Request, Response
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from central import sessions  # noqa: E402
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 STATE_COOKIE = "gdb_oauth"
+STATE_TTL = 20 * 60                 # a sign-in has twenty minutes to come back from the provider
 _META_CACHE: dict[str, tuple[float, dict]] = {}
+log = logging.getLogger("glassdb.auth")
+
+
+# --- pending sign-ins ----------------------------------------------------------
+# The state cookie is the first line; a copy of the same signed token is kept in the
+# central database keyed by the public ``state`` value, so a sign-in still finishes
+# when the browser drops the cookie between leaving for the provider and coming back
+# (seen on phones: in-app browsers, storage partitioning, a reload mid-flow). The
+# record is single-use and expires with STATE_TTL.
+def _state_hash(raw: str) -> str:
+    return hashlib.sha256(raw.encode()).hexdigest()[:32]
+
+
+def _pending_db():
+    try:
+        from central.dbconn import connect
+        c = connect()
+        c.execute("CREATE TABLE IF NOT EXISTS oauth_pending (state_hash TEXT PRIMARY KEY, "
+                  "token TEXT NOT NULL, created_at REAL NOT NULL)")
+        return c
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _pending_put(state_hash: str, token: str) -> None:
+    c = _pending_db()
+    if c is None:
+        return
+    try:
+        c.execute("DELETE FROM oauth_pending WHERE created_at < ?", (time.time() - STATE_TTL,))
+        c.execute("INSERT OR REPLACE INTO oauth_pending (state_hash, token, created_at) VALUES (?,?,?)",
+                  (state_hash, token, time.time()))
+        c.commit()
+    except Exception:  # noqa: BLE001
+        log.exception("could not record the pending sign-in")
+
+
+def _pending_take(state_hash: str) -> str | None:
+    """The token for this state, once; the record is removed whether or not it was fresh."""
+    c = _pending_db()
+    if c is None or not state_hash:
+        return None
+    try:
+        r = c.execute("SELECT token FROM oauth_pending WHERE state_hash=? AND created_at >= ?",
+                      (state_hash, time.time() - STATE_TTL)).fetchone()
+        c.execute("DELETE FROM oauth_pending WHERE state_hash=?", (state_hash,))
+        c.commit()
+        return r[0] if r else None
+    except Exception:  # noqa: BLE001
+        return None
+
+
+def _fail_page(request: Request, title: str, why: str, nxt: str = "/", status: int = 400) -> HTMLResponse:
+    """A readable page instead of raw JSON when a sign-in cannot finish (ASCII only:
+    phones have shown this page with the wrong charset)."""
+    again = f"{_api_prefix(request)}/auth/login?next={quote(_safe_next(nxt), safe='')}"
+    body = f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>{escape(title)} - Glass Database</title>
+<style>body{{margin:0;background:#F4EEE4;color:#1F1A16;font:16px/1.5 Inter,system-ui,sans-serif}}
+main{{max-width:34rem;margin:0 auto;padding:3rem 1.25rem}}h1{{font:400 2rem/1.15 Georgia,serif;margin:0 0 1rem}}
+p{{margin:0 0 1rem;color:#4A423A}}a.b{{display:inline-block;border:1px solid #1F1A16;padding:.7rem 1.1rem;color:#1F1A16;text-decoration:none;
+font:500 12px/1 ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase}}a.b:hover{{background:#1F1A16;color:#F4EEE4}}
+small{{display:block;margin-top:2rem;color:#6B6157;font-size:13px}}</style></head><body><main>
+<p style="font:500 11px/1 ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;color:#B3261E">Sign-in</p>
+<h1>{escape(title)}</h1><p>{escape(why)}</p>
+<p><a class="b" href="{escape(again)}">Try again</a> &nbsp; <a class="b" href="/">Home</a></p>
+<small>Nothing you were doing is lost: the capture app keeps your shots on the phone, and your pieces are in Glowtbook.
+If this keeps happening, say so on the Discord and name the phone and browser.</small></main></body></html>"""
+    return HTMLResponse(body, status_code=status)
 
 
 # --- resolving the caller ---------------------------------------------------
@@ -148,6 +220,7 @@ def providers(request: Request):
     dev = os.environ.get("GLASSDB_DEV_LOGIN") == "1"
     return {"configured": bool(p) or dev, "provider": (p[0] if p else ("dev" if dev else None)),
             "login": f"{_api_prefix(request)}/auth/login",
+            "secret_source": sessions.secret_source(),
             "redirect_uri": redirect_uri(request) if p else None,
             "pairing": "Open the capture app from Glowtbook → Objects → Fingerprint to pair a "
                        "device without signing in again.",
@@ -171,44 +244,80 @@ def login(request: Request, next: str = "/"):  # noqa: A002
     verifier = secrets.token_urlsafe(48)
     challenge = base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).rstrip(b"=").decode()
     nonce = secrets.token_urlsafe(16)
-    state = sessions.issue("oauth", ttl=600, kind="state",
+    state = sessions.issue("oauth", ttl=STATE_TTL, kind="state",
                            extra={"next": _safe_next(next), "v": verifier, "nonce": nonce, "p": name})
+    sh = _state_hash(state)
+    _pending_put(sh, state)
     params = {"response_type": "code", "client_id": cfg["client_id"],
               "redirect_uri": redirect_uri(request), "scope": "openid email profile",
-              "state": hashlib.sha256(state.encode()).hexdigest()[:32],
-              "code_challenge": challenge, "code_challenge_method": "S256", "nonce": nonce}
+              "state": sh, "code_challenge": challenge, "code_challenge_method": "S256", "nonce": nonce}
     resp = RedirectResponse(meta["authorization_endpoint"] + "?" + urlencode(params))
-    resp.set_cookie(STATE_COOKIE, state, max_age=600, path="/", httponly=True,
+    resp.set_cookie(STATE_COOKIE, state, max_age=STATE_TTL, path="/", httponly=True,
                     samesite="lax", secure=_secure(request))
     return resp
 
 
-@router.get("/callback", name="auth_callback", summary="Finish sign-in and set the session cookie")
-def callback(request: Request, code: str = "", state: str = "", error: str = ""):
-    if error:
-        raise HTTPException(400, f"Sign-in was cancelled or failed: {error}")
-    raw_state = request.cookies.get(STATE_COOKIE, "")
-    st = sessions.verify(raw_state, kinds=("state",))
-    if not st or hashlib.sha256(raw_state.encode()).hexdigest()[:32] != state:
-        raise HTTPException(400, "Sign-in state didn't match (expired or tampered) — try again.")
-    p = provider()
-    if not p or p[0] != st.get("p"):
-        raise HTTPException(503, "Sign-in provider changed mid-flow — try again.")
-    _, cfg = p
-    meta = _metadata(cfg["server_metadata_url"])
+def _exchange(cfg: dict, meta: dict, code: str, verifier: str, redirect: str) -> dict:
+    """Code -> tokens -> userinfo at the provider. Raises HTTPException with a plain message."""
     import httpx
     with httpx.Client(timeout=15) as c:
         tok = c.post(meta["token_endpoint"], data={
-            "grant_type": "authorization_code", "code": code, "redirect_uri": redirect_uri(request),
-            "client_id": cfg["client_id"], "client_secret": cfg["client_secret"],
-            "code_verifier": st.get("v", "")})
+            "grant_type": "authorization_code", "code": code, "redirect_uri": redirect,
+            "client_id": cfg["client_id"], "client_secret": cfg["client_secret"], "code_verifier": verifier})
         if tok.status_code != 200:
             raise HTTPException(400, f"Token exchange failed: {tok.text[:200]}")
         access = tok.json().get("access_token")
         ui = c.get(meta["userinfo_endpoint"], headers={"Authorization": f"Bearer {access}"})
         if ui.status_code != 200:
             raise HTTPException(400, "Couldn't read your profile from the provider.")
-        info = ui.json()
+        return ui.json()
+
+
+def _hands_token_to_page(path: str) -> bool:
+    """Static pages load site.js, which keeps a token in localStorage and sends it as a
+    Bearer header, so a sign-in survives a browser that drops cookies. The Streamlit
+    apps and the API docs do not read it, so they get the cookie alone."""
+    p = (path or "/").split("?")[0].split("#")[0]
+    return not p.startswith(("/glowtbook", "/explore", "/admin", "/api"))
+
+
+@router.get("/callback", name="auth_callback", summary="Finish sign-in and set the session cookie")
+def callback(request: Request, code: str = "", state: str = "", error: str = ""):
+    if error:
+        return _fail_page(request, "Sign-in was cancelled", f"The provider said: {error}.")
+    # 1. the cookie this browser was given when it left; 2. the server's copy of the same
+    # token, found by the public state value, for a browser that dropped the cookie.
+    raw_cookie = request.cookies.get(STATE_COOKIE, "")
+    from_cookie = sessions.verify(raw_cookie, kinds=("state",)) if raw_cookie else None
+    record = _pending_take(state)                     # single use, whichever path we take
+    if from_cookie and _state_hash(raw_cookie) == state:
+        st, how = from_cookie, "cookie"
+    else:
+        st = sessions.verify(record, kinds=("state",)) if record else None
+        how = "record"
+        if st:
+            log.warning("sign-in finished from the server record (%s); ua=%s",
+                        "no state cookie" if not raw_cookie else
+                        ("cookie expired" if not from_cookie else "cookie for another attempt"),
+                        request.headers.get("user-agent", "")[:120])
+    if not st:
+        why = ("no state cookie came back" if not raw_cookie else
+               "the state cookie had expired" if not from_cookie else "the state cookie was for a different attempt")
+        log.warning("sign-in could not finish: %s and no fresh record; ua=%s", why,
+                    request.headers.get("user-agent", "")[:120])
+        # the person may already be signed in (a refresh or back-button replay of the callback)
+        if current_user(request):
+            return RedirectResponse("/account.html", status_code=303)
+        return _fail_page(request, "That sign-in didn't finish",
+                          f"Your browser came back from the provider but {why}, so the sign-in could not be "
+                          "trusted. This happens when a page reloads mid-way, in some in-app browsers, or after "
+                          "twenty minutes. Try again; it usually works the second time.")
+    p = provider()
+    if not p or p[0] != st.get("p"):
+        return _fail_page(request, "Sign-in provider changed", "The provider changed mid-flow. Try again.", status=503)
+    _, cfg = p
+    meta = _metadata(cfg["server_metadata_url"])
+    info = _exchange(cfg, meta, code, st.get("v", ""), redirect_uri(request))
     uid = info.get("sub") or info.get("email")
     email = (info.get("email") or "").lower()
     name = info.get("name") or info.get("preferred_username") or email
@@ -220,9 +329,17 @@ def callback(request: Request, code: str = "", state: str = "", error: str = "")
         users.record_login(connect(), email, name)
     except Exception:  # noqa: BLE001
         pass
-    resp = RedirectResponse(st.get("next") or "/", status_code=303)
-    set_session_cookie(resp, request, sessions.issue(uid, email, name))
+    nxt = st.get("next") or "/"
+    token = sessions.issue(uid, email, name)
+    # static pages also get the token in the URL fragment (never sent to the server, never
+    # logged); site.js stores it and sends it as a Bearer header, so the capture app stays
+    # signed in even when a browser drops the cookie.
+    if _hands_token_to_page(nxt) and "#" not in nxt:
+        nxt = f"{nxt}#session={quote(token, safe='')}"
+    resp = RedirectResponse(nxt, status_code=303)
+    set_session_cookie(resp, request, token)
     resp.delete_cookie(STATE_COOKIE, path="/")
+    log.info("sign-in finished via %s for %s", how, email or uid)
     return resp
 
 

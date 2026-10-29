@@ -207,6 +207,13 @@ EOF
     say "Wrote $ENV_FILE with a fresh API admin token (X-API-Key)"
 else
     say "Kept existing $ENV_FILE"
+    # older .env files predate these; sign-in needs both to be right
+    if ! grep -q '^PUBLIC_BASE_URL=' "$ENV_FILE"; then
+        echo "PUBLIC_BASE_URL=https://$DOMAIN" >> "$ENV_FILE"; say "Added PUBLIC_BASE_URL=https://$DOMAIN to .env"
+    fi
+    if ! grep -q '^GLASSDB_SESSION_SECRET=' "$ENV_FILE" && ! grep -q '^GLASSDB_ADMIN_TOKEN=[^c]' "$ENV_FILE"; then
+        echo "GLASSDB_SESSION_SECRET=$(openssl rand -hex 32)" >> "$ENV_FILE"; say "Added GLASSDB_SESSION_SECRET to .env"
+    fi
 fi
 
 # --- admin web login (basic auth) ------------------------------------------
