@@ -23,7 +23,7 @@ def test_static_pages_carry_the_placeholder_not_items():
     assert pages
     for p in pages:
         s = p.read_text(encoding="utf-8")
-        assert re.search(r'<ul id="menu" data-nav data-active="[a-z]*"></ul>', s), p.name
+        assert re.search(r'<ul id="menu" data-nav data-active="[a-z]*"( data-nav-[a-z-]+="[a-z,]*")*></ul>', s), p.name
         assert '<ul id="menu">' not in s, f"{p.name} hard-codes menu items"
         assert '<small class="tag">' not in s, f"{p.name} still has the header tagline"
     for p in (DEPLOY / "blog").glob("*.html"):
@@ -44,3 +44,16 @@ def test_brand_uses_central_nav():
     src = (ROOT / "brand" / "__init__.py").read_text(encoding="utf-8")
     assert "from central import nav" in src and "menu_html(" in src
     assert "gdb-tagline" not in src
+
+
+def test_home_page_menu_is_spartan():
+    """The front page shows Find Artists & Studios and the sign-in; Glowtbook and My account
+    appear once signed in. site.js honours the two data-nav-* attributes; other pages are untouched."""
+    home = (DEPLOY / "landing-index.html").read_text(encoding="utf-8")
+    assert 'data-nav-show="explore" data-nav-signed-in="glowtbook,account"' in home
+    js = (DEPLOY / "site.js").read_text(encoding="utf-8")
+    assert 'data-nav-show' in js and 'data-nav-signed-in' in js
+    for key in ("explore", "glowtbook", "account"):
+        assert key in [k for k, _, _ in nav.NAV]
+    others = [p for p in DEPLOY.glob("*.html") if p.name != "landing-index.html"]
+    assert others and all("data-nav-show" not in p.read_text(encoding="utf-8") for p in others)

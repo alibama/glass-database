@@ -12,7 +12,10 @@ proof-of-concept features from production-ready ones in its docs.
   docs and the cost calculator, the opportunities calendar and shows, field notes, collecting
   events with the live season line, Glass ID and Glowtbook, the connections graph, the tables and
   API). A short About keeps the `/#about` anchor, the menu and the *our own AI* note. The previous
-  long homepage lives on as **The full tour** (`/tour.html`, linked from the hero and the footer).
+  long homepage lives on as **The full tour** (`/tour.html`, linked from the footer). The front page's
+  menu is spartan: *Find Artists & Studios* and the sign-in; *Glowtbook* and *My account* appear
+  once signed in (`data-nav-show` / `data-nav-signed-in` on the menu placeholder, honoured by
+  site.js; every other page keeps the full menu).
 - **My account** (`/account.html`, in the primary menu with a red dot once signed in): everything
   a person added in one place — what is waiting on them as a numbered list of clicks, their pieces
   with a linked next step each, their entries and collection, connected accounts. The next step
