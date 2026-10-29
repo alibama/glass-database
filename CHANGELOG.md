@@ -17,7 +17,23 @@ proof-of-concept features from production-ready ones in its docs.
   server today, a private network of lent machines being built), an honest what-runs-where table,
   why we build our own AI for members instead of renting one, and how to lend a machine. About
   gained the same note; Ways in gained *Lend a machine*.
+### Fixed
+- **Everything moves to https.** The :80 vhost now redirects to https (ACME path excepted),
+  the proxy snippet sends HSTS, the API redirects any request that arrives with
+  `X-Forwarded-Proto: http` when `PUBLIC_BASE_URL` is https, and the session cookie is always
+  Secure on an https site. Plain-http pages used to look signed out (the Secure cookie was not
+  sent), which broke sign-in. `a2enmod rewrite` is part of the installer.
+- **The capture rating was a frame counter.** Without a compass (laptops, iOS without motion
+  access, Android browsers that send no heading) every auto shot opened a new coverage cell, so
+  the rating read 100% at about 71 shots whatever you pointed at. Now a new cell needs a view
+  that differs clearly from every shot so far, coverage credit without a compass tops out at 75%
+  (the rating at "Strong", never "Verified-ready"), and detail and robustness only count in
+  proportion to coverage. The fingerprint document records `scoring: v2`.
 ### Changed
+- **Register Your Piece, the first screen**: choosing a piece now shows its one next step right
+  under the list — *Enable camera and register it* for a piece without a Glass ID, or the piece's
+  real next step (publish, enter, confirm) when it already has one, with *Register it again* as the
+  quieter option. Step 3 is retitled after the chosen piece and says when none is chosen.
 - **Register Your Piece**: the Lens overlay is off by default (it dimmed the view and hid the
   progress) and lighter when on; the gauge reads as a percentage with a plain line under it
   (*62% captured · ready at 75%*); the three small bars are hidden on phones; the Review drawer
