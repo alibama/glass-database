@@ -136,13 +136,24 @@
     if (typeof el === "string") el = document.querySelector(el);
     if (!el) return;
     active = active || el.getAttribute("data-active") || "";
-    el.innerHTML = NAV.map(function (n) {
-      return '<li><a href="' + esc(n[2]) + '"' + (n[0] === active ? ' class="on"' : "") + ' data-key="' + esc(n[0]) + '">' + esc(n[1]) + "</a></li>";
-    }).join("");
+    // A page may keep the menu spartan: data-nav-show="explore" lists the keys always shown,
+    // data-nav-signed-in="glowtbook,account" the keys that appear once the person is signed in.
+    var split = function (v) { return v ? v.split(",").map(function (x) { return x.trim(); }).filter(Boolean) : null; };
+    var show = split(el.getAttribute("data-nav-show")), more = split(el.getAttribute("data-nav-signed-in")) || [];
+    function render(signedIn) {
+      el.innerHTML = NAV.filter(function (n) {
+        return !show || show.indexOf(n[0]) >= 0 || (signedIn && more.indexOf(n[0]) >= 0);
+      }).map(function (n) {
+        return '<li><a href="' + esc(n[2]) + '"' + (n[0] === active ? ' class="on"' : "") + ' data-key="' + esc(n[0]) + '">' + esc(n[1]) + "</a></li>";
+      }).join("");
+    }
+    render(false);
     // "My account" carries a red dot once the person is signed in (the same dot as the chip)
     me(true).then(function (m) {
+      if (!m || !m.signed_in) return;
+      if (show && more.length) render(true);
       var a = el.querySelector('a[data-key="account"]');
-      if (a && m && m.signed_in) { a.classList.add("me"); a.title = "Signed in as " + (m.name || m.email || "you"); }
+      if (a) { a.classList.add("me"); a.title = "Signed in as " + (m.name || m.email || "you"); }
     }).catch(function () {});
   }
   function renderMenus() { var els = document.querySelectorAll("ul#menu[data-nav]"); for (var i = 0; i < els.length; i++) menu(els[i]); }
