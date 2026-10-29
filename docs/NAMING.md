@@ -59,7 +59,10 @@ The homepage opens with three doors, each a short path:
 ## Navigation
 
 Primary nav (every page, in this order): **Find Artists & Studios** · **Collecting Events** ·
-**Glass ID** · **Glowtbook** · **Field notes** · **About**. The brand links home.
+**Glass ID** · **Glowtbook** · **Field notes** · **About** · **My account**. The brand links home.
+**My account** (`/account.html`) is the one place a signed-in person finds everything they added:
+their pieces with a next step each, their collection, their entries, what is waiting on them. It
+carries a red dot in the menu once they are signed in; signed out it is the sign-in page.
 
 Sub-navs (the crumb is the primary item, then its pages):
 
@@ -76,4 +79,12 @@ Sub-navs (the crumb is the primary item, then its pages):
 Footer columns: **Find** (Directory, Connections, Map, Jobs, Calls & Classes, For
 Researchers) · **Collect** (Collecting Events, Shows & Sales, Add to My Collection, Check a
 Piece) · **Make** (Glowtbook, Register Your Piece, 3D Photo, Studio docs, Studio Cost
-Calculator) · **Elsewhere** (Discord, Instagram, Field notes, GitHub, About).
+Calculator) · **Elsewhere** (Discord, Instagram, Field notes, GitHub, How it runs, About).
+
+- About › The project (`/#about`) · How it runs (`/infrastructure.html`: what runs where today,
+  the private network being built, how to lend a machine) · Field notes · Code · Discord.
+
+**Next step** (the last column of every pieces table, in Glowtbook and on My account) comes from
+one function, `glowtbook.store.next_step`, so the words and links never differ: *Register it to
+get its Glass ID* → *Publish it* → *Waiting for review* → *Confirm n collection requests* →
+*Enter it in <event>* → *Entered in <event> · see the standings* → *All set*.

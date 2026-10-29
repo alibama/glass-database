@@ -73,9 +73,32 @@ def me(request: Request):
                        "pending": sum(1 for o in objs if o["publication"]["state"] == "pending")}}
 
 
+def _with_next(central, uid: str, cards: list[dict]) -> list[dict]:
+    """Attach ``next`` (what to do with the piece, as a link) to each card —
+    the same words the Glowtbook home table shows (``glowtbook.store.next_step``)."""
+    season, claims, entered = None, {}, set()
+    if central is not None:
+        try:
+            from central import seasons
+            seasons.ensure(central)
+            season = seasons.current_season(central)
+            claims = seasons.claim_counts(central, [c["publication"].get("row_id") for c in cards])
+            if season:
+                entered = {e["object_row_id"] for e in seasons.my_entries(central, uid)
+                           if e.get("season_id") == season["id"]}
+        except Exception:  # noqa: BLE001
+            season, claims, entered = None, {}, set()
+    for c in cards:
+        c["next"] = gstore.next_step(c, season=season,
+                                     claims=claims.get(c["publication"].get("row_id")), entered=entered)
+        c["url"] = gstore.piece_url(c["id"])
+    return cards
+
+
 @router.get("/objects", summary="My pieces")
 def my_objects(u: dict = Depends(require_user)):
-    return {"objects": gstore.list_objects(_store(), _central(), u["uid"])}
+    central = _central()
+    return {"objects": _with_next(central, u["uid"], gstore.list_objects(_store(), central, u["uid"]))}
 
 
 @router.post("/objects", summary="Quick-create a piece (from the capture app)")

@@ -236,32 +236,38 @@ if page == "home":
         m3.metric("Published", n_pub); m4.metric("In review", n_pend)
         n_wait = sum(v["pending"] for v in _claims.values())
         if n_wait:
+            _first = next((c for c in _cards
+                           if (_claims.get(c["publication"].get("row_id")) or {}).get("pending")), None)
+            _where = gstore.piece_url(_first["id"], "seasons") if _first else "/glowtbook/?page=objects"
             st.info(f"🧾 **{n_wait} collection request(s) waiting for you** — a collector scanned a "
-                    "piece of yours but the match was under 70. Confirm or reject in "
-                    "My pieces → Collecting Events.")
+                    f"piece of yours but the match was under 70. [Confirm or reject them]({_where}).")
+        _entered = set()
+        if _season:
+            try:
+                _entered = {e["object_row_id"] for e in _sea.my_entries(_central(), uid)
+                            if e.get("season_id") == _season["id"]}
+            except Exception:  # noqa: BLE001
+                _entered = set()
+        _ICON = {"register": "📷", "publish": "📤", "review": "🕐", "claims": "🧾", "enter": "🎃",
+                 "entered": "🏆", "done": "✓"}
         rows = ["| Piece | Glass ID | Registry | Collection requests | Next step |", "|---|---|---|---|---|"]
         for c in _cards[:25]:
             fp = c["fingerprint"]
-            fp_txt = f"{fp['rating']}/100 {fp['tier']}" if fp else "—"
+            fp_txt = (f"[{fp['rating']}/100 {fp['tier']}]({gstore.piece_url(c['id'], 'fingerprint')})"
+                      if fp else f"[—]({gstore.piece_url(c['id'], 'fingerprint')})")
             stt = c["publication"]["state"]
             reg = {"published": "✅ published", "pending": "🕐 in review", "rejected": "✖ rejected"}.get(stt, "private")
+            reg = f"[{reg}]({gstore.piece_url(c['id'], 'contribute')})"
             cc = _claims.get(c["publication"].get("row_id")) or {"ok": 0, "pending": 0}
             cl_txt = " · ".join(x for x in [f"{cc['ok']} ✓" if cc["ok"] else "",
                                            f"{cc['pending']} waiting" if cc["pending"] else ""] if x) or "—"
-            if not fp:
-                nxt = "📷 register it to get its Glass ID"
-            elif stt == "private":
-                nxt = "📤 publish it (My pieces → Publish)"
-            elif stt == "pending":
-                nxt = "waiting for review"
-            elif cc["pending"]:
-                nxt = f"🧾 confirm {cc['pending']} collection request(s) (My pieces → Collecting Events)"
-            elif stt == "published" and _season:
-                nxt = f"🎃 enter it in {_season['title']}"
-            else:
-                nxt = "✓ all set"
-            rows.append(f"| **{c['title']}** | {fp_txt} | {reg} | {cl_txt} | {nxt} |")
+            if cc["ok"] or cc["pending"]:
+                cl_txt = f"[{cl_txt}]({gstore.piece_url(c['id'], 'seasons')})"
+            nx = gstore.next_step(c, season=_season, claims=cc, entered=_entered)
+            nxt = f"{_ICON.get(nx['kind'], '')} [{nx['label']}]({nx['url']})".strip()
+            rows.append(f"| [**{c['title']}**]({gstore.piece_url(c['id'])}) | {fp_txt} | {reg} | {cl_txt} | {nxt} |")
         st.markdown("\n".join(rows))
+        st.caption("Every cell is a link: the title opens the piece, the next step takes you where it happens.")
         c1, c2 = st.columns(2)
         c1.link_button("📷 Register Your Piece", "/fingerprint/enroll.html", use_container_width=True)
         c1.caption("Walk around it with your phone; it gets its Glass ID.")

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How it runs — Glass Database</title>
+<meta name="description" content="What the Glass Database runs on today, what we are building next (our own AI for members, on machines the community lends), and how to get involved.">
+<meta property="og:title" content="How it runs — Glass Database">
+<meta property="og:description" content="One small server today. A private network of lent machines next, so the AI that reads your glass stays ours.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 16ch; }
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
+
+  /* the topology drawing */
+  .topo { margin: 2rem 0 0; border: 1px solid var(--ink); background: var(--paper-2); padding: 1rem; }
+  .topo svg { width: 100%; height: auto; display: block; font-family: var(--sans); }
+  .topo .box { fill: var(--paper); stroke: var(--ink); stroke-width: 1.2; }
+  .topo .box.plan { stroke-dasharray: 5 4; }
+  .topo .cloud { fill: none; stroke: var(--red); stroke-width: 1.2; stroke-dasharray: 3 5; }
+  .topo .t { fill: var(--ink); font-size: 15px; font-weight: 600; }
+  .topo .s { fill: var(--ink-2); font-size: 12.5px; }
+  .topo .m { fill: var(--muted); font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
+  .topo .red { fill: var(--red); }
+  .topo .wire { stroke: var(--ink); stroke-width: 1.2; fill: none; }
+  .topo .wire.plan { stroke: var(--red); stroke-dasharray: 4 4; }
+  .legend { display: flex; gap: 1.6rem; flex-wrap: wrap; margin: .9rem 0 0; font: 400 12px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 22px; height: 0; border-top: 1.5px solid var(--ink); margin-right: .5rem; vertical-align: middle; }
+  .legend span.plan::before { border-top: 1.5px dashed var(--red); }
+
+  .tbl table { min-width: 0; }
+  .tbl td:first-child { white-space: nowrap; }
+  .tag { display: inline-block; font: 500 10px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; padding: .3rem .5rem; border: 1px solid var(--ink); color: var(--ink); }
+  .tag.plan { border-color: var(--red); color: var(--red); }
+  .tag.want { border-style: dashed; color: var(--muted); border-color: var(--muted); }
+  .promise { margin-top: 1.6rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 0 2.5rem; border-top: 1px solid var(--ink); }
+  .promise div { padding: 1.4rem 0; border-bottom: 1px solid var(--rule); }
+  .promise h3 { margin: 0 0 .5rem; font-size: 1.25rem; }
+  .promise p { margin: 0; color: var(--ink-2); font-size: 15px; }
+  @media (max-width: 760px) { .promise { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active="about"></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">About</span><a href="/#about">The project</a><a href="/infrastructure.html" class="on" aria-current="page">How it runs</a><a href="/blog/">Field notes</a><a href="https://github.com/alibama/glass-database">Code</a><a href="https://discord.gg/9ek2UxvPT">Discord</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> How it runs</p>
+  <h1>Small machines, <em>kept by the field.</em></h1>
+  <p class="lede">The Glass Database runs on one small rented server today. We are building the next layer ourselves, out of machines the community lends, so that the AI that reads your photos and video belongs to the people who make and collect the glass, and stays available to members rather than rented from a vendor. This page says what is running now, what is next, and how to help.</p>
+  <div class="btns"><div class="act"><a class="btn btn--red" href="https://discord.gg/9ek2UxvPT">Join the Discord</a><small>Where the infrastructure gets talked through and machines get added.</small></div>
+   <div class="act"><a class="btn btn--line" href="https://github.com/alibama/glass-database/blob/main/docs/INFRASTRUCTURE.md">Read the runbook</a><small>The operator's version: services, ports, the overlay, backups.</small></div></div>
+ </div>
+</section>
+
+<section class="s alt" id="topology" aria-labelledby="h-topo">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> The shape of it</p>
+   <div><h2 id="h-topo">One public door, <em>a private workshop behind it.</em></h2><p class="lede">Everything you touch goes through the public server. The machines that do the heavy reading sit on a private network behind it, reachable only by that server, never by the open internet. Solid lines run today; red dashed lines are what we are building.</p></div></div>
+  <figure class="topo" aria-describedby="topo-desc">
+   <svg viewBox="0 0 960 470" role="img" aria-labelledby="topo-title">
+    <title id="topo-title">Topology: browsers and phones reach the public server; the server reaches lent machines over a private network</title>
+    <!-- you -->
+    <rect class="box" x="24" y="40" width="190" height="112"/>
+    <text class="m" x="40" y="64">You</text>
+    <text class="t" x="40" y="88">A phone or a browser</text>
+    <text class="s" x="40" y="110">The site, Glowtbook, the capture</text>
+    <text class="s" x="40" y="128">app, Check a Piece.</text>
+    <!-- public server -->
+    <rect class="box" x="300" y="24" width="330" height="200"/>
+    <text class="m" x="316" y="48">Public server · today</text>
+    <text class="t" x="316" y="72">glassdatabase.org</text>
+    <text class="s" x="316" y="96">Apache · the pages and the API</text>
+    <text class="s" x="316" y="114">Glowtbook, Find Artists &amp; Studios, Admin</text>
+    <text class="s" x="316" y="132">The registry (SQLite) and the archive</text>
+    <text class="s" x="316" y="150">Glass ID checks · C2PA signing</text>
+    <text class="s" x="316" y="168">Google sign-in · Discord notices</text>
+    <text class="m" x="316" y="204">One small rented box</text>
+    <!-- handshake -->
+    <rect class="box" x="300" y="250" width="330" height="70"/>
+    <text class="m" x="316" y="274">Also on that box · today</text>
+    <text class="t" x="316" y="298">Private-network handshake</text>
+    <text class="s" x="470" y="298">(NetBird; it only introduces machines)</text>
+    <!-- overlay cloud -->
+    <rect class="cloud" x="680" y="24" width="260" height="420" rx="18"/>
+    <text class="m red" x="700" y="50">Private network · next</text>
+    <rect class="box plan" x="700" y="68" width="220" height="92"/>
+    <text class="t" x="714" y="92">A quiet Linux laptop</text>
+    <text class="s" x="714" y="112">16 GB · the first worker: reads</text>
+    <text class="s" x="714" y="130">photos as they arrive, writes a</text>
+    <text class="s" x="714" y="148">caption and a check for each piece</text>
+    <rect class="box plan" x="700" y="180" width="220" height="92"/>
+    <text class="t" x="714" y="204">A machine with a GPU</text>
+    <text class="s" x="714" y="224">Wanted. Turns capture photos into</text>
+    <text class="s" x="714" y="242">3D Photos overnight; faster</text>
+    <text class="s" x="714" y="260">reading of video.</text>
+    <rect class="box plan" x="700" y="292" width="220" height="74"/>
+    <text class="t" x="714" y="316">Storage</text>
+    <text class="s" x="714" y="336">Originals and derived files on a</text>
+    <text class="s" x="714" y="354">disk next to the workers; backed up.</text>
+    <text class="s" x="700" y="396">Members' machines, lent. Each one</text>
+    <text class="s" x="700" y="414">receives work only from the server,</text>
+    <text class="s" x="700" y="432">and can leave at any time.</text>
+    <!-- wires -->
+    <path class="wire" d="M214 96 H300" marker-end="url(#a)"/>
+    <text class="m" x="222" y="88">https</text>
+    <path class="wire plan" d="M630 120 H700"/>
+    <path class="wire plan" d="M630 140 Q665 140 665 226 Q665 226 700 226"/>
+    <path class="wire plan" d="M630 160 Q660 160 660 330 Q660 330 700 330"/>
+    <text class="m red" x="636" y="108">queue</text>
+    <path class="wire plan" d="M465 320 V352 H690"/>
+    <text class="m red" x="476" y="344">introductions only</text>
+    <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="var(--ink)"/></marker></defs>
+   </svg>
+   <figcaption id="topo-desc" class="legend"><span>Running today</span><span class="plan">Being built</span></figcaption>
+  </figure>
+ </div>
+</section>
+
+<section class="s" id="today" aria-labelledby="h-today">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> What runs where</p>
+   <div><h2 id="h-today">The honest <em>inventory.</em></h2><p class="lede">Kept current by hand. If something here is wrong, say so on the Discord and we will fix the page.</p></div></div>
+  <div class="tbl"><table>
+   <thead><tr><th>Piece</th><th>Where</th><th>What it does</th><th>State</th></tr></thead>
+   <tbody>
+    <tr><td>Pages &amp; API</td><td>Public server</td><td>Every page on this site and the read-only API researchers build on. Apache in front, FastAPI behind.</td><td><span class="tag">Running</span></td></tr>
+    <tr><td>Glowtbook, Directory, Admin</td><td>Public server</td><td>Three small apps behind the same door. Your notebook, the public directory, the review queue.</td><td><span class="tag">Running</span></td></tr>
+    <tr><td>The registry</td><td>Public server</td><td>SQLite databases: the public record, each person's private notebook, sessions, the collecting events.</td><td><span class="tag">Running</span></td></tr>
+    <tr><td>The archive</td><td>Public server</td><td>BagIt packages of what is published, with C2PA credentials signed on the box.</td><td><span class="tag">Running</span></td></tr>
+    <tr><td>Glass ID</td><td>Your phone</td><td>The fingerprint is computed in your browser from the camera. The optional sharper read (a small open vision model) also runs in your browser; your photos do not leave the phone for it.</td><td><span class="tag">Running</span></td></tr>
+    <tr><td>Private-network handshake</td><td>Public server</td><td>The service that introduces lent machines to the server so they can talk directly. It carries no photos; it only brokers connections.</td><td><span class="tag">Running</span></td></tr>
+    <tr><td>First worker</td><td>A lent 16 GB laptop</td><td>Open vision models (Ollama) reading new captures: a caption, the kind of piece, colours, visible marks, a note on condition, written to the record with which model and machine did it.</td><td><span class="tag plan">Being built</span></td></tr>
+    <tr><td>Compute page</td><td>Public server</td><td>For signed-in members: which machines are on, what models each one holds, how fast they are, what ran where. Lend a machine and you can watch it work.</td><td><span class="tag plan">Being built</span></td></tr>
+    <tr><td>3D Photo training</td><td>A GPU machine</td><td>Capture photos in, a 3D Photo out, overnight. Today you train on your phone and upload the result.</td><td><span class="tag want">Wanted</span></td></tr>
+    <tr><td>Storage &amp; failover</td><td>Next to the workers</td><td>Originals and derived files on a disk beside the machines that read them, backed up off that machine; a copy that can take over if the public box goes down.</td><td><span class="tag plan">Being built</span></td></tr>
+   </tbody>
+  </table></div>
+ </div>
+</section>
+
+<section class="s alt" id="why" aria-labelledby="h-why">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Our own AI</p>
+   <div><h2 id="h-why">Why build it <em>instead of renting it.</em></h2><p class="lede">Reading a photo of a pumpkin is cheap; reading every photo and video that arrives, forever, is not, and sending them all to a vendor means the vendor holds the field's record of itself. We would rather run open models on machines members lend, and keep what they produce privileged to members.</p>
+    <div class="promise">
+     <div><h3>Your photos stay in the house</h3><p>Nothing you upload is sent to a commercial AI service. Models run on machines we or members control, on a private network, and the record says which model and which machine read each piece.</p></div>
+     <div><h3>Members first</h3><p>Captions, checks, searches and 3D Photos made this way are for signed-in members and the makers whose work it is. The public record stays public and CC BY; the extra reading is ours.</p></div>
+     <div><h3>Lend, don't donate</h3><p>A lent machine stays yours. It receives work only from the server, you can see what it did, and you can pull it out of the network whenever you like.</p></div>
+    </div></div></div>
+ </div>
+</section>
+
+<section class="s" id="involved" aria-labelledby="h-inv">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Get involved</p>
+   <div><h2 id="h-inv">Four ways to <em>help.</em></h2><p class="lede">Everything starts on the Discord; that is where machines are added and where the page you are reading gets corrected.</p></div></div>
+  <div class="cards">
+   <a class="card" href="https://discord.gg/9ek2UxvPT"><span class="label">Talk</span><h3>Join the Discord</h3><p>Say what you make, what you have, what you want the database to do. Infrastructure has its own channel.</p><span class="link">Open the Discord</span></a>
+   <a class="card" href="https://discord.gg/9ek2UxvPT"><span class="label">Lend</span><h3>Lend a machine</h3><p>A Linux or Mac box with 16 GB or more that is idle most of the day. You install two things; we hand you a one-time join key on the Discord; you can watch it work and leave any time.</p><span class="link">Ask for a join key</span></a>
+   <a class="card" href="/fingerprint/enroll.html"><span class="label">Test</span><h3>Register pieces</h3><p>Every piece registered and published is something the first worker will read. Testers steer the thresholds and the words it uses.</p><span class="link">Register a piece</span></a>
+   <a class="card" href="https://github.com/alibama/glass-database"><span class="label">Build</span><h3>Contribute code</h3><p>Python, FastAPI, Streamlit, plain HTML. The runbook in the repository says how the network is laid out and what is next.</p><span class="link">GitHub</span></a>
+  </div>
+  <p class="fine" style="margin-top:2rem">Lending a machine, in a sentence: you install the open-source network client and a model server, join with a key we give you, and the server sends your machine work when it is on. It never serves the public, never sees anyone else's private notebook, and holds nothing you cannot delete. Details, including what we log, are in the <a href="https://github.com/alibama/glass-database/blob/main/docs/INFRASTRUCTURE.md">runbook</a>.</p>
+ </div>
+</section>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/infrastructure.html">How it runs</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+GDB.chip("#chip",{next:location.pathname,compact:true});
+</script>
+</body>
+</html>

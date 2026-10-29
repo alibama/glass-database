@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My account — Glass Database</title>
+<meta name="description" content="Everything you have added to the Glass Database in one place: your pieces and what each needs next, your collection, your entries in the collecting event, and what is waiting on you.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 18ch; overflow-wrap: anywhere; }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; }
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
+  button.btn { background: var(--paper); cursor: pointer; }
+
+  /* what's waiting: a numbered list of things to click */
+  .todo { list-style: none; margin: 1.6rem 0 0; padding: 0; border-top: 1px solid var(--ink); max-width: 72ch; }
+  .todo li { display: grid; grid-template-columns: 2.4rem 1fr auto; gap: 1rem; align-items: baseline; padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+  .todo li .n { font: 400 1.6rem/1 var(--serif); color: var(--red); }
+  .todo li p { margin: 0; color: var(--ink-2); font-size: 16px; }
+  .todo li p b { color: var(--ink); font-weight: 500; }
+  .todo li .btn { white-space: nowrap; }
+  .todo .none { grid-template-columns: 1fr; color: var(--ink-2); }
+
+  /* the pieces table: every cell is a link */
+  .tbl td a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .tbl td a:hover { color: var(--red); border-color: var(--red); }
+  .tbl td a.step { display: inline-block; border: 1px solid var(--ink); padding: .35rem .6rem; font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+  .tbl td a.step:hover { background: var(--ink); color: var(--paper); }
+  .tbl td a.step.hot { border-color: var(--red); color: var(--red); }
+  .tbl td a.step.hot:hover { background: var(--red); color: #fff; }
+  .tbl td .st { font: 400 12px var(--mono); letter-spacing: .04em; color: var(--muted); }
+  .tbl td .st.ok { color: var(--ink); }
+
+  .cards { margin-top: 1.6rem; }
+  .card .ph { aspect-ratio: 4 / 3; margin-bottom: 1rem; background: var(--paper-2); }
+  .card .who { margin: 0; color: var(--ink-2); font-size: 15px; }
+  .card .ed { margin: .3rem 0 0; font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+  .pill.rar.legendary { background: var(--red); border-color: var(--red); color: #fff; }
+  .empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .empty a { color: var(--ink); } .empty a:hover { color: var(--red); }
+  .kv { margin: 1.4rem 0 0; display: grid; grid-template-columns: max-content 1fr; gap: .6rem 1.4rem; font-size: 15px; max-width: 70ch; }
+  .kv dt { font: 500 11px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .kv dd { margin: 0; color: var(--ink-2); } .kv dd a { color: var(--ink); }
+  .badges { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+  @media (max-width: 680px) { .todo li { grid-template-columns: 2rem 1fr; } .todo li .btn { grid-column: 2; } .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active="account"></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">My account</span><a href="/fingerprint/enroll.html">Register Your Piece</a><a href="/glowtbook/">Glowtbook</a><a href="/games.html">Collecting Events</a><a href="/fingerprint/verify.html">Check a Piece</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> My account</p>
+  <h1 id="heroTitle">Checking your <em>sign-in…</em></h1>
+  <p class="lede" id="heroLede"></p>
+  <p class="live" id="heroMeta" aria-live="polite"></p>
+  <div class="btns" id="heroCta"></div>
+ </div>
+</section>
+
+<div id="signedIn" hidden>
+<section class="s alt" id="waiting" aria-labelledby="h-waiting">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> Waiting on you</p>
+   <div><h2 id="h-waiting">What needs <em>a click.</em></h2><p class="lede">Each line is one thing to do and the button takes you straight there.</p>
+    <ol class="todo" id="todo"><li class="none">Looking…</li></ol></div></div>
+ </div>
+</section>
+
+<section class="s" id="pieces" aria-labelledby="h-pieces">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> My pieces</p>
+   <div><h2 id="h-pieces">Everything you've <em>added.</em></h2><p class="lede">Your pieces live in <a href="/glowtbook/">Glowtbook</a>, your studio notebook. The title opens the piece; the last column is its next step.</p>
+    <div class="btns"><div class="act"><a class="btn btn--red" href="/fingerprint/enroll.html">Register a new piece</a><small>Walk around it with your phone; it gets its Glass ID.</small></div>
+     <div class="act"><a class="btn btn--line" href="/glowtbook/?page=objects">Open Glowtbook</a><small>Add a piece by hand, write its story, publish it.</small></div></div></div></div>
+  <div id="piecesBody"></div>
+ </div>
+</section>
+
+<section class="s alt" id="events" aria-labelledby="h-events">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Collecting Events</p>
+   <div><h2 id="h-events">Entered and <em>collected.</em></h2><p class="lede" id="eventsLede">The pieces you entered in a collecting event, and the pieces you have checked and added to your collection.</p></div></div>
+  <div class="two">
+   <div>
+    <p class="label">Entered</p>
+    <div id="entriesBody"></div>
+   </div>
+   <div>
+    <p class="label">My collection</p>
+    <div id="collBody"></div>
+    <div class="badges" id="badges"></div>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section class="s" id="sharing" aria-labelledby="h-sharing">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Sharing &amp; sign-in</p>
+   <div><h2 id="h-sharing">Connected <em>accounts.</em></h2><p class="lede">Posting goes through the accounts you connect once; your collection can have a public link.</p>
+    <dl class="kv" id="kv"></dl></div></div>
+ </div>
+</section>
+</div>
+
+<div id="signedOut" hidden>
+<section class="s alt" id="why" aria-labelledby="h-why">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> What you get</p>
+   <div><h2 id="h-why">One place for <em>your glass.</em></h2><p class="lede">Signing in takes a Google account and nothing to install. Your pieces, your collection and your entries in the collecting event are private until you choose to publish or share them.</p></div></div>
+  <div class="steps">
+   <div class="step"><p class="big">1</p><h3>Your pieces</h3><p>Everything you register or write up in Glowtbook, with its Glass ID, whether it's published and what it needs next.</p></div>
+   <div class="step"><p class="big">2</p><h3>Your collection</h3><p>The pieces you've checked with your phone and added, the badges you've earned, and a public link if you want one.</p></div>
+   <div class="step"><p class="big">3</p><h3>What's waiting</h3><p>Collection requests to confirm, pieces in review, the collecting event that's open. One list, each line a click.</p></div>
+  </div>
+ </div>
+</section>
+</div>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/infrastructure.html">How it runs</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  var here = location.pathname + location.search;
+  function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
+  function soft(path) { return GDB.json(path).catch(function () { return null; }); }
+  var HOT = { register: 1, publish: 1, claims: 1, enter: 1 };
+
+  function signedOut() {
+    document.title = "Sign in — Glass Database";
+    $("#heroTitle").innerHTML = "Sign in to see <em>your glass.</em>";
+    $("#heroLede").textContent = "Your pieces, your collection, your entries in the collecting event and whatever is waiting on you, in one place.";
+    $("#heroCta").innerHTML = '<div class="act"><a class="btn btn--red" href="' + esc(GDB.loginUrl(here)) + '">Sign in with Google</a><small>Nothing to install. We keep your email to tell you about your pieces and nothing else.</small></div>' +
+      '<div class="act"><a class="btn btn--line" href="/fingerprint/verify.html">Check a Piece</a><small>Works without signing in: point your phone at a piece to see who made it.</small></div>';
+    $("#signedOut").hidden = false; $("#signedIn").hidden = true;
+  }
+
+  function pieceRow(o) {
+    var fp = o.fingerprint, pub = o.publication || {}, st = pub.state || "private";
+    var fpTxt = fp ? esc(fp.rating + "/100 " + fp.tier) : "—";
+    var reg = { published: "published", pending: "in review", rejected: "sent back" }[st] || "private";
+    var cc = o.claims || {};
+    var nx = o.next || { label: "Open", url: o.url, kind: "done" };
+    return "<tr>" +
+      '<td><a href="' + esc(o.url) + '"><b>' + esc(o.title || "Untitled") + "</b></a>" + (o.maker ? '<br><span class="st">' + esc(o.maker) + (o.year ? " · " + esc(o.year) : "") + "</span>" : "") + "</td>" +
+      '<td><a href="' + esc(o.url + "&tab=fingerprint") + '">' + fpTxt + "</a></td>" +
+      '<td><a href="' + esc(o.url + "&tab=contribute") + '"><span class="st' + (st === "published" ? " ok" : "") + '">' + reg + "</span></a></td>" +
+      '<td><a href="' + esc(nx.url) + '" class="step' + (HOT[nx.kind] ? " hot" : "") + '">' + esc(nx.label) + "</a></td>" +
+      "</tr>";
+  }
+
+  function renderPieces(objs) {
+    var el = $("#piecesBody");
+    if (!objs.length) {
+      el.innerHTML = '<div class="empty">No pieces yet. <a href="/fingerprint/enroll.html">Register one</a> with your phone, or <a href="/glowtbook/?page=objects">start it in Glowtbook</a> and add photos later.</div>';
+      return;
+    }
+    el.innerHTML = '<div class="tbl"><table><thead><tr><th>Piece</th><th>Glass ID</th><th>Registry</th><th>Next step</th></tr></thead><tbody>' +
+      objs.map(pieceRow).join("") + "</tbody></table></div>" +
+      '<p class="fine" style="margin-top:-1rem">Every cell is a link. Rows come from your Glowtbook; nothing here is public until it says published.</p>';
+  }
+
+  function renderTodo(objs, claims, coll, season) {
+    var items = [];
+    var pend = (claims && claims.pending) || 0;
+    if (pend) {
+      var first = (claims.claims || []).filter(function (c) { return c.status === "pending"; })[0];
+      items.push({ text: "<b>" + plural(pend, "collection request") + "</b> from collectors who scanned a piece of yours but matched under 70. Confirm or reject each one.",
+        url: "/glowtbook/?page=objects&tab=seasons", label: "Confirm" });
+    }
+    objs.forEach(function (o) {
+      var nx = o.next || {};
+      if (nx.kind === "register") items.push({ text: "<b>" + esc(o.title) + "</b> has no Glass ID yet.", url: nx.url, label: "Register it" });
+      else if (nx.kind === "publish") items.push({ text: "<b>" + esc(o.title) + "</b> is " + ((o.publication || {}).state === "rejected" ? "sent back from review" : "private") + ". Publish it to give it a page anyone can check.", url: nx.url, label: "Publish" });
+      else if (nx.kind === "enter") items.push({ text: "<b>" + esc(o.title) + "</b> is published and the call for <b>" + esc(season.title) + "</b> is open.", url: nx.url, label: "Enter it" });
+    });
+    var pendingEntries = ((coll && coll.entries) || []).filter(function (e) { return e.status === "pending"; });
+    var inReview = objs.filter(function (o) { return (o.publication || {}).state === "pending"; });
+    var el = $("#todo");
+    if (!items.length) {
+      var quiet = "Nothing. ";
+      if (inReview.length) quiet += plural(inReview.length, "piece") + " in review, which is on us. ";
+      if (pendingEntries.length) quiet += plural(pendingEntries.length, "entry") + " waiting for approval, also on us. ";
+      el.innerHTML = '<li class="none">' + quiet + (objs.length ? "" : 'Start by <a href="/fingerprint/enroll.html">registering a piece</a>.') + "</li>";
+      return;
+    }
+    el.innerHTML = items.slice(0, 12).map(function (it, i) {
+      return '<li><span class="n">' + (i + 1) + "</span><p>" + it.text + '</p><a class="btn btn--line" href="' + esc(it.url) + '">' + esc(it.label) + "</a></li>";
+    }).join("") + (inReview.length || pendingEntries.length ? '<li class="none">Also: ' + [inReview.length ? plural(inReview.length, "piece") + " in review" : "", pendingEntries.length ? plural(pendingEntries.length, "entry") + " waiting for approval" : ""].filter(Boolean).join(" and ") + ". Those are on us; you'll see them move here.</li>" : "");
+  }
+
+  function renderEntries(entries) {
+    var el = $("#entriesBody");
+    if (!entries.length) { el.innerHTML = '<div class="empty" style="margin-top:.6rem">Nothing entered yet. A published piece with a Glass ID can be entered from its <a href="/glowtbook/?page=objects&tab=seasons">Collecting Events tab</a>.</div>'; return; }
+    el.innerHTML = '<div class="tbl" style="margin-top:.6rem"><table style="min-width:0"><thead><tr><th>Piece</th><th>Event</th><th>Status</th><th>Votes</th></tr></thead><tbody>' + entries.map(function (e) {
+      var st = e.status === "approved" ? '<span class="st ok">in the running</span>' : e.status === "pending" ? '<span class="st">waiting for approval</span>' : '<span class="st">' + esc(e.status || "") + "</span>";
+      return "<tr><td><a href=\"/games.html?season=" + esc(e.season_slug || "") + "#e-" + esc(e.id) + '"><b>' + esc(e.title || "Untitled") + "</b></a>" + (e.rarity ? ' <span class="pill rar ' + esc(e.rarity) + '">' + esc(e.rarity) + "</span>" : "") + "</td><td><a href=\"/games.html?season=" + esc(e.season_slug || "") + '">' + esc(e.season_title || "") + "</a></td><td>" + st + "</td><td>" + esc(e.vote_count || 0) + "</td></tr>";
+    }).join("") + "</tbody></table></div>";
+  }
+
+  function renderCollection(coll, shareState) {
+    var el = $("#collBody"), pieces = (coll && coll.collection) || [];
+    if (!pieces.length) { el.innerHTML = '<div class="empty" style="margin-top:.6rem">Nothing collected yet. Buy a piece from a working shop, open <a href="/fingerprint/verify.html">Check a Piece</a> on your phone, and it joins your collection.</div>'; }
+    else {
+      var pts = pieces.reduce(function (a, p) { return a + (p.points || 0); }, 0);
+      el.innerHTML = '<p class="live" style="margin:.6rem 0 0"><span><b>' + plural(pieces.length, "piece") + "</b></span><span><b>" + plural(pts, "point") + "</b></span></p>" +
+        '<div class="tbl" style="margin-top:.8rem"><table style="min-width:0"><tbody>' + pieces.slice(0, 12).map(function (p) {
+          return '<tr><td><a href="/explore/?view=objects#obj-' + esc(p.object_row_id || "") + '"><b>' + esc(p.title || "Untitled") + "</b></a><br><span class=\"st\">" + esc(p.artist_name || p.maker || "") + (p.season_title ? " · " + esc(p.season_title) : "") + "</span></td><td>" + (p.rarity ? '<span class="pill rar ' + esc(p.rarity) + '">' + esc(p.rarity) + "</span>" : "") + "</td><td>" + (p.verified ? '<span class="st ok">checked</span>' : '<span class="st">waiting on the maker</span>') + "</td></tr>";
+        }).join("") + "</tbody></table></div>" +
+        '<div class="btns"><a class="btn btn--line" href="/games.html#mine">' + (shareState && shareState.shared ? "My public collection" : "Share my collection") + "</a></div>";
+    }
+    var b = $("#badges"), badges = (coll && coll.badges) || [];
+    b.innerHTML = badges.map(function (x) { return '<span class="pill" title="' + esc(x.blurb || "") + '">' + esc(x.label || x.badge) + "</span>"; }).join("");
+  }
+
+  function renderKv(m, social, shareState) {
+    var bs = social && social.bluesky;
+    $("#kv").innerHTML =
+      "<dt>Signed in as</dt><dd>" + esc(m.name || "") + (m.email ? " · " + esc(m.email) : "") + (m.is_admin ? ' · <a href="/admin/">Admin</a>' : "") + "</dd>" +
+      "<dt>Bluesky</dt><dd>" + (bs && bs.connected ? "connected as <b>@" + esc(bs.handle) + '</b> · <a href="/glowtbook/?page=profile">manage</a>' : 'not connected · <a href="/glowtbook/?page=profile">connect it once</a> in Glowtbook → My profile, and Share posts for you') + "</dd>" +
+      "<dt>Collection link</dt><dd>" + (shareState && shareState.shared ? '<a href="' + esc(shareState.url) + '">public</a> · withdraw it from the <a href="/games.html#mine">Collecting Events page</a>' : 'private · make it public from the <a href="/games.html#mine">Collecting Events page</a>') + "</dd>" +
+      '<dt>Your data</dt><dd>Private until you publish or share. Anything can be corrected or removed on request: ask on the <a href="https://discord.gg/9ek2UxvPT">Discord</a>.</dd>';
+  }
+
+  function signedIn(m) {
+    $("#signedIn").hidden = false; $("#signedOut").hidden = true;
+    var first = (m.name || m.email || "you").split(" ")[0];
+    document.title = "My account — Glass Database";
+    $("#heroTitle").innerHTML = "Hello, <em>" + esc(first) + ".</em>";
+    $("#heroLede").textContent = "Your pieces, your collection, your entries and what's waiting on you. Nothing here is public until it says so.";
+    var c = m.counts || {};
+    $("#heroMeta").innerHTML = "<span><b>" + plural(c.objects || 0, "piece") + "</b></span><span><b>" + (c.fingerprinted || 0) + "</b> with a Glass ID</span><span><b>" + (c.published || 0) + "</b> published</span><span><b>" + (c.pending || 0) + "</b> in review</span>";
+    $("#heroCta").innerHTML = '<div class="act"><a class="btn btn--red" href="/fingerprint/enroll.html">Register a new piece</a><small>Walk around it with your phone; it gets its Glass ID.</small></div>' +
+      '<div class="act"><a class="btn btn--line" href="/glowtbook/">Open Glowtbook</a><small>Your studio notebook: journal, pieces, publishing.</small></div>' +
+      '<div class="act"><a class="btn btn--line" href="/games.html">Collecting Events</a><small>This season\'s standings, your votes, your collection.</small></div>';
+    Promise.all([soft("/me/objects"), soft("/me/collection"), soft("/me/claims"), soft("/social/status"), soft("/social/collections/mine"), soft("/seasons")])
+      .then(function (r) {
+        var objs = (r[0] && r[0].objects) || [], coll = r[1], claims = r[2], social = r[3], shareState = r[4];
+        var season = (r[5] && r[5].current) || null;
+        renderTodo(objs, claims, coll, season);
+        renderPieces(objs);
+        renderEntries((coll && coll.entries) || []);
+        renderCollection(coll, shareState);
+        renderKv(m, social, shareState);
+        if (!r[0]) $("#piecesBody").innerHTML = '<div class="empty">Couldn\'t load your pieces just now. <a href="' + esc(here) + '">Try again</a>.</div>';
+      });
+  }
+
+  GDB.chip("#chip", { next: here, compact: true, onchange: function (m) { if (m) signedIn(m); else signedOut(); } });
+})();
+</script>
+</body>
+</html>

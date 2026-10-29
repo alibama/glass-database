@@ -7,6 +7,22 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **My account** (`/account.html`, in the primary menu with a red dot once signed in): everything
+  a person added in one place — what is waiting on them as a numbered list of clicks, their pieces
+  with a linked next step each, their entries and collection, connected accounts. The next step
+  is computed once (`glowtbook.store.next_step`) and shared by the Glowtbook home table, which is
+  now all links (title → the piece, next step → where it happens), and `GET /api/me/objects`
+  (`next`, `url` per piece).
+- **How it runs** (`/infrastructure.html` + `docs/INFRASTRUCTURE.md`): the topology (one public
+  server today, a private network of lent machines being built), an honest what-runs-where table,
+  why we build our own AI for members instead of renting one, and how to lend a machine. About
+  gained the same note; Ways in gained *Lend a machine*.
+### Changed
+- **Register Your Piece**: the Lens overlay is off by default (it dimmed the view and hid the
+  progress) and lighter when on; the gauge reads as a percentage with a plain line under it
+  (*62% captured · ready at 75%*); the three small bars are hidden on phones; the Review drawer
+  puts the actions first and the shots behind *See the shots*; the receipt links to Publish and
+  My account.
 - **Promote work and collections** — a Share kit on every entry, published piece, shared
   collection and 3D Photo: Copy link, Save image (a 1080×1350 share card on the paper ground),
   Share… (the phone's share sheet, where Instagram lives), Facebook, Bluesky and an Instagram

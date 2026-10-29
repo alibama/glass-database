@@ -135,6 +135,8 @@ if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     [ -f "$SRC/deploy/graph.html" ] && cp "$SRC/deploy/graph.html" "$APP_DIR/public/graph.html"
     [ -f "$SRC/deploy/games.html" ] && cp "$SRC/deploy/games.html" "$APP_DIR/public/games.html"
     [ -f "$SRC/deploy/collection.html" ] && cp "$SRC/deploy/collection.html" "$APP_DIR/public/collection.html"
+    [ -f "$SRC/deploy/account.html" ] && cp "$SRC/deploy/account.html" "$APP_DIR/public/account.html"
+    [ -f "$SRC/deploy/infrastructure.html" ] && cp "$SRC/deploy/infrastructure.html" "$APP_DIR/public/infrastructure.html"
     [ -f "$SRC/deploy/events.html" ] && cp "$SRC/deploy/events.html" "$APP_DIR/public/events.html"
     [ -f "$SRC/deploy/register.html" ] && cp "$SRC/deploy/register.html" "$APP_DIR/public/register.html"
     [ -f "$SRC/deploy/studios.html" ] && cp "$SRC/deploy/studios.html" "$APP_DIR/public/studios.html"
