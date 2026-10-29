@@ -125,8 +125,14 @@ def _safe_next(nxt: str | None) -> str:
     return nxt
 
 
+def public_https() -> bool:
+    """The site is served over https (PUBLIC_BASE_URL says so): cookies are always
+    Secure and plain-http requests are sent to https, whatever hop they came in on."""
+    return os.environ.get("PUBLIC_BASE_URL", "").lower().startswith("https://")
+
+
 def _secure(request: Request) -> bool:
-    return (request.headers.get("x-forwarded-proto") or request.url.scheme) == "https"
+    return public_https() or (request.headers.get("x-forwarded-proto") or request.url.scheme) == "https"
 
 
 def set_session_cookie(response: Response, request: Request, token: str,

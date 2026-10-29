@@ -135,3 +135,19 @@ crash-loop with `PermissionError`. If you create it with `sudo`, fix ownership:
 
 (The installer's final `chown -R glassdb` also fixes this, and now never deletes
 your secrets.toml on redeploy.)
+
+## https, always
+
+Sign-in only works over https: the session cookie is `Secure`, so a page served over plain
+http looks signed out, and Google only accepts an https redirect URI. Three layers keep every
+request on https:
+
+1. `deploy/apache-glassdatabase.conf` redirects the :80 vhost to https (the ACME challenge path
+   excepted); `a2enmod rewrite` is needed and `install.sh` enables it.
+2. `deploy/apache-glassdatabase-proxy.conf` sends `Strict-Transport-Security` on https responses.
+3. The API itself (`api/main.py`) answers any request that arrives with `X-Forwarded-Proto: http`
+   with a 301 to the https URL when `PUBLIC_BASE_URL` starts with `https://`, and
+   `set_session_cookie` marks the cookie Secure whenever `PUBLIC_BASE_URL` is https.
+
+Check it: `curl -sI http://glassdatabase.org/games` should return `301` with a `Location:
+https://…` header, and `curl -sI https://glassdatabase.org/` should carry `Strict-Transport-Security`.

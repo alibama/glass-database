@@ -60,6 +60,22 @@ app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def _force_https(request, call_next):
+    """When the site is https (PUBLIC_BASE_URL), a request that reached us over plain
+    http through the proxy (X-Forwarded-Proto: http) is sent to the https URL.
+    Apache redirects too; this catches the API if the vhost is ever out of date.
+    Direct requests with no forwarded header (tests, local runs) are untouched."""
+    from api.auth import _api_prefix, public_https
+    if public_https() and request.headers.get("x-forwarded-proto", "").lower() == "http":
+        from starlette.responses import RedirectResponse
+        host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
+        q = f"?{request.url.query}" if request.url.query else ""
+        return RedirectResponse(f"https://{host}{_api_prefix(request)}{request.scope.get('path', '/')}{q}",
+                                status_code=301)
+    return await call_next(request)
+
 # Routers for the surfaces that grew beyond read-only: sign-in for the static
 # pages, the signed-in person's own pieces (capture app writes), seasonal games,
 # and the richer relationship graph. Each lives in its own module.

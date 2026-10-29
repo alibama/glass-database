@@ -340,8 +340,9 @@
 
     <section class="step" id="stepPiece" hidden>
       <div class="step-h"><span class="n">2</span><b>Which piece</b><span class="st" id="pieceSt"></span></div>
-      <p>The Glass ID goes straight onto a piece in your Glowtbook.</p>
+      <p>Pick the piece this Glass ID belongs to. Pick it and its next step appears right here.</p>
       <div class="pieces" id="pieces"><p class="fine">Loading your pieces…</p></div>
+      <div id="nextPanel" class="banner" hidden></div>
       <div class="newpiece">
         <input id="newTitle" placeholder="New piece — title" maxlength="200">
         <input id="newMaker" placeholder="Maker (optional)" maxlength="200">
@@ -351,7 +352,8 @@
     </section>
 
     <section class="step" id="stepCapture">
-      <div class="step-h"><span class="n">3</span><b>Register</b></div>
+      <div class="step-h"><span class="n">3</span><b id="capTitle">Register</b><span class="st" id="capSt"></span></div>
+      <p class="fine" id="capNote" style="margin:-2px 0 10px"></p>
       <div class="check"><div class="n">a</div><div><b>Kill reflections</b><p>Dark, matte, neutral surroundings so moving highlights don't get baked in. Setting the piece on the Photo Mat also measures its real size: <a href="/fingerprint/capture-mat.pdf" style="color:var(--hot)">Print the Photo Mat</a>.</p></div></div>
       <div class="check"><div class="n">b</div><div><b>Walk around your piece until the bar fills up.</b><p>Keep it centred and circle it slowly, then again higher and lower. Blurry or repeat angles are ignored, so move deliberately.</p></div></div>
       <div class="check"><div class="n">c</div><div><b>Get in close</b><p>Move in on the pontil, any signature and cold-working, and take a backlit angle or two to record the internal bubbles.</p></div></div>
@@ -377,6 +379,8 @@
   const GRAD_T=90;                       // gradient^2 threshold -> "detail" pixel
   const SHARP_MIN=12, SHARP_GOOD=55;     // blur gate / crisp indicator
   const NOVELTY_MIN=8;                   // hamming dist to count as a new view
+  const PSEUDO_MIN=14;                   // no compass: hamming dist to every shot so far to open a new coverage cell
+  const NO_COMPASS_COV=0.75;             // no compass: the most coverage credit we will give (rating tops out ~82)
   const COV_TARGET=16;                   // distinct cells for full coverage
   const DET_SCALE=6, ROB_SCALE=18;       // saturation constants
   const READY=75;
@@ -498,12 +502,20 @@
   function computeRating(){
     const good=S.frames.filter(f=>f.sharp>=SHARP_MIN);
     const cells=new Set(good.map(f=>f.cell));
-    const cov=Math.min(1,cells.size/COV_TARGET)*40;
+    // Coverage is the spine of the score. Without a compass we cannot know the angles,
+    // so coverage credit tops out at NO_COMPASS_COV and the rating at "Strong", never
+    // "Verified-ready". Detail and robustness only count in proportion to coverage
+    // (sqrt, so they still help early), which stops a pile of shots from one angle
+    // reading as a finished capture.
+    const compass=good.some(f=>f.sector>=0);
+    const covf=Math.min(compass?1:NO_COMPASS_COV, cells.size/COV_TARGET);
+    const cov=covf*40;
+    const g=Math.sqrt(covf);
     const distinct=good.filter(f=>f.noveltyAtCapture>=NOVELTY_MIN);
     const detSum=distinct.reduce((a,f)=>a+Math.min(f.detail/0.06,1.4),0);
-    const det=(1-Math.exp(-detSum/DET_SCALE))*35;
-    const rob=(1-Math.exp(-good.length/ROB_SCALE))*25;
-    return {total:Math.min(100,Math.round(cov+det+rob)), cov:cov/40, det:det/35, rob:rob/25};
+    const det=(1-Math.exp(-detSum/DET_SCALE))*35*g;
+    const rob=(1-Math.exp(-good.length/ROB_SCALE))*25*g;
+    return {total:Math.min(100,Math.round(cov+det+rob)), cov:covf, det:det/35, rob:rob/25, compass};
   }
   function tierIdx(v){for(let i=0;i<TIERS.length;i++) if(v>=TIERS[i][0]) return i; return TIERS.length-1;}
   function updateRating(){
@@ -515,9 +527,11 @@
     $("#arc").style.strokeDashoffset=C*(1-r.total/100);
     $("#score").textContent=r.total+"%";
     const ti=tierIdx(r.total); $("#tier").textContent=TIERS[ti][1];
-    const pl=$("#pctline"); if(pl){ pl.innerHTML=r.total>=READY
+    const pl=$("#pctline"); if(pl){ const noCompass=S.frames.length>0&&!r.compass&&S.here<0;
+      pl.innerHTML=(r.total>=READY
       ? `<b>${r.total}%</b> captured · ready — keep going to strengthen it`
-      : `<b>${r.total}%</b> captured · ready at ${READY}%`; pl.classList.toggle("ok",r.total>=READY); }
+      : `<b>${r.total}%</b> captured · ready at ${READY}%`)+(noCompass?" · no compass, tops out at Strong":"");
+      pl.classList.toggle("ok",r.total>=READY); }
     const g=$("#gauge");
     const nowReady=r.total>=READY;
     if(nowReady&&!S.ready){S.ready=true; toast(S.target?"Glass ID ready — give it to the piece, or keep going to strengthen it":"Glass ID ready — keep going to strengthen it","ok"); buzz([30,40,30]);}
@@ -547,7 +561,10 @@
   }
   function cellOf(sector,band,dh){
     if(sector>=0) return sector+":"+band;
-    if(noveltyOf(dh)>=NOVELTY_MIN){S.pseudo++;} return "n"+S.pseudo;   // no compass: cells track visual novelty
+    // No compass: a new "cell" only when the view differs clearly from EVERY shot so far
+    // (PSEUDO_MIN bits of dHash, not the 8 that merely admit a shot). Before this, every
+    // auto shot opened a new cell and the rating was a frame counter: 71 shots = 100%.
+    if(noveltyOf(dh)>=PSEUDO_MIN){S.pseudo++;} return "n"+S.pseudo;
   }
   async function capture(manual){
     const a=S.live;
@@ -700,7 +717,8 @@
       rating:r.total, tier:TIERS[tierIdx(r.total)][1], ready:r.total>=READY,
       subscores:{coverage:+r.cov.toFixed(3),detail:+r.det.toFixed(3),robustness:+r.rob.toFixed(3)},
       device:{ua:navigator.userAgent,resolution:{w:video.videoWidth,h:video.videoHeight}},
-      params:{SHARP_MIN,NOVELTY_MIN,COV_TARGET,dhash:"9x8 dHash, [hi,lo] 32-bit ints"},
+      params:{SHARP_MIN,NOVELTY_MIN,COV_TARGET,PSEUDO_MIN,NO_COMPASS_COV,dhash:"9x8 dHash, [hi,lo] 32-bit ints",
+        scoring:"v2: cov*40 + (det*35 + rob*25)*sqrt(cov); without a compass cov is capped at NO_COMPASS_COV"},
       note:"Enrollment fingerprint. dhash + detail + coverage per frame let a later capture be matched to this reference.",
       metadata:{ dominantColor:dominantColor(aggChist(S.frames)), hasEmbeddings:S.frames.some(f=>f.emb) },
       object: S.target ? {id:S.target.id, title:S.target.title} : undefined,
@@ -776,6 +794,33 @@
     } else { chip.classList.add("none"); chip.innerHTML="Saving to <b>— export only</b>"; $("#pieceSt").textContent=""; $("#pieceSt").classList.remove("ok");
       $("#saveBtn").hidden=true; $("#saveHint").textContent=""; }
     try{ sessionStorage.setItem("gdb_fp_target", p?String(p.id):""); }catch(_){}
+    renderNext(p);
+  }
+  /* The one obvious next step for the chosen piece, shown right under the list:
+     no Glass ID yet → the camera; has one → publish / enter / confirm (from the API's
+     `next`), with "register again" as the quieter option. */
+  function renderNext(p){
+    const np=$("#nextPanel"), start=$("#start"), ct=$("#capTitle"), cn=$("#capNote"), cs=$("#capSt");
+    if(!np) return;
+    if(!p){ np.hidden=true; np.innerHTML=""; start.textContent="Enable camera"; ct.textContent="Register";
+      cs.textContent=S.user?"no piece chosen":""; cn.textContent=S.user?"Choose a piece in step 2 first, or the shots can only be exported as a .zip.":""; return; }
+    const fp=p.fingerprint, nx=p.next||{kind:fp?"done":"register"};
+    let html=`<b>${esc(p.title)}</b> is chosen. `;
+    if(!fp||nx.kind==="register"){
+      html+=`It has no Glass ID yet, so the next step is the camera.
+        <div class="row"><button type="button" class="btn primary" id="goCam">Enable camera and register it</button><button type="button" class="btn" id="unpick">Choose another</button></div>
+        <p class="fine" style="margin:.7rem 0 0">Walk around it until the number reads <b>75%</b> or more, then tap <b>Give it its Glass ID</b>. After that: publish it, then enter it in the collecting event.</p>`;
+    } else {
+      html+=`It already has its Glass ID (<b>${fp.rating}/100 ${esc(fp.tier)}</b>), so the next step is not the camera.
+        <div class="row"><a class="btn primary" href="${esc(nx.url||"/account.html")}">${esc(nx.label||"Open the piece")}</a><button type="button" class="btn" id="goCam">Register it again</button><button type="button" class="btn" id="unpick">Choose another</button></div>
+        <p class="fine" style="margin:.7rem 0 0">Register it again replaces its Glass ID; do that if the first capture was weak. Everything you've added is on <a href="/account.html">My account</a>.</p>`;
+    }
+    np.innerHTML=html; np.hidden=false;
+    $("#goCam").onclick=()=>{ $("#stepCapture").scrollIntoView({behavior:"smooth",block:"start"}); start.click(); };
+    $("#unpick").onclick=()=>setTarget(null);
+    start.textContent=`Enable camera and register “${p.title}”`; ct.textContent=`Register “${p.title}”`;
+    cs.textContent="piece chosen"; cs.classList.add("ok"); cn.textContent="";
+    np.scrollIntoView({behavior:"smooth",block:"nearest"});
   }
   function pieceTags(p){
     const t=[];
@@ -803,6 +848,7 @@
     // preselect: ?object= / #object= (pairing link), else the last one chosen in this tab
     let want=G.param("object"); if(!want){ try{ want=sessionStorage.getItem("gdb_fp_target"); }catch(_){} }
     if(want){ const p=S.pieces.find(x=>String(x.id)===String(want)); if(p) setTarget(p); }
+    renderNext(S.target);          // no piece chosen yet → step 3 says so
   }
   function renderWho(){
     const body=$("#whoBody"), st=$("#whoSt");
@@ -936,8 +982,8 @@
       $("#err").textContent=msg; btn.disabled=false; btn.textContent=label; return false;}
     btn.disabled=false; btn.textContent=label; $("#err").textContent="";
     const ok=await enableMotion();
-    $("#hint").textContent=ok?"Walk around your piece until the bar fills up. The ring turns amber when a shot will count.":
-      "No compass here — the bar fills by how different each view looks instead. Move to a new angle for each shot.";
+    $("#hint").textContent=ok?"Walk all the way around your piece: the number is how much of it is captured, and it's ready at 75%. The ring turns amber when a shot will count.":
+      "No compass here, so the number can only go by how different each view looks and tops out at Strong. Move to a clearly new angle for each shot.";
     $("#gate").hidden=true; $("#gate").style.display="none"; $("#hud").hidden=false; paintRing(); updateRating(); refresh(); requestAnimationFrame(loop);
     return true;
   }
