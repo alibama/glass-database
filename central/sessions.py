@@ -142,6 +142,20 @@ def secrets_diagnostics() -> dict:
     return d
 
 
+def secret_source() -> str:
+    """Where the signing secret comes from. 'ephemeral' means every process makes its
+    own, so cookies and sign-in states fail at random behind more than one worker:
+    set GLASSDB_SESSION_SECRET."""
+    if os.environ.get("GLASSDB_SESSION_SECRET"):
+        return "env:GLASSDB_SESSION_SECRET"
+    if auth_config().get("cookie_secret"):
+        return "secrets.toml:cookie_secret"
+    s = os.environ.get("GLASSDB_ADMIN_TOKEN")
+    if s and s != "change-me":
+        return "env:GLASSDB_ADMIN_TOKEN"
+    return "ephemeral"
+
+
 def secret() -> str:
     s = os.environ.get("GLASSDB_SESSION_SECRET")
     if s:

@@ -25,13 +25,19 @@
     if (!h) return;
     var p = new URLSearchParams(h);
     var paired = false;
+    // #token= is a pairing hand-off from Glowtbook; #session= is what /auth/callback adds
+    // after a sign-in so static pages keep working when a browser drops the cookie.
     if (p.get("token")) {
       try { localStorage.setItem(KEY, p.get("token")); } catch (_) {}
       p.delete("token"); paired = true;
     }
+    if (p.get("session")) {
+      try { localStorage.setItem(KEY, p.get("session")); } catch (_) {}
+      p.delete("session"); frag.signed_in = "1";
+    }
     p.forEach(function (v, k) { frag[k] = v; });
-    if (paired) {
-      frag.paired = "1";
+    if (paired || frag.signed_in) {
+      if (paired) frag.paired = "1";
       var rest = p.toString();
       history.replaceState(null, "", location.pathname + location.search + (rest ? "#" + rest : ""));
     }

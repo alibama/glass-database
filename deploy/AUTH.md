@@ -136,6 +136,25 @@ crash-loop with `PermissionError`. If you create it with `sudo`, fix ownership:
 (The installer's final `chown -R glassdb` also fixes this, and now never deletes
 your secrets.toml on redeploy.)
 
+## When a sign-in does not finish
+
+The callback accepts the state two ways: the `gdb_oauth` cookie the browser was given when it
+left, or the server's own copy of the same signed state (`oauth_pending`, keyed by the public
+`state` value, single use, twenty minutes). So a phone that drops the cookie mid-flow still
+signs in. The journal says which path was used (`sign-in finished via cookie|record`) and, on a
+failure, why (`no state cookie came back`, `cookie expired`, `cookie for another attempt`).
+
+After a sign-in, static pages are sent to `next#session=<token>`; `site.js` stores the token
+and sends it as a Bearer header, so the capture app keeps working when a browser will not keep
+cookies. The Streamlit apps get the cookie only.
+
+Two settings must be right in `/opt/glassdatabase/.env` (the installer adds them to an older
+file): `PUBLIC_BASE_URL=https://glassdatabase.org`, so the redirect URI is always the one
+registered with Google whatever host the request came in on, and a stable signing secret
+(`GLASSDB_SESSION_SECRET`, or the admin token it falls back to). `GET /api/auth/providers`
+shows `secret_source`; `ephemeral` means each API worker signs with its own key and sessions
+fail at random.
+
 ## https, always
 
 Sign-in only works over https: the session cookie is `Secure`, so a page served over plain

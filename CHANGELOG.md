@@ -18,6 +18,17 @@ proof-of-concept features from production-ready ones in its docs.
   why we build our own AI for members instead of renting one, and how to lend a machine. About
   gained the same note; Ways in gained *Lend a machine*.
 ### Fixed
+- **"Sign-in state didn't match" on phones.** The callback no longer depends on the state
+  cookie alone: the same signed state is kept server-side (`oauth_pending`, single use, twenty
+  minutes), so a browser that drops the cookie between leaving for Google and coming back still
+  finishes. Static pages get the session token in the URL fragment (`#session=`), which site.js
+  stores and sends as a Bearer header, so the capture app stays signed in even when a browser
+  drops cookies. A replay of the callback while already signed in goes to My account. Failures
+  are a readable page with *Try again* (ASCII only; the raw JSON showed mojibake on iOS). The
+  API sends `www.` to the one public host and the Apache snippet does the same; the installer
+  adds `PUBLIC_BASE_URL` and a `GLASSDB_SESSION_SECRET` to an older `.env`;
+  `/api/auth/providers` reports `secret_source` (`ephemeral` means sign-ins fail at random
+  behind two workers).
 - **Everything moves to https.** The :80 vhost now redirects to https (ACME path excepted),
   the proxy snippet sends HSTS, the API redirects any request that arrives with
   `X-Forwarded-Proto: http` when `PUBLIC_BASE_URL` is https, and the session cookie is always

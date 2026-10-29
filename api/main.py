@@ -68,12 +68,21 @@ async def _force_https(request, call_next):
     Apache redirects too; this catches the API if the vhost is ever out of date.
     Direct requests with no forwarded header (tests, local runs) are untouched."""
     from api.auth import _api_prefix, public_https
-    if public_https() and request.headers.get("x-forwarded-proto", "").lower() == "http":
+    if public_https():
+        from urllib.parse import urlsplit
+
         from starlette.responses import RedirectResponse
-        host = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
-        q = f"?{request.url.query}" if request.url.query else ""
-        return RedirectResponse(f"https://{host}{_api_prefix(request)}{request.scope.get('path', '/')}{q}",
-                                status_code=301)
+        canon = urlsplit(os.environ.get("PUBLIC_BASE_URL", "")).netloc.lower()
+        proto = request.headers.get("x-forwarded-proto", "").lower()
+        host = (request.headers.get("x-forwarded-host") or request.headers.get("host") or "").lower()
+        # a forwarded request on plain http, or on an alias such as www., goes to the one
+        # public origin: cookies are per host, so a sign-in started on www. would be lost
+        wrong_host = bool(proto) and bool(canon) and bool(host) and host != canon and host.endswith(canon)
+        if proto == "http" or wrong_host:
+            q = f"?{request.url.query}" if request.url.query else ""
+            target = canon if (wrong_host and canon) else host
+            return RedirectResponse(f"https://{target}{_api_prefix(request)}{request.scope.get('path', '/')}{q}",
+                                    status_code=301)
     return await call_next(request)
 
 # Routers for the surfaces that grew beyond read-only: sign-in for the static
