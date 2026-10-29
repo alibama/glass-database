@@ -29,7 +29,7 @@ from api.main import app as api_app  # noqa: E402
 STREAMLIT = {"glowtbook": 8503, "explore": 8502, "admin": 8501}
 FILES = {"/": "landing-index.html", "/paper.css": "paper.css", "/splat.html": "splat.html",
          "/collection.html": "collection.html", "/account.html": "account.html",
-         "/infrastructure.html": "infrastructure.html",
+         "/infrastructure.html": "infrastructure.html", "/tour.html": "tour.html",
          "/site.js": "site.js",
          "/logo.svg": "landing-logo.svg", "/shop-prompts.md": "shop-prompts.md",
          "/SHOP-PARTS.md": "SHOP-PARTS.md"}
