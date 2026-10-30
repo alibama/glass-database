@@ -7,6 +7,21 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Pieces as trading cards, and a Go-live panel.** One card renderer (`GDB.pieceCard` in
+  site.js, styled in paper.css) draws a piece the way a graded card reads: the Glass ID strength
+  as the big number up top, the top image in the art window, a type line, stat rows (Glass ID,
+  story, registry, event), a serial and a rarity pill. My account shows your pieces and your
+  collection as cards; a shared collection page does too. **Go live** on My account
+  (`/account.html?piece=N#golive`) is the one place a piece goes from registered to published to
+  entered: four steps, each with its button and status on the page. Publish is now one call
+  (`POST /api/me/objects/{id}/publish`), entering the open season is one click, and a photo can be
+  added from the phone (`POST /api/me/objects/{id}/images`, served back at `/image`). The only
+  thing that leaves the page is the one Discord notification the reviewers already got; the
+  Publish line turns to *live* on approval. Every *next step* link after Register now points at
+  the panel instead of a Glowtbook tab.
+- **The capture app keeps a top image.** While you walk around a piece it keeps a full-resolution
+  still of the sharpest, most detailed view, and saves it onto the piece with the Glass ID (as the
+  primary image when the piece has none). The receipt shows it and continues to the Go-live panel.
 - **The front page is the mission.** The homepage now carries the mission statement and the
   seven ways we pursue it, each one linked into the part of the site where it happens (studio
   docs and the cost calculator, the opportunities calendar and shows, field notes, collecting

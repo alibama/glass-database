@@ -22,7 +22,7 @@ def test_next_step_walks_the_ladder():
     assert gstore.next_step(_card(fp=False))["kind"] == "register"
     assert gstore.next_step(_card(fp=False))["url"] == "/fingerprint/enroll.html?object=7"
     assert gstore.next_step(_card())["kind"] == "publish"
-    assert gstore.next_step(_card())["url"] == "/glowtbook/?page=objects&object=7&tab=contribute"
+    assert gstore.next_step(_card())["url"] == "/account.html?piece=7#golive"
     assert gstore.next_step(_card(state="rejected"))["label"].startswith("Fix it")
     assert gstore.next_step(_card(state="pending"))["kind"] == "review"
     n = gstore.next_step(_card(state="published"), claims={"ok": 1, "pending": 2})
@@ -81,3 +81,18 @@ def test_walkthrough_short_is_where_people_look():
     assert short in (DEPLOY / "landing-index.html").read_text(encoding="utf-8")
     assert short in (DEPLOY / "fingerprint-web" / "enroll.html").read_text(encoding="utf-8")
     assert short in (ROOT / "docs" / "FINGERPRINT-WORKFLOW.md").read_text(encoding="utf-8")
+
+
+def test_go_live_panel_and_piece_cards_are_in_place():
+    """One panel for register → top image → publish → enter; one card renderer for every piece grid."""
+    acct = (DEPLOY / "account.html").read_text(encoding="utf-8")
+    assert 'id="golive"' in acct and "GDB.pieceCard(" in acct
+    for path in ("/me/objects/\" + o.id + \"/publish", "/me/objects/\" + o.id + \"/images", "/entries"):
+        assert path in acct, path
+    js = (DEPLOY / "site.js").read_text(encoding="utf-8")
+    assert "function pieceCard(" in js and "pieceCard: pieceCard" in js
+    assert ".pc-hp" in (DEPLOY / "paper.css").read_text(encoding="utf-8")
+    assert "GDB.pieceCard(" in (DEPLOY / "collection.html").read_text(encoding="utf-8")
+    enroll = (DEPLOY / "fingerprint-web" / "enroll.html").read_text(encoding="utf-8")
+    assert "heroGrab" in enroll and "/images?role=auto" in enroll and "#golive" in enroll
+    assert gstore.golive_url(7) == "/account.html?piece=7#golive"

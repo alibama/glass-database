@@ -202,6 +202,11 @@ def piece_url(oid: int, tab: str = "") -> str:
     return f"/glowtbook/?page=objects&object={int(oid)}" + (f"&tab={tab}" if tab else "")
 
 
+def golive_url(oid: int) -> str:
+    """The Go-live panel on My account: register → top image → publish → enter, one place."""
+    return f"/account.html?piece={int(oid)}#golive"
+
+
 def next_step(card: dict, *, season: dict | None = None, claims: dict | None = None,
               entered: set[str] | None = None) -> dict:
     """What this piece needs next, as something to click: ``{kind, label, url}``.
@@ -219,11 +224,11 @@ def next_step(card: dict, *, season: dict | None = None, claims: dict | None = N
         return {"kind": "register", "label": "Register it to get its Glass ID",
                 "url": f"/fingerprint/enroll.html?object={int(oid)}"}
     if state == "rejected":
-        return {"kind": "publish", "label": "Fix it and publish again", "url": piece_url(oid, "contribute")}
+        return {"kind": "publish", "label": "Fix it and publish again", "url": golive_url(oid)}
     if state == "private":
-        return {"kind": "publish", "label": "Publish it", "url": piece_url(oid, "contribute")}
+        return {"kind": "publish", "label": "Publish it", "url": golive_url(oid)}
     if state == "pending":
-        return {"kind": "review", "label": "Waiting for review", "url": piece_url(oid, "contribute")}
+        return {"kind": "review", "label": "Waiting for review", "url": golive_url(oid)}
     if int(cc.get("pending") or 0):
         n = int(cc["pending"])
         return {"kind": "claims", "label": f"Confirm {n} collection request{'s' if n != 1 else ''}",
@@ -232,8 +237,8 @@ def next_step(card: dict, *, season: dict | None = None, claims: dict | None = N
         if pub.get("row_id") and pub["row_id"] in (entered or set()):
             return {"kind": "entered", "label": f"Entered in {season['title']} · see the standings",
                     "url": f"/games.html?season={season['slug']}"}
-        return {"kind": "enter", "label": f"Enter it in {season['title']}", "url": piece_url(oid, "seasons")}
-    return {"kind": "done", "label": "All set", "url": piece_url(oid)}
+        return {"kind": "enter", "label": f"Enter it in {season['title']}", "url": golive_url(oid)}
+    return {"kind": "done", "label": "All set", "url": golive_url(oid)}
 
 
 def get_object(store, uid: str, oid: int):

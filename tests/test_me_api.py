@@ -132,3 +132,48 @@ def test_unconfigured_login_explains_why(client, tmp_path, monkeypatch):
     assert r.status_code == 503 and "no secrets.toml found" in r.json()["detail"]
     j = client.get("/auth/providers").json()
     assert j["configured"] is False and "no secrets.toml found" in j["note"]
+
+
+def _png():
+    import io
+    from PIL import Image
+    buf = io.BytesIO(); Image.new("RGB", (64, 48), (179, 38, 30)).save(buf, "PNG"); return buf.getvalue()
+
+
+def test_top_image_and_one_call_publish(client, monkeypatch):
+    """The capture app's best shot becomes the top image; Publish is one call; both show on the card."""
+    monkeypatch.setenv("GLASSDB_MODERATION", "1")
+    h = _auth("u9", "u9@example.com", "U Nine")
+    oid = client.post("/me/objects", json={"title": "Amber pumpkin"}, headers=h).json()["id"]
+    assert client.get(f"/me/objects/{oid}", headers=h).json()["image_url"] is None
+    assert client.get(f"/me/objects/{oid}/image", headers=h).status_code == 404
+    assert client.post(f"/me/objects/{oid}/images", content=b"not an image",
+                       headers={**h, "Content-Type": "image/jpeg"}).status_code == 400
+    # auto: the first photo is the top image
+    r = client.post(f"/me/objects/{oid}/images?role=auto&caption=best shot", content=_png(),
+                    headers={**h, "Content-Type": "image/png"})
+    assert r.status_code == 200, r.text
+    assert r.json()["role"] == "primary" and r.json()["object"]["image_url"].endswith(f"/me/objects/{oid}/image")
+    img = client.get(f"/me/objects/{oid}/image", headers=h)
+    assert img.status_code == 200 and img.headers["content-type"].startswith("image/png")
+    assert client.get(f"/me/objects/{oid}/image", headers=_auth("u2")).status_code == 404
+    # a second auto photo is just a photo; an explicit primary demotes the first
+    assert client.post(f"/me/objects/{oid}/images", content=_png(), headers=h).json()["role"] == "photo"
+    assert client.post(f"/me/objects/{oid}/images?role=primary", content=_png(), headers=h).json()["role"] == "primary"
+    assert client.get(f"/me/objects/{oid}", headers=h).json()["images"] == 3
+    # publish in one call -> the review queue; the card says pending and the next step says so
+    assert client.post(f"/me/objects/{oid}/publish", json={}, headers=_auth("u2")).status_code == 404
+    r = client.post(f"/me/objects/{oid}/publish", json={"sign": False}, headers=h)
+    assert r.status_code == 200, r.text
+    j = r.json()
+    assert j["ok"] and j["pending"] is True and j["content_hash"] and j["images"] == 3
+    assert j["object"]["publication"]["state"] == "pending"
+    mine = client.get("/me/objects", headers=h).json()["objects"]
+    me = next(o for o in mine if o["id"] == oid)
+    assert me["publication"]["state"] == "pending" and me["image_url"]
+    from central.dbconn import connect
+    c = connect()
+    row = c.execute("SELECT status, title FROM object_submissions WHERE content_hash=?", (j["content_hash"],)).fetchone()
+    assert row and row[0] == "pending" and row[1] == "Amber pumpkin"
+    c.execute("DELETE FROM object_submission_images WHERE submission_id IN (SELECT id FROM object_submissions WHERE content_hash=?)", (j["content_hash"],))
+    c.execute("DELETE FROM object_submissions WHERE content_hash=?", (j["content_hash"],)); c.commit()

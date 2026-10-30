@@ -559,6 +559,15 @@
     cap.width=w; cap.height=h; capx.drawImage(video,0,0,w,h);
     return await new Promise(r=>cap.toBlob(r,"image/jpeg",0.6));
   }
+  // The top image: a full-resolution still of the sharpest, most detailed view so far.
+  // Saved onto the piece with the Glass ID, so every piece registered here gets a picture.
+  const heroCnv=document.createElement("canvas");
+  async function heroGrab(){
+    const vw=video.videoWidth||1280, vh=video.videoHeight||720, MAX=1600, s=Math.min(1, MAX/Math.max(vw,vh));
+    const w=Math.max(1,Math.round(vw*s)), h=Math.max(1,Math.round(vh*s));
+    heroCnv.width=w; heroCnv.height=h; heroCnv.getContext("2d").drawImage(video,0,0,w,h);
+    return await new Promise(r=>heroCnv.toBlob(r,"image/jpeg",0.86));
+  }
   function cellOf(sector,band,dh){
     if(sector>=0) return sector+":"+band;
     // No compass: a new "cell" only when the view differs clearly from EVERY shot so far
@@ -580,6 +589,8 @@
       dhash:a.dhash,noveltyAtCapture:nov,sector:S.here,band,cell:cellOf(S.here,band,a.dhash),
       t:new Date().toISOString(),orientation:S.orient};
     S.frames.push(f);
+    const heroScore=a.sharp*(1+4*a.detail);
+    if(!S.hero||heroScore>S.hero.score){ heroGrab().then(b=>{ if(b){ S.hero={blob:b,score:heroScore,seq}; markDirty(); } }).catch(()=>{}); }
     // DINOv2 is expensive: sample a capped handful of representative views, then
     // stop — colour + dHash keep running on every frame.
     if(S.aiEmbed && (S.embCount||0) < EMB_CAP){
@@ -756,11 +767,11 @@
     const frames=S.frames.map(f=>({blob:f.blob,seq:f.seq,sharp:f.sharp,detail:f.detail,chist:f.chist,emb:f.emb,dhash:f.dhash,
       noveltyAtCapture:f.noveltyAtCapture,sector:f.sector,band:f.band,cell:f.cell,t:f.t,orientation:f.orientation}));
     await draftPut({ savedAt:Date.now(), objectId:S.target?S.target.id:null, objectTitle:S.target?S.target.title:null,
-      frames, seq:S.seq, pseudo:S.pseudo, embCount:S.embCount||0, rating:S.rating });
+      frames, seq:S.seq, pseudo:S.pseudo, embCount:S.embCount||0, rating:S.rating, hero:S.hero||null });
   }
   function restoreDraft(d){
     S.frames=(d.frames||[]).map(f=>Object.assign({},f,{url:URL.createObjectURL(f.blob)}));
-    S.seq=d.seq||S.frames.length; S.pseudo=d.pseudo||0; S.embCount=d.embCount||0;
+    S.seq=d.seq||S.frames.length; S.pseudo=d.pseudo||0; S.embCount=d.embCount||0; S.hero=d.hero||null;
     S.prevTierIdx=4; S.ready=false; S.dirty=true;
     paintRing(); updateRating(); refresh(); $("#review").classList.add("unsaved");
   }
@@ -884,8 +895,12 @@
   };
 
   /* ---------- save to piece / receipt ---------- */
-  function showReceipt(j){
+  function showReceipt(j,img){
     const o=j.object||{}, pub=(o.publication||{}).state;
+    const heroUrl=S.hero&&S.hero.blob?URL.createObjectURL(S.hero.blob):null;
+    const imgLine=img&&!img.error ? `${img.role==="primary"?"added from your sharpest shot":"your sharpest shot added as a photo (the piece already had a top image)"}${heroUrl?` <img src="${heroUrl}" alt="" style="display:block;width:96px;height:72px;object-fit:cover;border:1px solid var(--ink);margin-top:6px">`:""}`
+      : img&&img.error ? `couldn't be added (${esc(img.error)}) — add one on My account` : "no shot kept — add one on My account";
+    const panel=`/account.html?piece=${o.id}#golive`;
     const seasonHint=document.createElement("span");
     $("#filmReview").hidden=true;
     const r=$("#filmReceipt"); r.hidden=false;
@@ -893,20 +908,21 @@
       <dl><dt>Strength</dt><dd>${j.rating}/100 · ${esc(j.tier)}</dd>
           <dt>Views</dt><dd>${j.views}</dd>
           <dt>Measured</dt><dd>${j.dimensions?esc(j.dimensions)+(j.dimensions_set?" — set on the piece":""):"no mat detected (dimensions not measured)"}</dd>
-          <dt>Status</dt><dd>${pub==="published"?"published — the Glass ID goes out with it when you re-publish":pub==="pending"?"in the review queue":"private — publish it from Glowtbook when it's ready"}</dd></dl>
+          <dt>Top image</dt><dd>${imgLine}</dd>
+          <dt>Status</dt><dd>${pub==="published"?"live in the registry — publish it again so the new Glass ID goes out with it":pub==="pending"?"in the review queue":"private — publish it from the Go-live panel when it's ready"}</dd></dl>
       <div class="filmbtns">
-        <a class="primary" href="/fingerprint/verify.html?mine=${o.id}">Check it now</a>
-        <a class="ghost teal" href="/glowtbook/?page=objects&object=${o.id}">Open in Glowtbook</a>
+        <a class="primary" href="${panel}">${pub==="published"?"Open the Go-live panel":"Continue: publish it"}</a>
+        <a class="ghost teal" href="/fingerprint/verify.html?mine=${o.id}">Check it now</a>
         <button class="ghost" id="anotherBtn">Register another piece</button>
       </div>
-      <p class="fine">Check it now opens Check a Piece with this piece loaded; Open in Glowtbook shows the piece's page; Register another piece starts again.</p>
-      <p class="fine" id="nextStep">Next: <a href="/glowtbook/?page=objects&object=${o.id}&tab=contribute"><b>publish the piece</b></a> (Glowtbook → My pieces → Publish) — its Glass ID goes out with it so anyone can check it from The Directory. Everything you've added is on <a href="/account.html">My account</a>.</p>`;
+      <p class="fine">The Go-live panel on My account has the next steps as buttons: top image, publish, enter the collecting event. Check it now opens Check a Piece with this piece loaded.</p>
+      <p class="fine" id="nextStep">Everything you've added is on <a href="/account.html">My account</a>.</p>`;
     $("#anotherBtn").onclick=()=>{ resetSession(); $("#film").classList.remove("open"); $("#gate").hidden=false; $("#gate").style.display=""; $("#hud").hidden=true; stopCamera(); loadPieces(); };
-    if(G){ G.json("/seasons").then(s=>{ const cur=s&&s.current; if(cur){ $("#nextStep").insertAdjacentHTML("beforeend",
-      ` Then <a href="/games.html?season=${esc(cur.slug)}">enter it in <b>${esc(cur.title)}</b></a> — this collecting event's call for pieces is open.`); } }).catch(()=>{}); }
+    if(G){ G.json("/seasons").then(s=>{ const cur=s&&s.current; if(cur){ $("#nextStep").insertAdjacentHTML("afterbegin",
+      `<b>${esc(cur.title)}</b> is taking entries: publish the piece, then enter it, both from <a href="${panel}">the Go-live panel</a>. `); } }).catch(()=>{}); }
   }
   function resetSession(){
-    S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.pseudo=0; S.here=-1; S.ready=false; S.prevTierIdx=4; S.embCount=0; S.dirty=false; S.saved=null;
+    S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.pseudo=0; S.here=-1; S.ready=false; S.prevTierIdx=4; S.embCount=0; S.dirty=false; S.saved=null; S.hero=null;
     $("#review").classList.remove("unsaved"); $("#filmReceipt").hidden=true; $("#filmReview").hidden=false;
     paintRing(); updateRating(); refresh(); draftClear();
   }
@@ -918,9 +934,16 @@
     try{
       const {blob}=await buildZip(); b.textContent="Saving…";
       const j=await G.json(`/me/objects/${S.target.id}/fingerprint?set_dimensions=1`,{method:"POST",headers:{"Content-Type":"application/zip"},body:blob});
-      S.saved=j; S.dirty=false; $("#review").classList.remove("unsaved"); await draftClear();
+      S.saved=j; S.dirty=false; $("#review").classList.remove("unsaved");
       const p=S.pieces.find(x=>x.id===S.target.id); if(p&&j.object){ Object.assign(p,j.object); }
-      toast("Saved — "+j.rating+"/100 "+j.tier,"ok"); buzz([30,40,30]); showReceipt(j);
+      // the top image: the sharpest full-resolution shot, saved onto the piece automatically
+      let img=null;
+      if(S.hero&&S.hero.blob){ b.textContent="Adding the top image…";
+        try{ img=await G.json(`/me/objects/${S.target.id}/images?role=auto&caption=${encodeURIComponent("Best shot from the Glass ID capture")}`,{method:"POST",headers:{"Content-Type":"image/jpeg"},body:S.hero.blob});
+          if(p&&img&&img.object) Object.assign(p,img.object); }
+        catch(e){ img={error:e.message}; } }
+      await draftClear();
+      toast("Saved — "+j.rating+"/100 "+j.tier,"ok"); buzz([30,40,30]); showReceipt(j,img);
     }catch(e){
       if(e.status===401){ toast("Your sign-in expired — sign in again, your shots are kept on this phone","warn"); S.user=null; renderWho(); }
       else toast("Save failed: "+e.message,"warn");
