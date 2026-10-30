@@ -93,6 +93,8 @@ def test_go_live_panel_and_piece_cards_are_in_place():
     assert "function pieceCard(" in js and "pieceCard: pieceCard" in js
     assert ".pc-hp" in (DEPLOY / "paper.css").read_text(encoding="utf-8")
     assert "GDB.pieceCard(" in (DEPLOY / "collection.html").read_text(encoding="utf-8")
+    games = (DEPLOY / "games.html").read_text(encoding="utf-8")
+    assert games.count("GDB.pieceCard(") == 2 and 'class="card third"' not in games
     enroll = (DEPLOY / "fingerprint-web" / "enroll.html").read_text(encoding="utf-8")
     assert "heroGrab" in enroll and "/images?role=auto" in enroll and "#golive" in enroll
     assert gstore.golive_url(7) == "/account.html?piece=7#golive"
