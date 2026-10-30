@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>My account — Glass Database</title>
-<meta name="description" content="Everything you have added to the Glass Database in one place: your pieces and what each needs next, your collection, your entries in the collecting event, and what is waiting on you.">
+<meta name="description" content="Everything you have added to the Glass Database in one place: your pieces as cards, the Go-live panel that takes a piece from registered to published to entered, your collection, and what is waiting on you.">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -24,6 +24,34 @@
   .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
   .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
   button.btn { background: var(--paper); cursor: pointer; }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  /* Go live: pick a piece, then four steps in one place */
+  .chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: 1.2rem; }
+  .chipbtn { display: inline-flex; align-items: center; gap: .5rem; font: 500 12px/1 var(--mono); letter-spacing: .06em; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); padding: .55rem .8rem; cursor: pointer; max-width: 100%; }
+  .chipbtn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 22ch; }
+  .chipbtn:hover { border-color: var(--ink); } .chipbtn.on { border-color: var(--red); color: var(--red); }
+  .chipbtn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rule); flex: none; }
+  .chipbtn .dot.live { background: var(--ink); } .chipbtn .dot.todo { background: var(--red); } .chipbtn .dot.wait { background: var(--paper-3); border: 1px solid var(--muted); }
+  .gogrid { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: clamp(1.5rem, 4vw, 3.5rem); margin-top: 1.6rem; align-items: start; }
+  .go { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink); }
+  .go li { display: grid; grid-template-columns: 2.6rem 1fr; gap: .8rem; padding: 1.1rem 0; border-bottom: 1px solid var(--rule); }
+  .go li .n { font: 400 1.5rem/1 var(--serif); color: var(--red); padding-top: .15rem; }
+  .go li.done .n { color: var(--ink); } .go li.off .n, .go li.wait .n { color: var(--muted); }
+  .go h3 { font-size: 1.25rem; margin: 0 0 .25rem; display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
+  .go h3 .st { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule); padding: .3rem .5rem; }
+  .go li.done h3 .st { color: var(--ink); border-color: var(--ink); } .go li.todo h3 .st { color: var(--red); border-color: var(--red); } .go li.live h3 .st { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .go p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 60ch; }
+  .go li.off > div > p, .go li.off h3 { color: var(--muted); }
+  .go .row { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; margin-top: .7rem; }
+  .go .row small { font: 400 13px/1.45 var(--sans); color: var(--muted); flex-basis: 100%; max-width: 60ch; }
+  .go .msg { font: 400 13px/1.45 var(--sans); color: var(--ink); margin-top: .5rem; }
+  .go .msg.err { color: var(--red); }
+  .consent { display: grid; grid-template-columns: auto 1fr; gap: .6rem; align-items: start; font-size: 14px; color: var(--ink-2); margin-top: .7rem; max-width: 60ch; }
+  .consent input { margin-top: .25rem; accent-color: var(--red); }
+  .goprog { font: 500 12px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 .8rem; }
+  .goprog b { color: var(--red); font-weight: 500; }
+  .go .thumb { width: 72px; height: 54px; object-fit: cover; border: 1px solid var(--ink); display: block; }
 
   /* what's waiting: a numbered list of things to click */
   .todo { list-style: none; margin: 1.6rem 0 0; padding: 0; border-top: 1px solid var(--ink); max-width: 72ch; }
@@ -34,20 +62,10 @@
   .todo li .btn { white-space: nowrap; }
   .todo .none { grid-template-columns: 1fr; color: var(--ink-2); }
 
-  /* the pieces table: every cell is a link */
   .tbl td a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
   .tbl td a:hover { color: var(--red); border-color: var(--red); }
-  .tbl td a.step { display: inline-block; border: 1px solid var(--ink); padding: .35rem .6rem; font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
-  .tbl td a.step:hover { background: var(--ink); color: var(--paper); }
-  .tbl td a.step.hot { border-color: var(--red); color: var(--red); }
-  .tbl td a.step.hot:hover { background: var(--red); color: #fff; }
   .tbl td .st { font: 400 12px var(--mono); letter-spacing: .04em; color: var(--muted); }
   .tbl td .st.ok { color: var(--ink); }
-
-  .cards { margin-top: 1.6rem; }
-  .card .ph { aspect-ratio: 4 / 3; margin-bottom: 1rem; background: var(--paper-2); }
-  .card .who { margin: 0; color: var(--ink-2); font-size: 15px; }
-  .card .ed { margin: .3rem 0 0; font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
   .pill.rar.legendary { background: var(--red); border-color: var(--red); color: #fff; }
   .empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
   .empty a { color: var(--ink); } .empty a:hover { color: var(--red); }
@@ -55,6 +73,7 @@
   .kv dt { font: 500 11px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
   .kv dd { margin: 0; color: var(--ink-2); } .kv dd a { color: var(--ink); }
   .badges { display: flex; gap: .5rem; flex-wrap: wrap; margin-top: 1rem; }
+  @media (max-width: 900px) { .gogrid { grid-template-columns: 1fr; } .gogrid .pc { max-width: 380px; } }
   @media (max-width: 680px) { .todo li { grid-template-columns: 2rem 1fr; } .todo li .btn { grid-column: 2; } .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; } }
 </style>
 </head>
@@ -67,7 +86,7 @@
   <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
  </nav>
 </header>
-<div class="subnav wrap"><span class="crumb">My account</span><a href="/fingerprint/enroll.html">Register Your Piece</a><a href="/glowtbook/">Glowtbook</a><a href="/games.html">Collecting Events</a><a href="/fingerprint/verify.html">Check a Piece</a></div>
+<div class="subnav wrap"><span class="crumb">My account</span><a href="#golive">Go live</a><a href="#pieces">My pieces</a><a href="#events">Collecting Events</a><a href="/fingerprint/enroll.html">Register Your Piece</a><a href="/glowtbook/">Glowtbook</a></div>
 
 <main id="main">
 <section class="hero" id="hero">
@@ -81,45 +100,50 @@
 </section>
 
 <div id="signedIn" hidden>
-<section class="s alt" id="waiting" aria-labelledby="h-waiting">
+<section class="s alt" id="golive" aria-labelledby="h-golive">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 02</span> Waiting on you</p>
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> Go live</p>
+   <div><h2 id="h-golive">From the shelf <em>to the record.</em></h2><p class="lede">Pick a piece. Four steps, each with its button, all on this page: register it, give it a top image, publish it, enter it in the collecting event. The only thing that happens off this page is one Discord notification to the reviewers when you publish.</p>
+    <div class="chips" id="goPick" aria-label="Your pieces"></div></div></div>
+  <div class="gogrid" id="goGrid"><div id="goCard"></div><div><p class="goprog" id="goProg"></p><ol class="go" id="goSteps"></ol></div></div>
+  <div id="goEmpty" hidden></div>
+  <input type="file" id="photoFile" accept="image/*" capture="environment" hidden>
+ </div>
+</section>
+
+<section class="s" id="waiting" aria-labelledby="h-waiting">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> Waiting on you</p>
    <div><h2 id="h-waiting">What needs <em>a click.</em></h2><p class="lede">Each line is one thing to do and the button takes you straight there.</p>
     <ol class="todo" id="todo"><li class="none">Looking…</li></ol></div></div>
  </div>
 </section>
 
-<section class="s" id="pieces" aria-labelledby="h-pieces">
+<section class="s alt" id="pieces" aria-labelledby="h-pieces">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 03</span> My pieces</p>
-   <div><h2 id="h-pieces">Everything you've <em>added.</em></h2><p class="lede">Your pieces live in <a href="/glowtbook/">Glowtbook</a>, your studio notebook. The title opens the piece; the last column is its next step.</p>
-    <div class="btns"><div class="act"><a class="btn btn--red" href="/fingerprint/enroll.html">Register a new piece</a><small>Walk around it with your phone; it gets its Glass ID.</small></div>
-     <div class="act"><a class="btn btn--line" href="/glowtbook/?page=objects">Open Glowtbook</a><small>Add a piece by hand, write its story, publish it.</small></div></div></div></div>
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> My pieces</p>
+   <div><h2 id="h-pieces">Your pieces, <em>as cards.</em></h2><p class="lede">One card per piece: its Glass ID strength up top, its top image, its story, where it stands in the registry and in the collecting event. The title opens the piece in <a href="/glowtbook/">Glowtbook</a>.</p>
+    <div class="btns"><div class="act"><a class="btn btn--red" href="/fingerprint/enroll.html">Register a new piece</a><small>Walk around it with your phone; it gets its Glass ID and a top image.</small></div>
+     <div class="act"><a class="btn btn--line" href="/glowtbook/?page=objects">Open Glowtbook</a><small>Add a piece by hand, write its story, add more photos.</small></div></div></div></div>
   <div id="piecesBody"></div>
  </div>
 </section>
 
-<section class="s alt" id="events" aria-labelledby="h-events">
+<section class="s" id="events" aria-labelledby="h-events">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 04</span> Collecting Events</p>
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Collecting Events</p>
    <div><h2 id="h-events">Entered and <em>collected.</em></h2><p class="lede" id="eventsLede">The pieces you entered in a collecting event, and the pieces you have checked and added to your collection.</p></div></div>
-  <div class="two">
-   <div>
-    <p class="label">Entered</p>
-    <div id="entriesBody"></div>
-   </div>
-   <div>
-    <p class="label">My collection</p>
-    <div id="collBody"></div>
-    <div class="badges" id="badges"></div>
-   </div>
-  </div>
+  <p class="label">Entered</p>
+  <div id="entriesBody"></div>
+  <p class="label" style="margin-top:2.4rem">My collection</p>
+  <div id="collBody"></div>
+  <div class="badges" id="badges"></div>
  </div>
 </section>
 
-<section class="s" id="sharing" aria-labelledby="h-sharing">
+<section class="s alt" id="sharing" aria-labelledby="h-sharing">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 05</span> Sharing &amp; sign-in</p>
+  <div class="s-head"><p class="label"><span class="n">№ 06</span> Sharing &amp; sign-in</p>
    <div><h2 id="h-sharing">Connected <em>accounts.</em></h2><p class="lede">Posting goes through the accounts you connect once; your collection can have a public link.</p>
     <dl class="kv" id="kv"></dl></div></div>
  </div>
@@ -132,9 +156,9 @@
   <div class="s-head"><p class="label"><span class="n">№ 02</span> What you get</p>
    <div><h2 id="h-why">One place for <em>your glass.</em></h2><p class="lede">Signing in takes a Google account and nothing to install. Your pieces, your collection and your entries in the collecting event are private until you choose to publish or share them.</p></div></div>
   <div class="steps">
-   <div class="step"><p class="big">1</p><h3>Your pieces</h3><p>Everything you register or write up in Glowtbook, with its Glass ID, whether it's published and what it needs next.</p></div>
-   <div class="step"><p class="big">2</p><h3>Your collection</h3><p>The pieces you've checked with your phone and added, the badges you've earned, and a public link if you want one.</p></div>
-   <div class="step"><p class="big">3</p><h3>What's waiting</h3><p>Collection requests to confirm, pieces in review, the collecting event that's open. One list, each line a click.</p></div>
+   <div class="step"><p class="big">1</p><h3>Your pieces</h3><p>Everything you register or write up in Glowtbook, as cards: Glass ID, top image, story, registry, event.</p></div>
+   <div class="step"><p class="big">2</p><h3>Go live</h3><p>Register, top image, publish, enter: four steps with their buttons on one panel, and you watch the piece go live here.</p></div>
+   <div class="step"><p class="big">3</p><h3>Your collection</h3><p>The pieces you've checked with your phone and added, the badges you've earned, and a public link if you want one.</p></div>
   </div>
  </div>
 </section>
@@ -167,125 +191,256 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
   function soft(path) { return GDB.json(path).catch(function () { return null; }); }
   var HOT = { register: 1, publish: 1, claims: 1, enter: 1 };
+  var D = { me: null, objs: [], coll: null, claims: null, social: null, share: null, season: null, pick: null, msg: {} };
 
   function signedOut() {
     document.title = "Sign in — Glass Database";
     $("#heroTitle").innerHTML = "Sign in to see <em>your glass.</em>";
-    $("#heroLede").textContent = "Your pieces, your collection, your entries in the collecting event and whatever is waiting on you, in one place.";
+    $("#heroLede").textContent = "Your pieces as cards, the Go-live panel, your collection and whatever is waiting on you, in one place.";
     $("#heroCta").innerHTML = '<div class="act"><a class="btn btn--red" href="' + esc(GDB.loginUrl(here)) + '">Sign in with Google</a><small>Nothing to install. We keep your email to tell you about your pieces and nothing else.</small></div>' +
       '<div class="act"><a class="btn btn--line" href="/fingerprint/verify.html">Check a Piece</a><small>Works without signing in: point your phone at a piece to see who made it.</small></div>';
     $("#signedOut").hidden = false; $("#signedIn").hidden = true;
   }
 
-  function pieceRow(o) {
-    var fp = o.fingerprint, pub = o.publication || {}, st = pub.state || "private";
-    var fpTxt = fp ? esc(fp.rating + "/100 " + fp.tier) : "—";
-    var reg = { published: "published", pending: "in review", rejected: "sent back" }[st] || "private";
-    var cc = o.claims || {};
-    var nx = o.next || { label: "Open", url: o.url, kind: "done" };
-    return "<tr>" +
-      '<td><a href="' + esc(o.url) + '"><b>' + esc(o.title || "Untitled") + "</b></a>" + (o.maker ? '<br><span class="st">' + esc(o.maker) + (o.year ? " · " + esc(o.year) : "") + "</span>" : "") + "</td>" +
-      '<td><a href="' + esc(o.url + "&tab=fingerprint") + '">' + fpTxt + "</a></td>" +
-      '<td><a href="' + esc(o.url + "&tab=contribute") + '"><span class="st' + (st === "published" ? " ok" : "") + '">' + reg + "</span></a></td>" +
-      '<td><a href="' + esc(nx.url) + '" class="step' + (HOT[nx.kind] ? " hot" : "") + '">' + esc(nx.label) + "</a></td>" +
-      "</tr>";
+  /* ---- the data behind a card --------------------------------------------- */
+  function publicUrl(o) { var rid = (o.publication || {}).row_id; return rid ? "/explore/?view=objects#obj-" + encodeURIComponent(rid) : null; }
+  function entryFor(o) {
+    var rid = (o.publication || {}).row_id, list = (D.coll && D.coll.entries) || [];
+    if (!rid) return null;
+    return list.filter(function (e) { return e.object_row_id === rid && D.season && e.season_slug === D.season.slug; })[0] ||
+      list.filter(function (e) { return e.object_row_id === rid; })[0] || null;
+  }
+  function regWord(st) { return { published: "Live in the registry", pending: "In review", rejected: "Sent back" }[st] || "Private"; }
+  function eventWord(en) {
+    if (!en) return "Not entered";
+    if (en.status === "approved") return "In the running · " + plural(en.vote_count || 0, "vote");
+    if (en.status === "pending") return "Entered · waiting for approval";
+    return "Not accepted";
+  }
+  function cardData(o, opts) {
+    opts = opts || {};
+    var fp = o.fingerprint, pub = o.publication || {}, st = pub.state || "private", en = entryFor(o), nx = o.next || {};
+    var stats = [
+      { k: "Glass ID", v: fp ? fp.tier + " · " + fp.rating + "/100" : "Not registered",
+        sub: fp ? [fp.views ? fp.views + " views" : "", fp.dominant_color || ""].filter(Boolean).join(" · ") : "Walk around it with your phone", off: !fp },
+      { k: "Story", v: plural(o.events || 0, "moment") + " · " + plural(o.images || 0, "photo"), sub: o.dimensions || "" },
+      { k: "Registry", v: regWord(st), sub: pub.row_id ? "ref " + String(pub.row_id).slice(0, 8) : (st === "pending" ? "the reviewers have their one Discord ping" : "only you can see it"), off: st === "private" },
+      D.season ? { k: "Event", v: eventWord(en), sub: D.season.title, off: !en } : null
+    ];
+    return { id: o.id, title: o.title, url: o.url, image: o.image_url, maker: o.maker, year: o.year, techniques: o.techniques,
+      hp: { n: fp ? fp.rating : "—", label: "Glass ID", off: !fp }, rarity: en && en.rarity ? en.rarity : null,
+      serial: GDB.serial(o.id), set: "Glowtbook" + (o.created_at ? " · " + String(o.created_at).slice(0, 4) : ""),
+      stats: stats, selected: !!opts.selected,
+      actions: opts.actions || [{ label: nx.kind === "done" || nx.kind === "entered" ? "Open the panel" : "Go live", id: "golive", hot: !!HOT[nx.kind] }, { label: "Glowtbook", url: o.url }] };
+  }
+  function collCard(p) {
+    var url = "/explore/?view=objects#obj-" + encodeURIComponent(p.object_row_id || "");
+    return { id: p.object_row_id, title: p.title, url: url, image: p.image_url, maker: p.artist_name || p.maker, studio: p.studio,
+      hp: { n: p.points || 0, label: plural(p.points || 0, "point").replace(/^\d+ /, "") }, rarity: p.rarity || "common",
+      serial: "ref " + String(p.object_row_id || "").slice(0, 8), set: p.season_title || "",
+      stats: [{ k: "Checked", v: p.verified ? "In your hands, against its Glass ID" : "Waiting on the maker to confirm", off: !p.verified },
+        { k: "Event", v: p.season_title || "—" },
+        { k: "Added", v: p.created_at ? String(p.created_at).slice(0, 10) : "—" }],
+      actions: [{ label: "See the piece", url: url }] };
   }
 
-  function renderPieces(objs) {
-    var el = $("#piecesBody");
-    if (!objs.length) {
-      el.innerHTML = '<div class="empty">No pieces yet. <a href="/fingerprint/enroll.html">Register one</a> with your phone, or <a href="/glowtbook/?page=objects">start it in Glowtbook</a> and add photos later.</div>';
+  /* ---- Go live: four steps for the picked piece ----------------------------- */
+  function stepsFor(o) {
+    var fp = o.fingerprint, pub = o.publication || {}, st = pub.state || "private", en = entryFor(o);
+    var enroll = "/fingerprint/enroll.html?object=" + o.id, s = D.season;
+    var out = [];
+    out.push({ cls: fp ? "done" : "todo", st: fp ? "done" : "to do", title: "Glass ID",
+      text: fp ? fp.tier + " · " + fp.rating + "/100" + (fp.views ? " from " + fp.views + " views" : "") + ". Any phone can recognise this piece." : "Set it on the Photo Mat and walk around it with your phone until the number reads 75% or more.",
+      row: '<a class="btn ' + (fp ? "btn--line" : "btn--red") + '" href="' + esc(enroll) + '">' + (fp ? "Register it again" : "Register it") + "</a>" + (fp ? "<small>Registering again replaces its Glass ID; do that if the first capture was weak.</small>" : "<small>The capture app also keeps your sharpest shot as the top image.</small>") });
+    out.push({ cls: o.image_url ? "done" : "todo", st: o.image_url ? "done" : "to do", title: "Top image",
+      text: o.image_url ? "This is the picture on the card and, once published, on the public page." : "The capture app adds your best shot by itself. Or add a photo now, straight from the phone.",
+      row: (o.image_url ? '<img class="thumb" src="' + esc(o.image_url) + '" alt="">' : "") + '<button type="button" class="btn ' + (o.image_url ? "btn--line" : "btn--red") + '" data-act="photo">' + (o.image_url ? "Replace the photo" : "Add a photo") + "</button><small>Kept as the archival original in your Glowtbook; a condensed copy goes out when you publish.</small>" });
+    var pubStep = { title: "Publish" };
+    if (st === "published") {
+      pubStep.cls = "done live"; pubStep.st = "live";
+      pubStep.text = "Live in the registry. Anyone can find it, check it against its Glass ID and read its story.";
+      pubStep.row = '<a class="btn btn--line" href="' + esc(publicUrl(o)) + '">See the public page</a><div id="goShare" style="flex-basis:100%"></div>';
+    } else if (st === "pending") {
+      pubStep.cls = "wait"; pubStep.st = "in review";
+      pubStep.text = "Submitted. The reviewers got one Discord notification; nothing else is needed from you. This line turns to Live when it is approved.";
+      pubStep.row = '<button type="button" class="btn btn--line" data-act="refresh">Check again</button>' + (pub.submitted_at ? "<small>Sent " + esc(String(pub.submitted_at).slice(0, 16).replace("T", " ")) + ".</small>" : "");
+    } else {
+      pubStep.cls = "todo"; pubStep.st = st === "rejected" ? "sent back" : "to do";
+      pubStep.text = (st === "rejected" ? "The reviewers sent it back. Fix what they asked for in Glowtbook, then publish it again. " : "") +
+        "A condensed copy of the piece, its story and its Glass ID goes to the public registry; its pictures carry the maker's name as Content Credentials when the server can sign.";
+      pubStep.row = '<label class="consent"><input type="checkbox" data-act="consent"> Publish it to the public registry (data under CC BY 4.0). The story I recorded is accurate to the best of my knowledge.</label>' +
+        '<button type="button" class="btn btn--red" data-act="publish" disabled>' + (st === "rejected" ? "Publish it again" : "Publish for review") + "</button>" +
+        "<small>One Discord notification goes to the reviewers. You watch it go live on this line.</small>";
+    }
+    out.push(pubStep);
+    var evStep = { title: "Collecting event" };
+    if (!s) { evStep.cls = "off"; evStep.st = "no event open"; evStep.text = "No collecting event is taking entries right now. Published pieces can be entered the moment one opens."; evStep.row = '<a class="btn btn--line" href="/games.html">Collecting Events</a>'; }
+    else if (en) {
+      evStep.cls = en.status === "approved" ? "done live" : en.status === "pending" ? "wait" : "todo";
+      evStep.st = en.status === "approved" ? "in the running" : en.status === "pending" ? "waiting for approval" : "not accepted";
+      evStep.text = en.status === "approved" ? "Entered in " + s.title + " with " + plural(en.vote_count || 0, "vote") + (en.rarity ? ", rarity " + en.rarity : "") + "." : en.status === "pending" ? "Entered in " + s.title + ". An admin approves entries; that is on us." : "This entry was not accepted. Ask on the Discord if that is a surprise.";
+      evStep.row = '<a class="btn btn--line" href="/games.html?season=' + esc(s.slug) + '#e-' + esc(en.id) + '">See the standings</a>';
+    } else if (st !== "published") { evStep.cls = "off"; evStep.st = "after publishing"; evStep.text = "Only live pieces can be entered. Finish step 3 and this button wakes up."; evStep.row = '<button type="button" class="btn btn--line" disabled>Enter it in ' + esc(s.title) + "</button>"; }
+    else { evStep.cls = "todo"; evStep.st = "to do"; evStep.text = s.title + " is taking entries. Collectors vote, the standings are public, and a piece with a Glass ID counts as uncommon or better."; evStep.row = '<button type="button" class="btn btn--red" data-act="enter">Enter it in ' + esc(s.title) + '</button><small>Enters it as an edition of one. Edition size, a price note or a legend can be set in <a href="' + esc(o.url + "&tab=seasons") + '">Glowtbook → Collecting Events</a>.</small>'; }
+    out.push(evStep);
+    return out;
+  }
+  function renderGoLive() {
+    var pickEl = $("#goPick"), grid = $("#goGrid"), empty = $("#goEmpty");
+    if (!D.objs.length) {
+      grid.hidden = true; empty.hidden = false; pickEl.innerHTML = "";
+      empty.innerHTML = '<div class="empty">No pieces yet. <a href="/fingerprint/enroll.html">Register one</a> with your phone and come back here; the steps fill in as you go.</div>';
       return;
     }
-    el.innerHTML = '<div class="tbl"><table><thead><tr><th>Piece</th><th>Glass ID</th><th>Registry</th><th>Next step</th></tr></thead><tbody>' +
-      objs.map(pieceRow).join("") + "</tbody></table></div>" +
-      '<p class="fine" style="margin-top:-1rem">Every cell is a link. Rows come from your Glowtbook; nothing here is public until it says published.</p>';
+    grid.hidden = false; empty.hidden = true;
+    var o = D.objs.filter(function (x) { return x.id === D.pick; })[0];
+    if (!o) { o = D.objs.filter(function (x) { return HOT[(x.next || {}).kind]; })[0] || D.objs[0]; D.pick = o.id; }
+    pickEl.innerHTML = D.objs.map(function (x) {
+      var st = (x.publication || {}).state, dot = st === "published" ? "live" : st === "pending" ? "wait" : HOT[(x.next || {}).kind] ? "todo" : "";
+      return '<button type="button" class="chipbtn' + (x.id === o.id ? " on" : "") + '" data-pick="' + x.id + '"><i class="dot ' + dot + '"></i><span>' + esc(x.title || "Untitled") + "</span></button>";
+    }).join("");
+    $("#goCard").innerHTML = GDB.pieceCard(cardData(o, { actions: [{ label: "Glowtbook", url: o.url }, { label: "Check it", url: "/fingerprint/verify.html?mine=" + o.id }] }));
+    var steps = stepsFor(o), done = steps.filter(function (s) { return /\bdone\b/.test(s.cls); }).length;
+    $("#goProg").innerHTML = "<b>" + done + "</b> of " + steps.length + " done · " + esc(o.title || "Untitled");
+    $("#goSteps").innerHTML = steps.map(function (s, i) {
+      var m = D.msg[o.id + ":" + i];
+      return '<li class="' + s.cls + '"><span class="n">' + (i + 1) + "</span><div><h3>" + esc(s.title) + ' <span class="st">' + esc(s.st) + "</span></h3><p>" + esc(s.text) + '</p><div class="row">' + s.row + "</div>" + (m ? '<p class="msg' + (m.err ? " err" : "") + '">' + esc(m.text) + "</p>" : "") + "</div></li>";
+    }).join("");
+    var share = $("#goShare");
+    if (share && (o.publication || {}).row_id) GDB.share(share, { kind: "object", ref: o.publication.row_id, title: o.title, text: (o.title || "A piece") + " on the Glass Database", url: publicUrl(o), image: GDB.API + "/social/objects/" + encodeURIComponent(o.publication.row_id) + "/card.png" });
+    var consent = $('#goSteps [data-act="consent"]'), pubBtn = $('#goSteps [data-act="publish"]');
+    if (consent && pubBtn) consent.onchange = function () { pubBtn.disabled = !consent.checked; };
   }
+  function say(o, i, text, err) { D.msg[o.id + ":" + i] = { text: text, err: !!err }; renderGoLive(); }
+  function busy(btn, label) { if (btn) { btn.disabled = true; btn.dataset.label = btn.textContent; btn.textContent = label; } }
 
-  function renderTodo(objs, claims, coll, season) {
-    var items = [];
-    var pend = (claims && claims.pending) || 0;
-    if (pend) {
-      var first = (claims.claims || []).filter(function (c) { return c.status === "pending"; })[0];
-      items.push({ text: "<b>" + plural(pend, "collection request") + "</b> from collectors who scanned a piece of yours but matched under 70. Confirm or reject each one.",
-        url: "/glowtbook/?page=objects&tab=seasons", label: "Confirm" });
-    }
-    objs.forEach(function (o) {
+  function doPhoto(o) { var f = $("#photoFile"); f.value = ""; f.onchange = function () { if (f.files && f.files[0]) uploadPhoto(o, f.files[0]); }; f.click(); }
+  function uploadPhoto(o, file) {
+    say(o, 1, "Uploading " + (file.name || "the photo") + "…");
+    GDB.api("/me/objects/" + o.id + "/images?role=primary&caption=" + encodeURIComponent("Added from My account"), { method: "POST", headers: { "Content-Type": file.type || "image/jpeg" }, body: file })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.detail || "upload failed"); return j; }); })
+      .then(function () { return load(); })
+      .then(function () { say(o, 1, "Top image set."); })
+      .catch(function (e) { say(o, 1, "That didn't work: " + e.message, true); });
+  }
+  function doPublish(o, btn) {
+    busy(btn, "Publishing…");
+    GDB.json("/me/objects/" + o.id + "/publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) })
+      .then(function (j) {
+        var t = j.pending ? "Sent for review. The reviewers have their Discord notification; this line turns to Live when they approve it." : "Published. It is live now.";
+        if (j.sign_error) t += " (Content Credentials could not be signed on the server; the pictures went out unsigned.)";
+        return load().then(function () { say(o, 2, t); });
+      })
+      .catch(function (e) { load().then(function () { say(o, 2, "Publishing failed: " + e.message, true); }); });
+  }
+  function doEnter(o, btn) {
+    var rid = (o.publication || {}).row_id; if (!rid || !D.season) return;
+    busy(btn, "Entering…");
+    GDB.json("/seasons/" + encodeURIComponent(D.season.slug) + "/entries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ object_row_id: rid, title: o.title || "", edition_size: 1 }) })
+      .then(function (j) { return load().then(function () { say(o, 3, j.note || "Entered."); }); })
+      .catch(function (e) { load().then(function () { say(o, 3, e.message || "That didn't work.", true); }); });
+  }
+  $("#golive").addEventListener("click", function (ev) {
+    var pick = ev.target.closest("[data-pick]");
+    if (pick) { D.pick = +pick.getAttribute("data-pick"); history.replaceState(null, "", "/account.html?piece=" + D.pick + "#golive"); renderGoLive(); return; }
+    var b = ev.target.closest("[data-act]"); if (!b) return;
+    var o = D.objs.filter(function (x) { return x.id === D.pick; })[0]; if (!o) return;
+    var act = b.getAttribute("data-act");
+    if (act === "photo") doPhoto(o);
+    else if (act === "publish") doPublish(o, b);
+    else if (act === "enter") doEnter(o, b);
+    else if (act === "refresh") { busy(b, "Checking…"); load().then(function () { say(o, 2, (o.publication || {}).state === "pending" ? "Still in review." : "Updated."); }); }
+  });
+  $("#pieces").addEventListener("click", function (ev) {
+    var b = ev.target.closest('[data-act="golive"]'); if (!b) return;
+    var art = b.closest(".pc"); if (!art) return;
+    D.pick = +art.getAttribute("data-id"); history.replaceState(null, "", "/account.html?piece=" + D.pick + "#golive");
+    renderGoLive(); $("#golive").scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  /* ---- the rest of the page ------------------------------------------------- */
+  function renderPieces() {
+    var el = $("#piecesBody");
+    if (!D.objs.length) { el.innerHTML = '<div class="empty">No pieces yet. <a href="/fingerprint/enroll.html">Register one</a> with your phone, or <a href="/glowtbook/?page=objects">start it in Glowtbook</a> and add photos later.</div>'; return; }
+    el.innerHTML = '<div class="pcs">' + D.objs.map(function (o) { return GDB.pieceCard(cardData(o)); }).join("") + "</div>" +
+      '<p class="fine">Cards come from your Glowtbook; nothing is public until the Registry line says live. The number up top is the Glass ID strength out of 100.</p>';
+  }
+  function renderTodo() {
+    var items = [], claims = D.claims, pend = (claims && claims.pending) || 0;
+    if (pend) items.push({ text: "<b>" + plural(pend, "collection request") + "</b> from collectors who scanned a piece of yours but matched under 70. Confirm or reject each one.", url: "/glowtbook/?page=objects&tab=seasons", label: "Confirm" });
+    D.objs.forEach(function (o) {
       var nx = o.next || {};
       if (nx.kind === "register") items.push({ text: "<b>" + esc(o.title) + "</b> has no Glass ID yet.", url: nx.url, label: "Register it" });
       else if (nx.kind === "publish") items.push({ text: "<b>" + esc(o.title) + "</b> is " + ((o.publication || {}).state === "rejected" ? "sent back from review" : "private") + ". Publish it to give it a page anyone can check.", url: nx.url, label: "Publish" });
-      else if (nx.kind === "enter") items.push({ text: "<b>" + esc(o.title) + "</b> is published and the call for <b>" + esc(season.title) + "</b> is open.", url: nx.url, label: "Enter it" });
+      else if (nx.kind === "enter") items.push({ text: "<b>" + esc(o.title) + "</b> is live and the call for <b>" + esc(D.season.title) + "</b> is open.", url: nx.url, label: "Enter it" });
     });
-    var pendingEntries = ((coll && coll.entries) || []).filter(function (e) { return e.status === "pending"; });
-    var inReview = objs.filter(function (o) { return (o.publication || {}).state === "pending"; });
+    var pendingEntries = ((D.coll && D.coll.entries) || []).filter(function (e) { return e.status === "pending"; });
+    var inReview = D.objs.filter(function (o) { return (o.publication || {}).state === "pending"; });
     var el = $("#todo");
     if (!items.length) {
       var quiet = "Nothing. ";
       if (inReview.length) quiet += plural(inReview.length, "piece") + " in review, which is on us. ";
       if (pendingEntries.length) quiet += plural(pendingEntries.length, "entry") + " waiting for approval, also on us. ";
-      el.innerHTML = '<li class="none">' + quiet + (objs.length ? "" : 'Start by <a href="/fingerprint/enroll.html">registering a piece</a>.') + "</li>";
+      el.innerHTML = '<li class="none">' + quiet + (D.objs.length ? "" : 'Start by <a href="/fingerprint/enroll.html">registering a piece</a>.') + "</li>";
       return;
     }
     el.innerHTML = items.slice(0, 12).map(function (it, i) {
       return '<li><span class="n">' + (i + 1) + "</span><p>" + it.text + '</p><a class="btn btn--line" href="' + esc(it.url) + '">' + esc(it.label) + "</a></li>";
-    }).join("") + (inReview.length || pendingEntries.length ? '<li class="none">Also: ' + [inReview.length ? plural(inReview.length, "piece") + " in review" : "", pendingEntries.length ? plural(pendingEntries.length, "entry") + " waiting for approval" : ""].filter(Boolean).join(" and ") + ". Those are on us; you'll see them move here.</li>" : "");
+    }).join("") + (inReview.length || pendingEntries.length ? '<li class="none">Also: ' + [inReview.length ? plural(inReview.length, "piece") + " in review" : "", pendingEntries.length ? plural(pendingEntries.length, "entry") + " waiting for approval" : ""].filter(Boolean).join(" and ") + ". Those are on us; you'll see them move on the Go-live panel.</li>" : "");
   }
-
-  function renderEntries(entries) {
-    var el = $("#entriesBody");
-    if (!entries.length) { el.innerHTML = '<div class="empty" style="margin-top:.6rem">Nothing entered yet. A published piece with a Glass ID can be entered from its <a href="/glowtbook/?page=objects&tab=seasons">Collecting Events tab</a>.</div>'; return; }
+  function renderEntries() {
+    var el = $("#entriesBody"), entries = (D.coll && D.coll.entries) || [];
+    if (!entries.length) { el.innerHTML = '<div class="empty" style="margin-top:.6rem">Nothing entered yet. A live piece can be entered from the <a href="#golive">Go-live panel</a> in one click.</div>'; return; }
     el.innerHTML = '<div class="tbl" style="margin-top:.6rem"><table style="min-width:0"><thead><tr><th>Piece</th><th>Event</th><th>Status</th><th>Votes</th></tr></thead><tbody>' + entries.map(function (e) {
       var st = e.status === "approved" ? '<span class="st ok">in the running</span>' : e.status === "pending" ? '<span class="st">waiting for approval</span>' : '<span class="st">' + esc(e.status || "") + "</span>";
       return "<tr><td><a href=\"/games.html?season=" + esc(e.season_slug || "") + "#e-" + esc(e.id) + '"><b>' + esc(e.title || "Untitled") + "</b></a>" + (e.rarity ? ' <span class="pill rar ' + esc(e.rarity) + '">' + esc(e.rarity) + "</span>" : "") + "</td><td><a href=\"/games.html?season=" + esc(e.season_slug || "") + '">' + esc(e.season_title || "") + "</a></td><td>" + st + "</td><td>" + esc(e.vote_count || 0) + "</td></tr>";
     }).join("") + "</tbody></table></div>";
   }
-
-  function renderCollection(coll, shareState) {
-    var el = $("#collBody"), pieces = (coll && coll.collection) || [];
+  function renderCollection() {
+    var el = $("#collBody"), pieces = (D.coll && D.coll.collection) || [];
     if (!pieces.length) { el.innerHTML = '<div class="empty" style="margin-top:.6rem">Nothing collected yet. Buy a piece from a working shop, open <a href="/fingerprint/verify.html">Check a Piece</a> on your phone, and it joins your collection.</div>'; }
     else {
       var pts = pieces.reduce(function (a, p) { return a + (p.points || 0); }, 0);
       el.innerHTML = '<p class="live" style="margin:.6rem 0 0"><span><b>' + plural(pieces.length, "piece") + "</b></span><span><b>" + plural(pts, "point") + "</b></span></p>" +
-        '<div class="tbl" style="margin-top:.8rem"><table style="min-width:0"><tbody>' + pieces.slice(0, 12).map(function (p) {
-          return '<tr><td><a href="/explore/?view=objects#obj-' + esc(p.object_row_id || "") + '"><b>' + esc(p.title || "Untitled") + "</b></a><br><span class=\"st\">" + esc(p.artist_name || p.maker || "") + (p.season_title ? " · " + esc(p.season_title) : "") + "</span></td><td>" + (p.rarity ? '<span class="pill rar ' + esc(p.rarity) + '">' + esc(p.rarity) + "</span>" : "") + "</td><td>" + (p.verified ? '<span class="st ok">checked</span>' : '<span class="st">waiting on the maker</span>') + "</td></tr>";
-        }).join("") + "</tbody></table></div>" +
-        '<div class="btns"><a class="btn btn--line" href="/games.html#mine">' + (shareState && shareState.shared ? "My public collection" : "Share my collection") + "</a></div>";
+        '<div class="pcs">' + pieces.map(function (p) { return GDB.pieceCard(collCard(p)); }).join("") + "</div>" +
+        '<div class="btns"><a class="btn btn--line" href="/games.html#mine">' + (D.share && D.share.shared ? "My public collection" : "Share my collection") + "</a></div>";
     }
-    var b = $("#badges"), badges = (coll && coll.badges) || [];
+    var b = $("#badges"), badges = (D.coll && D.coll.badges) || [];
     b.innerHTML = badges.map(function (x) { return '<span class="pill" title="' + esc(x.blurb || "") + '">' + esc(x.label || x.badge) + "</span>"; }).join("");
   }
-
-  function renderKv(m, social, shareState) {
-    var bs = social && social.bluesky;
+  function renderKv() {
+    var m = D.me, bs = D.social && D.social.bluesky, shareState = D.share;
     $("#kv").innerHTML =
       "<dt>Signed in as</dt><dd>" + esc(m.name || "") + (m.email ? " · " + esc(m.email) : "") + (m.is_admin ? ' · <a href="/admin/">Admin</a>' : "") + "</dd>" +
       "<dt>Bluesky</dt><dd>" + (bs && bs.connected ? "connected as <b>@" + esc(bs.handle) + '</b> · <a href="/glowtbook/?page=profile">manage</a>' : 'not connected · <a href="/glowtbook/?page=profile">connect it once</a> in Glowtbook → My profile, and Share posts for you') + "</dd>" +
       "<dt>Collection link</dt><dd>" + (shareState && shareState.shared ? '<a href="' + esc(shareState.url) + '">public</a> · withdraw it from the <a href="/games.html#mine">Collecting Events page</a>' : 'private · make it public from the <a href="/games.html#mine">Collecting Events page</a>') + "</dd>" +
       '<dt>Your data</dt><dd>Private until you publish or share. Anything can be corrected or removed on request: ask on the <a href="https://discord.gg/9ek2UxvPT">Discord</a>.</dd>';
   }
-
-  function signedIn(m) {
-    $("#signedIn").hidden = false; $("#signedOut").hidden = true;
-    var first = (m.name || m.email || "you").split(" ")[0];
+  function renderHero() {
+    var m = D.me, c = m.counts || {}, first = (m.name || m.email || "you").split(" ")[0];
     document.title = "My account — Glass Database";
     $("#heroTitle").innerHTML = "Hello, <em>" + esc(first) + ".</em>";
-    $("#heroLede").textContent = "Your pieces, your collection, your entries and what's waiting on you. Nothing here is public until it says so.";
-    var c = m.counts || {};
-    $("#heroMeta").innerHTML = "<span><b>" + plural(c.objects || 0, "piece") + "</b></span><span><b>" + (c.fingerprinted || 0) + "</b> with a Glass ID</span><span><b>" + (c.published || 0) + "</b> published</span><span><b>" + (c.pending || 0) + "</b> in review</span>";
-    $("#heroCta").innerHTML = '<div class="act"><a class="btn btn--red" href="/fingerprint/enroll.html">Register a new piece</a><small>Walk around it with your phone; it gets its Glass ID.</small></div>' +
-      '<div class="act"><a class="btn btn--line" href="/glowtbook/">Open Glowtbook</a><small>Your studio notebook: journal, pieces, publishing.</small></div>' +
+    $("#heroLede").textContent = "Your pieces as cards, the Go-live panel, your collection and what's waiting on you. Nothing here is public until it says live.";
+    $("#heroMeta").innerHTML = "<span><b>" + plural(c.objects || 0, "piece") + "</b></span><span><b>" + (c.fingerprinted || 0) + "</b> with a Glass ID</span><span><b>" + (c.published || 0) + "</b> live</span><span><b>" + (c.pending || 0) + "</b> in review</span>";
+    $("#heroCta").innerHTML = '<div class="act"><a class="btn btn--red" href="/fingerprint/enroll.html">Register a new piece</a><small>Walk around it with your phone; it gets its Glass ID and a top image.</small></div>' +
+      '<div class="act"><a class="btn btn--line" href="#golive">Go live</a><small>Register, top image, publish, enter: one panel.</small></div>' +
       '<div class="act"><a class="btn btn--line" href="/games.html">Collecting Events</a><small>This season\'s standings, your votes, your collection.</small></div>';
-    Promise.all([soft("/me/objects"), soft("/me/collection"), soft("/me/claims"), soft("/social/status"), soft("/social/collections/mine"), soft("/seasons")])
+  }
+  function renderAll() { renderGoLive(); renderTodo(); renderPieces(); renderEntries(); renderCollection(); renderKv(); }
+  function load() {
+    return Promise.all([soft("/me/objects"), soft("/me/collection"), soft("/me/claims"), soft("/social/status"), soft("/social/collections/mine"), soft("/seasons"), soft("/me")])
       .then(function (r) {
-        var objs = (r[0] && r[0].objects) || [], coll = r[1], claims = r[2], social = r[3], shareState = r[4];
-        var season = (r[5] && r[5].current) || null;
-        renderTodo(objs, claims, coll, season);
-        renderPieces(objs);
-        renderEntries((coll && coll.entries) || []);
-        renderCollection(coll, shareState);
-        renderKv(m, social, shareState);
+        D.objs = (r[0] && r[0].objects) || []; D.coll = r[1]; D.claims = r[2]; D.social = r[3]; D.share = r[4];
+        D.season = (r[5] && r[5].current) || null; if (r[6] && r[6].signed_in) D.me = r[6];
+        renderAll();
         if (!r[0]) $("#piecesBody").innerHTML = '<div class="empty">Couldn\'t load your pieces just now. <a href="' + esc(here) + '">Try again</a>.</div>';
       });
+  }
+  function signedIn(m) {
+    D.me = m; $("#signedIn").hidden = false; $("#signedOut").hidden = true;
+    var want = parseInt(GDB.param("piece") || "", 10); if (want) D.pick = want;
+    renderHero();
+    load().then(function () { if (location.hash === "#golive" || want) { var g = $("#golive"); if (g) g.scrollIntoView({ block: "start" }); } });
   }
 
   GDB.chip("#chip", { next: here, compact: true, onchange: function (m) { if (m) signedIn(m); else signedOut(); } });

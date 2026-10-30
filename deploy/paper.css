@@ -164,3 +164,37 @@ footer p{color:#D9CFC1}
 .fine{font:400 13px/1.6 var(--sans);color:var(--muted);border-top:1px solid var(--rule);padding-top:1rem;margin-top:1.6rem}
 .fine a{color:var(--ink-2)}
 @media (max-width:900px){.doors{grid-template-columns:1fr}}
+
+/* ---- piece card: the trading-card view of a piece (site.js GDB.pieceCard) ----------
+   A double frame (ink outside, rule inside), the title and a big "HP"-style Glass ID
+   number up top, the art window, a type line, stat rows, a serial and a rarity pill. */
+.pcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.5rem;margin-top:1.6rem}
+.pc{display:flex;flex-direction:column;background:var(--paper-2);border:2px solid var(--ink);border-radius:14px;padding:.55rem;box-shadow:0 10px 30px rgba(31,26,22,.10);color:var(--ink)}
+.pc .pc-in{display:flex;flex-direction:column;flex:1;border:1px solid var(--rule);border-radius:9px;background:var(--paper);padding:.9rem .9rem .8rem}
+.pc-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;margin-bottom:.6rem}
+.pc-title{font:400 1.4rem/1.1 var(--serif);margin:0;font-variation-settings:"opsz" 48;letter-spacing:-.01em;overflow-wrap:anywhere}
+.pc-title a{color:inherit;text-decoration:none}.pc-title a:hover{color:var(--red)}
+.pc-hp{text-align:right;flex:none;line-height:1}
+.pc-hp b{display:block;font:400 1.9rem/1 var(--serif);color:var(--red);font-variant-numeric:tabular-nums}
+.pc-hp small{display:block;font:500 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pc-hp.off b{color:var(--rule)}
+.pc-art{display:block;aspect-ratio:4/3;overflow:hidden;border:1px solid var(--ink);background:linear-gradient(160deg,var(--paper-3),var(--paper-2));position:relative;text-decoration:none}
+.pc-art img{width:100%;height:100%;object-fit:cover;display:block}
+.pc-art .pc-noimg{position:absolute;inset:0;display:grid;place-items:center;font:500 11px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:center;padding:1rem}
+.pc-type{margin:.6rem 0 0;font:500 11px/1.5 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--rule);padding-bottom:.6rem}
+.pc-stats{margin:.2rem 0 0;padding:0}
+.pc-stats div{display:grid;grid-template-columns:5.4rem 1fr;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--rule);align-items:baseline}
+.pc-stats dt{font:500 10px/1.6 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.pc-stats dd{margin:0;font-size:14px;line-height:1.4;color:var(--ink)}
+.pc-stats dd small{display:block;font:400 12px/1.4 var(--sans);color:var(--muted)}
+.pc-stats div.off dd{color:var(--muted)}
+.pc-foot{display:flex;justify-content:space-between;align-items:center;gap:.6rem;margin-top:auto;padding-top:.8rem}
+.pc-serial{font:500 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pc-acts{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem}
+.pc-acts a,.pc-acts button{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:none;border:1px solid var(--ink);padding:.5rem .7rem;text-decoration:none;cursor:pointer}
+.pc-acts a:hover,.pc-acts button:hover{background:var(--ink);color:var(--paper)}
+.pc-acts a.hot,.pc-acts button.hot{border-color:var(--red);color:var(--red)}.pc-acts a.hot:hover,.pc-acts button.hot:hover{background:var(--red);color:#fff}
+.pc.r-rare .pc-in{border-color:var(--red)}
+.pc.r-legendary{border-color:var(--red);background:#F2DCD6}.pc.r-legendary .pc-in{border-color:var(--red)}
+.pc .pill.rar{border-color:var(--ink);color:var(--ink)}.pc .pill.rar.common{border-color:var(--rule);color:var(--muted)}.pc .pill.rar.legendary{background:var(--red);border-color:var(--red);color:#fff}
+.pc.sel{outline:3px solid var(--red);outline-offset:3px}

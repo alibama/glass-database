@@ -237,6 +237,38 @@
     };
   }
 
+  /* ---- piece card: the trading-card view of a piece ------------------------
+     GDB.pieceCard({id, title, url, image, maker, studio, year, techniques, serial, set,
+       hp:{n, label, off}, rarity, stats:[{k, v, sub, off}], actions:[{label, url|id, hot}]})
+     returns the HTML of one <article class="pc">; paper.css draws it. A button action
+     carries data-act="<id>" so the page can wire it up. */
+  function pieceCard(d) {
+    d = d || {};
+    var art = d.image ? '<img src="' + esc(d.image) + '" alt="' + esc(d.title || "") + '" loading="lazy" onerror="this.remove()">'
+      : '<span class="pc-noimg">' + esc(d.noImage || "No photo yet") + "</span>";
+    var title = d.url ? '<a href="' + esc(d.url) + '">' + esc(d.title || "Untitled") + "</a>" : esc(d.title || "Untitled");
+    var hp = d.hp ? '<span class="pc-hp' + (d.hp.off ? " off" : "") + '"><b>' + esc(d.hp.n) + "</b><small>" + esc(d.hp.label || "Glass ID") + "</small></span>" : "";
+    var type = [].concat(d.techniques || []).slice(0, 2).concat([d.year, d.maker, d.studio]).filter(Boolean).map(esc).join(" · ");
+    var stats = (d.stats || []).filter(Boolean).map(function (s) {
+      return "<div" + (s.off ? ' class="off"' : "") + "><dt>" + esc(s.k) + "</dt><dd>" + esc(s.v) + (s.sub ? "<small>" + esc(s.sub) + "</small>" : "") + "</dd></div>";
+    }).join("");
+    var acts = (d.actions || []).filter(Boolean).map(function (a) {
+      var cls = a.hot ? ' class="hot"' : "";
+      return a.url ? '<a href="' + esc(a.url) + '"' + cls + ">" + esc(a.label) + "</a>"
+        : '<button type="button"' + (a.id ? ' data-act="' + esc(a.id) + '"' : "") + cls + ">" + esc(a.label) + "</button>";
+    }).join("");
+    var rar = d.rarity ? '<span class="pill rar ' + esc(d.rarity) + '">' + esc(d.rarity) + "</span>" : "";
+    return '<article class="pc' + (d.rarity ? " r-" + esc(d.rarity) : "") + (d.selected ? " sel" : "") + '"' + (d.id != null ? ' data-id="' + esc(d.id) + '"' : "") + '><div class="pc-in">' +
+      '<header class="pc-top"><h3 class="pc-title">' + title + "</h3>" + hp + "</header>" +
+      (d.url ? '<a class="pc-art" href="' + esc(d.url) + '">' : '<div class="pc-art">') + art + (d.url ? "</a>" : "</div>") +
+      (type ? '<p class="pc-type">' + type + "</p>" : "") +
+      (stats ? '<dl class="pc-stats">' + stats + "</dl>" : "") +
+      '<footer class="pc-foot"><span class="pc-serial">' + esc(d.serial || "") + (d.set ? " · " + esc(d.set) : "") + "</span>" + rar + "</footer>" +
+      (acts ? '<div class="pc-acts">' + acts + "</div>" : "") +
+      "</div></article>";
+  }
+  function serial(n) { return "№ " + String(n == null ? "" : n).padStart(4, "0"); }
+
   window.GDB = { API: API, api: api, json: json, me: me, token: token, headers: headers, NAV: NAV, menu: menu, share: share,
-    loginUrl: loginUrl, logout: logout, chip: chip, param: param, frag: frag, esc: esc };
+    pieceCard: pieceCard, serial: serial, loginUrl: loginUrl, logout: logout, chip: chip, param: param, frag: frag, esc: esc };
 })();

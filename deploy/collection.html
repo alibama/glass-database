@@ -122,15 +122,16 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function rarityPill(r) { r = r || "common"; return '<span class="pill rar ' + esc(r) + '">' + esc(r) + "</span>"; }
   function pieceUrl(p) { return "/explore/?view=objects#obj-" + encodeURIComponent(p.object_row_id || ""); }
 
+  /* one collected piece as a trading card (the same renderer My account uses) */
   function card(p) {
-    var who = esc(p.artist_name || p.maker || "") + (p.studio ? " · " + esc(p.studio) : "");
-    return '<article class="card third">' +
-      '<a href="' + esc(pieceUrl(p)) + '" class="ph" style="display:block"><img src="' + esc(p.image_url || "") + '" alt="' + esc(p.title || "") + '" loading="lazy" onerror="this.style.opacity=.15"></a>' +
-      '<div class="marks">' + rarityPill(p.rarity) + (p.points ? '<span class="pill">' + plural(p.points, "point") + "</span>" : "") + "</div>" +
-      "<h3>" + esc(p.title || "Untitled") + "</h3>" +
-      '<p class="who">' + who + "</p>" +
-      '<p class="ed">' + esc(p.season_title || "") + (p.created_at ? (p.season_title ? " · " : "") + "added " + esc(String(p.created_at).slice(0, 10)) : "") + "</p>" +
-      '<div class="acts"><a class="link" href="' + esc(pieceUrl(p)) + '">See the piece</a></div></article>';
+    return GDB.pieceCard({ id: p.object_row_id, title: p.title, url: pieceUrl(p), image: p.image_url,
+      maker: p.artist_name || p.maker, studio: p.studio,
+      hp: { n: p.points || 0, label: (p.points || 0) === 1 ? "point" : "points" }, rarity: p.rarity || "common",
+      serial: "ref " + String(p.object_row_id || "").slice(0, 8), set: p.season_title || "",
+      stats: [{ k: "Checked", v: p.verified ? "In the collector's hands, against its Glass ID" : "Confirmed by the maker", off: !p.verified },
+        { k: "Event", v: p.season_title || "—" },
+        { k: "Added", v: p.created_at ? String(p.created_at).slice(0, 10) : "—" }],
+      actions: [{ label: "See the piece", url: pieceUrl(p) }] });
   }
 
   function notFound() {
@@ -160,7 +161,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">' + esc(name) + " hasn't added a piece yet. Pieces land here once they are checked against their Glass ID or confirmed by the maker.</div>";
       return;
     }
-    g.innerHTML = c.pieces.map(card).join("");
+    g.className = "pcs"; g.innerHTML = c.pieces.map(card).join("");
   }
 
   if (!sid) { notFound(); }

@@ -84,6 +84,13 @@ Calculator) · **Elsewhere** (Discord, Instagram, Field notes, GitHub, How it ru
 - About › The project (`/#about`) · How it runs (`/infrastructure.html`: what runs where today,
   the private network being built, how to lend a machine) · Field notes · Code · Discord.
 
+**Go live** is the panel on My account (`/account.html?piece=N#golive`) with the four steps a piece
+takes, each a button: *Glass ID* → *Top image* → *Publish* → *Collecting event*. Status words on it:
+*to do*, *done*, *in review*, *live*, *waiting for approval*, *in the running*. A **piece card** is the
+trading-card view of a piece (title, Glass ID number, top image, type line, stat rows, serial, rarity).
+The **top image** is the picture on the card and the public page; the capture app sets it from the
+sharpest shot, My account can replace it.
+
 **Next step** (the last column of every pieces table, in Glowtbook and on My account) comes from
 one function, `glowtbook.store.next_step`, so the words and links never differ: *Register it to
 get its Glass ID* → *Publish it* → *Waiting for review* → *Confirm n collection requests* →
