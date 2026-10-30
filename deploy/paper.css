@@ -75,7 +75,8 @@ section.s{padding:clamp(4rem,9vw,8rem) 0;border-bottom:1px solid var(--rule)}
 .list li{display:grid;grid-template-columns:3rem 1fr;padding:1rem 0;border-bottom:1px solid var(--rule)}
 .list li span{font:400 12px var(--mono);color:var(--red);padding-top:.3rem}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,5rem);align-items:start}
-.tabs{display:flex;border-bottom:1px solid var(--ink);margin-top:1.5rem}
+.tabs{display:flex;border-bottom:1px solid var(--ink);margin-top:1.5rem;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tabs button{white-space:nowrap}
 .tabs button{flex:1;background:none;border:0;padding:1rem .5rem;font:500 13px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
 .tabs button[aria-selected=true]{color:var(--ink);border-color:var(--red)}
 .panel{padding:1.5rem 0}.panel[hidden]{display:none}
