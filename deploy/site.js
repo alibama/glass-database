@@ -257,13 +257,17 @@
       return a.url ? '<a href="' + esc(a.url) + '"' + cls + ">" + esc(a.label) + "</a>"
         : '<button type="button"' + (a.id ? ' data-act="' + esc(a.id) + '"' : "") + cls + ">" + esc(a.label) + "</button>";
     }).join("");
-    var rar = d.rarity ? '<span class="pill rar ' + esc(d.rarity) + '">' + esc(d.rarity) + "</span>" : "";
-    return '<article class="pc' + (d.rarity ? " r-" + esc(d.rarity) : "") + (d.selected ? " sel" : "") + '"' + (d.id != null ? ' data-id="' + esc(d.id) + '"' : "") + '><div class="pc-in">' +
+    if (d.actionsHtml) acts += d.actionsHtml;            // page-specific controls (a vote button, a share slot)
+    var marks = (d.marks || []).filter(Boolean).map(function (m) { return '<span class="pill ' + esc(m.cls || "") + '">' + esc(m.text) + "</span>"; }).join("");
+    var rar = (d.rarity ? '<span class="pill rar ' + esc(d.rarity) + '">' + esc(d.rarity) + "</span>" : "") + marks;
+    return '<article class="pc' + (d.rarity ? " r-" + esc(d.rarity) : "") + (d.selected ? " sel" : "") + (d.classes ? " " + esc(d.classes) : "") + '"' +
+      (d.htmlId ? ' id="' + esc(d.htmlId) + '"' : "") + (d.id != null ? ' data-id="' + esc(d.id) + '"' : "") + '><div class="pc-in">' +
       '<header class="pc-top"><h3 class="pc-title">' + title + "</h3>" + hp + "</header>" +
       (d.url ? '<a class="pc-art" href="' + esc(d.url) + '">' : '<div class="pc-art">') + art + (d.url ? "</a>" : "</div>") +
       (type ? '<p class="pc-type">' + type + "</p>" : "") +
+      (d.quote ? '<p class="pc-quote">“' + esc(d.quote) + "”</p>" : "") +
       (stats ? '<dl class="pc-stats">' + stats + "</dl>" : "") +
-      '<footer class="pc-foot"><span class="pc-serial">' + esc(d.serial || "") + (d.set ? " · " + esc(d.set) : "") + "</span>" + rar + "</footer>" +
+      '<footer class="pc-foot"><span class="pc-serial">' + esc(d.serial || "") + (d.set ? " · " + esc(d.set) : "") + '</span><span class="pc-marks">' + rar + "</span></footer>" +
       (acts ? '<div class="pc-acts">' + acts + "</div>" : "") +
       "</div></article>";
   }

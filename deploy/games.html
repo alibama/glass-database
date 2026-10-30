@@ -111,7 +111,11 @@
   .vote:disabled:hover { background: var(--paper); color: var(--ink); }
   .vote.on:disabled:hover { background: var(--red); color: #fff; }
   .vote .n { font-variant-numeric: tabular-nums; }
-  .card.hit { outline: 2px solid var(--red); outline-offset: 10px; }
+  .card.hit, .pc.hit { outline: 2px solid var(--red); outline-offset: 10px; }
+  /* the vote button keeps its own look inside the shared card */
+  .pc-acts .vote { font-size: 13px; padding: .55rem .8rem; }
+  .pc-acts .vote.on, .pc-acts .vote.on:hover, .pc-acts .vote.on:disabled:hover { background: var(--red); border-color: var(--red); color: #fff; }
+  .pc-acts .vote:disabled:hover { background: none; color: var(--ink); }
   /* share: a Share button opens the kit under the card's actions */
   .card .share-slot { flex-basis: 100%; border-top: 1px solid var(--rule); margin-top: .6rem; padding-top: .2rem; }
   .card .share-slot .sh { display: block; margin-top: .6rem; font: 400 13px/1.45 var(--sans); color: var(--muted); }
@@ -404,7 +408,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function wireShare(root) {
     root.querySelectorAll("button[data-share]").forEach(function (b) {
       b.addEventListener("click", function () {
-        var card = b.closest(".card, .cshare"), slot = card && card.querySelector(".share-slot"); if (!slot) return;
+        var card = b.closest(".card, .pc, .cshare"), slot = card && card.querySelector(".share-slot"); if (!slot) return;
         var open = slot.hidden; slot.hidden = !open; b.setAttribute("aria-expanded", open);
         if (open && !slot.getAttribute("data-ready")) {
           slot.setAttribute("data-ready", "1");
@@ -462,24 +466,25 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   /* --- entries ------------------------------------------------------ */
   function card(e) {
     var on = S.myVotes.indexOf(e.id) >= 0;
-    var ed = e.edition_size > 1 ? "edition of " + e.edition_size : "one of one";
-    var marks = (e.rank && e.rank <= 3 && e.vote_count > 0 ? '<span class="pill red rank">#' + e.rank + "</span>" : "") +
-      rarityPill(e.rarity) +
-      (e.solo ? '<span class="pill">solo</span>' : "") +
-      (e.mine ? '<span class="pill ink mine">yours</span>' : "");
-    return '<article class="card third" id="entry-' + e.id + '" data-id="' + e.id + '">' +
-      '<div class="ph"><img src="' + esc(e.image_url) + '" alt="' + esc(e.title) + '" loading="lazy" onerror="this.style.opacity=.15"></div>' +
-      '<div class="marks">' + marks + "</div>" +
-      "<h3>" + esc(e.title) + "</h3>" +
-      '<p class="who">' + esc(e.artist_name || "") + (e.studio ? " · " + esc(e.studio) : "") + "</p>" +
-      '<p class="ed">' + esc(ed) + (e.price_note ? " · " + esc(e.price_note) : "") + (e.height_mm ? " · " + esc(mm(e.height_mm)) + " tall" : "") + "</p>" +
-      (e.rarity === "legendary" && e.legend ? '<p class="who" style="font-style:italic;margin-top:.5rem">“' + esc(e.legend) + "”</p>" : "") +
-      '<div class="acts">' +
-        '<button class="vote' + (on ? " on" : "") + '" data-vote="' + e.id + '" aria-pressed="' + on + '"' + (S.canVote ? "" : " disabled") + ">" +
+    var ed = e.edition_size > 1 ? "Edition of " + e.edition_size : "One of one";
+    var marks = [];
+    if (e.rank && e.rank <= 3 && e.vote_count > 0) marks.push({ text: "#" + e.rank, cls: "red rank" });
+    if (e.solo) marks.push({ text: "solo", cls: "" });
+    if (e.mine) marks.push({ text: "yours", cls: "ink mine" });
+    return GDB.pieceCard({ id: e.id, htmlId: "entry-" + e.id, title: e.title, image: e.image_url,
+      maker: e.artist_name, studio: e.studio, rarity: e.rarity || "common", marks: marks,
+      hp: { n: e.vote_count || 0, label: (e.vote_count || 0) === 1 ? "vote" : "votes" },
+      serial: "ref " + String(e.object_row_id || "").slice(0, 8), set: S.season ? S.season.title : "",
+      quote: e.rarity === "legendary" && e.legend ? e.legend : "",
+      stats: [
+        { k: "Glass ID", v: e.fingerprinted ? "Registered" : "Not registered", sub: e.fingerprinted ? "any phone can check this piece" : "counts as common until the maker registers it", off: !e.fingerprinted },
+        { k: "Edition", v: ed + (e.price_note ? " · " + e.price_note : ""), sub: e.height_mm ? mm(e.height_mm) + " tall" : "" },
+        { k: "Collected", v: plural(e.claim_count || 0, "collector"), sub: (e.points || 0) + " points to whoever adds it" }
+      ],
+      actionsHtml: '<button class="vote' + (on ? " on" : "") + '" data-vote="' + e.id + '" aria-pressed="' + on + '"' + (S.canVote ? "" : " disabled") + ">" +
           (on ? "Voted" : "Vote") + ' <span class="n">' + e.vote_count + "</span></button>" +
-        '<a class="link" href="' + esc(verifyUrl(e.object_row_id)) + '">Check it to add it</a>' +
-        shareBtn(entryShare(e)) + shareSlot() +
-      "</div></article>";
+        '<a href="' + esc(verifyUrl(e.object_row_id)) + '">Check it to add it</a>' +
+        shareBtn(entryShare(e)) + shareSlot() });
   }
   function renderEntries() {
     var g = $("#grid");
@@ -495,6 +500,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     }
     var rank = {};
     (S.lb && S.lb.peoples_choice || []).forEach(function (r) { rank[r.id] = r.rank; });
+    g.className = "pcs";
     g.innerHTML = S.entries.map(function (e) { e.rank = rank[e.id]; return card(e); }).join("");
     renderStandings();
     g.querySelectorAll("[data-vote]").forEach(function (b) {
@@ -520,6 +526,8 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       var on = S.myVotes.indexOf(e.id) >= 0;
       b.classList.toggle("on", on); b.setAttribute("aria-pressed", on);
       b.innerHTML = (on ? "Voted" : "Vote") + ' <span class="n">' + e.vote_count + "</span>";
+      var art = b.closest(".pc"), hp = art && art.querySelector(".pc-hp b"), hl = art && art.querySelector(".pc-hp small");
+      if (hp) hp.textContent = e.vote_count; if (hl) hl.textContent = e.vote_count === 1 ? "vote" : "votes";
     });
     var c = $("#voteCounter");
     var closes = S.season.voting_closes ? " · voting closes <b>" + esc(S.season.voting_closes) + "</b>" : "";
@@ -696,17 +704,19 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
           '<div class="act" style="margin-top:1rem"><a class="btn btn--red" href="' + VERIFY_URL + '">Check your first piece</a><small>Point your phone at it to see who made it.</small></div></div>';
       } else {
         html += '<p class="live" style="margin-top:0">' + plural(coll.length, "piece") + " · " + plural(d.badges.length, "badge") + "</p>";
-        html += '<div class="cards">' + coll.map(function (c) {
-          var st = c.verified ? '<span class="pill red">checked</span>' : '<span class="pill">' + esc(c.status) + "</span>";
-          return '<article class="card third">' +
-            '<div class="ph"><img src="' + esc(c.image_url) + '" alt="' + esc(c.title) + '" loading="lazy" onerror="this.style.opacity=.15"></div>' +
-            '<div class="marks">' + st + "</div>" +
-            "<h3>" + esc(c.title) + "</h3>" +
-            '<p class="who">' + esc(c.artist_name || c.maker || "") + (c.studio ? " · " + esc(c.studio) : "") + "</p>" +
-            '<p class="ed">' + (c.season_title ? esc(c.season_title) + " · " : "") + "check " + Math.round(c.confidence || 0) + "/100" + (c.location ? " · " + esc(c.location) : "") + "</p>" +
-            '<div class="acts"><a class="link" href="' + esc(verifyUrl(c.object_row_id)) + '">Check it again</a>' +
-            (c.entry_id ? shareBtn(entryShare({ id: c.entry_id, title: c.title, artist_name: c.artist_name || c.maker, season_title: c.season_title })) + shareSlot() : "") +
-            "</div></article>";
+        html += '<div class="pcs">' + coll.map(function (c) {
+          return GDB.pieceCard({ id: c.object_row_id, title: c.title, image: c.image_url,
+            maker: c.artist_name || c.maker, studio: c.studio, rarity: c.rarity || "common",
+            marks: [c.verified ? { text: "checked", cls: "red" } : { text: c.status || "waiting", cls: "" }],
+            hp: { n: c.points || 0, label: (c.points || 0) === 1 ? "point" : "points" },
+            serial: "ref " + String(c.object_row_id || "").slice(0, 8), set: c.season_title || "",
+            stats: [
+              { k: "Checked", v: c.verified ? "In your hands · " + Math.round(c.confidence || 0) + "/100" : "Waiting on the maker to confirm", sub: c.location || "", off: !c.verified },
+              { k: "Event", v: c.season_title || "—" },
+              { k: "Added", v: c.created_at ? String(c.created_at).slice(0, 10) : "—" }
+            ],
+            actionsHtml: '<a href="' + esc(verifyUrl(c.object_row_id)) + '">Check it again</a>' +
+              (c.entry_id ? shareBtn(entryShare({ id: c.entry_id, title: c.title, artist_name: c.artist_name || c.maker, season_title: c.season_title })) + shareSlot() : "") });
         }).join("") + "</div>";
       }
       html += '<div class="cshare" id="collShare"><p class="label">Share my collection</p><div class="body"><div class="skel" style="height:60px"></div></div></div>';

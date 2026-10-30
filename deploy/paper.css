@@ -198,3 +198,7 @@ footer p{color:#D9CFC1}
 .pc.r-legendary{border-color:var(--red);background:#F2DCD6}.pc.r-legendary .pc-in{border-color:var(--red)}
 .pc .pill.rar{border-color:var(--ink);color:var(--ink)}.pc .pill.rar.common{border-color:var(--rule);color:var(--muted)}.pc .pill.rar.legendary{background:var(--red);border-color:var(--red);color:#fff}
 .pc.sel{outline:3px solid var(--red);outline-offset:3px}
+.pc-quote{margin:.6rem 0 0;font:italic 300 1.02rem/1.45 var(--serif);color:var(--ink-2)}
+.pc-marks{display:flex;gap:.35rem;flex-wrap:wrap;justify-content:flex-end}
+.pc-acts .share-slot{flex-basis:100%;border-top:1px solid var(--rule);margin-top:.4rem;padding-top:.2rem}
+.pc-acts .share-slot .sh{display:block;margin-top:.6rem;font:400 13px/1.45 var(--sans);color:var(--muted)}

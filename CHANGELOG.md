@@ -11,7 +11,8 @@ proof-of-concept features from production-ready ones in its docs.
   site.js, styled in paper.css) draws a piece the way a graded card reads: the Glass ID strength
   as the big number up top, the top image in the art window, a type line, stat rows (Glass ID,
   story, registry, event), a serial and a rarity pill. My account shows your pieces and your
-  collection as cards; a shared collection page does too. **Go live** on My account
+  collection as cards; a shared collection page and the Collecting Events page (its entries,
+  votes as the big number, and your collection) do too. **Go live** on My account
   (`/account.html?piece=N#golive`) is the one place a piece goes from registered to published to
   entered: four steps, each with its button and status on the page. Publish is now one call
   (`POST /api/me/objects/{id}/publish`), entering the open season is one click, and a photo can be
