@@ -52,6 +52,11 @@ proof-of-concept features from production-ready ones in its docs.
   why we build our own AI for members instead of renting one, and how to lend a machine. About
   gained the same note; Ways in gained *Lend a machine*.
 ### Fixed
+- **Discord "Approve & publish" on a season entry did nothing visible.** The one-click link wrote
+  to the generic approvals table while the season page reads the entry's own status column; it
+  now calls the same function as Admin → Seasons (approve or reject, claims re-attached, badges
+  awarded). Links already posted keep working: the signature does not expire, so re-clicking an
+  old one after this deploy approves the entry.
 - **"Sign-in state didn't match" on phones.** The callback no longer depends on the state
   cookie alone: the same signed state is kept server-side (`oauth_pending`, single use, twenty
   minutes), so a browser that drops the cookie between leaving for Google and coming back still

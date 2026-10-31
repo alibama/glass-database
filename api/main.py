@@ -510,6 +510,14 @@ def moderate(tbl: str, row: str, action: str, sig: str):
     elif tbl == "object_submissions":   # reject
         conn.execute("UPDATE object_submissions SET status='rejected' WHERE id=?", (row,))
         conn.commit()
+    elif tbl == "season_entries":
+        # an entry's state is its own column (the season page reads e.status), the same
+        # function the admin console's Seasons tab calls — not the generic approvals gate
+        from central import seasons as _seasons
+        try:
+            _seasons.approve_entry(conn, int(row), action == "approve")
+        except (ValueError, TypeError) as ex:
+            raise HTTPException(404, f"no such entry: {ex}")
     else:
         status = "approved" if action == "approve" else "rejected"
         approvals.set_status(conn, tbl, [row], status, reviewer="discord")
