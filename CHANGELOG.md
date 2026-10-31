@@ -7,6 +7,24 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **The console's last sections are pages; the Streamlit admin can be switched off.**
+  `/events-admin.html` creates and runs collecting events (title, theme, dates, rules, prize
+  note, votes per voter, the award categories as `title | vote|measured | solo` lines with the
+  theme presets; open, start voting, close with the end-of-event badges, edit the words and
+  dates, delete a draft, pull an entry). `/datasets.html` is every table in the registry: pick
+  one, page through its rows, search, edit a cell, add a row, import a CSV that updates by
+  `_row_id` and adds the rest, export the whole table. `/analytics.html` is usage: 7, 30 or 90
+  days, views and visitors by day as a plain inline SVG, by surface, view, event and country,
+  and the newsletter CSV. The routes are `api/admin_data.py`, every one behind `require_admin`;
+  every edit, added row and imported row is approved through `central.approvals` with the
+  administrator as the reviewer, exactly as the console's grid did, and nothing is deleted
+  (a row that should not be public is rejected). `/subscribers.csv` now also takes a signed-in
+  administrator. The five admin pages share one sub-nav (Review queue · Collecting Events ·
+  Tables · Usage · Wikibase); the Streamlit console's sidebar points at them and every section
+  says where it went; the Duplicates tool is superseded by the Wikibase dedupe step; the
+  Discord moderation page links to the Review queue. `tests/test_admin_pages.py` covers the
+  gates, the event lifecycle, the cell edit flipping `_approvals`, the CSV upsert and the
+  page markup.
 - **The public record moves to glass.wikibase.cloud, and the migration is a page.**
   `central/wikibase/` is the pipeline: the model (55 properties with their Wikidata twins, 29
   classes, the vocabularies from code), **stage** (the site's tables → one staged item per

@@ -26,7 +26,7 @@ import os
 import sys
 from pathlib import Path
 
-from fastapi import FastAPI, Header, HTTPException, Query, Request, Response
+from fastapi import FastAPI, HTTPException, Query, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -89,6 +89,7 @@ async def _force_https(request, call_next):
 # pages, the signed-in person's own pieces (capture app writes), seasonal games,
 # and the richer relationship graph. Each lives in its own module.
 from api import admin as _admin  # noqa: E402
+from api import admin_data as _admin_data  # noqa: E402
 from api import auth as _auth  # noqa: E402
 from api import events as _events  # noqa: E402
 from api import graph_ext as _graph_ext  # noqa: E402
@@ -106,6 +107,7 @@ app.include_router(_graph_ext.router)
 app.include_router(_splats.router)
 app.include_router(_social.router)
 app.include_router(_admin.router)        # the review queue (static admin pages)
+app.include_router(_admin_data.router)   # collecting events, the tables, usage (static admin pages)
 app.include_router(_wikibase.router)     # the migration to glass.wikibase.cloud
 
 
@@ -479,19 +481,13 @@ def subscribe(payload: dict):
     return {"ok": True, "new": fresh}
 
 
-@app.get("/subscribers.csv", summary="Export newsletter subscribers (admin key)")
-def subscribers_csv(x_api_key: str = Header(default="")):
-    admin_key = os.environ.get("GLASSDB_ADMIN_TOKEN", "") or ADMIN_KEY
-    if not admin_key or x_api_key != admin_key:
+@app.get("/subscribers.csv", summary="Export newsletter subscribers (admin key, or a signed-in administrator)")
+def subscribers_csv(request: Request):
+    from api.admin_data import subscribers_csv_text
+    from api.auth import is_admin_request
+    if not is_admin_request(request):
         raise HTTPException(403, "admin key required")
-    conn = connect()
-    conn.execute("CREATE TABLE IF NOT EXISTS newsletter "
-                 "(email TEXT PRIMARY KEY, name TEXT, created_at TEXT, source TEXT)")
-    rows = conn.execute("SELECT email,name,created_at,source FROM newsletter ORDER BY created_at DESC").fetchall()
-    out = "email,name,created_at,source\r\n" + "".join(
-        f'{r["email"]},"{(r["name"] or "").replace(chr(34), "")}",{r["created_at"]},{r["source"]}\r\n'
-        for r in rows)
-    return Response(out, media_type="text/csv",
+    return Response(subscribers_csv_text(connect()), media_type="text/csv",
                     headers={"Content-Disposition": 'attachment; filename="subscribers.csv"'})
 
 
@@ -536,7 +532,7 @@ a{{color:#fdba74}}</style></head><body><div>
 <h1>{'✅ Approved &amp; published' if ok else '⛔ Rejected'}</h1>
 <p>{'It’s now live.' if ok else 'It won’t appear publicly.'}</p>
 <p><code>{tbl} / {row}</code></p>
-<p><a href="/admin/">Open the admin console</a></p></div></body></html>"""
+<p><a href="/review.html">Open the review queue</a></p></div></body></html>"""
     return Response(content=body, media_type="text/html", status_code=200)
 
 
