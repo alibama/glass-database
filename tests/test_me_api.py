@@ -134,10 +134,16 @@ def test_unconfigured_login_explains_why(client, tmp_path, monkeypatch):
     assert j["configured"] is False and "no secrets.toml found" in j["note"]
 
 
-def _png():
+def _png(w=64, h=48):
     import io
     from PIL import Image
-    buf = io.BytesIO(); Image.new("RGB", (64, 48), (179, 38, 30)).save(buf, "PNG"); return buf.getvalue()
+    buf = io.BytesIO(); Image.new("RGB", (w, h), (179, 38, 30)).save(buf, "PNG"); return buf.getvalue()
+
+
+def _size(data):
+    import io
+    from PIL import Image
+    im = Image.open(io.BytesIO(data)); return im.format, im.size
 
 
 def test_top_image_and_one_call_publish(client, monkeypatch):
@@ -159,8 +165,15 @@ def test_top_image_and_one_call_publish(client, monkeypatch):
     assert client.get(f"/me/objects/{oid}/image", headers=_auth("u2")).status_code == 404
     # a second auto photo is just a photo; an explicit primary demotes the first
     assert client.post(f"/me/objects/{oid}/images", content=_png(), headers=h).json()["role"] == "photo"
-    assert client.post(f"/me/objects/{oid}/images?role=primary", content=_png(), headers=h).json()["role"] == "primary"
+    assert client.post(f"/me/objects/{oid}/images?role=primary", content=_png(1000, 750), headers=h).json()["role"] == "primary"
     assert client.get(f"/me/objects/{oid}", headers=h).json()["images"] == 3
+    # ?w= is the card-sized derivative (JPEG, never upscaled, snapped to a few widths); bare = the file
+    assert _size(client.get(f"/me/objects/{oid}/image", headers=h).content) == ("PNG", (1000, 750))
+    small = client.get(f"/me/objects/{oid}/image?w=300", headers=h)
+    assert small.status_code == 200 and small.headers["content-type"] == "image/jpeg"
+    assert _size(small.content) == ("JPEG", (320, 240))
+    assert _size(client.get(f"/me/objects/{oid}/image?w=5000", headers=h).content)[1] == (960, 720)
+    assert _size(client.get(f"/me/objects/{oid}/image?w=300", headers=h).content) == ("JPEG", (320, 240))  # cached
     # publish in one call -> the review queue; the card says pending and the next step says so
     assert client.post(f"/me/objects/{oid}/publish", json={}, headers=_auth("u2")).status_code == 404
     r = client.post(f"/me/objects/{oid}/publish", json={"sign": False}, headers=h)

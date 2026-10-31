@@ -242,9 +242,13 @@
        hp:{n, label, off}, rarity, stats:[{k, v, sub, off}], actions:[{label, url|id, hot}]})
      returns the HTML of one <article class="pc">; paper.css draws it. A button action
      carries data-act="<id>" so the page can wire it up. */
+  /* thumb(url, w): the card-sized version of one of our image URLs (?w= on /api/objects/…/image
+     and /api/me/objects/…/image). The bare URL stays the full, signed rendition. */
+  function thumb(url, w) { if (!url || !w) return url || ""; return url + (url.indexOf("?") >= 0 ? "&" : "?") + "w=" + w; }
   function pieceCard(d) {
     d = d || {};
-    var art = d.image ? '<img src="' + esc(d.image) + '" alt="' + esc(d.title || "") + '" loading="lazy" onerror="this.remove()">'
+    var src = d.image ? (d.imageFull ? d.image : thumb(d.image, d.imageWidth || 640)) : "";
+    var art = d.image ? '<img src="' + esc(src) + '" alt="' + esc(d.title || "") + '" loading="lazy" onerror="this.remove()">'
       : '<span class="pc-noimg">' + esc(d.noImage || "No photo yet") + "</span>";
     var title = d.url ? '<a href="' + esc(d.url) + '">' + esc(d.title || "Untitled") + "</a>" : esc(d.title || "Untitled");
     var hp = d.hp ? '<span class="pc-hp' + (d.hp.off ? " off" : "") + '"><b>' + esc(d.hp.n) + "</b><small>" + esc(d.hp.label || "Glass ID") + "</small></span>" : "";
@@ -274,5 +278,5 @@
   function serial(n) { return "№ " + String(n == null ? "" : n).padStart(4, "0"); }
 
   window.GDB = { API: API, api: api, json: json, me: me, token: token, headers: headers, NAV: NAV, menu: menu, share: share,
-    pieceCard: pieceCard, serial: serial, loginUrl: loginUrl, logout: logout, chip: chip, param: param, frag: frag, esc: esc };
+    pieceCard: pieceCard, serial: serial, thumb: thumb, loginUrl: loginUrl, logout: logout, chip: chip, param: param, frag: frag, esc: esc };
 })();

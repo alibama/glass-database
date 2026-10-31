@@ -323,7 +323,7 @@ fetch('/api/seasons').then(r=>r.ok?r.json():null).then(j=>{
     const es=d.entries.slice().sort((a,b)=>(b.vote_count||0)-(a.vote_count||0)).slice(0,4);
     const esc=t=>String(t||'').replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch]));
     const cls=es.length<4?'card third':'card';
-    document.getElementById('seasonCards').innerHTML=es.map((e,i)=>'<a class="'+cls+'" href="/games.html#entry-'+e.id+'"><div class="ph"><img src="'+esc(e.image_url)+'" alt="'+esc(e.title)+'" loading="lazy"></div><span class="label">#'+(i+1)+(e.rarity?' · '+esc(e.rarity):'')+'</span><h3>'+esc(e.title)+'</h3><p>'+esc(e.artist_name||'')+(e.studio?' · '+esc(e.studio):'')+'</p><span class="link">'+(e.vote_count||0)+' '+((e.vote_count||0)===1?'vote':'votes')+' · vote</span></a>').join('');
+    document.getElementById('seasonCards').innerHTML=es.map((e,i)=>'<a class="'+cls+'" href="/games.html#entry-'+e.id+'"><div class="ph"><img src="'+esc(window.GDB?GDB.thumb(e.image_url,640):e.image_url)+'" alt="'+esc(e.title)+'" loading="lazy"></div><span class="label">#'+(i+1)+(e.rarity?' · '+esc(e.rarity):'')+'</span><h3>'+esc(e.title)+'</h3><p>'+esc(e.artist_name||'')+(e.studio?' · '+esc(e.studio):'')+'</p><span class="link">'+(e.vote_count||0)+' '+((e.vote_count||0)===1?'vote':'votes')+' · vote</span></a>').join('');
     document.getElementById('seasonEntries').hidden=false;
   });
 }).catch(()=>{});

@@ -514,7 +514,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     if (!S.season || !S.entries.length) { ol.hidden = true; ol.innerHTML = ""; return; }
     var es = S.entries.slice().sort(function (a, b) { return (b.vote_count || 0) - (a.vote_count || 0) || (a.id - b.id); });
     ol.innerHTML = es.map(function (e, i) {
-      return '<li><span class="rk">' + (i + 1) + '</span><a href="#entry-' + e.id + '"><img class="th" src="' + esc(e.image_url) + '" alt="" loading="lazy"></a>' +
+      return '<li><span class="rk">' + (i + 1) + '</span><a href="#entry-' + e.id + '"><img class="th" src="' + esc(GDB.thumb(e.image_url, 160)) + '" alt="" loading="lazy"></a>' +
         '<div><a class="t" href="#entry-' + e.id + '">' + esc(e.title) + "</a><div class=\"w\">" + esc(e.artist_name || "") + (e.studio ? " · " + esc(e.studio) : "") + (e.rarity ? " · " + esc(e.rarity) : "") + "</div></div>" +
         '<span class="v"><b>' + (e.vote_count || 0) + "</b> " + ((e.vote_count || 0) === 1 ? "vote" : "votes") + "</span></li>"; }).join("");
     ol.hidden = false;

@@ -20,6 +20,12 @@ proof-of-concept features from production-ready ones in its docs.
   thing that leaves the page is the one Discord notification the reviewers already got; the
   Publish line turns to *live* on approval. Every *next step* link after Register now points at
   the panel instead of a Glowtbook tab.
+- **Card-sized images.** `/api/objects/{id}/image?w=640` (and the private
+  `/api/me/objects/{id}/image?w=`) serve a small progressive JPEG for cards and lists, made with
+  Pillow and cached on disk (`data/dip_media/thumbs`, `data/glowtbook_media/thumbs`); widths snap to
+  160/320/640/960 and never upscale. The bare URL is unchanged: the full rendition with its Content
+  Credential intact. Every piece card, the standings list and the Go-live thumbnail ask for the
+  small one; the Collecting Events grid went from 443 KB per picture to a few tens of KB.
 - **The capture app keeps a top image.** While you walk around a piece it keeps a full-resolution
   still of the sharpest, most detailed view, and saves it onto the piece with the Glass ID (as the
   primary image when the piece has none). The receipt shows it and continues to the Go-live panel.
