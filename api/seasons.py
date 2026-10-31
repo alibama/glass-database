@@ -11,7 +11,8 @@ app's "Claim" button. Reads are open; writes need a signed-in person
   GET  /seasons/{slug}/awards                 award categories with standings (+ my picks)
   GET  /seasons/{slug}/entries/{entry_id}     one entry
   POST /seasons/{slug}/entries   (sign-in)    {object_row_id, studio, edition_size, price_note, title,
-                                               solo, legendary, legend}
+                                               solo, legendary, legend} → live at once (the piece was
+                                               reviewed when published); GLASSDB_SEASON_ENTRY_REVIEW=1 queues it
   POST /seasons/{slug}/vote      (sign-in)    {entry_id}  → toggles; {"voted","votes","remaining"}
   POST /seasons/{slug}/awards/{category}/vote (sign-in) {entry_id} → one pick per award; swaps/toggles
   POST /claims                   (sign-in)    {object_row_id, confidence, report, location}
@@ -44,6 +45,7 @@ router = APIRouter(tags=["seasons"])
 def _conn():
     conn = connect()
     seasons.ensure(conn)
+    seasons.release_backlog(conn)
     return conn
 
 
@@ -250,14 +252,19 @@ def enter_piece(slug: str, payload: dict, request: Request, u: dict = Depends(re
     except ValueError as ex:
         raise _bad(ex)
     e = seasons.get_entry(conn, eid) or {"id": eid}
+    live = e.get("status") == "approved"
     try:
         from central import notify
-        notify.notify_submission(
-            "season entry", f"{e.get('title') or 'Untitled'} — {s['title']}",
-            {"Maker": e.get("artist_name"), "Studio": e.get("studio"),
-             "Edition": e.get("edition_size"), "Price": e.get("price_note"),
-             "Object": rid, "Review": "Admin → 🎃 Seasons"},
-            "season_entries", str(eid), _public_base(request))
+        fields = {"Maker": e.get("artist_name"), "Studio": e.get("studio"),
+                  "Edition": e.get("edition_size"), "Price": e.get("price_note"), "Object": rid}
+        if live:    # already public once: no approve button, just the news and where it is
+            fields["Page"] = f"{_public_base(request)}/games.html?season={s['slug']}#entry-{eid}"
+            fields["Reject if needed"] = "Admin → 🎃 Seasons"
+            notify.notify_message(f"New entry, live: {e.get('title') or 'Untitled'} — {s['title']}", fields)
+        else:
+            fields["Review"] = "Admin → 🎃 Seasons"
+            notify.notify_submission("season entry", f"{e.get('title') or 'Untitled'} — {s['title']}",
+                                     fields, "season_entries", str(eid), _public_base(request))
     except Exception:  # noqa: BLE001
         pass
     try:
@@ -265,8 +272,9 @@ def enter_piece(slug: str, payload: dict, request: Request, u: dict = Depends(re
         analytics.log(conn, "seasons", s["slug"], "season:enter")
     except Exception:  # noqa: BLE001
         pass
-    return {"ok": True, "pending": True, "entry": _pub_entry(e, u["uid"]),
-            "note": "Thanks — it'll show on the season page once an admin approves it."}
+    return {"ok": True, "pending": not live, "entry": _pub_entry(e, u["uid"]),
+            "note": "It's on the season page now." if live
+            else "Thanks — it'll show on the season page once an admin approves it."}
 
 
 @router.post("/seasons/{slug}/vote", summary="Toggle your vote for an entry")

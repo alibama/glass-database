@@ -786,7 +786,8 @@ elif page == "objects":
                                                        image_url=f"/api/objects/{pub['row_id']}/image",
                                                        solo=bool(solo), legendary=bool(legendary_on),
                                                        legend=legend.strip())
-                                        st.success("Entered — an admin approves entries before they show.")
+                                        st.success("Entered — it's on the season page now." if not _seasons.entry_review()
+                                                   else "Entered — an admin approves entries before they show.")
                                         st.rerun()
                                     except ValueError as ex:
                                         st.error(str(ex))

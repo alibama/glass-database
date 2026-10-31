@@ -367,7 +367,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   var esc = GDB.esc;
   var S = { season: null, entries: [], myVotes: [], remaining: 0, canVote: false, signedIn: false,
             lb: null, seasons: [], tab: "peoples_choice", me: null, awards: [], myPicks: {}, legendOut: 0 };
-  var ENTER_URL = "/glowtbook/?page=objects&tab=seasons";
+  var ENTER_URL = "/account.html#golive";
   var VERIFY_URL = "/fingerprint/verify.html";
 
   var toastT;
@@ -494,7 +494,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     }
     if (!S.entries.length) {
       g.innerHTML = '<div class="empty" style="grid-column:1/-1;margin-top:0">' + (S.season.status === "open"
-        ? 'No entries approved yet — be the first. <a href="' + ENTER_URL + '">Enter a piece</a> from Glowtbook (it needs a Glass ID and a public listing).'
+        ? 'No entries yet — be the first. <a href="' + ENTER_URL + '">Enter a published piece</a> from My account; it goes live the moment you do.'
         : "This collecting event closed without entries. The shelf is ready for the next one.") + "</div>";
       $("#voteCounter").innerHTML = ""; return;
     }
@@ -663,7 +663,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       return row(c.rank, esc(c.collector_name), plural(c.studios, "studio") + " · " + plural(c.seasons, "collecting event") + (c.badges ? " · " + plural(c.badges, "badge") : ""), "<b>" + c.pieces + "</b> " + (c.pieces === 1 ? "piece" : "pieces")); }).join("");
     var empty = { peoples_choice: "No votes yet. Be the first — it takes a tap.",
                   most_collected: "No checked pieces in any collection yet. Buy one, check it, add it.",
-                  studios: "No studios on the board until entries are approved.",
+                  studios: "No studios on the board until there are entries.",
                   points: "Points come with every piece you add: common 1 · uncommon 2 · rare 5 · legendary 20.",
                   collectors: "The collectors' board fills as pieces are checked and added — across every collecting event." }[S.tab];
     b.innerHTML = html || '<div class="empty">' + empty + "</div>";
