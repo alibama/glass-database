@@ -113,3 +113,31 @@ def test_newsletter_subscribe(demo_db):
     assert cl.post("/subscribe", json={"email": "bad"}).status_code == 400
     assert cl.get("/subscribers.csv", headers={"X-API-Key": "k"}).status_code == 200
     assert cl.get("/subscribers.csv").status_code == 403
+
+
+def test_season_entry_approve_link_flips_the_entry(demo_db):
+    """The Discord link for a season entry must do what Admin → Seasons does: set the entry's
+    own status (the season page reads e.status), not the generic approvals gate."""
+    from fastapi.testclient import TestClient
+
+    from api.main import app
+    from central import seasons as S
+    c = connect(); S.ensure(c)
+    sid = S.create_season(c, status="open", title="Link Test Season", theme="t", starts="2032-10-01",
+                          entries_close="2032-10-20", voting_closes="2032-10-28", ends="2032-10-31")
+    c.execute("INSERT INTO season_entries (season_id, object_row_id, artist_uid, artist_name, title, status, created_at) "
+              "VALUES (?,?,?,?,?,'pending',datetime('now'))", (sid, "obj-link-test", "u-link", "Link Maker", "Link pumpkin"))
+    c.commit()
+    eid = c.execute("SELECT id FROM season_entries WHERE object_row_id='obj-link-test'").fetchone()[0]
+    cl = TestClient(app)
+    sig = notify.sign("season_entries", str(eid))
+    assert cl.get(f"/moderate?tbl=season_entries&row={eid}&action=approve&sig=bad").status_code == 403
+    r = cl.get(f"/moderate?tbl=season_entries&row={eid}&action=approve&sig={sig}")
+    assert r.status_code == 200 and "Approved" in r.text
+    assert connect().execute("SELECT status FROM season_entries WHERE id=?", (eid,)).fetchone()[0] == "approved"
+    r = cl.get(f"/moderate?tbl=season_entries&row={eid}&action=reject&sig={notify.sign('season_entries', str(eid))}")
+    assert r.status_code == 200
+    assert connect().execute("SELECT status FROM season_entries WHERE id=?", (eid,)).fetchone()[0] == "rejected"
+    assert cl.get(f"/moderate?tbl=season_entries&row=999999&action=approve&sig={notify.sign('season_entries', '999999')}").status_code == 404
+    c = connect()
+    c.execute("DELETE FROM season_entries WHERE id=?", (eid,)); c.execute("DELETE FROM seasons WHERE id=?", (sid,)); c.commit()
