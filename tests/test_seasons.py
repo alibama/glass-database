@@ -14,6 +14,13 @@ from central.dbconn import connect
 _N = itertools.count(1)
 
 
+@pytest.fixture(autouse=True)
+def _review_mode(monkeypatch):
+    """These tests were written when entries waited for an admin; keep them in that mode.
+    The default (entries of a public piece go live at once) has its own test at the end."""
+    monkeypatch.setenv("GLASSDB_SEASON_ENTRY_REVIEW", "1")
+
+
 def _conn():
     from glowtbook.contribute import ensure_central_objects, ensure_object_staging
     c = connect()
@@ -712,3 +719,29 @@ def test_categories_backfill_for_seasons_made_before_awards(demo_db):
     closed = closed["id"] if isinstance(closed, dict) else closed
     c.execute("DELETE FROM season_categories WHERE season_id=?", (closed,)); c.commit()
     assert S.categories(c, closed) == []
+
+
+def test_default_mode_a_published_piece_goes_live_at_once(demo_db, monkeypatch):
+    """A piece that is public was reviewed once already: entering it needs no second approval."""
+    monkeypatch.setenv("GLASSDB_SEASON_ENTRY_REVIEW", "0")
+    c = _conn(); sid = _season(c); slug = S.get_season(c, sid)["slug"]
+    rid, _ = _object(c, uid="live1", title="Live Pumpkin")
+    eid = S.enter(c, sid, object_row_id=rid, artist_uid="live1", artist_name="Live One")
+    assert S.get_entry(c, eid)["status"] == "approved"
+    assert eid in [x["id"] for x in S.entries(c, sid)]                    # on the season page
+    assert any(b["badge"] == "maker-debut" for b in S.badges_for(c, "live1"))
+    # an entry left pending from review mode goes live on the next pass
+    c.execute("UPDATE season_entries SET status='pending' WHERE id=?", (eid,)); c.commit()
+    assert S.release_backlog(c) >= 1 and S.get_entry(c, eid)["status"] == "approved"   # other tests leave pending rows too
+    # over HTTP the answer says so, and nothing is pending
+    from api.main import app
+    cl = TestClient(app)
+    rid2, _ = _object(c, uid="u1", title="Live Two")
+    r = cl.post(f"/seasons/{slug}/entries", json={"object_row_id": rid2}, headers=_auth())
+    assert r.status_code == 200, r.text
+    assert r.json()["pending"] is False and r.json()["entry"]["status"] == "approved"
+    assert "season page now" in r.json()["note"]
+    # review mode still queues
+    monkeypatch.setenv("GLASSDB_SEASON_ENTRY_REVIEW", "1")
+    rid3, _ = _object(c, uid="live1", title="Queued Pumpkin")
+    assert S.get_entry(c, S.enter(c, sid, object_row_id=rid3, artist_uid="live1", artist_name="Live One"))["status"] == "pending"

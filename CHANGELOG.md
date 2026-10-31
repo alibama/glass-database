@@ -26,6 +26,11 @@ proof-of-concept features from production-ready ones in its docs.
   160/320/640/960 and never upscale. The bare URL is unchanged: the full rendition with its Content
   Credential intact. Every piece card, the standings list and the Go-live thumbnail ask for the
   small one; the Collecting Events grid went from 443 KB per picture to a few tens of KB.
+- **Entering a published piece in a collecting event needs no second approval.** The piece
+  was reviewed when it was published, so its entry is live on the season page the moment it is
+  entered (claims re-attached, badges awarded); the Discord post is now news with a link, not an
+  approve button. `GLASSDB_SEASON_ENTRY_REVIEW=1` restores the review queue. Entries left
+  pending from before go live on the next API call that touches seasons.
 - **The capture app keeps a top image.** While you walk around a piece it keeps a full-resolution
   still of the sharpest, most detailed view, and saves it onto the piece with the Glass ID (as the
   primary image when the piece has none). The receipt shows it and continues to the Go-live panel.

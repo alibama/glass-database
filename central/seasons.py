@@ -48,6 +48,14 @@ from central import approvals
 
 STATUSES = ("draft", "open", "voting", "closed")
 ENTRY_STATUSES = ("pending", "approved", "rejected")
+
+
+def entry_review() -> bool:
+    """Do new entries wait for an admin? Off by default: a public piece was already reviewed
+    once, when it was published, so entering it in a season goes live at once. Set
+    GLASSDB_SEASON_ENTRY_REVIEW=1 to hold entries in the queue instead (Admin → Seasons
+    approves them; so does the Discord link)."""
+    return os.environ.get("GLASSDB_SEASON_ENTRY_REVIEW", "0").lower() in ("1", "true", "yes")
 CLAIM_STATUSES = ("verified", "pending", "approved", "rejected")
 CLAIM_OK = ("verified", "approved")          # the claims that count on the boards
 VERIFIED_CONFIDENCE = 70.0                   # verify.html: >= 70 with >= 3 views = "Match likely"
@@ -634,7 +642,24 @@ def enter(conn, season_id: int, *, object_row_id: str, artist_uid: str, artist_n
          ed, (price_note or "")[:200], image_url or object_image_url(object_row_id), "pending",
          _now(), int(bool(solo)), int(bool(legendary)), legend[:2000]))
     conn.commit()
-    return int(cur.lastrowid)
+    eid = int(cur.lastrowid)
+    if not entry_review():
+        approve_entry(conn, eid, True)      # the piece is public already: live, claims attached, badges
+    return eid
+
+
+def release_backlog(conn) -> int:
+    """Default mode only: entries still ``pending`` from when entries waited for an admin go
+    live now; their pieces were public when they were entered. Returns how many it approved."""
+    if entry_review():
+        return 0
+    rows = _rows(conn.execute("SELECT id FROM season_entries WHERE status='pending'"))
+    for r in rows:
+        try:
+            approve_entry(conn, r["id"], True)
+        except ValueError:
+            pass
+    return len(rows)
 
 
 def my_entries(conn, uid: str) -> list[dict]:

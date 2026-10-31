@@ -67,7 +67,7 @@ admin meanwhile. Propose new themes on the Discord.
 | **Shop / studio** | The name on the entry; appears on the Studios board; can tell customers "scan it to claim it" | Entry's `studio` field |
 | **Collector** | Buys → scans with Verify → claims → builds a collection and badges | `/fingerprint/verify.html` → *Claim* → `/games.html#mine` |
 | **Voter** | Anyone signed in; N votes per season, swappable | `/games.html` Vote buttons |
-| **Admin** | Creates/opens/closes seasons, approves entries; backstop for low-confidence claims the maker hasn't got to | Admin → 🎃 Seasons |
+| **Admin** | Creates/opens/closes seasons, can reject an entry (approves them only in review mode); backstop for low-confidence claims the maker hasn't got to | Admin → 🎃 Seasons |
 
 ## Rules & anti-abuse
 
@@ -78,7 +78,10 @@ admin meanwhile. Propose new themes on the Discord.
   `open` or `voting`.
 * **One entry per piece per season**, and only the person who published the piece may
   enter it (resolved through `object_submissions.submitted_uid` and the Glowtbook
-  `contribution` table, both via `content_hash`). Entries are **pending until approved**.
+  `contribution` table, both via `content_hash`). An entry of a public piece is **live at once**:
+  the piece was reviewed when it was published. `GLASSDB_SEASON_ENTRY_REVIEW=1` holds entries
+  in a review queue instead (Admin → Seasons; the Discord link approves them). Entries left
+  pending from review mode go live the next time the API touches seasons.
 * **One claim per piece per person.** A claim needs a fingerprint confidence **≥ 70** to be
   `verified`; otherwise it is `pending` until the **maker who published the piece** confirms
   it in Glowtbook or an admin approves it. Only the publisher may confirm — the same
@@ -212,9 +215,10 @@ can show earned and unearned badges side by side.
 2. **Open** — the season appears on `/games.html` as the current season; makers can enter.
    A Discord nudge posts itself when the webhook is set (theme, dates, page link); add the
    Instagram post by hand.
-3. **Review entries** — pending entries show image, title, maker, studio, edition. Approve
-   or reject. Approved entries appear on the page immediately and are votable. New entries
-   also post to Discord (`notify_submission("season entry", …)`) when the webhook is set.
+3. **Watch entries** — entries go live as they come in and each posts to Discord with a
+   link to its card; the Seasons tab can still reject one. With
+   `GLASSDB_SEASON_ENTRY_REVIEW=1` they queue here instead (image, title, maker, studio,
+   edition; approve or reject) and the Discord post carries the approve link.
 4. **Start voting** — entries close, votes continue (another Discord nudge). Dates on the
    page are informational; the status buttons are what gates the behaviour, so you decide
    when.
