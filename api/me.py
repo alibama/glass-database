@@ -32,7 +32,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from api.auth import _api_prefix, current_user, require_user  # noqa: E402
@@ -298,13 +298,25 @@ async def upload_image(oid: int, request: Request, u: dict = Depends(require_use
 
 
 @router.get("/objects/{oid}/image", summary="The top image of one of my pieces")
-def my_image(oid: int, u: dict = Depends(require_user)):
+def my_image(oid: int, u: dict = Depends(require_user),
+             w: int = Query(0, ge=0, le=8000, description="Card-sized derivative, long edge at most w px "
+                            "(snapped to 160/320/640/960); 0 = the original file")):
     store = _store()
     _own(store, u["uid"], oid)
     r = _primary_image(store, u["uid"], oid)
     if not r:
         raise HTTPException(404, "No photo on this piece yet")
     path = Path(r["aip_path"])
+    from glowtbook import media as _media
+    width = _media.thumb_width(w)
+    if width:
+        try:
+            from glowtbook.contribute import MEDIA, uid_slug
+            cache = MEDIA / "thumbs" / uid_slug(u["uid"]) / f"{r['id']}-{width}.jpg"
+            small = _media.cached_thumbnail(cache, path.stat().st_mtime, path.read_bytes, width)
+            return Response(content=small, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=600"})
+        except Exception:  # noqa: BLE001 — fall back to the original
+            pass
     mime = {".png": "image/png", ".webp": "image/webp", ".gif": "image/gif"}.get(path.suffix.lower(), "image/jpeg")
     return FileResponse(path, media_type=mime, headers={"Cache-Control": "private, max-age=60"})
 

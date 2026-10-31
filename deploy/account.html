@@ -254,7 +254,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       row: '<a class="btn ' + (fp ? "btn--line" : "btn--red") + '" href="' + esc(enroll) + '">' + (fp ? "Register it again" : "Register it") + "</a>" + (fp ? "<small>Registering again replaces its Glass ID; do that if the first capture was weak.</small>" : "<small>The capture app also keeps your sharpest shot as the top image.</small>") });
     out.push({ cls: o.image_url ? "done" : "todo", st: o.image_url ? "done" : "to do", title: "Top image",
       text: o.image_url ? "This is the picture on the card and, once published, on the public page." : "The capture app adds your best shot by itself. Or add a photo now, straight from the phone.",
-      row: (o.image_url ? '<img class="thumb" src="' + esc(o.image_url) + '" alt="">' : "") + '<button type="button" class="btn ' + (o.image_url ? "btn--line" : "btn--red") + '" data-act="photo">' + (o.image_url ? "Replace the photo" : "Add a photo") + "</button><small>Kept as the archival original in your Glowtbook; a condensed copy goes out when you publish.</small>" });
+      row: (o.image_url ? '<img class="thumb" src="' + esc(GDB.thumb(o.image_url, 320)) + '" alt="">' : "") + '<button type="button" class="btn ' + (o.image_url ? "btn--line" : "btn--red") + '" data-act="photo">' + (o.image_url ? "Replace the photo" : "Add a photo") + "</button><small>Kept as the archival original in your Glowtbook; a condensed copy goes out when you publish.</small>" });
     var pubStep = { title: "Publish" };
     if (st === "published") {
       pubStep.cls = "done live"; pubStep.st = "live";

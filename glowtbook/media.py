@@ -16,6 +16,7 @@ import hashlib
 import io
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 from PIL import Image, ImageOps
 
@@ -67,6 +68,60 @@ def condense_image(data: bytes, max_px: int = 1200, quality: int = 80) -> tuple[
     im.thumbnail((max_px, max_px))
     im.save(buf, format="JPEG", quality=quality, optimize=True)
     return buf.getvalue(), "image/jpeg"
+
+
+THUMB_WIDTHS = (160, 320, 640, 960)
+
+
+def thumb_width(w) -> int:
+    """Snap a requested ``?w=`` to one of a few sizes so the caches stay small. 0 = the original."""
+    try:
+        w = int(w or 0)
+    except (TypeError, ValueError):
+        return 0
+    if w <= 0:
+        return 0
+    for cand in THUMB_WIDTHS:
+        if w <= cand:
+            return cand
+    return THUMB_WIDTHS[-1]
+
+
+def thumbnail(data: bytes, width: int, quality: int = 76) -> tuple[bytes, str]:
+    """A card-sized JPEG of an image: EXIF orientation baked in, long edge at most ``width``,
+    never upscaled, transparency flattened onto paper. A display derivative only: it carries
+    no Content Credential; the signed rendition is the full image."""
+    im = Image.open(io.BytesIO(data))
+    im = ImageOps.exif_transpose(im)
+    if im.mode in ("RGBA", "LA", "P"):
+        im = im.convert("RGBA")
+        bg = Image.new("RGB", im.size, (244, 238, 228))
+        bg.paste(im, mask=im.split()[-1])
+        im = bg
+    elif im.mode != "RGB":
+        im = im.convert("RGB")
+    im.thumbnail((width, width))
+    buf = io.BytesIO()
+    im.save(buf, format="JPEG", quality=quality, optimize=True, progressive=True)
+    return buf.getvalue(), "image/jpeg"
+
+
+def cached_thumbnail(cache_path: Path, source_mtime: float | None, loader, width: int) -> bytes:
+    """``thumbnail`` with a file cache: ``cache_path`` is reused while it is at least as new as
+    ``source_mtime`` (None = the source never changes under this key). ``loader()`` returns the
+    source bytes and is only called on a miss."""
+    try:
+        if cache_path.exists() and (source_mtime is None or cache_path.stat().st_mtime >= source_mtime):
+            return cache_path.read_bytes()
+    except OSError:
+        pass
+    out, _ = thumbnail(loader(), width)
+    try:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        cache_path.write_bytes(out)
+    except OSError:
+        pass
+    return out
 
 
 def sha256_hex(data: bytes) -> str:

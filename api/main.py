@@ -271,10 +271,13 @@ def rows(
 
 
 @app.get("/objects/{row_id}/image", summary="Primary image of a public object (bytes, credentials intact)")
-def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (0 = primary)")):
+def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (0 = primary)"),
+                 w: int = Query(0, ge=0, le=8000, description="Card-sized derivative: long edge at most "
+                                "w px (snapped to 160/320/640/960), unsigned. 0 = the full signed image")):
     """Serve a contributed object's image exactly as stored — no re-encoding — so any
     embedded C2PA Content Credential stays intact and can be verified at
-    contentcredentials.org/verify or c2paviewer.com by pasting this URL."""
+    contentcredentials.org/verify or c2paviewer.com by pasting this URL. With ``?w=``
+    a small JPEG for cards and lists is served instead (cached under data/dip_media/thumbs)."""
     import base64 as _b64
     conn = connect()
     # only public/approved objects have rows here
@@ -293,6 +296,17 @@ def object_image(row_id: str, i: int = Query(0, ge=0, description="Image index (
         raw = _b64.b64decode(rows[i]["image_b64"])
     except Exception:
         raise HTTPException(500, "Image could not be decoded")
+    from glowtbook import media as _media
+    width = _media.thumb_width(w)
+    if width:
+        try:
+            small = _media.cached_thumbnail(DIP_MEDIA / "thumbs" / f"{row_id}-{i}-{width}.jpg", None,
+                                            lambda: raw, width)
+            return Response(content=small, media_type="image/jpeg",
+                            headers={"Cache-Control": "public, max-age=86400",
+                                     "Content-Disposition": f'inline; filename="{row_id}-{width}.jpg"'})
+        except Exception:  # noqa: BLE001 — an undecodable image falls back to the stored bytes
+            pass
     is_png = raw[:4] == b"\x89PNG"
     mime = "image/png" if is_png else "image/jpeg"
     ext = "png" if is_png else "jpg"
