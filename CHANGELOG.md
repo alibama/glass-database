@@ -7,6 +7,33 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **The public record moves to glass.wikibase.cloud, and the migration is a page.**
+  `central/wikibase/` is the pipeline: the model (55 properties with their Wikidata twins, 29
+  classes, the vocabularies from code), **stage** (the site's tables → one staged item per
+  person, studio, school, museum, funder, piece, show, collecting event, place and term; only
+  approved rows and public columns; emails, prices, buyers and collectors never enter),
+  **dedupe** (clusters by name, city, website and Instagram; one canonical per cluster, the
+  rest fold into it and keep their Glass Database IDs), the **OpenRefine** round trip (CSV out,
+  reconcile against Wikidata and against the site's own W3C reconciliation service at
+  `/api/wikibase/reconcile`, CSV back; a manifest for OpenRefine's Wikibase extension),
+  **bootstrap** of the properties, a **dry run** that writes every request body to a plan,
+  the two-pass **push** (bare items, then every statement with a reference; find-before-create;
+  `clear` only on items we made; never deletes or merges), and **pull** (the wiki's copy into
+  `wb_cache`, with drift reported). Jobs run in the background with a log in the database that
+  every API worker can read. **`/wikibase.html`** shows all of it to anyone (steps, items by
+  kind, clusters, runs with their logs) and gives administrators the buttons, including the bot
+  settings: the bot password is saved encrypted with the site secret and never shown again.
+  Collectors stay in the app by design. `docs/WIKIBASE.md` is the runbook; `python -m
+  central.wikibase` the command line.
+- **The Review queue is a page.** `/review.html` and `api/admin.py` do what the Streamlit
+  console's moderation sections did: pieces, artist profiles, every dataset's pending rows
+  (with *Approve all*), show listings and registrations, collecting-event entries and
+  collection requests, harvested content, studio data sources, feedback, users and the Discord
+  settings, all behind `require_admin` (an admin email or the API key). The first slice of
+  retiring Streamlit; the console stays for datasets, analytics and creating collecting events.
+- **Install keeps what the server made.** The deploy's rsync now excludes `data/splat_media`,
+  `data/wikibase` and the Glowtbook store's `-wal`/`-shm` files, so a deploy no longer deletes
+  them.
 - **Pieces as trading cards, and a Go-live panel.** One card renderer (`GDB.pieceCard` in
   site.js, styled in paper.css) draws a piece the way a graded card reads: the Glass ID strength
   as the big number up top, the top image in the art window, a type line, stat rows (Glass ID,

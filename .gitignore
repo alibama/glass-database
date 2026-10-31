@@ -28,6 +28,8 @@ data/glowtbook_media/
 data/dip_media/
 data/aip_bags/
 data/splat_media/
+# dry-run plans and push logs of the Wikibase migration
+data/wikibase/
 data/c2pa/            # self-signed test cert + PRIVATE signing key
 
 # OS / editor

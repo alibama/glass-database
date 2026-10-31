@@ -18,6 +18,8 @@ Routes
 Any route can resolve the caller with ``current_user(request)`` (None when
 anonymous) or ``Depends(require_user)`` (401 when anonymous). Both accept the
 cookie or an ``Authorization: Bearer`` token (what a paired phone sends).
+``Depends(require_admin)`` is the same for administrators (``central.users`` roles,
+or the ``X-API-Key`` admin token).
 """
 from __future__ import annotations
 
@@ -124,6 +126,35 @@ def require_user(request: Request) -> dict:
         raise HTTPException(401, "Sign in first (GET /api/auth/login), or open this page from "
                                  "Glowtbook so it's paired to your account.")
     return u
+
+
+def is_admin_request(request: Request) -> bool:
+    """An administrator: a signed-in person whose email is an admin (``central.users``:
+    GLASSDB_ADMIN_EMAILS or promoted in Admin → Users), or a caller holding the API admin
+    key (``X-API-Key`` = GLASSDB_ADMIN_TOKEN, what scripts and cron use)."""
+    key = os.environ.get("GLASSDB_ADMIN_TOKEN", "")
+    if key and request.headers.get("x-api-key", "") == key:
+        return True
+    u = current_user(request)
+    if not u or not u.get("email"):
+        return False
+    try:
+        from central import users
+        from central.dbconn import connect
+        return users.is_admin(connect(), u["email"])
+    except Exception:  # noqa: BLE001
+        return False
+
+
+def require_admin(request: Request) -> dict:
+    """The admin routes of the static admin pages (review queue, the wiki). 401 when
+    anonymous, 403 when signed in but not an administrator."""
+    if is_admin_request(request):
+        return current_user(request) or {"uid": "api-key", "email": "", "name": "API key", "kind": "key"}
+    if current_user(request):
+        raise HTTPException(403, "You're signed in, but you're not an administrator. Ask an admin to "
+                                 "promote you (Admin → Users), then reload.")
+    raise HTTPException(401, "Sign in first (GET /api/auth/login).")
 
 
 # --- provider config ----------------------------------------------------------

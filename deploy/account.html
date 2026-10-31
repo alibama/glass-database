@@ -411,7 +411,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function renderKv() {
     var m = D.me, bs = D.social && D.social.bluesky, shareState = D.share;
     $("#kv").innerHTML =
-      "<dt>Signed in as</dt><dd>" + esc(m.name || "") + (m.email ? " · " + esc(m.email) : "") + (m.is_admin ? ' · <a href="/admin/">Admin</a>' : "") + "</dd>" +
+      "<dt>Signed in as</dt><dd>" + esc(m.name || "") + (m.email ? " · " + esc(m.email) : "") + (m.is_admin ? ' · <a href="/review.html">Review queue</a> · <a href="/wikibase.html">Wikibase</a> · <a href="/admin/">Old console</a>' : "") + "</dd>" +
       "<dt>Bluesky</dt><dd>" + (bs && bs.connected ? "connected as <b>@" + esc(bs.handle) + '</b> · <a href="/glowtbook/?page=profile">manage</a>' : 'not connected · <a href="/glowtbook/?page=profile">connect it once</a> in Glowtbook → My profile, and Share posts for you') + "</dd>" +
       "<dt>Collection link</dt><dd>" + (shareState && shareState.shared ? '<a href="' + esc(shareState.url) + '">public</a> · withdraw it from the <a href="/games.html#mine">Collecting Events page</a>' : 'private · make it public from the <a href="/games.html#mine">Collecting Events page</a>') + "</dd>" +
       '<dt>Your data</dt><dd>Private until you publish or share. Anything can be corrected or removed on request: ask on the <a href="https://discord.gg/9ek2UxvPT">Discord</a>.</dd>';

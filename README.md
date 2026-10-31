@@ -34,7 +34,8 @@ Five small pieces share one database:
 | **`central/`** | Self-describing SQLite store + a re-runnable spreadsheet importer | — |
 | **`api/`** | Read-only, self-documenting HTTP API (FastAPI, `/docs`) | `:8000` |
 | **`explore/`** | Public data explorer — break any dataset down, chart, map, download | `:8502` |
-| **`admin/`** | Add content, moderate contributions, de-duplicate (basic-auth) | `:8501` |
+| **`admin/`** | Add content, moderate contributions, de-duplicate (basic-auth); moderation has moved to `/review.html` | `:8501` |
+| **`central/wikibase/`** | The public record's pipeline to glass.wikibase.cloud (stage, dedupe, OpenRefine, push, pull); run from `/wikibase.html` | via the API |
 | **`glowtbook/`** | Journal + object registry: AIP/DIP, C2PA signing, BagIt, Bluesky | `:8503` |
 
 The API and explorer are **generic** — they read a registry (`_datasets` /
@@ -159,7 +160,8 @@ smoke-test of all four apps.
 
 ```
 central/     store + importer + shared DB connection
-api/         read-only FastAPI service
+central/wikibase/  the migration to glass.wikibase.cloud (docs/WIKIBASE.md)
+api/         FastAPI service (public reads; sign-in, pieces, review queue and the wiki behind it)
 explore/     public data explorer (Streamlit)   + dataclean.py (pure helpers)
 admin/       content + moderation console (Streamlit)
 glowtbook/   object registry: media, c2pa_sign, video, aip, bluesky
