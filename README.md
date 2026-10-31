@@ -34,7 +34,7 @@ Five small pieces share one database:
 | **`central/`** | Self-describing SQLite store + a re-runnable spreadsheet importer | — |
 | **`api/`** | Read-only, self-documenting HTTP API (FastAPI, `/docs`) | `:8000` |
 | **`explore/`** | Public data explorer — break any dataset down, chart, map, download | `:8502` |
-| **`admin/`** | Add content, moderate contributions, de-duplicate (basic-auth); moderation has moved to `/review.html` | `:8501` |
+| **`admin/`** | The old Streamlit console (basic-auth), being switched off: everything it did is a page — `/review.html`, `/events-admin.html`, `/datasets.html`, `/analytics.html`, `/wikibase.html` | `:8501` |
 | **`central/wikibase/`** | The public record's pipeline to glass.wikibase.cloud (stage, dedupe, OpenRefine, push, pull); run from `/wikibase.html` | via the API |
 | **`glowtbook/`** | Journal + object registry: AIP/DIP, C2PA signing, BagIt, Bluesky | `:8503` |
 

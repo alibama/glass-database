@@ -5,7 +5,7 @@ ad networks, nothing that clashes with the project's data ethics.
 
 ## 1. In-app usage analytics (built in)
 
-**Admin → 📊 Analytics.** Captures what the log-based tools can't see through
+**`/analytics.html` (Usage, administrators).** Captures what the log-based tools can't see through
 Streamlit's WebSocket: which **surface/view** people use, and key **events**
 (submissions, feedback). Design:
 

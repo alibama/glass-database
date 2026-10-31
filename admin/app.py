@@ -1,13 +1,17 @@
 """
 Glass Database — admin (content, moderation, de-duplication)
 ============================================================
-Behind HTTP basic auth at the proxy. Three sections:
+Behind HTTP basic auth at the proxy. Being retired: everything it does is now a
+page on the website, behind the admin sign-in (api.auth.require_admin):
 
-  • Datasets    — browse any dataset and add rows (bulk stays via CLI ingest).
-  • Review queue — approve/reject Glowtbook submissions. Approving PROMOTES a
-                   submission into a public `profiles` table (auto-registered so
-                   it shows up in the API and explorer immediately).
-  • Duplicates  — find likely duplicate rows in a dataset and delete the extras.
+  • Review queue, Users, Discord  → /review.html      (api/admin.py)
+  • Collecting Events             → /events-admin.html (api/admin_data.py)
+  • Datasets                      → /datasets.html     (api/admin_data.py)
+  • Analytics                     → /analytics.html    (api/admin_data.py)
+  • Wikibase                      → /wikibase.html     (api/wikibase.py)
+
+The Duplicates tool is superseded by the Wikibase dedupe step. The sections stay
+here until the console is switched off; each one points at its page.
 
 Writes go to whatever central.dbconn points at (local file or Turso).
 
@@ -74,7 +78,10 @@ if os.environ.get("GLASSDB_ADMIN_OIDC") == "1":
 st.sidebar.title("🛠️ Admin")
 st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'}**")
 st.sidebar.caption("[GitHub repo](https://github.com/alibama/glass-database)")
-st.sidebar.caption("Moving to the website: [Review queue](/review.html) · [Wikibase](/wikibase.html)")
+st.sidebar.markdown("**This console has moved to the website.** Use these pages; the console stays "
+                    "only until it is switched off.")
+st.sidebar.markdown("[Review queue](/review.html) · [Collecting Events](/events-admin.html) · "
+                    "[Tables](/datasets.html) · [Usage](/analytics.html) · [Wikibase](/wikibase.html)")
 section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue",
                                        "🧹 Duplicates", "💬 Discord", "📮 Feedback", "📊 Analytics",
                                        "👥 Users", "🌾 Harvest", "🛰 Studio data", "🎃 Collecting Events"],
@@ -256,6 +263,8 @@ def approve_object_submission(sub):
 # DATASETS
 # ===========================================================================
 if section == "📋 Datasets":
+    st.info("This section has moved to the website: [Tables](/datasets.html) — pick a table, edit a "
+            "cell, add a row, import a CSV. The copy here goes away when the console is switched off.")
     ds = datasets()
     labels = [f"{d['tbl']} ({d['row_count']})" + ("  🔒" if d['visibility'] == 'restricted' else "")
               for d in ds]
@@ -399,6 +408,8 @@ if section == "📋 Datasets":
 # APPROVALS — the publication gate (nothing is public until approved)
 # ===========================================================================
 elif section == "✅ Approvals":
+    st.info("This section has moved to the website: the [Review queue](/review.html) approves rows and "
+            "whole tables; [Tables](/datasets.html) shows every row's gate status.")
     st.header("Publication gate")
     st.caption("Nothing in a dataset is served publicly until it's approved here. "
                "New imports and contributions arrive **pending** by default.")
@@ -460,6 +471,7 @@ elif section == "✅ Approvals":
 # REVIEW QUEUE
 # ===========================================================================
 elif section == "🛡️ Review queue":
+    st.info("This section has moved to the website: the [Review queue](/review.html).")
     st.header("Review queue")
     tab_obj, tab_prof, tab_events = st.tabs(["🪟 Pieces","🧑\u200d🎨 Artist profiles", "🎟 Shows & Sales"])
 
@@ -621,6 +633,7 @@ elif section == "💬 Discord":
     import os
 
     from central import notify, settings
+    st.info("This section has moved to the website: the [Review queue](/review.html), under Discord.")
     st.header("Discord notifications")
     st.caption("New submissions post to your channel with one-click approve/reject links.")
     cur = settings.get(conn, "discord_webhook_url", os.environ.get("DISCORD_WEBHOOK_URL", ""))
@@ -644,6 +657,7 @@ elif section == "💬 Discord":
 # ===========================================================================
 elif section == "📮 Feedback":
     from central import feedback
+    st.info("This section has moved to the website: the [Review queue](/review.html), under Feedback.")
     st.header("Site feedback")
     items = feedback.open_items(conn)
     open_n = sum(1 for i in items if not i["resolved"])
@@ -669,6 +683,7 @@ elif section == "📊 Analytics":
     import pandas as _pd
 
     from central import analytics
+    st.info("This section has moved to the website: [Usage](/analytics.html).")
     st.header("Usage analytics")
     st.caption("Self-hosted, cookieless, no raw IPs stored. Views are counted once per "
                "session; visitors are a per-day rotating hash. Do-Not-Track is honoured.")
@@ -727,6 +742,7 @@ elif section == "👥 Users":
     import os
 
     from central import users
+    st.info("This section has moved to the website: the [Review queue](/review.html), under Users.")
     st.header("Users & administrators")
     st.caption("Everyone who's signed in with Google (name + email only). Promote "
                "someone to administrator, or add an admin by email before their first login.")
@@ -767,6 +783,7 @@ elif section == "🌾 Harvest":
     import os
 
     from central import harvest
+    st.info("This section has moved to the website: the [Review queue](/review.html), under Harvested content.")
     st.header("Harvested content — review")
     st.caption("Content pulled from consenting artists' own sites/socials. The artist stays the "
                "owner (asserted in each image's C2PA credential); nothing is public until you "
@@ -800,6 +817,7 @@ elif section == "🌾 Harvest":
 # ===========================================================================
 elif section == "🛰 Studio data":
     from central import studio_sources
+    st.info("This section has moved to the website: the [Review queue](/review.html), under Studio data sources.")
     st.header("Studio open-data sources")
     st.caption("Studios that publish open kiln/furnace data via an API. Pending sources are "
                "NOT polled until you approve them — review the URL before approving.")
@@ -835,6 +853,8 @@ elif section == "🎃 Collecting Events":
 
     from central import seasons as _seasons
     _seasons.ensure(conn)
+    st.info("This section has moved to the website: [Collecting Events](/events-admin.html) creates and runs "
+            "events; entries and collection requests that need a look are in the [Review queue](/review.html).")
     st.header("Collecting Events — friendly competitions & collecting")
     st.caption("A collecting event is a themed call for artists (pumpkins in October, ornaments in "
                "December). Makers enter pieces they've already published through Glowtbook, collectors "
@@ -1013,6 +1033,8 @@ elif section == "🎃 Collecting Events":
 # DUPLICATES
 # ===========================================================================
 else:
+    st.info("Superseded: the [Wikibase](/wikibase.html) page's dedupe step clusters duplicates across the "
+            "whole registry and keeps every Glass Database ID. This tool goes away with the console.")
     st.header("Find & remove duplicates")
     ds = datasets()
     tbl = st.selectbox("Dataset", [d["tbl"] for d in ds],

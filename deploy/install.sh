@@ -141,6 +141,9 @@ if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     [ -f "$SRC/deploy/tour.html" ] && cp "$SRC/deploy/tour.html" "$APP_DIR/public/tour.html"
     [ -f "$SRC/deploy/review.html" ] && cp "$SRC/deploy/review.html" "$APP_DIR/public/review.html"
     [ -f "$SRC/deploy/wikibase.html" ] && cp "$SRC/deploy/wikibase.html" "$APP_DIR/public/wikibase.html"
+    [ -f "$SRC/deploy/events-admin.html" ] && cp "$SRC/deploy/events-admin.html" "$APP_DIR/public/events-admin.html"
+    [ -f "$SRC/deploy/datasets.html" ] && cp "$SRC/deploy/datasets.html" "$APP_DIR/public/datasets.html"
+    [ -f "$SRC/deploy/analytics.html" ] && cp "$SRC/deploy/analytics.html" "$APP_DIR/public/analytics.html"
     [ -f "$SRC/deploy/events.html" ] && cp "$SRC/deploy/events.html" "$APP_DIR/public/events.html"
     [ -f "$SRC/deploy/register.html" ] && cp "$SRC/deploy/register.html" "$APP_DIR/public/register.html"
     [ -f "$SRC/deploy/studios.html" ] && cp "$SRC/deploy/studios.html" "$APP_DIR/public/studios.html"
@@ -312,7 +315,7 @@ else
     echo "    • API       : http://$DOMAIN/api/      (docs: /api/docs)"
     echo "    • Explore   : http://$DOMAIN/explore/"
     echo "    • Glowtbook : http://$DOMAIN/glowtbook/  (shared demo)"
-    echo "    • Admin     : http://$DOMAIN/admin/     (login: admin${ADMIN_PW:+ / $ADMIN_PW})"
+    echo "    • Admin     : http://$DOMAIN/review.html  (sign in with an admin email; the old console is at /admin/${ADMIN_PW:+, login admin / $ADMIN_PW})"
     echo
     echo "  Enable HTTPS once DNS for $DOMAIN points here:"
     echo "    $CERTBOT_CMD"

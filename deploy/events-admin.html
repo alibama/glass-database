@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Collecting Events admin — Glass Database</title>
+<meta name="description" content="Create and run a collecting event: the title and theme, the dates, the rules and the awards; open it, start the voting, close it. For administrators.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 18ch; overflow-wrap: anywhere; }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; }
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
+  button.btn { background: var(--paper); cursor: pointer; font-family: var(--sans); }
+  button.btn.btn--red { background: var(--red); }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.sm { padding: .6rem 1rem; font-size: 14px; }
+  .msg { font: 400 14px/1.5 var(--sans); color: var(--ink); margin-top: 1rem; min-height: 1.5em; }
+  .msg.err { color: var(--red); }
+  .empty { margin-top: 1.4rem; padding: 1.2rem 1.4rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .empty.small { padding: .8rem 1rem; font-size: 14px; margin-top: 1rem; }
+
+  /* the form: labelled fields in a grid, the dates in a row of four */
+  form.ev { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem 1.2rem; margin-top: 1.4rem; max-width: 70rem; }
+  form.ev label { display: flex; flex-direction: column; gap: .35rem; font: 500 11px/1.6 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  form.ev label.w2 { grid-column: span 2; } form.ev label.w4 { grid-column: span 4; }
+  form.ev input[type=text], form.ev input[type=date], form.ev input[type=number], form.ev textarea, form.ev select { font: 400 15px/1.45 var(--sans); padding: .7rem .85rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); min-width: 0; letter-spacing: 0; text-transform: none; }
+  form.ev textarea { min-height: 5.2rem; resize: vertical; }
+  form.ev textarea.cats { font-family: var(--mono); font-size: 14px; }
+  form.ev .hint { font: 400 13px/1.45 var(--sans); color: var(--muted); text-transform: none; letter-spacing: 0; max-width: 60ch; }
+  form.ev label.chk { flex-direction: row; align-items: center; gap: .6rem; text-transform: none; letter-spacing: 0; font: 400 15px var(--sans); color: var(--ink-2); grid-column: span 2; align-self: end; }
+  form.ev input[type=checkbox] { accent-color: var(--red); width: 1rem; height: 1rem; }
+  form.ev .submit { grid-column: span 4; display: flex; gap: 1rem 1.6rem; flex-wrap: wrap; align-items: center; }
+  .presets { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: 1.2rem; font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .presets button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink); background: none; border: 1px solid var(--rule); padding: .5rem .7rem; cursor: pointer; }
+  .presets button:hover, .presets button.on { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+
+  /* one event per block: words · dates · counts · the status buttons · its entries */
+  .ev-list { border-top: 1px solid var(--ink); }
+  .evrow { display: grid; grid-template-columns: 1fr minmax(16rem, auto); gap: 1.2rem 2rem; padding: 1.5rem 0; border-bottom: 1px solid var(--rule); align-items: start; }
+  .evrow h3 { font-size: 1.5rem; margin: 0 0 .3rem; display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; }
+  .evrow h3 .pill { vertical-align: middle; }
+  .evrow .theme { font: italic 300 1.1rem/1.4 var(--serif); color: var(--ink-2); margin: 0 0 .5rem; }
+  .facts { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 72ch; }
+  .facts b { color: var(--ink); font-weight: 500; }
+  .facts span { white-space: nowrap; }
+  .facts a { color: var(--ink); }
+  .cal { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; margin: .5rem 0 0; font: 500 12px/1.7 var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .cal b { color: var(--ink); font-weight: 500; }
+  .awards { margin: .5rem 0 0; font-size: 14px; color: var(--ink-2); max-width: 72ch; }
+  .awards b { color: var(--ink); font-weight: 500; }
+  .qacts { display: flex; flex-direction: column; gap: .8rem; align-items: flex-start; }
+  .qacts .act small { max-width: 24ch; }
+  details.entries { margin-top: 1rem; grid-column: 1 / -1; }
+  details.entries summary { cursor: pointer; font: 500 12px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); }
+  details.edit { grid-column: 1 / -1; }
+  details.edit summary { cursor: pointer; font: 500 12px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  details.edit summary:hover { color: var(--red); }
+  .tbl table { min-width: 0; }
+  .tbl td.acts { white-space: nowrap; }
+  .tbl td .mono { font: 400 12px var(--mono); color: var(--muted); }
+  .ok { color: var(--ink); } .warn { color: var(--red); }
+  @media (max-width: 900px) { form.ev { grid-template-columns: 1fr 1fr; } form.ev label.w4, form.ev .submit { grid-column: span 2; } }
+  @media (max-width: 680px) { .evrow { grid-template-columns: 1fr; } form.ev { grid-template-columns: 1fr; } form.ev label.w2, form.ev label.w4, form.ev label.chk, form.ev .submit { grid-column: span 1; } .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active=""></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">Admin</span><a href="/review.html">Review queue</a><a href="/events-admin.html" class="on">Collecting Events</a><a href="/datasets.html">Tables</a><a href="/analytics.html">Usage</a><a href="/wikibase.html">Wikibase</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> Collecting Events</p>
+  <h1 id="heroTitle">Create and run <em>a collecting event.</em></h1>
+  <p class="lede" id="heroLede">A collecting event is a themed call for makers: pumpkins in October, ornaments in December. Makers enter pieces they have already published, collectors check a piece to add it to their collection, signed-in visitors vote. The public page is <a href="/games.html">/games.html</a>; entries and collection requests that need a look are in the <a href="/review.html#events">Review queue</a>.</p>
+  <p class="live" id="heroMeta" aria-live="polite"></p>
+  <div class="btns" id="heroCta"></div>
+  <p class="msg" id="msg" aria-live="polite"></p>
+ </div>
+</section>
+
+<div id="body"></div>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/infrastructure.html">How it runs</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  var here = location.pathname + location.search;
+  var D = { me: null, ov: null, preset: 0, open: {} };
+
+  function plural(n, w) { n = n || 0; return n + " " + w + (n === 1 ? "" : "s"); }
+  function say(text, err) { var m = $("#msg"); m.textContent = text || ""; m.className = "msg" + (err ? " err" : ""); }
+  function busy(on) { document.querySelectorAll("#body button").forEach(function (b) { b.disabled = !!on; }); }
+  function post(path, body, method) { return GDB.json(path, { method: method || "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) }); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function statusWord(s) { return { draft: "draft", open: "open for entries", voting: "voting", closed: "closed" }[s] || s; }
+  function statusPill(s) { return '<span class="pill' + (s === "open" || s === "voting" ? " red" : (s === "closed" ? " ink" : "")) + '">' + esc(statusWord(s)) + "</span>"; }
+  function section(n, id, label, title, lede, inner) {
+    return '<section class="s' + (n % 2 ? "" : " alt") + '" id="' + id + '" aria-labelledby="h-' + id + '"><div class="wrap">' +
+      '<div class="s-head"><p class="label"><span class="n">№ ' + pad(n) + "</span> " + esc(label) + '</p><div><h2 id="h-' + id + '">' + title + '</h2><p class="lede">' + esc(lede) + "</p></div></div>" +
+      inner + "</div></section>";
+  }
+  function facts(pairs) {
+    return '<p class="facts">' + pairs.filter(function (p) { return p[1] != null && p[1] !== "" && p[1] !== false; })
+      .map(function (p) { return "<span><b>" + esc(p[0]) + "</b> " + (p[2] ? p[1] : esc(p[1])) + "</span>"; }).join(" · ") + "</p>";
+  }
+  function field(label, name, type, value, cls, extra) {
+    return '<label class="' + (cls || "") + '">' + esc(label) + '<input type="' + type + '" name="' + name + '" value="' + esc(value == null ? "" : value) + '"' + (extra || "") + "></label>";
+  }
+  function area(label, name, value, cls, hint, mono) {
+    return '<label class="' + (cls || "") + '">' + esc(label) + '<textarea name="' + name + '"' + (mono ? ' class="cats"' : "") + ">" + esc(value == null ? "" : value) + "</textarea>" + (hint ? '<span class="hint">' + esc(hint) + "</span>" : "") + "</label>";
+  }
+
+  /* ---- the gate ------------------------------------------------------------ */
+  function signedOut() {
+    document.title = "Sign in — Glass Database";
+    $("#heroMeta").textContent = "";
+    $("#heroCta").innerHTML = '<div class="act"><a class="btn btn--red" href="' + esc(GDB.loginUrl(here)) + '">Sign in with Google</a><small>Administrators sign in with the same Google account as everyone else; the page opens for them.</small></div>';
+    $("#body").innerHTML = "";
+  }
+  function notAdmin(me) {
+    $("#heroMeta").innerHTML = "<span>Signed in as <b>" + esc(me.email || me.name || "you") + "</b></span>";
+    $("#heroCta").innerHTML = "";
+    $("#body").innerHTML = '<section class="s"><div class="wrap"><p class="empty">You are signed in, but you are not an administrator. Ask an administrator to promote you (on the Review queue page, under Users), then reload.</p></div></section>';
+  }
+
+  /* ---- the create form ------------------------------------------------------ */
+  function createForm() {
+    var ov = D.ov, d = ov.defaults, p = ov.presets[D.preset] || ov.presets[0];
+    var presets = '<div class="presets"><span>Award preset</span>' + ov.presets.map(function (x, i) {
+      return '<button type="button" data-preset="' + i + '"' + (i === D.preset ? ' class="on"' : "") + ">" + esc(x.label) + "</button>";
+    }).join("") + "</div>";
+    var form = '<form class="ev" id="createForm">' +
+      field("Title", "title", "text", "", "w2", ' placeholder="Court of the Gourds" required') +
+      field("Theme (one line, in italics on the page)", "theme", "text", p.theme ? p.theme.charAt(0).toUpperCase() + p.theme.slice(1) + "s from every studio" : "", "w2", ' placeholder="Blown-glass pumpkins from every studio"') +
+      area("Description", "description", "", "w4", "What the collecting event is, who should enter, where to buy.") +
+      field("Starts", "starts", "date", d.starts) + field("Entries close", "entries_close", "date", d.entries_close) +
+      field("Voting closes", "voting_closes", "date", d.voting_closes) + field("Ends", "ends", "date", d.ends) +
+      area("Rules", "rules", d.rules, "w4") +
+      field("Prize note", "prize_note", "text", d.prize_note, "w2") +
+      field("Votes per voter", "votes_per_voter", "number", d.votes_per_voter, "", ' min="1" max="10"') +
+      '<label class="chk"><input type="checkbox" name="open"> Open for entries right away</label>' +
+      area("Award categories, one per line: title | vote or measured | solo", "categories", p.categories_text, "w4",
+        "People's choice is always on. 'measured' ranks by the height the Photo Mat wrote onto the piece; 'solo' limits an award to pieces made solo. Leave it blank and the theme picks the defaults.", true) +
+      '<div class="submit"><div class="act"><button class="btn btn--red" type="submit">Create collecting event</button><small>It starts as a draft, invisible on the public page, unless you ticked open.</small></div></div>' +
+      "</form>";
+    return presets + form;
+  }
+  function editForm(s) {
+    return '<form class="ev" data-edit="' + s.id + '">' +
+      field("Title", "title", "text", s.title, "w2", " required") + field("Theme", "theme", "text", s.theme, "w2") +
+      area("Description", "description", s.description, "w4") +
+      field("Starts", "starts", "date", s.starts) + field("Entries close", "entries_close", "date", s.entries_close) +
+      field("Voting closes", "voting_closes", "date", s.voting_closes) + field("Ends", "ends", "date", s.ends) +
+      area("Rules", "rules", s.rules, "w4") + field("Prize note", "prize_note", "text", s.prize_note, "w2") +
+      field("Votes per voter", "votes_per_voter", "number", s.votes_per_voter, "", ' min="1" max="10"') +
+      '<div class="submit"><div class="act"><button class="btn btn--line sm" type="submit">Save changes</button><small>The words and dates only; the awards stay as they were created.</small></div></div></form>';
+  }
+  function formData(f) {
+    var o = {};
+    Array.prototype.forEach.call(f.elements, function (el) {
+      if (!el.name) return;
+      o[el.name] = el.type === "checkbox" ? el.checked : el.value;
+    });
+    return o;
+  }
+
+  /* ---- the list ---------------------------------------------------------------- */
+  function eventRow(s) {
+    var acts = "";
+    if (s.status === "draft" || s.status === "closed") acts += '<div class="act"><button class="btn sm btn--red" data-status="open" data-id="' + s.id + '">Open</button><small>It appears on the public page and makers can enter.</small></div>';
+    if (s.status === "open") acts += '<div class="act"><button class="btn sm btn--line" data-status="voting" data-id="' + s.id + '">Start voting</button><small>Entries close; votes stay open.</small></div>';
+    if (s.status === "open" || s.status === "voting") acts += '<div class="act"><button class="btn sm btn--line" data-status="closed" data-id="' + s.id + '">Close</button><small>Final boards; Crowd Favourite and Set Complete are awarded.</small></div>';
+    if (s.status === "draft") acts += '<div class="act"><button class="btn sm btn--line" data-delete="' + s.id + '">Delete draft</button><small>Gone for good; only a draft can be deleted.</small></div>';
+    var awards = "People's choice" + (s.categories || []).map(function (c) { return " · <b>" + esc(c.title) + "</b> (" + esc(c.kind) + (c.solo_only ? ", solo" : "") + ")"; }).join("");
+    var entries = s.entries || [];
+    var table = entries.length ? '<div class="tbl"><table><thead><tr><th>Piece</th><th>Maker</th><th>Studio</th><th>Edition</th><th>Votes</th><th>Collected</th><th>Rarity</th><th></th></tr></thead><tbody>' +
+      entries.map(function (e) {
+        return "<tr><td>" + esc(e.title || "Untitled") + (e.legendary ? ' <span class="pill red">Legendary</span>' : "") + (e.solo ? ' <span class="pill">solo</span>' : "") + '<br><span class="mono">' + esc(e.object_row_id) + "</span></td><td>" + esc(e.artist_name || "") + "</td><td>" + esc(e.studio || "Independent") + "</td><td>" + esc(e.edition_size) + "</td><td>" + esc(e.vote_count) + "</td><td>" + esc(e.claim_count) + "</td><td>" + esc(e.rarity || "") + "</td>" +
+          '<td class="acts"><button class="btn sm btn--line" data-pull="' + e.id + '" data-title="' + esc(e.title || "") + '">Pull</button></td></tr>';
+      }).join("") + "</tbody></table></div>" : '<p class="empty small">No approved entries yet.</p>';
+    return '<article class="evrow" id="ev-' + s.id + '"><div>' +
+      "<h3>" + esc(s.title) + statusPill(s.status) + "</h3>" +
+      (s.theme ? '<p class="theme">' + esc(s.theme) + "</p>" : "") +
+      facts([["Entries", s.entry_count], ["Votes", s.vote_count], ["Collected", s.claim_count], ["Votes per voter", s.votes_per_voter], ["Legendaries still out", s.legendaries_out || 0], ["Waiting for review", s.pending_entries ? s.pending_entries + ' (<a href="/review.html#events">queue</a>)' : "", true], ["Page", '<a href="' + esc(s.page) + '">' + esc(s.page) + "</a>", true]]) +
+      '<p class="cal"><span>starts <b>' + esc(s.starts || "—") + "</b></span><span>entries close <b>" + esc(s.entries_close || "—") + "</b></span><span>voting closes <b>" + esc(s.voting_closes || "—") + "</b></span><span>ends <b>" + esc(s.ends || "—") + "</b></span></p>" +
+      '<p class="awards">Awards: ' + awards + "</p>" +
+      '</div><div class="qacts">' + acts + "</div>" +
+      '<details class="entries"' + (D.open["e" + s.id] ? " open" : "") + ' data-keep="e' + s.id + '"><summary>' + plural(entries.length, "approved entry").replace("entrys", "entries") + "</summary>" + table + "</details>" +
+      '<details class="edit"' + (D.open["f" + s.id] ? " open" : "") + ' data-keep="f' + s.id + '"><summary>Edit the words and dates</summary>' + editForm(s) + "</details>" +
+      "</article>";
+  }
+  function render() {
+    var ov = D.ov, sm = ov.summary || {};
+    var list = (ov.events || []).length ? '<div class="ev-list">' + ov.events.map(eventRow).join("") + "</div>" :
+      '<p class="empty">No collecting events yet. Create the first one above. A calendar that has worked: Court of the Gourds in October, Heirloom Ornaments in December, paperweights in spring, drinkware in summer.</p>';
+    $("#body").innerHTML =
+      section(2, "create", "New", "Call the <em>makers.</em>", "Title, theme and dates, the rules in plain words, the prize, how many votes each person gets, and the awards. The preset fills the awards for the theme; edit the lines freely.", createForm()) +
+      section(3, "events", "Every event", "Open, voting, <em>closed.</em>", "The status buttons are what gate the behaviour; the dates on the page are what people read. Opening and starting the voting post a Discord nudge when the webhook is set." + (ov.review_mode ? " Review mode is on: new entries wait in the Review queue." : " Entries of a published piece go live on their own."), list);
+    $("#heroMeta").innerHTML = "<span><b>" + plural(sm.seasons, "collecting event") + "</b></span><span>" + (sm.live || 0) + " live</span><span>" + plural(sm.entries, "entry").replace("entrys", "entries") + "</span><span>" + plural(sm.votes, "vote") + "</span><span>" + plural(sm.claims, "piece") + " collected</span>" +
+      (sm.pending_entries || sm.pending_claims ? '<span class="warn">' + (sm.pending_entries || 0) + " entries · " + (sm.pending_claims || 0) + ' requests <a href="/review.html#events">waiting</a></span>' : "");
+    document.title = "Collecting Events admin — Glass Database";
+  }
+  function load() {
+    return GDB.json("/admin/events").then(function (j) { D.ov = j; render(); })
+      .catch(function (e) { say("Could not load the collecting events: " + (e.message || e), true); });
+  }
+  function keep() {
+    document.querySelectorAll("details[data-keep]").forEach(function (d) { D.open[d.getAttribute("data-keep")] = d.open; });
+  }
+
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button");
+    if (!b) return;
+    if (b.dataset.preset != null) { D.preset = +b.dataset.preset; keep(); render(); return; }
+    if (b.dataset.status) {
+      var word = { open: "Open", voting: "Start voting for", closed: "Close" }[b.dataset.status];
+      if (b.dataset.status === "closed" && !confirm("Close this collecting event? The boards become final and the badges are handed out.")) return;
+      busy(true); say("Working…"); keep();
+      post("/admin/events/" + b.dataset.id + "/status", { status: b.dataset.status }).then(function (j) {
+        var cf = j.crowd_favourite;
+        say(b.dataset.status === "closed" ? ("Closed " + (j.event ? "“" + j.event.title + "”" : "") + (cf ? ". Crowd favourite: " + cf.title + " by " + cf.artist_name + " (" + plural(cf.votes, "vote") + ")." : ". No votes were cast, so no Crowd Favourite this time.")) : (word + " done: " + (j.event ? j.event.title : "") + " is now " + statusWord(j.status) + "."));
+        return load();
+      }).catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    } else if (b.dataset.delete) {
+      if (!confirm("Delete this draft? This cannot be undone.")) return;
+      busy(true); say("Working…"); keep();
+      post("/admin/events/" + b.dataset.delete, {}, "DELETE").then(function () { say("Draft deleted."); return load(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    } else if (b.dataset.pull) {
+      if (!confirm("Pull “" + (b.dataset.title || "this piece") + "” off the event page?")) return;
+      busy(true); say("Working…"); keep();
+      post("/admin/events/entries/" + b.dataset.pull + "/pull").then(function () { say("Pulled: " + (b.dataset.title || "the entry") + " is off the page."); return load(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    }
+  });
+  document.addEventListener("submit", function (ev) {
+    var f = ev.target;
+    if (f.id === "createForm") {
+      ev.preventDefault();
+      var body = formData(f);
+      if (!(body.title || "").trim()) { say("A title, at least.", true); return; }
+      busy(true); say("Creating…"); keep();
+      post("/admin/events", body).then(function (j) { say("Created “" + (j.event ? j.event.title : body.title) + "”" + (body.open ? ", open for entries." : " as a draft.")); return load(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    } else if (f.dataset.edit) {
+      ev.preventDefault();
+      busy(true); say("Saving…"); keep();
+      post("/admin/events/" + f.dataset.edit, formData(f)).then(function (j) { say("Saved “" + (j.event ? j.event.title : "") + "”."); return load(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    }
+  });
+
+  GDB.chip("#chip", { next: here, onchange: function (m) { if (D.loaded && !!(m && m.signed_in) !== !!(D.me && D.me.signed_in)) location.reload(); } });
+  GDB.me().then(function (me) {
+    D.me = me; D.loaded = true;
+    if (!me || !me.signed_in) return signedOut();
+    if (!me.is_admin) return notAdmin(me);
+    $("#heroMeta").textContent = "Loading…";
+    return load();
+  });
+})();
+</script>
+</body>
+</html>

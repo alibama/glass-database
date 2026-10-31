@@ -34,6 +34,9 @@ under it, small:
 | **Studio docs** | Shop docs, open shop documentation | Describe a studio by its parts: gas, air, power, heat, exhaust | `/shop.html` |
 | **Field notes** | Blog | Studies and essays | `/blog/` |
 | **Review queue** | Admin console, moderation, approvals | What is waiting for a reviewer; approve and it goes live | `/review.html` (admins) |
+| **Collecting Events admin** | Admin → Seasons, the console | Create and run a collecting event: the call, the dates, the awards; open, start voting, close | `/events-admin.html` (admins) |
+| **Tables** | Datasets (admin), the console | Every table in the registry, row by row: read it, fix a cell, add a row, import a sheet | `/datasets.html` (admins) |
+| **Usage** | Analytics | Views and visitors by day, surface, view and country; the newsletter list | `/analytics.html` (admins) |
 | **Wikibase** | The migration, the loader, the pusher | The public record moving to glass.wikibase.cloud, step by step | `/wikibase.html` |
 
 Fine print keeps the technical words, once, where a curious person can find them: "Glass ID
@@ -85,6 +88,9 @@ Calculator) · **Elsewhere** (Discord, Instagram, Field notes, GitHub, How it ru
 
 - About › The project (`/#about`) · How it runs (`/infrastructure.html`: what runs where today,
   the private network being built, how to lend a machine) · Field notes · Code · Discord.
+- Admin (administrators only, no primary item; the crumb is *Admin*) › Review queue
+  (`/review.html`) · Collecting Events (`/events-admin.html`) · Tables (`/datasets.html`) · Usage
+  (`/analytics.html`) · Wikibase (`/wikibase.html`). My account links to them once an admin is signed in.
 
 **Go live** is the panel on My account (`/account.html?piece=N#golive`) with the four steps a piece
 takes, each a button: *Glass ID* → *Top image* → *Publish* → *Collecting event*. Status words on it:

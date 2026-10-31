@@ -31,6 +31,8 @@ FILES = {"/": "landing-index.html", "/paper.css": "paper.css", "/splat.html": "s
          "/collection.html": "collection.html", "/account.html": "account.html",
          "/infrastructure.html": "infrastructure.html", "/tour.html": "tour.html",
          "/review.html": "review.html", "/wikibase.html": "wikibase.html",
+         "/events-admin.html": "events-admin.html", "/datasets.html": "datasets.html",
+         "/analytics.html": "analytics.html",
          "/site.js": "site.js",
          "/logo.svg": "landing-logo.svg", "/shop-prompts.md": "shop-prompts.md",
          "/SHOP-PARTS.md": "SHOP-PARTS.md"}

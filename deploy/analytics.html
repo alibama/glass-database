@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usage — Glass Database</title>
+<meta name="description" content="Who used what: page views and visitors by day, by surface, the most-used views, the events, the countries, and the newsletter list. Self-hosted, cookieless, no IP stored. For administrators.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 18ch; overflow-wrap: anywhere; }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; }
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
+  button.btn { background: var(--paper); cursor: pointer; font-family: var(--sans); }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.sm { padding: .6rem 1rem; font-size: 14px; }
+  .msg { font: 400 14px/1.5 var(--sans); color: var(--ink); margin-top: 1rem; min-height: 1.5em; }
+  .msg.err { color: var(--red); }
+  .empty { margin-top: 1.4rem; padding: 1.2rem 1.4rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .empty.small { padding: .8rem 1rem; font-size: 14px; margin-top: 1rem; }
+
+  /* the window: three buttons, one on */
+  .window { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: 1.4rem; font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .window button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink); background: none; border: 1px solid var(--rule); padding: .55rem .8rem; cursor: pointer; }
+  .window button:hover, .window button.on { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+
+  /* the big numbers */
+  .nums { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--ink); margin-top: 1.6rem; }
+  .nums div { padding: 1.4rem 1.4rem 1.4rem 0; border-right: 1px solid var(--rule); }
+  .nums div:last-child { border-right: 0; }
+  .nums .big { font: 300 3.4rem/1 var(--serif); color: var(--red); font-variation-settings: "opsz" 144; font-variant-numeric: tabular-nums; }
+  .nums .big.ink { color: var(--ink); }
+  .nums p { margin: .4rem 0 0; color: var(--ink-2); font-size: 15px; }
+
+  /* the chart: a plain SVG, two thin lines, a crosshair on hover */
+  .chart { margin-top: 1.8rem; position: relative; }
+  .chart svg { width: 100%; height: auto; display: block; overflow: visible; font: 400 11px var(--mono); }
+  .chart .grid line { stroke: var(--rule); stroke-width: 1; }
+  .chart .axis text { fill: var(--muted); }
+  .chart .ln { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart .ln.views { stroke: var(--ink); } .chart .ln.visitors { stroke: var(--red); }
+  .chart .end text { fill: var(--ink); font: 500 11px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+  .chart .dot { fill: var(--paper); stroke-width: 2; }
+  .chart .dot.views { stroke: var(--ink); } .chart .dot.visitors { stroke: var(--red); }
+  .chart .xh { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 3 3; }
+  .chart .hit { fill: transparent; cursor: crosshair; }
+  .legend { display: flex; flex-wrap: wrap; gap: .6rem 1.6rem; margin-top: .8rem; font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+  .legend span::before { content: ""; display: inline-block; width: 18px; height: 2px; vertical-align: middle; margin-right: .5rem; background: var(--ink); }
+  .legend span.visitors::before { background: var(--red); }
+  .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--paper); font: 400 12px/1.5 var(--mono); padding: .5rem .7rem; white-space: nowrap; transform: translate(-50%, -110%); display: none; }
+  .tip b { color: #F2B8A8; font-weight: 500; }
+
+  .two { margin-top: 1.5rem; }
+  .block h3 { font-size: 1.35rem; margin: 0; }
+  .tbl table { min-width: 0; }
+  .tbl td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .tbl th.n { text-align: right; }
+  details.days { margin-top: 1rem; }
+  details.days summary { cursor: pointer; font: 500 12px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .fine { max-width: 72ch; }
+  @media (max-width: 900px) { .nums { grid-template-columns: 1fr 1fr; } .nums div:nth-child(2) { border-right: 0; } .nums div { border-bottom: 1px solid var(--rule); } }
+  @media (max-width: 680px) { .nums { grid-template-columns: 1fr; } .nums div { border-right: 0; } .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active=""></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">Admin</span><a href="/review.html">Review queue</a><a href="/events-admin.html">Collecting Events</a><a href="/datasets.html">Tables</a><a href="/analytics.html" class="on">Usage</a><a href="/wikibase.html">Wikibase</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> Usage</p>
+  <h1 id="heroTitle">Who used <em>what.</em></h1>
+  <p class="lede" id="heroLede">Self-hosted and cookieless: no third party, no raw IP stored. A visitor is a per-day rotating hash, so the visitor counts are approximate and nobody is tracked across days. Do-Not-Track is honoured. Country appears only when a GeoLite2 database is configured.</p>
+  <p class="live" id="heroMeta" aria-live="polite"></p>
+  <div class="btns" id="heroCta"></div>
+  <p class="msg" id="msg" aria-live="polite"></p>
+ </div>
+</section>
+
+<div id="body"></div>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/infrastructure.html">How it runs</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  var here = location.pathname + location.search;
+  var D = { me: null, s: null, days: +(GDB.param("days") || 30) };
+  if ([7, 30, 90].indexOf(D.days) < 0) D.days = 30;
+
+  function plural(n, w) { n = n || 0; return n + " " + w + (n === 1 ? "" : "s"); }
+  function say(text, err) { var m = $("#msg"); m.textContent = text || ""; m.className = "msg" + (err ? " err" : ""); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function num(n) { return (n || 0).toLocaleString(); }
+  function section(n, id, label, title, lede, inner) {
+    return '<section class="s' + (n % 2 ? "" : " alt") + '" id="' + id + '" aria-labelledby="h-' + id + '"><div class="wrap">' +
+      '<div class="s-head"><p class="label"><span class="n">№ ' + pad(n) + "</span> " + esc(label) + '</p><div><h2 id="h-' + id + '">' + title + '</h2><p class="lede">' + esc(lede) + "</p></div></div>" +
+      inner + "</div></section>";
+  }
+  function table(cols, rows, empty) {
+    if (!rows.length) return '<p class="empty small">' + esc(empty) + "</p>";
+    return '<div class="tbl"><table><thead><tr>' + cols.map(function (c) { return '<th class="' + (c[2] ? "n" : "") + '">' + esc(c[0]) + "</th>"; }).join("") + "</tr></thead><tbody>" +
+      rows.map(function (r) { return "<tr>" + cols.map(function (c) { return '<td class="' + (c[2] ? "n" : "") + '">' + esc(c[2] ? num(r[c[1]]) : (r[c[1]] == null ? "" : r[c[1]])) + "</td>"; }).join("") + "</tr>"; }).join("") + "</tbody></table></div>";
+  }
+  function download(path, name) {
+    say("Preparing " + name + "…");
+    return GDB.api(path).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.blob(); }).then(function (b) {
+      var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000); say("Downloaded " + name + ".");
+    }).catch(function (e) { say("That did not go through: " + (e.message || e), true); });
+  }
+
+  /* ---- the gate ------------------------------------------------------------ */
+  function signedOut() {
+    document.title = "Sign in — Glass Database";
+    $("#heroMeta").textContent = "";
+    $("#heroCta").innerHTML = '<div class="act"><a class="btn btn--red" href="' + esc(GDB.loginUrl(here)) + '">Sign in with Google</a><small>Administrators sign in with the same Google account as everyone else; the numbers open for them.</small></div>';
+    $("#body").innerHTML = "";
+  }
+  function notAdmin(me) {
+    $("#heroMeta").innerHTML = "<span>Signed in as <b>" + esc(me.email || me.name || "you") + "</b></span>";
+    $("#heroCta").innerHTML = "";
+    $("#body").innerHTML = '<section class="s"><div class="wrap"><p class="empty">You are signed in, but you are not an administrator. Ask an administrator to promote you (on the Review queue page, under Users), then reload.</p></div></section>';
+  }
+
+  /* ---- the by-day chart: one SVG, no library --------------------------------
+     Two thin lines on one axis (views in ink, visitors in red), a recessive grid,
+     the series named at their right-hand ends, and a crosshair tooltip that snaps
+     to the nearest day. The same numbers are in a table under it. */
+  var W = 900, H = 260, PL = 44, PR = 92, PT = 14, PB = 30;
+  function chart(days) {
+    if (!days.length) return '<p class="empty">No usage recorded in this window yet. Numbers appear as people use the site.</p>';
+    var all = days.map(function (d) { return d.views; }).concat(days.map(function (d) { return d.visitors; }));
+    var max = Math.max.apply(null, all.concat([1]));
+    var step = Math.pow(10, Math.floor(Math.log(max) / Math.LN10)); if (max / step < 2) step /= 4; else if (max / step < 5) step /= 2;
+    var top = Math.ceil(max / step) * step;
+    var x = function (i) { return days.length === 1 ? PL + (W - PL - PR) / 2 : PL + i * (W - PL - PR) / (days.length - 1); };
+    var y = function (v) { return PT + (H - PT - PB) * (1 - v / top); };
+    var grid = "", k;
+    for (k = 0; k <= top; k += step) grid += '<line x1="' + PL + '" x2="' + (W - PR) + '" y1="' + y(k) + '" y2="' + y(k) + '"></line><text x="' + (PL - 8) + '" y="' + (y(k) + 4) + '" text-anchor="end">' + num(k) + "</text>";
+    var every = Math.max(1, Math.ceil(days.length / 8)), ticks = {}, t;
+    for (t = 0; t < days.length; t += every) ticks[t] = 1;
+    var lastTick = Math.floor((days.length - 1) / every) * every;
+    if (days.length - 1 - lastTick < every / 2) delete ticks[lastTick];      // the last day is always labelled; keep its neighbour clear
+    ticks[days.length - 1] = 1;
+    var xa = days.map(function (d, i) { return ticks[i] ? '<text x="' + x(i) + '" y="' + (H - PB + 18) + '" text-anchor="middle">' + esc(d.day.slice(5)) + "</text>" : ""; }).join("");
+    var line = function (key) { return days.map(function (d, i) { return (i ? "L" : "M") + x(i).toFixed(1) + " " + y(d[key]).toFixed(1); }).join(" "); };
+    var last = days[days.length - 1], lx = x(days.length - 1) + 8;
+    var ly1 = y(last.views), ly2 = y(last.visitors);
+    if (Math.abs(ly1 - ly2) < 14) { if (ly1 <= ly2) { ly1 -= 7; ly2 += 7; } else { ly1 += 7; ly2 -= 7; } }
+    var dots = days.length <= 31 ? days.map(function (d, i) { return '<circle class="dot views" r="3" cx="' + x(i) + '" cy="' + y(d.views) + '"></circle><circle class="dot visitors" r="3" cx="' + x(i) + '" cy="' + y(d.visitors) + '"></circle>'; }).join("") : "";
+    return '<div class="chart" id="chart"><svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="Page views and visitors by day">' +
+      '<g class="grid">' + grid + "</g>" +
+      '<g class="axis">' + xa + "</g>" +
+      '<path class="ln views" d="' + line("views") + '"></path><path class="ln visitors" d="' + line("visitors") + '"></path>' + dots +
+      '<g class="end"><text x="' + lx + '" y="' + (ly1 + 4) + '">Views</text><text x="' + lx + '" y="' + (ly2 + 4) + '">Visitors</text></g>' +
+      '<line class="xh" id="xh" x1="0" x2="0" y1="' + PT + '" y2="' + (H - PB) + '" hidden></line>' +
+      '<circle class="dot views" id="h1" r="5" hidden></circle><circle class="dot visitors" id="h2" r="5" hidden></circle>' +
+      '<rect class="hit" id="hit" x="' + PL + '" y="' + PT + '" width="' + (W - PL - PR) + '" height="' + (H - PT - PB) + '"></rect></svg>' +
+      '<div class="legend"><span class="views">Views</span><span class="visitors">Visitors (approximate)</span></div><div class="tip" id="tip"></div></div>';
+  }
+  function wireChart(days) {
+    var svg = $("#chart svg"), hit = $("#hit"), tip = $("#tip"), xh = $("#xh"), h1 = $("#h1"), h2 = $("#h2");
+    if (!svg || !hit || !days.length) return;
+    var all = days.map(function (d) { return d.views; }).concat(days.map(function (d) { return d.visitors; }));
+    var max = Math.max.apply(null, all.concat([1]));
+    var step = Math.pow(10, Math.floor(Math.log(max) / Math.LN10)); if (max / step < 2) step /= 4; else if (max / step < 5) step /= 2;
+    var top = Math.ceil(max / step) * step;
+    var x = function (i) { return days.length === 1 ? PL + (W - PL - PR) / 2 : PL + i * (W - PL - PR) / (days.length - 1); };
+    var y = function (v) { return PT + (H - PT - PB) * (1 - v / top); };
+    function move(ev) {
+      var r = svg.getBoundingClientRect(), px = (ev.clientX - r.left) * W / r.width;
+      var i = days.length === 1 ? 0 : Math.round((px - PL) / ((W - PL - PR) / (days.length - 1)));
+      i = Math.max(0, Math.min(days.length - 1, i));
+      var d = days[i];
+      xh.setAttribute("x1", x(i)); xh.setAttribute("x2", x(i)); xh.hidden = false;
+      h1.setAttribute("cx", x(i)); h1.setAttribute("cy", y(d.views)); h1.hidden = false;
+      h2.setAttribute("cx", x(i)); h2.setAttribute("cy", y(d.visitors)); h2.hidden = false;
+      tip.innerHTML = esc(d.day) + "<br><b>" + num(d.views) + "</b> views · <b>" + num(d.visitors) + "</b> visitors";
+      tip.style.left = (x(i) * r.width / W) + "px"; tip.style.top = (Math.min(y(d.views), y(d.visitors)) * r.height / H) + "px"; tip.style.display = "block";
+    }
+    function leave() { xh.hidden = true; h1.hidden = true; h2.hidden = true; tip.style.display = "none"; }
+    hit.addEventListener("mousemove", move); hit.addEventListener("mouseleave", leave);
+    hit.addEventListener("touchstart", function (ev) { if (ev.touches[0]) move(ev.touches[0]); }, { passive: true });
+  }
+
+  /* ---- render ---------------------------------------------------------------- */
+  function render() {
+    var s = D.s;
+    var win = '<div class="window"><span>Window</span>' + [7, 30, 90].map(function (d) { return '<button type="button" data-days="' + d + '"' + (d === D.days ? ' class="on"' : "") + ">" + d + " days</button>"; }).join("") + "</div>";
+    var nums = '<div class="nums"><div><div class="big">' + num(s.views) + '</div><p>Page views</p></div><div><div class="big">' + num(s.visitors) + '</div><p>Visitors, approximate</p></div><div><div class="big ink">' + num(s.submissions) + '</div><p>Submissions</p></div><div><div class="big ink">' + num(s.newsletter.count) + "</div><p>Newsletter subscribers" + (s.newsletter.latest ? ", last one " + esc(String(s.newsletter.latest).slice(0, 10)) : "") + "</p></div></div>";
+    var dayTable = '<details class="days"><summary>The same numbers as a table</summary>' + table([["Day", "day"], ["Views", "views", 1], ["Visitors", "visitors", 1]], s.by_day, "No days yet.") + "</details>";
+    var news = '<div class="act" style="margin-top:1.4rem"><button class="btn sm btn--line" type="button" id="subsBtn">Export the newsletter list (CSV)</button><small>email, name, created_at, source. ' + plural(s.newsletter.count, "subscriber") + ". Treat it as private.</small></div>";
+    $("#body").innerHTML =
+      section(2, "byday", "By day", "Views and visitors, <em>day by day.</em>", "Views are counted once per session per surface and view; the Streamlit apps' reruns do not double-count. A visitor is the per-day hash.", win + nums + chart(s.by_day) + dayTable) +
+      section(3, "where", "Where", "Which part of the site <em>gets used.</em>",
+        "A surface is one app or page family: the site, the Directory, Glowtbook, the capture apps. The most-used views are the pages inside them.",
+        '<div class="two"><div class="block"><h3>By surface</h3>' + table([["Surface", "surface"], ["Views", "views", 1], ["Visitors", "visitors", 1]], s.by_surface, "Nothing in this window.") + "</div>" +
+        '<div class="block"><h3>Most-used views</h3>' + table([["View", "view"], ["Views", "views", 1]], s.by_view, "Nothing in this window.") + "</div></div>") +
+      section(4, "what", "What happened", "Events and <em>countries.</em>",
+        "Events are the things people did, not pages they saw: a submission, a newsletter signup, a verify. Country needs a GeoLite2 database on the server (set GEOIP_DB); without it the column stays empty and the Apache logs with GoAccess are the richer picture.",
+        '<div class="two"><div class="block"><h3>Events</h3>' + table([["Event", "event"], ["Count", "count", 1]], s.by_event, "No events in this window.") + "</div>" +
+        '<div class="block"><h3>Countries</h3>' + table([["Country", "country"], ["Visitors", "visitors", 1]], s.by_country, "No country data: GEOIP_DB is not set, or nobody has visited since it was.") + "</div></div>" + news +
+        '<p class="fine">Retention is up to you: central.analytics.prune keeps the last 400 days when wired to a cron. The newsletter list is the same file the admin key gets at /api/subscribers.csv.</p>');
+    wireChart(s.by_day);
+    $("#heroMeta").innerHTML = "<span>last <b>" + D.days + " days</b></span><span>" + num(s.views) + " views</span><span>" + num(s.visitors) + " visitors</span><span>" + num(s.newsletter.count) + " subscribers</span>";
+    document.title = "Usage, " + D.days + " days — Glass Database";
+  }
+  function load() {
+    return GDB.json("/admin/analytics?days=" + D.days).then(function (j) { D.s = j; render(); })
+      .catch(function (e) { say("Could not load the numbers: " + (e.message || e), true); });
+  }
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button");
+    if (!b) return;
+    if (b.dataset.days) {
+      D.days = +b.dataset.days;
+      try { history.replaceState(null, "", location.pathname + "?days=" + D.days); } catch (_) {}
+      say(""); load();
+    } else if (b.id === "subsBtn") download("/admin/subscribers.csv", "subscribers.csv");
+  });
+
+  GDB.chip("#chip", { next: here, onchange: function (m) { if (D.loaded && !!(m && m.signed_in) !== !!(D.me && D.me.signed_in)) location.reload(); } });
+  GDB.me().then(function (me) {
+    D.me = me; D.loaded = true;
+    if (!me || !me.signed_in) return signedOut();
+    if (!me.is_admin) return notAdmin(me);
+    $("#heroMeta").textContent = "Loading…";
+    return load();
+  });
+})();
+</script>
+</body>
+</html>

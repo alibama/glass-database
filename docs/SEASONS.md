@@ -10,7 +10,8 @@ and badges. Think gotta-catch-'em-all, but every "catch" is a checked piece of g
 real collection and a sale for an independent maker. The rest of this document uses the
 code's words (season, claim, verify, fingerprint) because it describes the code.
 
-Public page: `/games.html` · admin: **🎃 Seasons** · code: `central/seasons.py`,
+Public page: `/games.html` · admin: **`/events-admin.html`** (entries and claims that wait: the
+Review queue, `/review.html`) · code: `central/seasons.py`,
 `api/seasons.py` · demo data: `scripts/seed_demo.py`.
 
 ## The loop
@@ -26,7 +27,7 @@ scan ─▶ authenticate ─▶ collect ─▶ vote ─▶ share ─▶ (someone
    verifies the claim on the spot. Lower scores wait as *pending*: the **maker** sees them
    in Glowtbook → Objects → *Seasons* (and a *Claims* column on the Home dashboard) and
    taps **Confirm** ("they bought it") or **Reject**; an admin can also decide from
-   Admin → 🎃 Seasons. Either way the claim then counts on the boards and earns badges.
+   the Review queue (`/review.html`). Either way the claim then counts on the boards and earns badges.
 3. **Collect** — the claim joins the collector's **My collection** with maker, studio, season
    and scan score. One claim per piece per person; a better scan upgrades a pending one.
 4. **Vote** — a handful of votes per season (default 3), toggleable until voting closes.
@@ -67,7 +68,7 @@ admin meanwhile. Propose new themes on the Discord.
 | **Shop / studio** | The name on the entry; appears on the Studios board; can tell customers "scan it to claim it" | Entry's `studio` field |
 | **Collector** | Buys → scans with Verify → claims → builds a collection and badges | `/fingerprint/verify.html` → *Claim* → `/games.html#mine` |
 | **Voter** | Anyone signed in; N votes per season, swappable | `/games.html` Vote buttons |
-| **Admin** | Creates/opens/closes seasons, can reject an entry (approves them only in review mode); backstop for low-confidence claims the maker hasn't got to | Admin → 🎃 Seasons |
+| **Admin** | Creates/opens/closes seasons, can pull an entry (approves them only in review mode); backstop for low-confidence claims the maker hasn't got to | `/events-admin.html`; entries and claims that wait in `/review.html` |
 
 ## Rules & anti-abuse
 
@@ -80,7 +81,7 @@ admin meanwhile. Propose new themes on the Discord.
   enter it (resolved through `object_submissions.submitted_uid` and the Glowtbook
   `contribution` table, both via `content_hash`). An entry of a public piece is **live at once**:
   the piece was reviewed when it was published. `GLASSDB_SEASON_ENTRY_REVIEW=1` holds entries
-  in a review queue instead (Admin → Seasons; the Discord link approves them). Entries left
+  in a review queue instead (`/review.html`; the Discord link approves them). Entries left
   pending from review mode go live the next time the API touches seasons.
 * **One claim per piece per person.** A claim needs a fingerprint confidence **≥ 70** to be
   `verified`; otherwise it is `pending` until the **maker who published the piece** confirms
@@ -209,20 +210,22 @@ can show earned and unearned badges side by side.
 
 ## Admin runbook
 
-1. **Create** — Admin → 🎃 Seasons → *Create a season*: title, one-line theme, dates
-   (starts / entries close / voting closes / ends), rules, prize note, votes per voter.
-   It starts as a `draft` (invisible on the public page) unless you tick *Open right away*.
+1. **Create** — `/events-admin.html` → *Call the makers*: title, one-line theme, dates
+   (starts / entries close / voting closes / ends), rules, prize note, votes per voter, the
+   award categories (a preset per theme, one `title | vote|measured | solo` line each).
+   It starts as a `draft` (invisible on the public page) unless you tick *Open for entries
+   right away*. The words and dates can be edited later from the same page.
 2. **Open** — the season appears on `/games.html` as the current season; makers can enter.
    A Discord nudge posts itself when the webhook is set (theme, dates, page link); add the
    Instagram post by hand.
 3. **Watch entries** — entries go live as they come in and each posts to Discord with a
-   link to its card; the Seasons tab can still reject one. With
-   `GLASSDB_SEASON_ENTRY_REVIEW=1` they queue here instead (image, title, maker, studio,
-   edition; approve or reject) and the Discord post carries the approve link.
+   link to its card; *Pull* on the Collecting Events page takes one off. With
+   `GLASSDB_SEASON_ENTRY_REVIEW=1` they wait in the Review queue instead (image, title,
+   maker, studio, edition; approve or reject) and the Discord post carries the approve link.
 4. **Start voting** — entries close, votes continue (another Discord nudge). Dates on the
    page are informational; the status buttons are what gates the behaviour, so you decide
    when.
-5. **Review claims** — scans under 70 wait in *Pending claims*. The maker usually gets there
+5. **Review claims** — scans under 70 wait in the Review queue under *Collecting Events*. The maker usually gets there
    first from Glowtbook; approve the stragglers yourself if you can vouch for the piece.
 6. **Close** — sets `closed`, awards **Crowd Favourite** to the top-voted entry's maker and
    **Set Complete** to collectors who covered every studio. The page shows final boards and
@@ -248,7 +251,7 @@ the maker's side too:
 
 ### Discord nudges
 
-With the webhook set (Admin → Settings, or `DISCORD_WEBHOOK_URL`), `central.seasons` posts
+With the webhook set (the Review queue under *Discord*, or `DISCORD_WEBHOOK_URL`), `central.seasons` posts
 a plain `notify_message` — no moderation links — when:
 
 | Event | Message |

@@ -926,7 +926,7 @@ def claim(conn, *, object_row_id: str, collector_uid: str, collector_name: str,
            {"Maker": row.get("maker") or row.get("artist_name") or obj.get("maker"),
             "Studio": row.get("studio"), "Collector": who, "Confidence": f"{conf:.0f}/100",
             "Where": location, "Season": row.get("season_title"),
-            "Confirm": ("The maker in Glowtbook → Objects → Seasons, or Admin → 🎃 Seasons"
+            "Confirm": ("The maker in Glowtbook → Objects → Seasons, or a reviewer at /review.html"
                         if status == "pending" else None),
             "Object": object_row_id},
            color=0x16A34A if status == "verified" else 0xEA580C)
