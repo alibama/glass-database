@@ -74,6 +74,7 @@ if os.environ.get("GLASSDB_ADMIN_OIDC") == "1":
 st.sidebar.title("🛠️ Admin")
 st.sidebar.caption(f"Target: **{'Turso cloud' if using_turso() else 'local file'}**")
 st.sidebar.caption("[GitHub repo](https://github.com/alibama/glass-database)")
+st.sidebar.caption("Moving to the website: [Review queue](/review.html) · [Wikibase](/wikibase.html)")
 section = st.sidebar.radio("Section", ["📋 Datasets", "✅ Approvals", "🛡️ Review queue",
                                        "🧹 Duplicates", "💬 Discord", "📮 Feedback", "📊 Analytics",
                                        "👥 Users", "🌾 Harvest", "🛰 Studio data", "🎃 Collecting Events"],

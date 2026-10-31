@@ -88,6 +88,7 @@ async def _force_https(request, call_next):
 # Routers for the surfaces that grew beyond read-only: sign-in for the static
 # pages, the signed-in person's own pieces (capture app writes), seasonal games,
 # and the richer relationship graph. Each lives in its own module.
+from api import admin as _admin  # noqa: E402
 from api import auth as _auth  # noqa: E402
 from api import events as _events  # noqa: E402
 from api import graph_ext as _graph_ext  # noqa: E402
@@ -95,6 +96,7 @@ from api import me as _me  # noqa: E402
 from api import seasons as _seasons  # noqa: E402
 from api import social as _social  # noqa: E402
 from api import splats as _splats  # noqa: E402
+from api import wikibase as _wikibase  # noqa: E402
 
 app.include_router(_auth.router)
 app.include_router(_me.router)
@@ -103,6 +105,8 @@ app.include_router(_events.router)
 app.include_router(_graph_ext.router)
 app.include_router(_splats.router)
 app.include_router(_social.router)
+app.include_router(_admin.router)        # the review queue (static admin pages)
+app.include_router(_wikibase.router)     # the migration to glass.wikibase.cloud
 
 
 @app.on_event("startup")

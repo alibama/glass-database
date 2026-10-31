@@ -33,6 +33,8 @@ under it, small:
 | **Studio Cost Calculator** | Shop cost calculator, shop costs | What it costs to run a studio, by the month and by the piece | `/shop-costs.html` |
 | **Studio docs** | Shop docs, open shop documentation | Describe a studio by its parts: gas, air, power, heat, exhaust | `/shop.html` |
 | **Field notes** | Blog | Studies and essays | `/blog/` |
+| **Review queue** | Admin console, moderation, approvals | What is waiting for a reviewer; approve and it goes live | `/review.html` (admins) |
+| **Wikibase** | The migration, the loader, the pusher | The public record moving to glass.wikibase.cloud, step by step | `/wikibase.html` |
 
 Fine print keeps the technical words, once, where a curious person can find them: "Glass ID
 is stored as a fingerprint of the glass itself and signed into the photo's Content

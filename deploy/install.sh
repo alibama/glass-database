@@ -82,16 +82,17 @@ a2enmod substitute filter headers alias >/dev/null 2>&1 || true
 say "Creating service user '$APP_USER' and $APP_DIR"
 id -u "$APP_USER" >/dev/null 2>&1 || useradd --system --home "$APP_DIR" --shell /usr/sbin/nologin "$APP_USER"
 mkdir -p "$APP_DIR/data" "$APP_DIR/public"
-mkdir -p "$APP_DIR/data/dip_media" "$APP_DIR/data/aip_bags" "$APP_DIR/data/c2pa"
+mkdir -p "$APP_DIR/data/dip_media" "$APP_DIR/data/aip_bags" "$APP_DIR/data/c2pa" "$APP_DIR/data/wikibase"
 
 # --- copy app (preserve an existing DB + generated media/certs) -------------
 say "Copying application to $APP_DIR (preserving any existing database)"
 rsync -a --delete \
     --exclude '.venv' --exclude '__pycache__' --exclude '.git' \
     --exclude 'data/glassdb.db' --exclude 'data/glassdb.db-*' \
-    --exclude 'data/glowtbook_demo.db' \
+    --exclude 'data/glowtbook_demo.db' --exclude 'data/glowtbook_demo.db-*' \
     --exclude 'data/glowtbook_media' --exclude 'data/dip_media' \
     --exclude 'data/aip_bags' --exclude 'data/c2pa' \
+    --exclude 'data/splat_media' --exclude 'data/wikibase' \
     --exclude '.env' --exclude '.htpasswd' \
     --exclude '.streamlit/secrets.toml' \
     --exclude 'public' \
@@ -138,6 +139,8 @@ if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     [ -f "$SRC/deploy/account.html" ] && cp "$SRC/deploy/account.html" "$APP_DIR/public/account.html"
     [ -f "$SRC/deploy/infrastructure.html" ] && cp "$SRC/deploy/infrastructure.html" "$APP_DIR/public/infrastructure.html"
     [ -f "$SRC/deploy/tour.html" ] && cp "$SRC/deploy/tour.html" "$APP_DIR/public/tour.html"
+    [ -f "$SRC/deploy/review.html" ] && cp "$SRC/deploy/review.html" "$APP_DIR/public/review.html"
+    [ -f "$SRC/deploy/wikibase.html" ] && cp "$SRC/deploy/wikibase.html" "$APP_DIR/public/wikibase.html"
     [ -f "$SRC/deploy/events.html" ] && cp "$SRC/deploy/events.html" "$APP_DIR/public/events.html"
     [ -f "$SRC/deploy/register.html" ] && cp "$SRC/deploy/register.html" "$APP_DIR/public/register.html"
     [ -f "$SRC/deploy/studios.html" ] && cp "$SRC/deploy/studios.html" "$APP_DIR/public/studios.html"

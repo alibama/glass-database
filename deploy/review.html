@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Review queue — Glass Database</title>
+<meta name="description" content="Everything waiting for a reviewer, in one place: pieces, artist profiles, directory rows, shows and sales, collecting-event entries and collection requests, harvested pictures, studio data sources and site feedback.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 18ch; overflow-wrap: anywhere; }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; }
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
+  button.btn { background: var(--paper); cursor: pointer; font-family: var(--sans); }
+  button.btn.btn--red { background: var(--red); }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.sm { padding: .6rem 1rem; font-size: 14px; }
+  .msg { font: 400 14px/1.5 var(--sans); color: var(--ink); margin-top: 1rem; min-height: 1.5em; }
+  .msg.err { color: var(--red); }
+
+  /* one waiting thing per row: picture · facts · the two buttons */
+  .q { border-top: 1px solid var(--ink); }
+  .qrow { display: grid; grid-template-columns: 132px 1fr minmax(14rem, auto); gap: 1.2rem; padding: 1.2rem 0; border-bottom: 1px solid var(--rule); align-items: start; }
+  .qrow.noimg { grid-template-columns: 1fr minmax(14rem, auto); }
+  .qimg img { width: 132px; height: 100px; object-fit: cover; border: 1px solid var(--ink); display: block; background: var(--paper-2); }
+  .qbody h3 { font-size: 1.3rem; margin: 0 0 .3rem; }
+  .qbody h3 .pill { vertical-align: middle; margin-left: .5rem; }
+  .facts { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 70ch; }
+  .facts b { color: var(--ink); font-weight: 500; }
+  .facts span { white-space: nowrap; }
+  .qbody .desc { margin: .5rem 0 0; color: var(--ink-2); font-size: 15px; max-width: 70ch; }
+  .qbody .mono { font: 400 12px/1.6 var(--mono); color: var(--muted); margin: .4rem 0 0; overflow-wrap: anywhere; }
+  .kv { margin: .6rem 0 0; display: grid; grid-template-columns: max-content 1fr; gap: .3rem 1.2rem; font-size: 14px; max-width: 70ch; }
+  .kv dt { font: 500 11px/1.7 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .kv dd { margin: 0; color: var(--ink-2); overflow-wrap: anywhere; }
+  .qacts { display: flex; flex-direction: column; gap: .8rem; align-items: flex-start; }
+  .qacts .act small { max-width: 24ch; }
+  .block { margin-top: 2rem; }
+  .block .head { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: baseline; justify-content: space-between; }
+  .block .head h3 { font-size: 1.35rem; margin: 0; }
+  .block .head .pills { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .tbl table { min-width: 0; }
+  .tbl td .btn { margin-right: .4rem; }
+  .tbl td.acts { white-space: nowrap; }
+  .empty { margin-top: 1.4rem; padding: 1.2rem 1.4rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .empty.small { padding: .8rem 1rem; font-size: 14px; margin-top: 1rem; }
+  .ok { color: var(--ink); } .warn { color: var(--red); }
+  form.row { display: flex; flex-wrap: wrap; gap: .8rem 1rem; align-items: center; margin-top: 1.2rem; }
+  form.row input[type=text], form.row input[type=email], form.row input[type=password], form.row input[type=url] { font: 400 15px var(--sans); padding: .75rem .9rem; border: 1px solid var(--ink); background: var(--paper); min-width: min(26rem, 100%); }
+  form.row label.chk { display: inline-flex; gap: .5rem; align-items: center; font-size: 15px; color: var(--ink-2); }
+  form.row input[type=checkbox] { accent-color: var(--red); width: 1rem; height: 1rem; }
+  .gate { margin-top: 1.6rem; }
+  @media (max-width: 680px) {
+    .qrow, .qrow.noimg { grid-template-columns: 1fr; }
+    .qimg img { width: 100%; height: auto; aspect-ratio: 4 / 3; }
+    .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active=""></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">Admin</span><a href="/review.html" class="on">Review queue</a><a href="/wikibase.html">Wikibase</a><a href="/admin/">Collecting Events</a><a href="/admin/">Old console</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> Review queue</p>
+  <h1 id="heroTitle">What is waiting <em>for a reviewer.</em></h1>
+  <p class="lede" id="heroLede">Each row is one thing someone sent in. Approve it and it goes live; reject it and it stays out. Nothing here is public until you say so.</p>
+  <p class="live" id="heroMeta" aria-live="polite"></p>
+  <div class="btns" id="heroCta"></div>
+  <p class="msg" id="msg" aria-live="polite"></p>
+ </div>
+</section>
+
+<div id="queues"></div>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/infrastructure.html">How it runs</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  var here = location.pathname + location.search;
+  var D = { me: null, q: null, users: null, discord: null };
+  var N = 1;
+
+  function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
+  function when(s) { return s ? String(s).slice(0, 16).replace("T", " ") : ""; }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function thumb(url) { return url ? (GDB.thumb ? GDB.thumb(url, 320) : url) : null; }
+  function say(text, err) { var m = $("#msg"); m.textContent = text || ""; m.className = "msg" + (err ? " err" : ""); }
+  function busy(on) { document.querySelectorAll("#queues button").forEach(function (b) { b.disabled = !!on; }); }
+
+  /* ---- pieces of markup ---------------------------------------------------- */
+  function img(url, alt) {
+    return url ? '<div class="qimg"><img src="' + esc(url) + '" alt="' + esc(alt || "") + '" loading="lazy"></div>' : "";
+  }
+  function facts(pairs) {
+    return '<p class="facts">' + pairs.filter(function (p) { return p[1] != null && p[1] !== "" && p[1] !== 0 && p[1] !== false; })
+      .map(function (p) { return "<span><b>" + esc(p[0]) + "</b> " + esc(p[1]) + "</span>"; }).join(" · ") + "</p>";
+  }
+  function kv(obj) {
+    var keys = Object.keys(obj || {}).filter(function (k) {
+      var v = obj[k]; return v != null && v !== "" && !(Array.isArray(v) && !v.length) && typeof v !== "object" || Array.isArray(v) && v.length;
+    });
+    if (!keys.length) return "";
+    return '<dl class="kv">' + keys.map(function (k) {
+      var v = obj[k]; v = Array.isArray(v) ? v.join(", ") : String(v);
+      return "<dt>" + esc(k.replace(/_/g, " ")) + "</dt><dd>" + esc(v) + "</dd>";
+    }).join("") + "</dl>";
+  }
+  function act(queue, id, action, label, help, red) {
+    return '<div class="act"><button class="btn sm ' + (red ? "btn--red" : "btn--line") + '" data-q="' + esc(queue) + '" data-id="' + esc(id) + '" data-act="' + action + '">' + esc(label) + "</button><small>" + esc(help) + "</small></div>";
+  }
+  function yesno(queue, id, yes, yesHelp, no, noHelp) {
+    return '<div class="qacts">' + act(queue, id, "approve", yes, yesHelp, true) + act(queue, id, "reject", no, noHelp, false) + "</div>";
+  }
+  function row(picture, body, actions) {
+    return '<article class="qrow' + (picture ? "" : " noimg") + '">' + picture + '<div class="qbody">' + body + "</div>" + actions + "</article>";
+  }
+  function section(id, label, title, lede, inner) {
+    N += 1;
+    return '<section class="s' + (N % 2 ? "" : " alt") + '" id="' + id + '" aria-labelledby="h-' + id + '"><div class="wrap">' +
+      '<div class="s-head"><p class="label"><span class="n">№ ' + pad(N) + "</span> " + esc(label) + '</p><div><h2 id="h-' + id + '">' + title + '</h2><p class="lede">' + esc(lede) + "</p></div></div>" +
+      inner + "</div></section>";
+  }
+  function none(text) { return '<p class="empty small">' + esc(text) + "</p>"; }
+  function list(rows) { return rows.length ? '<div class="q">' + rows.join("") + "</div>" : ""; }
+
+  /* ---- the gate ------------------------------------------------------------ */
+  function signedOut() {
+    document.title = "Sign in — Glass Database";
+    $("#heroMeta").textContent = "";
+    $("#heroCta").innerHTML = '<div class="act"><a class="btn btn--red" href="' + esc(GDB.loginUrl(here)) + '">Sign in with Google</a><small>Reviewers sign in with the same Google account as everyone else; the queue opens for administrators.</small></div>';
+    $("#queues").innerHTML = "";
+  }
+  function notAdmin(me) {
+    $("#heroMeta").innerHTML = "<span>Signed in as <b>" + esc(me.email || me.name || "you") + "</b></span>";
+    $("#heroCta").innerHTML = "";
+    $("#queues").innerHTML = '<section class="s"><div class="wrap"><p class="empty">You are signed in, but you are not an administrator. Ask an administrator to promote you (they do it on this page, under Users, or in the old console under Users), then reload.</p></div></section>';
+  }
+
+  /* ---- sections ------------------------------------------------------------ */
+  function pieces(q) {
+    var rows = (q.object_submissions || []).map(function (s) {
+      var body = "<h3>" + esc(s.title || "(untitled)") + (s.has_credentials ? '<span class="pill">Glass ID credential</span>' : "") + "</h3>" +
+        facts([["Maker", s.maker], ["Year", s.year], ["Techniques", s.techniques], ["Materials", s.materials], ["Size", s.dimensions], ["Sourcing", s.sourcing], ["Value", s.value_display], ["From", s.submitted_by], ["Received", when(s.received_at)], ["Pictures", s.images]]) +
+        (s.description ? '<p class="desc">' + esc(s.description) + "</p>" : "") +
+        '<p class="mono">' + esc(s.content_hash || "") + " · sourcing is self-reported; approving says you have looked</p>";
+      return row(img(s.image_url, s.title), body, yesno("object_submissions", s.id, "Approve & publish", "It becomes a public piece in the registry, with its pictures and story.", "Reject", "It stays out; the maker can send it again."));
+    });
+    var c = q.object_submission_counts || {};
+    return section("pieces", "Pieces", "Pieces sent in <em>from Glowtbook.</em>",
+      "A published piece is a public record: a condensed copy of the piece, its story and its Glass ID. " + (c.approved || 0) + " approved so far, " + (c.rejected || 0) + " rejected.",
+      rows.length ? list(rows) : none("No pieces waiting."));
+  }
+  function profiles(q) {
+    var rows = (q.submissions || []).map(function (s) {
+      var body = "<h3>" + esc(s.display_name || "(no name)") + "</h3>" + facts([["Sourcing", s.sourcing], ["Received", when(s.received_at)]]) + kv(s.payload);
+      return row("", body, yesno("submissions", s.id, "Approve & publish", "The profile joins the Directory as an artist-written entry.", "Reject", "It stays out; the artist can edit and send it again."));
+    });
+    return section("profiles", "Artist profiles", "Profiles artists <em>wrote themselves.</em>", "Glowtbook lets an artist write their own Directory entry; it appears once a reviewer has read it.",
+      rows.length ? list(rows) : none("No profiles waiting."));
+  }
+  function datasets(q) {
+    var ds = q.datasets || [];
+    var waiting = ds.filter(function (d) { return d.counts.pending > 0; });
+    var blocks = waiting.map(function (d) {
+      var cols = (d.columns || []).slice(0, 6);
+      var head = '<div class="head"><h3>' + esc(d.tbl) + '</h3><div class="pills"><span class="pill red">' + plural(d.counts.pending, "pending") + '</span><span class="pill">' + d.counts.approved + " approved</span>" + (d.visibility === "restricted" ? '<span class="pill">restricted</span>' : "") + "</div>" +
+        '<div class="act"><button class="btn sm btn--red" data-all="' + esc(d.tbl) + '">Approve all ' + d.counts.pending + "</button><small>Every pending row in this table goes live at once.</small></div></div>" +
+        (d.description ? '<p class="facts">' + esc(d.description) + "</p>" : "");
+      var table = '<div class="tbl"><table><thead><tr>' + cols.map(function (c) { return "<th>" + esc(c.label || c.column) + "</th>"; }).join("") + "<th></th></tr></thead><tbody>" +
+        d.rows.map(function (r) {
+          return "<tr>" + cols.map(function (c) { return "<td>" + esc(r[c.column] == null ? "" : String(r[c.column]).slice(0, 160)) + "</td>"; }).join("") +
+            '<td class="acts"><button class="btn sm btn--red" data-q="' + esc(d.tbl) + '" data-id="' + esc(r._row_id) + '" data-act="approve">Approve</button><button class="btn sm btn--line" data-q="' + esc(d.tbl) + '" data-id="' + esc(r._row_id) + '" data-act="reject">Reject</button></td></tr>';
+        }).join("") + "</tbody></table></div>" + (d.counts.pending > d.rows.length ? '<p class="facts">Showing the first ' + d.rows.length + " of " + d.counts.pending + ".</p>" : "");
+      return '<div class="block">' + head + table + "</div>";
+    });
+    var overview = '<div class="tbl"><table><thead><tr><th>Table</th><th>Domain</th><th>Rows</th><th>Approved</th><th>Pending</th><th>Rejected</th></tr></thead><tbody>' +
+      ds.map(function (d) { return "<tr><td>" + esc(d.tbl) + "</td><td>" + esc(d.domain || "") + "</td><td>" + d.counts.total + "</td><td>" + d.counts.approved + "</td><td>" + (d.counts.pending ? '<b class="warn">' + d.counts.pending + "</b>" : "0") + "</td><td>" + d.counts.rejected + "</td></tr>"; }).join("") + "</tbody></table></div>";
+    return section("directory", "Directory rows", "Rows from the forms <em>and the sheets.</em>",
+      "Every table goes through one publication gate: a row is public only once it is approved. The forms on the site write pending rows here.",
+      (blocks.length ? blocks.join("") : none("Nothing waiting in the directory tables.")) + '<div class="block"><div class="head"><h3>All tables</h3></div>' + overview + "</div>");
+  }
+  function shows(q) {
+    var lrows = (q.listings || []).map(function (ev) {
+      var body = "<h3>" + esc(ev.title || "Untitled") + "</h3>" + facts([["Host", ev.host_name], ["Studio", ev.studio], ["Venue", ev.venue], ["Where", [ev.city, ev.region, ev.country].filter(Boolean).join(", ")], ["Starts", ev.starts], ["Ends", ev.ends], ["Pieces", ev.piece_type], ["Price", ev.price_note], ["Glass ID", ev.fingerprinting], ["Registration closes", ev.registration_closes]]) +
+        (ev.description ? '<p class="desc">' + esc(ev.description) + "</p>" : "");
+      return row("", body, yesno("listing", ev.id, "List it", "The show appears in the public Shows & Sales directory; it already works by link.", "Don't list", "It keeps working by link, but stays off the public list."));
+    });
+    var rrows = (q.registrations || []).map(function (r) {
+      var body = "<h3>" + esc(r.title || "Untitled") + (r.piece_ref ? '<span class="pill">#' + esc(r.piece_ref) + "</span>" : "") + "</h3>" +
+        facts([["Bought by", r.buyer], ["At", r.event_title], ["Host", r.host_name], ["Studio", r.studio], ["Venue", r.venue], ["Date", r.starts], ["Paid", r.price_paid], ["Host note", r.host_note], ["Sent", when(r.created_at)]]) +
+        (r.description ? '<p class="desc">' + esc(r.description) + "</p>" : "");
+      return row(img(r.image_url, r.title), body, yesno("registration", r.id, "Approve & publish", "The piece joins the registry with its story: made by the maker for the show, bought by the buyer.", "Reject", "It stays in the buyer's Glowtbook only."));
+    });
+    return section("shows", "Shows & Sales", "Listings and the pieces <em>bought at them.</em>",
+      "A host lists a show, buyers add what they bought, the host approves first; approving here puts a listing in the directory or a piece in the registry.",
+      '<div class="block"><div class="head"><h3>Listings</h3></div>' + (lrows.length ? list(lrows) : none("No listings waiting.")) + "</div>" +
+      '<div class="block"><div class="head"><h3>Registrations the host approved</h3></div>' + (rrows.length ? list(rrows) : none("Nothing waiting for site review.")) + "</div>");
+  }
+  function events(q) {
+    var erows = (q.entries || []).map(function (e) {
+      var body = "<h3>" + esc(e.title || "Untitled") + (e.legendary ? '<span class="pill red">Legendary</span>' : "") + (e.solo ? '<span class="pill">solo</span>' : "") + "</h3>" +
+        facts([["Maker", e.artist_name], ["Studio", e.studio || "Independent"], ["Edition", e.edition_size], ["Price", e.price_note], ["Glass ID", e.fingerprinted ? "yes" : "none"], ["Event", e.season_title], ["Entered", when(e.created_at)]]) +
+        (e.legend ? '<p class="desc"><i>' + esc(e.legend) + "</i></p>" : "") + '<p class="mono">object ' + esc(e.object_row_id) + "</p>";
+      return row(img(thumb(e.image_url), e.title), body, yesno("entry", e.id, "Approve", "The piece goes on the season page and can be voted for.", "Reject", "It stays off the season page."));
+    });
+    var crows = (q.claims || []).map(function (c) {
+      var body = "<h3>" + esc(c.title || "Untitled") + "</h3>" +
+        facts([["Collector", c.collector_name || "a collector"], ["Confidence", c.confidence != null ? Math.round(c.confidence) + "/100" : ""], ["Maker", c.maker || c.artist_name], ["Studio", c.studio], ["Where", c.location], ["Event", c.season_title], ["Asked", when(c.created_at)]]) +
+        '<p class="mono">object ' + esc(c.object_row_id) + " · a scan under 70 waits for the maker or a reviewer</p>";
+      return row(img(thumb(c.image_url), c.title), body, yesno("claim", c.id, "Approve", "The piece joins their collection and counts on the boards.", "Reject", "It does not."));
+    });
+    return section("events", "Collecting Events", "Entries and <em>collection requests.</em>",
+      "Entries of a published piece go live on their own unless review mode is on; low-confidence collection requests wait here for someone who can vouch.",
+      '<div class="block"><div class="head"><h3>Entries</h3></div>' + (erows.length ? list(erows) : none("No entries waiting.")) + "</div>" +
+      '<div class="block"><div class="head"><h3>Collection requests</h3></div>' + (crows.length ? list(crows) : none("No collection requests waiting.")) + "</div>");
+  }
+  function harvest(q) {
+    var rows = (q.harvest || []).map(function (h) {
+      var body = "<h3>" + esc(h.artist_name || "") + "</h3>" + facts([["Via", h.source], ["Harvested", when(h.harvested_at)]]) +
+        (h.caption ? '<p class="desc">' + esc(h.caption) + "</p>" : "") + '<p class="mono">' + esc(h.source_url || "") + " · © the artist, owner-asserted in the picture's credential</p>";
+      return row(img(h.image_url, h.caption), body, yesno("harvest", h.id, "Approve", "The picture can appear on the artist's entry.", "Reject", "It is not shown."));
+    });
+    var c = q.harvest_counts || {};
+    return section("harvest", "Harvested content", "Pictures pulled <em>with consent.</em>",
+      "From the sites and socials of artists who ticked the box. The artist stays the owner; nothing shows until it is approved here, one by one. " + (c.approved || 0) + " approved so far.",
+      rows.length ? list(rows) : none("No harvested pictures waiting."));
+  }
+  function sources(q) {
+    var rows = (q.studio_sources || []).map(function (s) {
+      var body = "<h3>" + esc(s.name || "") + "</h3>" + facts([["Where", [s.city, s.region, s.country].filter(Boolean).join(", ")], ["Coordinates", (s.lat || s.lng) ? s.lat + ", " + s.lng : ""], ["By", s.submitted_by], ["Added", when(s.added_at)]]) +
+        '<p class="mono">' + esc(s.api_url || "") + "</p>" + '<p class="facts ' + (s.url_ok ? "ok" : "warn") + '">' + (s.url_ok ? "The URL passes the safety check." : "Check the URL first: " + esc(s.url_note || "")) + "</p>";
+      return row("", body, yesno("studio_source", s.id, "Approve & poll", "The site starts reading this studio's open data every fifteen minutes.", "Reject", "It is never polled."));
+    });
+    return section("sources", "Studio data sources", "Studios that publish <em>open data.</em>",
+      "A studio can offer a kiln or furnace API. It is not read until a reviewer has looked at the URL.",
+      rows.length ? list(rows) : none("No studio data sources waiting."));
+  }
+  function feedback(q) {
+    var all = q.feedback || [], open = all.filter(function (f) { return !f.resolved; });
+    var rows = open.map(function (f) {
+      var body = "<h3>" + esc(f.name || f.email || "anonymous") + "</h3>" + facts([["Page", f.page], ["Sent", when(f.created_at)], ["Reply to", f.email]]) + '<p class="desc">' + esc(f.message || "") + "</p>";
+      return row("", body, '<div class="qacts">' + act("feedback", f.id, "approve", "Mark resolved", "It leaves this list; nothing is sent to the person.", false) + "</div>");
+    });
+    return section("feedback", "Feedback", "What people <em>told us.</em>",
+      "Feedback is private to the team and never published. " + (all.length - open.length) + " resolved so far.",
+      rows.length ? list(rows) : none("No open feedback."));
+  }
+  function usersSection() {
+    var u = D.users || { users: [] };
+    var table = '<div class="tbl"><table><thead><tr><th>Who</th><th>Role</th><th>Logins</th><th>Last seen</th><th></th></tr></thead><tbody>' +
+      u.users.map(function (p) {
+        var role = p.via_config ? "admin, set in .env" : (p.is_admin ? "admin" : "member");
+        var button = p.via_config ? "" : (p.is_admin ?
+          '<button class="btn sm btn--line" data-user="' + esc(p.email) + '" data-admin="0">Revoke admin</button>' :
+          '<button class="btn sm btn--red" data-user="' + esc(p.email) + '" data-admin="1">Make admin</button>');
+        return "<tr><td><b>" + esc(p.name || p.email) + "</b><br><span class=\"mono\">" + esc(p.email) + "</span></td><td>" + esc(role) + "</td><td>" + (p.logins || 0) + "</td><td>" + esc(when(p.last_seen)) + "</td><td class=\"acts\">" + button + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+    var grant = '<form class="row" id="grantForm"><input type="email" id="grantEmail" placeholder="name@example.com" required aria-label="Email to make an administrator"><div class="act"><button class="btn sm btn--red" type="submit">Make administrator</button><small>Works before their first sign-in too; they get the queue the moment they sign in.</small></div></form>';
+    return section("users", "Users", "Who can <em>review.</em>",
+      "Everyone who has signed in with Google, name and email only. Administrators see this page; the emails in GLASSDB_ADMIN_EMAILS are always administrators.",
+      (u.users.length ? table : none("Nobody has signed in yet.")) + grant);
+  }
+  function discordSection() {
+    var d = D.discord || {};
+    var state = d.configured ? "Configured (webhook ending in …" + esc(d.webhook_tail) + "), notifications " + (d.enabled ? "on" : "off") + "." : "No webhook yet: new submissions are not announced anywhere.";
+    var form = '<form class="row" id="discordForm"><input type="password" id="webhook" placeholder="https://discord.com/api/webhooks/… (leave blank to keep)" aria-label="Discord webhook URL" autocomplete="off">' +
+      '<label class="chk"><input type="checkbox" id="discordOn"' + (d.enabled ? " checked" : "") + "> Announce new submissions</label>" +
+      '<div class="act"><button class="btn sm btn--red" type="submit">Save</button><small>Discord → Server Settings → Integrations → Webhooks. Approve links in the channel are signed with the admin token.</small></div>' +
+      '<div class="act"><button class="btn sm btn--line" type="button" id="discordTest">Send test message</button><small>Posts one line to the channel.</small></div></form>';
+    return section("discord", "Discord", "Where the <em>pings go.</em>",
+      "New submissions post to your channel with one-click approve and reject links. Anyone who can see the channel can act on them, so keep it to reviewers.",
+      '<p class="facts">' + state + "</p>" + form);
+  }
+
+  /* ---- loading and acting ---------------------------------------------------- */
+  function render() {
+    var q = D.q;
+    N = 1;
+    $("#queues").innerHTML = pieces(q) + profiles(q) + datasets(q) + shows(q) + events(q) + harvest(q) + sources(q) + feedback(q) + usersSection() + discordSection();
+    var c = q.counts || {};
+    $("#heroMeta").innerHTML = "<span><b>" + plural(c.total || 0, "thing") + "</b> waiting</span>" +
+      [["pieces", c.object_submissions], ["profiles", c.submissions], ["rows", c.datasets], ["listings", c.listings], ["registrations", c.registrations], ["entries", c.entries], ["requests", c.claims], ["harvested", c.harvest], ["sources", c.studio_sources], ["feedback", c.feedback]]
+        .filter(function (p) { return p[1]; }).map(function (p) { return "<span>" + p[1] + " " + p[0] + "</span>"; }).join("") +
+      "<span>reviewing as <b>" + esc(q.reviewer || (D.me && D.me.email) || "") + "</b></span>";
+    document.title = (c.total ? c.total + " waiting · " : "") + "Review queue — Glass Database";
+  }
+  function load() {
+    return Promise.all([GDB.json("/admin/queue"), GDB.json("/admin/users").catch(function () { return null; }), GDB.json("/admin/discord").catch(function () { return null; })])
+      .then(function (r) { D.q = r[0]; D.users = r[1]; D.discord = r[2]; render(); })
+      .catch(function (e) { say("Could not load the queue: " + (e.message || e), true); });
+  }
+  function decide(queue, id, action, label) {
+    busy(true); say("Working…");
+    return GDB.json("/admin/decide", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ queue: queue, id: id, action: action }) })
+      .then(function (j) {
+        var r = j.result || {};
+        say((action === "approve" ? "Approved" : "Rejected") + (label ? ": " + label : "") + (r.published ? " · published as " + r.published : "") + ".");
+        return load();
+      })
+      .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+  }
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button");
+    if (!b) return;
+    if (b.dataset.q && b.dataset.act) {
+      var h3 = b.closest(".qrow, tr"); var label = h3 ? (h3.querySelector("h3, td") || {}).textContent : "";
+      decide(b.dataset.q, b.dataset.id, b.dataset.act, (label || "").trim().slice(0, 60));
+    } else if (b.dataset.all) {
+      if (!confirm("Approve every pending row in " + b.dataset.all + "?")) return;
+      busy(true); say("Working…");
+      GDB.json("/admin/approve-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tbl: b.dataset.all }) })
+        .then(function (j) { say("Approved " + plural(j.approved || 0, "row") + " in " + b.dataset.all + "."); return load(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    } else if (b.dataset.user) {
+      busy(true);
+      GDB.json("/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: b.dataset.user, admin: b.dataset.admin === "1" }) })
+        .then(function (j) { D.users = j; say((b.dataset.admin === "1" ? "Made an administrator: " : "No longer an administrator: ") + b.dataset.user + "."); render(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    } else if (b.id === "discordTest") {
+      var wh = ($("#webhook") || {}).value || "";
+      GDB.json("/admin/discord/test", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ webhook: wh }) })
+        .then(function (j) { say(j.ok ? "Test sent; check the channel." : "The test did not go through: " + (j.message || ""), !j.ok); })
+        .catch(function (e) { say("The test did not go through: " + (e.message || e), true); });
+    }
+  });
+  document.addEventListener("submit", function (ev) {
+    var f = ev.target;
+    if (f.id === "grantForm") {
+      ev.preventDefault();
+      var email = ($("#grantEmail").value || "").trim();
+      if (!email) return;
+      GDB.json("/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: email, admin: true }) })
+        .then(function (j) { D.users = j; say("Made an administrator: " + email + "."); render(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); });
+    } else if (f.id === "discordForm") {
+      ev.preventDefault();
+      var body = { enabled: !!$("#discordOn").checked };
+      var wh = ($("#webhook").value || "").trim();
+      if (wh) body.webhook = wh;
+      GDB.json("/admin/discord", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+        .then(function (j) { D.discord = j; say("Saved."); render(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); });
+    }
+  });
+
+  // the chip calls onchange on its first render too: reload only when the sign-in state flips later (sign-out)
+  GDB.chip("#chip", { next: here, onchange: function (m) { if (D.loaded && !!(m && m.signed_in) !== !!(D.me && D.me.signed_in)) location.reload(); } });
+  GDB.me().then(function (me) {
+    D.me = me; D.loaded = true;
+    if (!me || !me.signed_in) return signedOut();
+    if (!me.is_admin) return notAdmin(me);
+    $("#heroMeta").textContent = "Loading…";
+    return load();
+  });
+})();
+</script>
+</body>
+</html>

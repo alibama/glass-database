@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wikibase — Glass Database</title>
+<meta name="description" content="The Glass Database's public record moving to glass.wikibase.cloud: what is staged, what is deduplicated, what OpenRefine still has to reconcile, what is on the wiki. The whole migration, viewable step by step.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 18ch; }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; font: 500 12px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .hero .live b { color: var(--red); font-weight: 500; }
+  .hero .live a { color: var(--ink); }
+  .msg { font: 400 14px/1.45 var(--sans); color: var(--ink); margin-top: .8rem; min-height: 1.2em; }
+  .msg.err { color: var(--red); }
+  button.btn { background: var(--paper); cursor: pointer; }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.sm, button.sm { padding: .55rem .9rem; font-size: 13px; }
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .4rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 32ch; }
+
+  /* the pipeline: one numbered list, each step with its status, facts and buttons */
+  .go { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ink); }
+  .go li { display: grid; grid-template-columns: 2.6rem 1fr; gap: .8rem; padding: 1.1rem 0; border-bottom: 1px solid var(--rule); }
+  .go li .n { font: 400 1.5rem/1 var(--serif); color: var(--red); padding-top: .15rem; }
+  .go li.done .n { color: var(--ink); } .go li.off .n { color: var(--muted); }
+  .go h3 { font-size: 1.25rem; margin: 0 0 .25rem; display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
+  .go h3 .st { font: 500 11px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); border: 1px solid var(--rule); padding: .3rem .5rem; }
+  .go li.done h3 .st { color: var(--ink); border-color: var(--ink); } .go li.todo h3 .st { color: var(--red); border-color: var(--red); } .go li.running h3 .st { background: var(--red); color: #fff; border-color: var(--red); }
+  .go p { margin: 0; color: var(--ink-2); font-size: 15px; max-width: 64ch; }
+  .go .row { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; margin-top: .7rem; }
+  .go .row small { font: 400 13px/1.45 var(--sans); color: var(--muted); flex-basis: 100%; max-width: 64ch; }
+  .go .row input[type=number] { width: 6rem; }
+  .goprog { font: 500 12px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 .8rem; }
+  .goprog b { color: var(--red); font-weight: 500; }
+
+  /* where things live */
+  .where { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; border-top: 1px solid var(--ink); }
+  .where > div { padding: 1.4rem 1.4rem 1.4rem 0; border-right: 1px solid var(--rule); }
+  .where > div:last-child { border-right: 0; }
+  .where h3 { font-size: 1.3rem; margin: 0 0 .6rem; }
+  .where p { font-size: 15px; color: var(--ink-2); margin: 0 0 .6rem; }
+
+  /* items */
+  .filters { display: flex; flex-wrap: wrap; gap: .6rem .9rem; align-items: center; margin-top: 1.2rem; }
+  .filters select, .filters input[type=search], form.row input, form.row select { font: 400 15px var(--sans); padding: .6rem .8rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); min-width: 0; }
+  .filters input[type=search] { min-width: 14rem; }
+  .tbl td a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .tbl td a:hover { color: var(--red); border-color: var(--red); }
+  .tbl td .st { font: 400 12px var(--mono); letter-spacing: .04em; color: var(--muted); white-space: nowrap; }
+  .tbl td .st.ok { color: var(--ink); } .tbl td .st.hot { color: var(--red); }
+  .tbl tr.sel td { background: var(--paper-2); }
+  .tbl tr[data-key] { cursor: pointer; }
+  .pager { display: flex; gap: 1rem; align-items: center; font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .detail { margin-top: 1.2rem; border: 1px solid var(--ink); padding: 1.2rem 1.4rem; background: var(--paper-2); }
+  .detail h3 { margin: 0 0 .3rem; display: flex; gap: .8rem; align-items: baseline; flex-wrap: wrap; }
+  .detail p { margin: 0 0 .6rem; font-size: 15px; color: var(--ink-2); }
+  .detail dl { margin: .8rem 0 0; display: grid; grid-template-columns: max-content 1fr; gap: .35rem 1.2rem; font-size: 14px; max-width: 80ch; }
+  .detail dt { font: 500 11px/1.7 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .detail dd { margin: 0; color: var(--ink-2); overflow-wrap: anywhere; }
+  .detail dd small { color: var(--muted); }
+  form.row { display: flex; flex-wrap: wrap; gap: .8rem 1rem; align-items: center; margin-top: 1rem; }
+  form.row label { font: 500 11px/1.6 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); display: flex; flex-direction: column; gap: .3rem; }
+  form.row label.chk { flex-direction: row; align-items: center; text-transform: none; font: 400 15px var(--sans); color: var(--ink-2); }
+  form.row input[type=checkbox] { accent-color: var(--red); width: 1rem; height: 1rem; }
+
+  /* clusters */
+  .cl { border-top: 1px solid var(--rule); padding: 1rem 0; display: grid; grid-template-columns: 10rem 1fr; gap: 1rem; }
+  .cl .k { font: 500 11px/1.7 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .cl ul { list-style: none; margin: 0; padding: 0; }
+  .cl li { display: flex; gap: .8rem 1.2rem; flex-wrap: wrap; align-items: baseline; padding: .25rem 0; font-size: 15px; }
+  .cl li b { font-weight: 500; } .cl li .src { color: var(--muted); font: 400 12px var(--mono); }
+  .cl li.dup { color: var(--ink-2); }
+
+  /* log */
+  .log { margin-top: 1.2rem; border: 1px solid var(--ink); background: var(--ink); color: var(--paper); font: 400 12.5px/1.5 var(--mono); padding: 1rem 1.2rem; max-height: 24rem; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .log .t { color: #B9AE9F; }
+  .runs td .st { font: 400 12px var(--mono); }
+  .empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  code { font: 400 .92em var(--mono); background: var(--paper-2); padding: .1em .35em; }
+  .steps-how { list-style: decimal; margin: 1rem 0 0; padding-left: 1.4rem; max-width: 66ch; color: var(--ink-2); font-size: 15px; }
+  .steps-how li { margin: .4rem 0; }
+  @media (max-width: 900px) { .where { grid-template-columns: 1fr; } .where > div { border-right: 0; border-bottom: 1px solid var(--rule); padding-right: 0; } .cl { grid-template-columns: 1fr; } }
+  @media (max-width: 680px) { .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; } .detail dl { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active=""></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">Admin</span><a href="/review.html">Review queue</a><a href="/wikibase.html" class="on">Wikibase</a><a href="#pipeline">Pipeline</a><a href="#items">Items</a><a href="#openrefine">OpenRefine</a><a href="#runs">Runs</a><a href="/admin/">Old console</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> Wikibase</p>
+  <h1 id="heroTitle">The record, <em>on the wiki.</em></h1>
+  <p class="lede" id="heroLede">Everything public and durable in the Glass Database is moving to <a id="wikiLink" href="https://glass.wikibase.cloud">glass.wikibase.cloud</a>, where the Museum of Glass and anyone else can cite it, correct it and carry it on to Wikidata. This page is the migration itself: every step, every item, every run, as it happens.</p>
+  <p class="live" id="heroMeta" aria-live="polite">Loading…</p>
+  <div class="btns" id="heroCta"></div>
+  <p class="msg" id="msg" aria-live="polite"></p>
+ </div>
+</section>
+
+<section class="s" id="pipeline" aria-labelledby="h-pipeline">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> The pipeline</p>
+   <div><h2 id="h-pipeline">Eight steps, <em>in order.</em></h2><p class="lede">Stage the tables into items, fold the duplicates, reconcile names in OpenRefine, create the properties, rehearse, push, then read back what the wiki holds. Each step says where it stands; administrators get the button.</p>
+   <p class="goprog" id="goProg"></p></div></div>
+  <ol class="go" id="steps"></ol>
+ </div>
+</section>
+
+<section class="s alt" id="where" aria-labelledby="h-where">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> What goes where</p>
+   <div><h2 id="h-where">Public and durable <em>goes to the wiki.</em></h2><p class="lede">One test decides it: if a fact is public, durable and useful to someone who is not us, it belongs on the wiki. If it is private, changes by the minute or weighs megabytes, it stays in the app.</p></div></div>
+  <div class="where">
+   <div><h3>In the wiki</h3><p>People who make glass and the organisations around them, the published pieces with everything their public page shows, the vocabularies, lineage, shows and sales, collecting events and their results, awards, and the links to Wikidata and Getty that make the record citable.</p><p>Every item carries a <b>Glass Database ID</b>, so a wiki item and our row always find each other.</p></div>
+   <div><h3>In the app</h3><p>Emails, phones and demographic fields, prices paid and buyers, votes while a season runs, claims and their reports, event registrations, unpublished pieces and their images, fingerprint vectors and frames, the archive bags, sessions and analytics.</p><p>And a cache of the wiki, so the pages never wait on a query service.</p></div>
+   <div><h3>Collectors</h3><p>Collectors are captured on the site when they check a piece and add it to their collection. They stay in the app: no collector item, no collection, no claim and no vote is ever staged. A piece on the wiki shows no owner.</p><p>A collector who later wants a public profile can have a person item of their own, with none of their collection on it.</p></div>
+  </div>
+  <p class="note" id="licence"></p>
+ </div>
+</section>
+
+<section class="s" id="items" aria-labelledby="h-items">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Items</p>
+   <div><h2 id="h-items">What is staged, <em>what is live.</em></h2><p class="lede">One row per would-be wiki item, by kind. <i>New</i> has never been pushed; <i>pushed</i> is on the wiki and current; <i>changed</i> is on the wiki but its row moved since; <i>duplicate</i> was folded into another item; <i>held</i> and <i>failed</i> need a look.</p></div></div>
+  <div class="tbl"><table id="kinds"><thead><tr><th>Kind</th><th>Staged</th><th>New</th><th>On the wiki</th><th>Changed</th><th>Duplicates</th><th>Held · failed</th></tr></thead><tbody></tbody></table></div>
+  <div class="filters" id="filters">
+   <select id="fKind" aria-label="Kind"><option value="">Every kind</option></select>
+   <select id="fStatus" aria-label="Status"><option value="">Every status</option><option>new</option><option>ready</option><option>pushed</option><option>changed</option><option>duplicate</option><option>held</option><option>failed</option><option>skipped</option><option>orphan</option></select>
+   <input type="search" id="fQ" placeholder="Search a label or key" aria-label="Search">
+   <button type="button" class="btn btn--line sm" id="fGo">Show</button>
+   <span class="pager" id="pager"></span>
+  </div>
+  <div class="tbl"><table id="itemsTbl"><thead><tr><th>Label</th><th>Kind</th><th>Status</th><th>Source</th><th>Wiki</th><th>Wikidata</th></tr></thead><tbody></tbody></table></div>
+  <div class="detail" id="detail" hidden></div>
+ </div>
+</section>
+
+<section class="s alt" id="dupes" aria-labelledby="h-dupes">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Duplicates</p>
+   <div><h2 id="h-dupes">One item <em>per thing.</em></h2><p class="lede">The same person in the artist list and the legacy sheet, the same studio in the directory and a submission, the same city spelt two ways. Each cluster keeps one canonical item; the others fold into it and keep pointing at it through their own Glass Database IDs. If two really are different, keep them apart.</p></div></div>
+  <div id="clusters"><p class="empty">No clusters yet. Run Stage; it finds duplicates on the way.</p></div>
+ </div>
+</section>
+
+<section class="s" id="openrefine" aria-labelledby="h-refine">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 06</span> OpenRefine</p>
+   <div><h2 id="h-refine">Names to Wikidata, <em>in OpenRefine.</em></h2><p class="lede">The wiki can hold a person without a Wikidata id, and the id arrives as a statement when it is found. OpenRefine does the finding: its built-in Wikidata reconciliation for people, studios, schools and places, and this site's own reconciliation service for what is already staged or on the wiki.</p></div></div>
+  <ol class="steps-how">
+   <li>Download a kind below (people, studios, places, schools…). The CSV has a <code>key</code> per row, the label, description, aliases and the properties staging built.</li>
+   <li>In OpenRefine, reconcile the <code>label</code> column against <b>Wikidata</b> (the type it suggests, or <code>Q5</code> for people). Copy the match into <code>wikidata_qid</code>: <code>cell.recon.match.id</code>.</li>
+   <li>To check against what is already here, add a reconciliation service with this URL: <code id="reconUrl"></code>. The OpenRefine Wikibase extension's manifest (after Bootstrap): <code id="manifestUrl"></code>.</li>
+   <li>Fix labels, descriptions and aliases; set <code>status</code> to <code>ready</code> or <code>skipped</code>; write a key into <code>merge_into</code> when two rows are the same thing. Export CSV and upload it here. Nothing is deleted on the wiki by an import.</li>
+  </ol>
+  <div id="refineAdmin" hidden>
+   <div class="filters" id="exports"></div>
+   <form class="row" id="importForm"><label>Upload the edited CSV<input type="file" id="importFile" accept=".csv,text/csv" required></label><button type="submit" class="btn btn--red sm">Import</button><small id="importMsg" class="msg"></small></form>
+  </div>
+ </div>
+</section>
+
+<section class="s alt" id="runs" aria-labelledby="h-runs">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 07</span> Runs</p>
+   <div><h2 id="h-runs">Every run, <em>with its log.</em></h2><p class="lede">What each job did, who started it, and the log as it was written. A dry run's plan holds every request body it would have sent.</p></div></div>
+  <div class="tbl runs"><table id="runsTbl"><thead><tr><th>Run</th><th>Job</th><th>Status</th><th>Started</th><th>By</th><th>Summary</th></tr></thead><tbody></tbody></table></div>
+  <pre class="log" id="log" aria-live="polite">No run selected.</pre>
+ </div>
+</section>
+
+<section class="s" id="settings" aria-labelledby="h-settings" hidden>
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 08</span> The bot</p>
+   <div><h2 id="h-settings">Who writes <em>to the wiki.</em></h2><p class="lede">A bot password made on the wiki (<a id="botPwLink" href="https://glass.wikibase.cloud/wiki/Special:BotPasswords">Special:BotPasswords</a>) with the grants <i>Edit existing pages</i>, <i>Create, edit, and move pages</i> and <i>High-volume editing</i>. The password is stored encrypted with the site secret and never shown again; the site's own secret is the key.</p></div></div>
+  <form class="row" id="botForm">
+   <label>Wiki URL<input type="url" id="sUrl" placeholder="https://glass.wikibase.cloud" required></label>
+   <label>Bot user<input type="text" id="sUser" placeholder="Anson@glassbot" autocomplete="off" required></label>
+   <label>Bot password<input type="password" id="sPass" placeholder="leave blank to keep the saved one" autocomplete="new-password"></label>
+   <label>Pause between writes (s)<input type="number" id="sPause" min="0" max="10" step="0.1" value="1"></label>
+   <label class="chk"><input type="checkbox" id="sBot"> send bot=1 (only once the account is in the bot group)</label>
+   <button type="submit" class="btn btn--red">Save</button>
+   <button type="button" class="btn btn--line" id="sTest">Test sign-in</button>
+   <small id="sMsg" class="msg"></small>
+  </form>
+  <pre class="log" id="testLog" hidden></pre>
+ </div>
+</section>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/infrastructure.html">How it runs</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  var here = location.pathname + location.search;
+  var D = { me: null, admin: false, st: null, items: null, page: 1, per: 50, run: null, after: 0, timer: null, key: null };
+
+  function plural(n, w) { n = n || 0; return n + " " + w + (n === 1 ? "" : "s"); }
+  function when(s) { return s ? String(s).slice(0, 16).replace("T", " ") : ""; }
+  function say(text, err) { var m = $("#msg"); m.textContent = text || ""; m.className = "msg" + (err ? " err" : ""); }
+  function wikiItem(q) { return q ? (D.st ? D.st.wiki : "https://glass.wikibase.cloud") + "/wiki/Item:" + encodeURIComponent(q) : ""; }
+  function post(path, body) { return GDB.json(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) }); }
+  function stWord(s) { return { "new": "new", ready: "ready", pushed: "on the wiki", changed: "changed", duplicate: "duplicate", held: "held", failed: "failed", skipped: "skipped", orphan: "orphan", split: "kept apart" }[s] || s; }
+  function stClass(s) { return s === "pushed" ? "ok" : (s === "failed" || s === "held" ? "hot" : ""); }
+
+  /* ---- hero + steps ------------------------------------------------------- */
+  function renderHero() {
+    var s = D.st, c = s.counts;
+    $("#wikiLink").href = s.wiki; $("#wikiLink").textContent = s.wiki.replace(/^https?:\/\//, "");
+    $("#botPwLink").href = s.wiki + "/wiki/Special:BotPasswords";
+    $("#heroMeta").innerHTML = "<span><b>" + c.total + "</b> items staged</span><span><b>" + c.live + "</b> on the wiki</span><span><b>" + c.pending + "</b> waiting to go</span>" +
+      (s.running ? '<span><b>running:</b> ' + esc(s.running.kind) + ' #' + s.running.id + '</span>' : "") +
+      '<span><a href="' + esc(s.wiki) + '">Open the wiki</a></span>';
+    $("#heroCta").innerHTML = D.admin
+      ? '<div class="act"><a class="btn btn--red" href="#pipeline">Run the next step</a><small>Each step below has its button; the page follows the log.</small></div>' +
+        '<div class="act"><a class="btn btn--line" href="#settings">Bot settings</a><small>' + (s.configured ? "Saved. Test the sign-in any time." : "Not set yet: save the bot user and password first.") + '</small></div>'
+      : (D.me && D.me.signed_in ? '<div class="act"><span class="btn btn--line" aria-disabled="true">Read only</span><small>You are signed in, but not an administrator; the migration is viewable all the same.</small></div>'
+        : '<div class="act"><a class="btn btn--line" href="' + esc(GDB.loginUrl(here)) + '">Sign in</a><small>Administrators run the steps from here; everyone can watch.</small></div>');
+    $("#licence").textContent = s.licence;
+    $("#reconUrl").textContent = s.public_base + "/api/wikibase/reconcile";
+    $("#manifestUrl").textContent = s.public_base + "/api/wikibase/openrefine-manifest.json";
+  }
+  function last(step) { var l = step && step.last; return l ? " Last run #" + l.id + " " + (l.status === "done" ? "finished" : l.status) + " " + when(l.finished_at || l.started_at) + "." : ""; }
+  function btn(label, act, hot, extra) { return '<button type="button" class="btn ' + (hot ? "btn--red" : "btn--line") + ' sm" data-act="' + act + '"' + (extra || "") + '>' + esc(label) + '</button>'; }
+  function renderSteps() {
+    var s = D.st, st = s.steps, c = s.counts, running = s.running && s.running.kind;
+    var rows = [];
+    rows.push({ key: "settings", cls: st.settings.done ? "done" : "todo", st: st.settings.done ? "done" : "to do", title: "Bot settings",
+      text: st.settings.done ? "Writes go to " + s.wiki + " as " + st.settings.user + "." : "Save the wiki URL, the bot user and its password. Nothing can be written until then; everything else here works without it.",
+      row: D.admin ? '<a class="btn btn--line sm" href="#settings">' + (st.settings.done ? "Change" : "Set up the bot") + '</a>' : "" });
+    rows.push({ key: "stage", cls: running === "stage" ? "running" : (st.stage.done ? "done" : "todo"), st: running === "stage" ? "running" : (st.stage.done ? "done" : "to do"), title: "Stage",
+      text: "The site's tables become items: people, studios, schools, museums, pieces, shows, collecting events, places, the vocabularies. Only approved rows and public columns; emails, prices, buyers and collectors never enter." + (st.stage.items ? " " + plural(st.stage.items, "item") + " staged." : "") + last(st.stage),
+      row: D.admin ? btn(st.stage.done ? "Stage again" : "Stage", "stage", !st.stage.done) + "<small>Safe to repeat: new approvals become new items, edited rows become changed ones, nothing on the wiki is touched. Duplicates are found on the way.</small>" : "" });
+    rows.push({ key: "dedupe", cls: running === "dedupe" ? "running" : (st.dedupe.done ? "done" : (st.stage.done ? "todo" : "off")), st: running === "dedupe" ? "running" : (st.dedupe.done ? "done" : "to do"), title: "Duplicates",
+      text: (st.dedupe.duplicates ? plural(st.dedupe.duplicates, "duplicate") + " folded into " + plural(st.dedupe.clusters, "cluster") + ". " : "No duplicates found yet. ") + "Review the clusters below; keep apart what is really two things." + last(st.dedupe),
+      row: D.admin ? btn("Find duplicates again", "dedupe", false) + '<a class="btn btn--line sm" href="#dupes">Review</a>' : "" });
+    rows.push({ key: "refine", cls: st.refine.done ? "done" : (st.stage.done ? "todo" : "off"), st: st.refine.done ? "in progress" : "optional", title: "OpenRefine",
+      text: (st.refine.with_wikidata ? plural(st.refine.with_wikidata, "item") + " carry a Wikidata id so far. " : "") + "Export a kind, reconcile the names against Wikidata and against this site's own service, import the CSV back. The wiki can be loaded before this and completed after.",
+      row: '<a class="btn btn--line sm" href="#openrefine">' + (D.admin ? "Export and import" : "How it works") + '</a>' });
+    rows.push({ key: "bootstrap", cls: running === "bootstrap" ? "running" : (st.bootstrap.done ? "done" : (st.settings.done ? "todo" : "off")), st: running === "bootstrap" ? "running" : (st.bootstrap.done ? "done" : "to do"), title: "Bootstrap the properties",
+      text: st.bootstrap.properties_on_wiki + " of " + st.bootstrap.properties_total + " properties exist on the wiki. Each one says which Wikidata property it mirrors, so a statement here can be copied there without translation." + last(st.bootstrap),
+      row: D.admin ? btn("Rehearse", "bootstrap-dry", false) + btn(st.bootstrap.done ? "Create missing properties" : "Create the properties", "bootstrap", !st.bootstrap.done) + "<small>Rehearse lists what would be created; Create writes it. Needs the bot's property-create right (an admin account has it).</small>" : "" });
+    rows.push({ key: "dry-run", cls: running === "dry-run" ? "running" : (st["dry-run"].done ? "done" : (st.stage.done ? "todo" : "off")), st: running === "dry-run" ? "running" : (st["dry-run"].done ? "done" : "to do"), title: "Dry run",
+      text: "Builds every request the push would send, against the live wiki's ids, and writes nothing. The plan file holds the bodies; the log holds the counts and the first examples." + last(st["dry-run"]),
+      row: D.admin ? btn("Dry run", "dry-run", !st["dry-run"].done) + '<label class="chk" style="font:400 13px var(--sans);color:var(--ink-2)">limit <input type="number" id="limit" min="0" placeholder="all" style="width:5rem;padding:.3rem .4rem;font:inherit"></label>' + "<small>A limit pushes only the first N items in write order (classes and vocabularies first), to try a small batch.</small>" : "" });
+    rows.push({ key: "push", cls: running === "push" ? "running" : (st.push.done ? "done" : (st["dry-run"].done ? "todo" : "off")), st: running === "push" ? "running" : (st.push.done ? (st.push.pending ? "more to go" : "done") : "to do"), title: "Push",
+      text: plural(st.push.live, "item") + " on the wiki, " + plural(st.push.pending, "item") + " waiting" + (st.push.failed ? ", " + plural(st.push.failed, "failure") + " to look at" : "") + ". Two passes: items are created bare, then every statement is written with a reference back to the page it came from. Re-running pushes only what is new or changed." + last(st.push),
+      row: D.admin ? btn(st.push.done ? "Push what is new or changed" : "Push for real", "push", true) + "<small>Writes to the wiki, one edit a second. Nothing is ever deleted or merged there by this button. It asks once more before it starts.</small>" : "" });
+    rows.push({ key: "pull", cls: running === "pull" ? "running" : (st.pull.done ? "done" : (st.push.done ? "todo" : "off")), st: running === "pull" ? "running" : (st.pull.done ? "done" : "to do"), title: "Pull",
+      text: plural(st.pull.cached, "item") + " cached from the wiki. Reads back what we pushed, keeps the wiki's copy here for the pages, and reports drift: a label changed by hand, statements added on the wiki, an item gone." + last(st.pull),
+      row: D.admin ? btn("Pull", "pull", false) + btn("Check the wiki", "check", false) + "<small>Check reads site info, the bot's rights and the property count, and writes nothing.</small>" : "" });
+    $("#steps").innerHTML = rows.map(function (r, i) {
+      return '<li class="' + r.cls + '" id="step-' + r.key + '"><span class="n">' + (i + 1) + '</span><div><h3>' + esc(r.title) + '<span class="st">' + esc(r.st) + '</span></h3><p>' + esc(r.text) + '</p>' + (r.row ? '<div class="row">' + r.row + '</div>' : "") + '</div></li>';
+    }).join("");
+    var done = rows.filter(function (r) { return r.cls.indexOf("done") === 0; }).length;
+    $("#goProg").innerHTML = "<b>" + done + "</b> of " + rows.length + " steps done" + (s.running ? " · " + esc(s.running.kind) + " running" : "");
+  }
+
+  /* ---- kinds + items ------------------------------------------------------ */
+  function renderKinds() {
+    var k = D.st.counts.kinds, sel = $("#fKind"), keep = sel.value;
+    var order = Object.keys(k).sort();
+    $("#kinds tbody").innerHTML = order.map(function (kind) {
+      var c = k[kind]; var tot = Object.keys(c).reduce(function (a, s) { return a + c[s]; }, 0);
+      return "<tr><td><a href=\"#items\" data-kind=\"" + esc(kind) + "\">" + esc(kind) + "</a></td><td>" + tot + "</td><td>" + ((c["new"] || 0) + (c.ready || 0)) + "</td><td>" + ((c.pushed || 0) + (c.changed || 0)) + "</td><td>" + (c.changed || 0) + "</td><td>" + (c.duplicate || 0) + "</td><td>" + ((c.held || 0) + (c.failed || 0)) + "</td></tr>";
+    }).join("") || '<tr><td colspan="7">Nothing staged yet.</td></tr>';
+    sel.innerHTML = '<option value="">Every kind</option>' + order.map(function (kind) { return '<option' + (kind === keep ? " selected" : "") + '>' + esc(kind) + '</option>'; }).join("");
+    if (D.admin) $("#exports").innerHTML = '<span class="label">Download</span>' + order.filter(function (x) { return ["person", "studio", "place", "school", "museum", "show", "funder", "object", "program"].indexOf(x) >= 0; })
+      .map(function (kind) { return '<a class="btn btn--line sm" href="' + esc(GDB.API + "/wikibase/refine/" + kind + ".csv") + '">' + esc(kind) + '.csv</a>'; }).join("");
+  }
+  function loadItems() {
+    var kind = $("#fKind").value, status = $("#fStatus").value, q = $("#fQ").value.trim();
+    var path = "/wikibase/items?page=" + D.page + "&per=" + D.per + (kind ? "&kind=" + encodeURIComponent(kind) : "") + (status ? "&status=" + encodeURIComponent(status) : "") + (q ? "&q=" + encodeURIComponent(q) : "");
+    return GDB.json(path).then(function (j) { D.items = j; renderItems(); }).catch(function (e) { say(e.message, true); });
+  }
+  function renderItems() {
+    var j = D.items, tb = $("#itemsTbl tbody");
+    tb.innerHTML = j.items.map(function (it) {
+      return '<tr data-key="' + esc(it.key) + '"' + (it.key === D.key ? ' class="sel"' : "") + '><td>' + esc(it.label) + (it.description ? '<br><small class="st">' + esc(it.description) + '</small>' : "") + '</td><td>' + esc(it.kind) + '</td><td><span class="st ' + stClass(it.status) + '">' + esc(stWord(it.status)) + '</span></td><td><span class="st">' + esc(it.source_table || "") + '</span></td><td>' + (it.qid ? '<a href="' + esc(wikiItem(it.qid)) + '">' + esc(it.qid) + '</a>' : "") + '</td><td>' + (it.wikidata_qid ? '<a href="https://www.wikidata.org/wiki/' + esc(it.wikidata_qid) + '">' + esc(it.wikidata_qid) + '</a>' : "") + '</td></tr>';
+    }).join("") || '<tr><td colspan="6">Nothing matches.</td></tr>';
+    var pages = Math.max(1, Math.ceil(j.total / j.per));
+    $("#pager").innerHTML = plural(j.total, "item") + " · page " + j.page + " of " + pages + (j.page > 1 ? ' · <a href="#items" data-page="' + (j.page - 1) + '">previous</a>' : "") + (j.page < pages ? ' · <a href="#items" data-page="' + (j.page + 1) + '">next</a>' : "");
+  }
+  function valueText(v, refs) {
+    if (v.k === "item") { var r = refs[v.v]; return (r ? r.label : v.v) + (r && r.qid ? " · " + r.qid : "") + ' <small>' + esc(v.v) + '</small>'; }
+    if (v.k === "time") return v.v.replace(/-00/g, "") + (v.p === 9 ? " (year)" : "");
+    if (v.k === "quantity") return v.v + (v.u === "gdb:unit:mm" ? " mm" : "");
+    if (v.k === "url") return '<a href="' + esc(v.v) + '">' + esc(v.v) + '</a>';
+    return esc(v.v);
+  }
+  function openItem(key) {
+    D.key = key;
+    GDB.json("/wikibase/items/" + encodeURIComponent(key).replace(/%3A/g, ":")).then(function (it) {
+      var d = $("#detail"), item = it.item, refs = it.refs || {};
+      var rows = (item.claims || []).map(function (c) {
+        var q = (c.q || []).map(function (x) { return esc(x[0]) + " " + valueText(x[1], refs); }).join("; ");
+        return "<dt>" + esc(c.p) + "</dt><dd>" + valueText(c.v, refs) + (q ? " <small>(" + q + ")</small>" : "") + "</dd>";
+      }).join("");
+      d.hidden = false;
+      d.innerHTML = '<h3>' + esc(item.label) + ' <span class="st ' + stClass(it.status) + '">' + esc(stWord(it.status)) + '</span>' + (it.qid ? ' <a class="link" href="' + esc(wikiItem(it.qid)) + '">' + esc(it.qid) + ' on the wiki</a>' : "") + '</h3>' +
+        '<p>' + esc(item.description) + (item.aliases && item.aliases.length ? ' · also ' + esc(item.aliases.join(", ")) : "") + '</p>' +
+        '<p><small class="st">' + esc(it.key) + ' · from ' + esc(it.source_table || "code") + (it.canonical ? ' · folded into ' + esc(it.canonical) : "") + (it.error ? ' · <span class="hot">' + esc(it.error) + '</span>' : "") + (it.notes ? ' · ' + esc(it.notes) : "") + '</small>' + (item.url ? ' <a href="' + esc(item.url) + '">page on the site</a>' : "") + '</p>' +
+        '<dl><dt>instance of</dt><dd>' + (item.cls ? valueText({ k: "item", v: item.cls }, refs) : "—") + '</dd>' + rows + '</dl>' +
+        (D.admin ? '<form class="row" id="reviewForm">' +
+          '<label>Label<input type="text" id="rLabel" value="' + esc(item.label) + '"></label>' +
+          '<label>Description<input type="text" id="rDesc" value="' + esc(item.description) + '" style="min-width:20rem"></label>' +
+          '<label>Wikidata id<input type="text" id="rWd" value="' + esc(it.wikidata_qid || "") + '" placeholder="Q…" style="width:8rem"></label>' +
+          '<button type="submit" class="btn btn--line sm">Save</button>' +
+          (it.status !== "pushed" && it.status !== "changed" && it.status !== "duplicate" ? btn("Ready", "ready", it.status === "new") + btn("Skip", "skipped", false) : "") +
+          (it.status === "duplicate" ? btn("Keep apart", "split", false) : "") +
+          (it.status === "skipped" ? btn("Back to new", "new", false) : "") +
+          '<small>Label, description and the Wikidata id survive a re-stage. Ready and Skip decide whether it is pushed; a pushed item follows its source row.</small></form>' : "");
+      d.scrollIntoView({ block: "nearest" });
+      document.querySelectorAll("#itemsTbl tr[data-key]").forEach(function (tr) { tr.classList.toggle("sel", tr.getAttribute("data-key") === key); });
+    }).catch(function (e) { say(e.message, true); });
+  }
+
+  /* ---- clusters ----------------------------------------------------------- */
+  function loadClusters() {
+    return GDB.json("/wikibase/clusters").then(function (j) {
+      var cl = j.clusters || [];
+      $("#clusters").innerHTML = cl.length ? cl.slice(0, 80).map(function (c) {
+        return '<div class="cl"><div class="k">' + esc(c.kind) + ' · ' + plural(c.members.length, "row") + '</div><ul>' + c.members.map(function (m) {
+          return '<li class="' + (m.status === "duplicate" ? "dup" : "") + '"><b>' + esc(m.label) + '</b> <span>' + esc(m.description || "") + '</span> <span class="src">' + esc(m.source_table || "") + ' · ' + esc(stWord(m.status)) + (m.qid ? " · " + esc(m.qid) : "") + '</span>' +
+            (D.admin && m.status === "duplicate" ? ' <button type="button" class="btn btn--line sm" data-split="' + esc(m.key) + '">Keep apart</button>' : "") + ' <a class="link" href="#items" data-open="' + esc(m.key) + '">open</a></li>';
+        }).join("") + '</ul></div>';
+      }).join("") + (cl.length > 80 ? '<p class="empty">Showing 80 of ' + cl.length + ' clusters.</p>' : "") : '<p class="empty">No clusters with more than one row. ' + (D.st.counts.total ? "Every staged item is on its own." : "Run Stage first.") + '</p>';
+    }).catch(function () {});
+  }
+
+  /* ---- runs + log --------------------------------------------------------- */
+  function summaryText(r) {
+    var s = r.summary || {};
+    if (r.kind === "stage") return (s.items ? plural(s.items, "item") : "") + (s.duplicates != null ? ", " + plural(s.duplicates, "duplicate") : "") + (s.orphaned ? ", " + s.orphaned + " orphaned" : "");
+    if (r.kind === "dedupe") return plural(s.duplicates || 0, "duplicate") + " in " + plural(s.clusters || 0, "cluster");
+    if (r.kind === "pull") return plural(s.fetched || 0, "item") + " fetched" + (s.drift && Object.keys(s.drift).length ? ", drift: " + Object.keys(s.drift).map(function (k) { return k + " " + s.drift[k]; }).join(", ") : "");
+    if (r.kind === "check") return s.ok ? "reachable" + (s.login && s.login.name ? ", signed in as " + s.login.name : "") : (s.error || (s.login && s.login.error) || "see the log");
+    var f = s.failures_by_code && Object.keys(s.failures_by_code).length ? ", failures: " + Object.keys(s.failures_by_code).map(function (k) { return k + " " + s.failures_by_code[k]; }).join(", ") : "";
+    return (s.creates != null ? s.creates + " creates, " + s.updates + " updates" : "") + (s.dry_run ? " (dry run)" : "") + f + (s.plan ? ' · <a href="' + esc(GDB.API + "/wikibase/plan/" + r.id) + '">plan</a>' : "");
+  }
+  function renderRuns() {
+    var rs = D.st.runs || [];
+    $("#runsTbl tbody").innerHTML = rs.map(function (r) {
+      return '<tr data-run="' + r.id + '"><td><a href="#runs" data-run="' + r.id + '">#' + r.id + '</a></td><td>' + esc(r.kind) + '</td><td><span class="st ' + (r.status === "done" ? "ok" : (r.status === "running" ? "" : "hot")) + '">' + esc(r.status) + '</span></td><td>' + esc(when(r.started_at)) + '</td><td>' + esc(r.by_email || "") + '</td><td>' + summaryText(r) + '</td></tr>';
+    }).join("") || '<tr><td colspan="6">No runs yet.</td></tr>';
+  }
+  function showRun(id, follow) {
+    D.run = id; D.after = 0; $("#log").textContent = "";
+    poll(follow);
+  }
+  function poll(follow) {
+    if (!D.run) return;
+    GDB.json("/wikibase/runs/" + D.run + "?after=" + D.after).then(function (r) {
+      var log = $("#log");
+      if (D.after === 0) log.textContent = "";
+      (r.lines || []).forEach(function (l) {
+        var el = document.createElement("div"); el.innerHTML = '<span class="t">' + esc(String(l.ts).slice(11, 19)) + '</span>  ' + esc(l.line); log.appendChild(el); D.after = l.id;
+      });
+      if (r.lines && r.lines.length) log.scrollTop = log.scrollHeight;
+      if (r.status === "running") { D.timer = setTimeout(function () { poll(follow); }, 1500); }
+      else { D.timer = null; if (follow) { say("Run #" + r.id + " " + (r.status === "done" ? "finished." : r.status + ".")); refresh(); } }
+    }).catch(function (e) { say(e.message, true); });
+  }
+
+  /* ---- actions ------------------------------------------------------------ */
+  function startJob(kind, params, extra) {
+    say("Starting " + kind + "…");
+    return post("/wikibase/jobs", Object.assign({ kind: kind, params: params || {} }, extra || {})).then(function (j) {
+      say(kind + " started as run #" + j.run_id + ".");
+      return GDB.json("/wikibase/status").then(function (s) { D.st = s; renderHero(); renderSteps(); renderRuns(); showRun(j.run_id, true); document.getElementById("runs").scrollIntoView({ behavior: "smooth", block: "start" }); });
+    }).catch(function (e) { say(e.message, true); });
+  }
+  document.addEventListener("click", function (ev) {
+    var b = ev.target.closest("button[data-act]");
+    if (b) {
+      var act = b.getAttribute("data-act"), lim = $("#limit") ? parseInt($("#limit").value, 10) || 0 : 0;
+      if (act === "stage") return startJob("stage");
+      if (act === "dedupe") return startJob("dedupe");
+      if (act === "bootstrap-dry") return startJob("bootstrap", {}, { really: false });
+      if (act === "bootstrap") { if (!confirm("Create the missing properties on " + D.st.wiki + "? Properties cannot be deleted by a normal user afterwards.")) return; return startJob("bootstrap", {}, { really: true }); }
+      if (act === "dry-run") return startJob("dry-run", lim ? { limit: lim } : {});
+      if (act === "push") { if (!confirm("Push " + D.st.changes.pending + " item(s) to " + D.st.wiki + " for real" + (lim ? " (limit " + lim + ")" : "") + "? Nothing is deleted or merged; new items are created and ours are updated.")) return; return startJob("push", lim ? { limit: lim } : {}, { confirm: true }); }
+      if (act === "pull") return startJob("pull");
+      if (act === "check") return startJob("check");
+      if (act === "ready" || act === "skipped" || act === "new") return reviewItem({ status: act });
+      if (act === "split") return reviewItem({ split: true });
+    }
+    var sp = ev.target.closest("button[data-split]");
+    if (sp) { return post("/wikibase/items/" + sp.getAttribute("data-split"), { split: true }).then(function () { say("Kept apart."); loadClusters(); refresh(); }).catch(function (e) { say(e.message, true); }); }
+    var tr = ev.target.closest("#itemsTbl tr[data-key]");
+    if (tr && !ev.target.closest("a")) { openItem(tr.getAttribute("data-key")); return; }
+    var o = ev.target.closest("a[data-open]");
+    if (o) { ev.preventDefault(); openItem(o.getAttribute("data-open")); document.getElementById("items").scrollIntoView({ behavior: "smooth" }); return; }
+    var k = ev.target.closest("a[data-kind]");
+    if (k) { ev.preventDefault(); $("#fKind").value = k.getAttribute("data-kind"); D.page = 1; loadItems(); return; }
+    var pg = ev.target.closest("a[data-page]");
+    if (pg) { ev.preventDefault(); D.page = parseInt(pg.getAttribute("data-page"), 10) || 1; loadItems(); return; }
+    var rn = ev.target.closest("a[data-run]");
+    if (rn) { ev.preventDefault(); showRun(parseInt(rn.getAttribute("data-run"), 10), false); return; }
+  });
+  function reviewItem(body) {
+    if (!D.key) return;
+    return post("/wikibase/items/" + D.key, body).then(function () { say("Saved."); openItem(D.key); loadItems(); return GDB.json("/wikibase/status").then(function (s) { D.st = s; renderKinds(); renderSteps(); }); }).catch(function (e) { say(e.message, true); });
+  }
+  document.addEventListener("submit", function (ev) {
+    if (ev.target.id === "reviewForm") {
+      ev.preventDefault();
+      return reviewItem({ label: $("#rLabel").value, description: $("#rDesc").value, wikidata_qid: $("#rWd").value.trim() });
+    }
+    if (ev.target.id === "botForm") {
+      ev.preventDefault();
+      var body = { url: $("#sUrl").value.trim(), user: $("#sUser").value.trim(), bot: $("#sBot").checked, pause: parseFloat($("#sPause").value) || 0 };
+      if ($("#sPass").value) body.password = $("#sPass").value;
+      post("/wikibase/settings", body).then(function (s) { $("#sPass").value = ""; $("#sMsg").textContent = "Saved" + (s.password_set ? "; a password is on file." : "; no password yet."); return GDB.json("/wikibase/status"); })
+        .then(function (s) { D.st = s; renderHero(); renderSteps(); }).catch(function (e) { $("#sMsg").textContent = e.message; });
+      return;
+    }
+    if (ev.target.id === "importForm") {
+      ev.preventDefault();
+      var f = $("#importFile").files[0]; if (!f) return;
+      var fd = new FormData(); fd.append("file", f);
+      $("#importMsg").textContent = "Importing…";
+      GDB.json("/wikibase/refine/import", { method: "POST", body: fd }).then(function (j) {
+        $("#importMsg").textContent = j.rows + " rows: " + j.wikidata + " Wikidata ids, " + j.status + " statuses, " + j.merged + " merges, " + j.edits + " edited rows" + (j.unknown ? ", " + j.unknown + " unknown keys" : "") + ".";
+        refresh();
+      }).catch(function (e) { $("#importMsg").textContent = e.message; });
+    }
+  });
+  $("#fGo").addEventListener("click", function () { D.page = 1; loadItems(); });
+  $("#fQ").addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); D.page = 1; loadItems(); } });
+  $("#fKind").addEventListener("change", function () { D.page = 1; loadItems(); });
+  $("#fStatus").addEventListener("change", function () { D.page = 1; loadItems(); });
+  $("#sTest").addEventListener("click", function () {
+    $("#sMsg").textContent = "Testing…"; $("#testLog").hidden = false; $("#testLog").textContent = "";
+    post("/wikibase/settings/test").then(function (j) {
+      $("#testLog").textContent = (j.lines || []).join("\n");
+      $("#sMsg").textContent = j.ok ? "The wiki answers and the bot can sign in." : (j.error || (j.login && j.login.error) || "See the lines below.");
+    }).catch(function (e) { $("#sMsg").textContent = e.message; });
+  });
+
+  /* ---- load ----------------------------------------------------------------- */
+  function refresh() {
+    return GDB.json("/wikibase/status").then(function (s) {
+      D.st = s; renderHero(); renderSteps(); renderKinds(); renderRuns();
+      if (s.running && (!D.run || D.run !== s.running.id)) showRun(s.running.id, true);
+      return Promise.all([loadItems(), loadClusters()]);
+    }).catch(function (e) { $("#heroMeta").textContent = "The API did not answer: " + e.message; });
+  }
+  function loadSettings() {
+    GDB.json("/wikibase/settings").then(function (s) {
+      $("#sUrl").value = s.url; $("#sUser").value = s.user || ""; $("#sPause").value = s.pause; $("#sBot").checked = !!s.bot;
+      $("#sMsg").textContent = s.password_set ? "A password is on file." : "No password saved yet.";
+    }).catch(function () {});
+  }
+  // the chip calls onchange on its first render too: reload only when the sign-in state flips later (sign-out)
+  GDB.chip("#chip", { next: here, onchange: function (m) { if (D.loaded && !!(m && m.signed_in) !== !!(D.me && D.me.signed_in)) location.reload(); } });
+  GDB.me().then(function (m) {
+    D.me = m; D.admin = !!(m && m.signed_in && m.is_admin);
+    if (D.admin) { $("#settings").hidden = false; $("#refineAdmin").hidden = false; loadSettings(); }
+    return refresh();
+  }).then(function () {
+    D.loaded = true;
+    var key = GDB.param("key");
+    if (key) { openItem(key); document.getElementById("items").scrollIntoView(); }
+  });
+})();
+</script>
+</body>
+</html>
