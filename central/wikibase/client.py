@@ -39,6 +39,26 @@ def error_code(e: Exception) -> str:
     return parts[1] if len(parts) >= 2 and re.fullmatch(r"[a-z0-9_-]+", parts[1]) else "error"
 
 
+def error_text(action: str, err: dict) -> str:
+    """One line for an API error: ``<action>: <code>: <info> [<message names>]``. The names
+    say what a generic code really was: ``failed-save`` is an ``edit-conflict`` when two
+    writers hit one item, a label clash, a filter, a throttle."""
+    code = str(err.get("code") or "")
+    names: list[str] = []
+    for m in err.get("messages") or []:
+        n = (m or {}).get("name") if isinstance(m, dict) else None
+        if n and n not in (code, f"wikibase-api-{code}") and n not in names:
+            names.append(n)
+    tail = f" [{', '.join(names)}]" if names else ""
+    return f"{action}: {code}: {err.get('info')}{tail}"
+
+
+def is_conflict(e: Exception) -> bool:
+    """An edit conflict: another writer changed the entity between our read and our save."""
+    s = str(e)
+    return error_code(e) == "editconflict" or "edit-conflict" in s or "editconflict" in s
+
+
 def owner_of(error: str) -> str | None:
     """The item an "already has label" message names."""
     if "already has label" not in error:
@@ -76,13 +96,19 @@ class Wikibase:
         if self.log:
             self.log(msg)
 
+    def _beat(self) -> None:
+        """Tell the job runner we are alive (once per request); a job asked to stop ends here."""
+        b = getattr(self.log, "beat", None)
+        if b:
+            b()
+
     def get(self, **params) -> dict:
+        self._beat()
         r = self.session.get(self.api, params={**params, "format": "json"})
         r.raise_for_status()
         data = r.json()
         if "error" in data:
-            e = data["error"]
-            raise WikibaseError(f"{params.get('action')}: {e.get('code')}: {e.get('info')}")
+            raise WikibaseError(error_text(str(params.get("action")), data["error"]))
         return data
 
     def _post_once(self, params: dict) -> dict:
@@ -94,13 +120,14 @@ class Wikibase:
         out = r.json()
         err = out.get("error")
         if err:
-            raise WikibaseError(f"{params.get('action')}: {err.get('code')}: {err.get('info')}")
+            raise WikibaseError(error_text(str(params.get("action")), err))
         return out
 
     def post(self, **params) -> dict:
         last: Exception | None = None
         signed_in = 0
         for attempt in range(self.attempts):
+            self._beat()
             try:
                 data = self._post_once(params)
             except WikibaseError as e:
@@ -109,6 +136,11 @@ class Wikibase:
                     last = e
                     self._say(f"  {code}: waiting {15 * (attempt + 1)} s")
                     time.sleep(15 * (attempt + 1))
+                    continue
+                if is_conflict(e) and attempt < 3:
+                    last = e
+                    self._say(f"  edit conflict on the wiki (another writer touched the item): retrying in {2 * (attempt + 1)} s")
+                    time.sleep(2 * (attempt + 1))
                     continue
                 if code in ("badtoken", "assertuserfailed", "assertnameduserfailed") and self.user and signed_in < 2:
                     signed_in += 1
@@ -212,6 +244,23 @@ class Wikibase:
             if len(rows) < page:
                 return out
             offset += page
+
+    def duplicate_keys(self, key_pid: str, limit: int = 2000) -> dict[str, list[str]]:
+        """Glass Database IDs that sit on more than one item (two loaders ran at once, or a copy
+        made by hand): key → items, lowest id first. Through SPARQL; empty when it is down."""
+        q = (f"PREFIX gdbt: <{self.base}/prop/direct/>\n"
+             f"SELECT ?key (GROUP_CONCAT(STR(?item); separator=' ') AS ?items) WHERE {{ ?item gdbt:{key_pid} ?key }} "
+             f"GROUP BY ?key HAVING (COUNT(?item) > 1) LIMIT {int(limit)}")
+        try:
+            rows = self.sparql(q)
+        except (httpx.HTTPError, ValueError) as e:
+            self._say(f"  SPARQL unavailable ({e}); duplicate ids not checked")
+            return {}
+        out: dict[str, list[str]] = {}
+        for b in rows:
+            ids = {x.rsplit("/", 1)[-1] for x in b["items"]["value"].split()}
+            out[b["key"]["value"]] = sorted(ids, key=lambda s: int(s[1:]) if s[1:].isdigit() else 0)
+        return out
 
     # ------------------------------------------------------------------ writes
     def placeholder(self, entity_type: str = "item") -> str:
