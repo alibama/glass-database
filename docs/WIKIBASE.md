@@ -50,7 +50,7 @@ Every item carries a **Glass Database ID**: `gdb:<table>:<row id>` for an ingest
 
 ## The pipeline
 
-Eight steps, in the order the page shows them. Each one is a background job with a log the
+Nine steps, in the order the page shows them. Each one is a background job with a log the
 page follows; state is in the database (`wb_runs`, `wb_log`), so every API worker sees it and
 one job runs at a time.
 
@@ -80,7 +80,38 @@ one job runs at a time.
    wins); the others become `duplicate`, their statements and labels fold into the canonical,
    and their Glass Database IDs ride along as extra identifiers, so every source row still finds
    the item. *Keep apart* on the page (or `merge_into` in a CSV) overrides it.
-4. **OpenRefine** (`refine.py`). Export a kind as CSV (`/api/wikibase/refine/person.csv` …);
+4. **Wikidata lookup** (`wikidata.py`). Asks Wikidata what it already knows, and writes the
+   answer into the same `wikidata_qid` the OpenRefine import fills, so the next push carries
+   it to the wiki as a *Wikidata ID* statement. Two sources, both read only. The
+   **glass-artist index**: three SPARQL reads of every item whose occupation is glass artist,
+   glassblower, stained-glass artist, glass painter, glass designer or glass engraver (about
+   2,100 people) with their aliases, descriptions, links to institutions and places (*has
+   works in the collection*, *affiliation*, *employer*, *educated at*, *work location*,
+   *award received*), websites and Instagram accounts; a person of ours whose name is exactly
+   one of them is `matched`, two namesakes are `unsure`. The **Wikidata reconciliation
+   service** (`wikidata-reconciliation.wmcloud.org`, the one OpenRefine uses) for everything
+   else, ten queries a request, each with the class the kind calls for (human settlement or
+   U.S. state or first-level division for places, museum, educational institution,
+   organization, award, color, occupation, the show's class) and the country when we know it.
+   The rules are narrow on purpose: a candidate must carry our label or alias exactly; a town
+   must name its region (or its country) in its description; a person found only through the
+   service must be described as a glass worker (a namesake who is some other kind of artist is
+   left `unsure`, anyone else dropped); a technique, trait or studio must be described in
+   terms of glass. One candidate that passes is `matched` and written to the item; several
+   are `unsure` and wait in the page's Wikidata section, where an administrator picks one
+   (`confirmed`), types a Q id, or says none (`rejected`); no candidate is `none`. An item
+   that already had an id (the hand lists in `model.py`, OpenRefine, a reviewer) is `known`
+   and never asked about. A second run looks only at items not yet checked or whose label
+   changed; *Look everything up again* (`recheck`) redoes the automatic decisions and never a
+   person's. Forms, classes, programs, pieces and collecting events are not looked up (a glass
+   bird is not the bird). The run ends with a report: the museums Wikidata says hold our
+   people's work, the websites and Instagram accounts it has that we lack, and the glass
+   artists it ties to our own institutions and places (a museum's collection, a school's
+   alumni, a town) that we have no row for, each with its Wikidata link
+   (`/api/wikibase/wikidata/suggested`). Nothing is written to Wikidata, and nothing from
+   Wikidata is copied into our statements: a person reads the report and decides.
+5. **OpenRefine** (`refine.py`). For what the lookup could not settle. Export a kind as CSV
+   (`/api/wikibase/refine/person.csv` …);
    reconcile `label` against Wikidata in OpenRefine (`Q5` for people, the suggested type
    otherwise) and copy the match into `wikidata_qid` (`cell.recon.match.id`); fix labels,
    descriptions, aliases; set `status` to `ready` or `skipped`; write a key into `merge_into`
@@ -92,15 +123,15 @@ one job runs at a time.
    deleted on the wiki by an import. This step is optional before the first load and
    completed after it: the wiki holds a person without a Wikidata id, and the id arrives as a
    statement when found.
-5. **Bootstrap the properties** (`push.py`, `what=properties`). Creates every property that
+6. **Bootstrap the properties** (`push.py`, `what=properties`). Creates every property that
    has no property of that label on the wiki, then adds *equivalent property* (the Wikidata
    URL) and *formatter URL* statements where missing. *Rehearse* lists them; *Create* writes.
-6. **Dry run**. Builds every request the push would send, against the live wiki's ids (the
+7. **Dry run**. Builds every request the push would send, against the live wiki's ids (the
    property labels, and the SPARQL map of every Glass Database ID already there), and writes
    nothing. The plan file (`data/wikibase/plan-<run>.json`, also at `/api/wikibase/plan/<run>`)
    holds every body; the log holds the counts and the first examples. A *limit* takes only the
    first N items in write order (classes and vocabularies first).
-7. **Push**. Two passes. Pass 1 creates every item that has no id yet, bare: labels,
+8. **Push**. Two passes. Pass 1 creates every item that has no id yet, bare: labels,
    description, aliases, its Glass Database ID(s) and *instance of*. Find-before-create: the id
    in `wb_items`, then the wiki's key map, then the API's "already has label" answer, whose
    item is reused only when it carries our key; otherwise the key's tail is appended to the
@@ -118,7 +149,7 @@ one job runs at a time.
    once. Edit conflicts are retried, and the log names the real reason behind a generic save
    error (`failed-save [edit-conflict]`, a label clash, a throttle). Pushing again continues
    where a stopped or lost run left off.
-8. **Pull** (`sync.py`). Fetches what we pushed into `wb_cache` (the wiki's JSON per item) and
+9. **Pull** (`sync.py`). Fetches what we pushed into `wb_cache` (the wiki's JSON per item) and
    reports drift: a label changed by hand, statements added on the wiki, an item gone, a lost
    Glass Database ID, and a Glass Database ID that sits on more than one item (the note carries
    the *Special:MergeItems* link for a person; the loader never merges). *Check the wiki* is the
@@ -171,6 +202,7 @@ review queue has already replaced the Admin console's approvals.
 ```
 python -m central.wikibase status
 python -m central.wikibase stage            # then dedupe runs by itself from the page; here: `dedupe`
+python -m central.wikibase wikidata [--recheck] [--kinds person,place] [--limit N]
 python -m central.wikibase check
 python -m central.wikibase bootstrap        # dry; --really creates the properties
 python -m central.wikibase dry-run [--kinds person,studio] [--limit 50] [--no-live]
@@ -194,3 +226,10 @@ WIKIBASE_BOT_PASSWORD=… python -m central.wikibase set-bot "Name@botname"
   gate, `wb_runs`; a cron line must not overlap a push started from the page). Two loaders
   creating the same keys in step make duplicate items faster than the wiki's label check can
   stop them; *Pull* lists such keys with merge links.
+* The Wikidata lookup leans on two public services that are not ours: the query service
+  (`query.wikidata.org`, three reads a run) and the reconciliation service
+  (`wikidata-reconciliation.wmcloud.org`, ten names a request with a pause between requests,
+  under the site's User-Agent). A run that cannot reach them says so and stops; the rows it
+  wrote before that stand, and running it again continues. Its matches are only as good as
+  Wikidata's descriptions: read the *unsure* list, and spot-check a few *matched* places and
+  people before the first push that carries them.

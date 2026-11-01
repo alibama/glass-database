@@ -31,7 +31,7 @@ from central.wikibase import store
 STALE = 600          # seconds without a heartbeat → the run is considered dead
 GRACE = 30           # a run from before this process booted gets this long to beat again
 BEAT_EVERY = 3       # seconds between heartbeat writes (beats in between are free)
-KINDS = ("stage", "dedupe", "bootstrap", "dry-run", "push", "pull", "check")
+KINDS = ("stage", "dedupe", "wikidata", "bootstrap", "dry-run", "push", "pull", "check")
 LIVE = ("running", "stopping")
 
 
