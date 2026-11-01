@@ -536,7 +536,8 @@ def test_page_markup():
     for must in ("/wikibase/status", "/wikibase/jobs", "/wikibase/runs/", "/wikibase/settings", "/wikibase/refine/import",
                  "Collectors", "Special:BotPasswords", "openrefine-manifest.json", "confirm(", "Nine steps",
                  "/wikibase/wikidata/suggested", "/wikibase/wikidata?status=unsure", '"wd-use"', '"wd-none"',
-                 '"wikidata-recheck"', "www.wikidata.org/wiki/", "as suggested", "local model panel"):
+                 '"wikidata-recheck"', "www.wikidata.org/wiki/", "as suggested", "local model panel", '"en-add"',
+                 "/wikibase/enrich"):
         assert must in page, must
     assert 'type="password"' in page and "GDB.me()" in page
     # the proxy, the dev site and the installer know the page
@@ -748,6 +749,32 @@ def test_api_wikidata_rows_decisions_and_job(client, conn, fake_wikidata):
     assert row["suggestion"]["confidence"] == 0.91 and row["suggestion"]["settled"] is True
     assert client.post("/wikibase/wikidata/gdb:nobody:1", json={"suggest": {"qid": "Q1"}}, headers=_auth()).status_code == 404
     assert client.post(f"/wikibase/wikidata/{ivo['key']}", json={"suggest": {"qid": "Q1"}}).status_code == 401
+    # a web search's proposal for a record with nothing on Wikidata: kept beside the item; a person adds a field
+    rae = client.get("/wikibase/items", params={"q": "Rae Sutter"}).json()["items"][0]
+    prop = {"fields": {"website": {"value": "https://raesutterglass.example/", "confidence": 0.9, "because": "her site names Crozet",
+                                   "evidence": ["https://raesutterglass.example/about"]},
+                       "instagram": {"value": "@rae.sutter.glass", "confidence": 0.8, "evidence": ["https://www.instagram.com/rae.sutter.glass/"]},
+                       "city": {"value": "Crozet", "region": "Virginia", "confidence": 0.7},
+                       "bogus": {"value": "x"}},
+            "model": "qwen3:8b", "searched": True, "version": "e-1"}
+    assert client.post(f"/wikibase/items/{rae['key']}", json={"enrich": prop}).status_code == 401
+    r = client.post(f"/wikibase/items/{rae['key']}", json={"enrich": prop}, headers=_auth())
+    assert r.status_code == 200 and set(r.json()["enrich"]["fields"]) == {"website", "instagram", "city"}
+    assert r.json()["enrich"]["fields"]["instagram"]["value"] == "rae.sutter.glass" and r.json()["enrich"]["by"] == BOSS
+    en = client.get("/wikibase/enrich").json()["items"]
+    assert [e["key"] for e in en] == [rae["key"]] and en[0]["has"]["instagram"] == [] and en[0]["enrich"]["applied"] == {}
+    assert client.post(f"/wikibase/items/{rae['key']}", json={"add": [{"p": "work location", "v": "Crozet"}]}, headers=_auth()).status_code == 400
+    r = client.post(f"/wikibase/items/{rae['key']}", json={"add": [{"p": "official website", "v": "https://raesutterglass.example/"},
+                                                                  {"p": "Instagram username", "v": "rae.sutter.glass"}]}, headers=_auth())
+    assert r.status_code == 200 and set(r.json()["enrich"]["applied"]) == {"website", "instagram"}
+    row = store.one(conn.execute("SELECT * FROM wb_items WHERE key=?", (rae["key"],)))
+    eff = store.effective_item(row)
+    assert "https://raesutterglass.example/" in eff.values("official website") and "rae.sutter.glass" in eff.values("Instagram username")
+    stage.run(conn, lambda *_: None)                                   # a re-stage keeps what the reviewer added
+    eff = store.effective_item(store.one(conn.execute("SELECT * FROM wb_items WHERE key=?", (rae["key"],))))
+    assert "rae.sutter.glass" in eff.values("Instagram username")
+    r = client.post(f"/wikibase/items/{rae['key']}", json={"enrich": prop}, headers=_auth())   # the same values again keep their marks
+    assert set(r.json()["enrich"]["applied"]) == {"website", "instagram"}
     st = client.get("/wikibase/status").json()
     assert st["steps"]["wikidata"]["matched"] >= 3 and st["steps"]["wikidata"]["confirmed"] == 1 and "wikidata" in st["steps"]
     r = client.post("/wikibase/jobs", json={"kind": "wikidata", "params": {"recheck": True}}, headers=_auth())

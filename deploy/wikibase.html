@@ -185,6 +185,8 @@
   <div id="wdUnsure"><p class="empty">Nothing waiting. Run the lookup from the pipeline.</p></div>
   <h3 class="sub">Glass artists Wikidata ties to our institutions and places, with no row here</h3>
   <div id="wdSuggested"><p class="empty">Run the lookup to see them.</p></div>
+  <h3 class="sub">Records with no Wikidata item that a web search found more about</h3>
+  <div id="wdEnrich"><p class="empty">Nothing yet. lexflow's enrich step searches for a website, an Instagram account and a city and leaves what it found here; a person adds it.</p></div>
  </div>
 </section>
 
@@ -421,6 +423,21 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       }).join("") + (j.total > rows.length ? '<p class="empty">Showing ' + rows.length + ' of ' + j.total + '.</p>' : "") : '<p class="empty">' + (wd.done ? "Nothing waiting on a person." : "Nothing waiting. Run the lookup from the pipeline.") + '</p>';
     }).catch(function () {});
   }
+  function loadEnrich() {
+    GDB.json("/wikibase/enrich?limit=100").then(function (j) {
+      var rows = j.items || [];
+      function host(u) { try { return new URL(u).host.replace(/^www\./, ""); } catch (e) { return u; } }
+      $("#wdEnrich").innerHTML = rows.length ? rows.map(function (r) {
+        var en = r.enrich || {}, f = en.fields || {}, ap = en.applied || {}, has = r.has || {};
+        var parts = [];
+        if (f.website) parts.push('<li><b>Website</b> <a class="link" href="' + esc(f.website.value) + '" rel="noopener">' + esc(host(f.website.value)) + '</a> <span class="src">' + Math.round((f.website.confidence || 0) * 100) + '%</span> <span class="why">' + esc(f.website.because || "") + '</span>' + (ap.website ? ' <span class="src">added</span>' : (has.website || []).length ? ' <span class="src">the record already has ' + esc(host(has.website[0])) + '</span>' : (D.admin ? ' ' + btn("Add the website", "en-add", true, ' data-key="' + esc(r.key) + '" data-p="official website" data-v="' + esc(f.website.value) + '"') : "")) + '</li>');
+        if (f.instagram) parts.push('<li><b>Instagram</b> <a class="link" href="https://www.instagram.com/' + esc(f.instagram.value) + '/" rel="noopener">@' + esc(f.instagram.value) + '</a> <span class="src">' + Math.round((f.instagram.confidence || 0) * 100) + '%</span> <span class="why">' + esc(f.instagram.because || "") + '</span>' + (ap.instagram ? ' <span class="src">added</span>' : (has.instagram || []).length ? ' <span class="src">the record already has @' + esc(has.instagram[0]) + '</span>' : (D.admin ? ' ' + btn("Add the account", "en-add", true, ' data-key="' + esc(r.key) + '" data-p="Instagram username" data-v="' + esc(f.instagram.value) + '"') : "")) + '</li>');
+        if (f.city) parts.push('<li><b>Place</b> ' + esc([f.city.value, f.city.region, f.city.country].filter(Boolean).join(", ")) + ' <span class="src">' + Math.round((f.city.confidence || 0) * 100) + '%</span> <span class="why">' + esc(f.city.because || "") + (has.place && has.place.length ? " (the record says " + esc(has.place[0]) + ")" : "; a place is added through the row's based-in column") + '</span></li>');
+        var ev = []; Object.keys(f).forEach(function (k) { (f[k].evidence || []).forEach(function (u) { if (ev.indexOf(u) < 0) ev.push(u); }); });
+        return '<div class="cl"><div class="k">' + esc(r.kind) + '<b>' + esc(r.label) + '</b><span>' + esc(r.description || "") + '</span></div><ul>' + parts.join("") + (ev.length ? '<li><span class="src">read: ' + ev.slice(0, 4).map(function (u) { return '<a class="link" href="' + esc(u) + '" rel="noopener">' + esc(host(u)) + '</a>'; }).join(" · ") + (en.model ? ' · ' + esc(en.model) : "") + '</span></li>' : "") + '</ul></div>';
+      }).join("") : '<p class="empty">Nothing yet. lexflow\'s enrich step searches for a website, an Instagram account and a city and leaves what it found here; a person adds it.</p>';
+    }).catch(function () {});
+  }
   function decideWikidata(key, qid) {
     return post("/wikibase/wikidata/" + key, { qid: qid }).then(function (r) { say(qid ? esc(r.label) + " is " + qid + " on Wikidata." : r.label + " is not on Wikidata."); return GDB.json("/wikibase/status"); })
       .then(function (s) { D.st = s; renderSteps(); loadWikidata(); }).catch(function (e) { say(e.message, true); });
@@ -481,6 +498,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       if (act === "wikidata") return startJob("wikidata");
       if (act === "wikidata-recheck") { if (!confirm("Look every item up again? The automatic matches are redone; what a person decided on this page stays.")) return; return startJob("wikidata", { recheck: true }); }
       if (act === "wd-use" || act === "wd-none") return decideWikidata(b.getAttribute("data-wd"), act === "wd-use" ? b.getAttribute("data-qid") : "");
+      if (act === "en-add") { var ek = b.getAttribute("data-key"), ep = b.getAttribute("data-p"), ev = b.getAttribute("data-v"); return post("/wikibase/items/" + ek, { add: [{ p: ep, v: ev }] }).then(function () { say("Added " + ep + " to " + ek + "; the next push carries it."); loadEnrich(); if (D.key === ek) openItem(ek); }).catch(function (e) { say(e.message, true); }); }
       if (act === "bootstrap-dry") return startJob("bootstrap", {}, { really: false });
       if (act === "bootstrap") { if (!confirm("Create the missing properties on " + D.st.wiki + "? Properties cannot be deleted by a normal user afterwards.")) return; return startJob("bootstrap", {}, { really: true }); }
       if (act === "dry-run") return startJob("dry-run", lim ? { limit: lim } : {});
@@ -556,7 +574,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     return GDB.json("/wikibase/status").then(function (s) {
       D.st = s; renderHero(); renderSteps(); renderKinds(); renderRuns();
       if (s.running && (!D.run || D.run !== s.running.id)) showRun(s.running.id, true);
-      loadWikidata();
+      loadWikidata(); loadEnrich();
       return Promise.all([loadItems(), loadClusters()]);
     }).catch(function (e) { $("#heroMeta").textContent = "The API did not answer: " + e.message; });
   }
