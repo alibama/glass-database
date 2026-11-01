@@ -111,9 +111,18 @@ one job runs at a time.
    second (`wikibase_pause`), `maxlag=5`, back-off on `ratelimited`, a fresh sign-in when the
    session lapses. A failed item is marked `failed` with the error and retried next time; the
    run goes on. **Nothing is ever deleted or merged on the wiki by the loader.**
+   **One push at a time.** A run proves it is alive with a heartbeat (every item, every request
+   to the wiki); the Runs section shows the one going, with a *Stop* button that ends it after
+   the item it is on. A run that says *lost* was cut off by a restart of the service; a run that
+   finds itself marked lost while it is still going stops itself, so two loaders never write at
+   once. Edit conflicts are retried, and the log names the real reason behind a generic save
+   error (`failed-save [edit-conflict]`, a label clash, a throttle). Pushing again continues
+   where a stopped or lost run left off.
 8. **Pull** (`sync.py`). Fetches what we pushed into `wb_cache` (the wiki's JSON per item) and
    reports drift: a label changed by hand, statements added on the wiki, an item gone, a lost
-   Glass Database ID. *Check the wiki* is the read-only connectivity test.
+   Glass Database ID, and a Glass Database ID that sits on more than one item (the note carries
+   the *Special:MergeItems* link for a person; the loader never merges). *Check the wiki* is the
+   read-only connectivity test.
 
 ### Statuses
 
@@ -181,3 +190,7 @@ WIKIBASE_BOT_PASSWORD=… python -m central.wikibase set-bot "Name@botname"
   after a big push; `wb_items.qid` is the source of truth for what we created.
 * Backups: a nightly entity dump of the wiki (every item as JSON, via the API) next to the
   SQLite backup; `wb_cache` is not a backup.
+* Never run two loaders against the wiki at once (the page and the command line share the same
+  gate, `wb_runs`; a cron line must not overlap a push started from the page). Two loaders
+  creating the same keys in step make duplicate items faster than the wiki's label check can
+  stop them; *Pull* lists such keys with merge links.

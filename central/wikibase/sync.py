@@ -121,8 +121,24 @@ def pull(conn, log=print, params: dict | None = None) -> dict:
                 drift["no_key"] += 1
                 notes.append(f"{r['key']}: {r['qid']} lost its Glass Database ID")
         conn.commit()
+        # one key on several items: two loaders ran at once, or someone copied an item by hand.
+        # The loader never merges; the note carries the Special:MergeItems link for a person.
+        if key_pid:
+            try:
+                dups = api.duplicate_keys(key_pid)
+            except Exception as e:  # noqa: BLE001
+                dups = {}
+                log(f"  could not check for duplicate ids ({e})")
+            if dups:
+                drift["duplicate_key"] = len(dups)
+                ours = {r["key"]: r["qid"] for r in rows}
+                for k, ids in list(dups.items())[:200]:
+                    keep = ours.get(k) or ids[0]
+                    extra = [i for i in ids if i != keep]
+                    notes.append(f"{k}: on {len(ids)} items ({', '.join(ids)}); ours is {keep}. Merge the others into it: "
+                                 + " · ".join(f"{api.base}/wiki/Special:MergeItems?fromid={i}&toid={keep}" for i in extra))
         log(f"cached {len(ents)} items; drift: " + (", ".join(f"{k} {n}" for k, n in drift.items()) or "none"))
-        for n in notes[:30]:
+        for n in notes[:500]:            # the log is the record a person works from
             log("  " + n)
         return {"fetched": len(ents), "drift": dict(drift), "notes": notes[:200]}
     finally:

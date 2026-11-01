@@ -6,6 +6,17 @@ All notable changes are documented here. This project distinguishes
 proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
+### Fixed
+- **Wikibase runs could overlap.** A run's heartbeat only beat on log lines, and a push logs
+  every 100 items (about three minutes), so the page declared a live push *lost* and let the
+  next one start; three pushes then wrote the same items at once, which showed up as
+  `failed-save` edit conflicts and duplicate items. Now every item and every request to the wiki
+  beats, a run that finds itself marked lost stops itself, a run from before a service restart is
+  recognised as dead, the start gate takes the write lock, and the Runs section has a *Stop*
+  button (`POST /api/wikibase/runs/{id}/stop`). Edit conflicts are retried; the log names the
+  real reason behind a generic save error; *Pull* reports Glass Database IDs that sit on more
+  than one item, with the merge link for a person (the loader still never merges or deletes).
+
 ### Added
 - **The console's last sections are pages; the Streamlit admin can be switched off.**
   `/events-admin.html` creates and runs collecting events (title, theme, dates, rules, prize

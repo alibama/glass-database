@@ -117,7 +117,7 @@ def status(request: Request):
     }
     return {"wiki": s["url"], "public_base": s["public_base"], "configured": steps["settings"]["done"],
             "counts": counts, "changes": sync.changes(conn), "steps": steps,
-            "running": ({k: busy.get(k) for k in ("id", "kind", "started_at", "by_email")} if busy else None),
+            "running": ({k: busy.get(k) for k in ("id", "kind", "status", "started_at", "by_email")} if busy else None),
             "runs": [{k: r.get(k) for k in ("id", "kind", "status", "started_at", "finished_at", "by_email")}
                      | {"summary": _small_summary(r.get("summary") or {})} for r in runs[:12]],
             "classes": [{"slug": c.slug, "label": c.label, "wikidata": c.wikidata} for c in CLASSES],
@@ -183,6 +183,14 @@ def run_status(run_id: int, after: int = Query(0, ge=0)):
         raise HTTPException(404, "no such run")
     st["summary"] = _small_summary(st.get("summary") or {}) | ({"plan": st["summary"].get("plan")} if st.get("summary") else {})
     return st
+
+
+@router.post("/runs/{run_id}/stop", summary="Ask the running job to stop; it ends after the item it is on")
+def stop_run(run_id: int, u: dict = Depends(require_admin)):
+    r = jobs.stop(_conn(), run_id)
+    if not r:
+        raise HTTPException(404, "no such run")
+    return {k: r.get(k) for k in ("id", "kind", "status", "started_at", "finished_at", "by_email")}
 
 
 @router.get("/plan/{run_id}", summary="The plan a dry run or push wrote")

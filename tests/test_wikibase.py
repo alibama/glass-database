@@ -2,6 +2,7 @@
 round trip, the two-pass pusher against a fake wiki, the jobs, and the API + page."""
 import json
 import re
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -208,6 +209,13 @@ class FakeWiki(Wikibase):
             for s in (e.get("claims") or {}).get(key_pid, []):
                 out[s["mainsnak"]["datavalue"]["value"]] = q
         return out
+
+    def duplicate_keys(self, key_pid, limit=2000):
+        seen = {}
+        for q, e in self.entities.items():
+            for s in (e.get("claims") or {}).get(key_pid, []):
+                seen.setdefault(s["mainsnak"]["datavalue"]["value"], []).append(q)
+        return {k: v for k, v in seen.items() if len(v) > 1}
 
     def edit(self, data, *, qid=None, new=None, clear=False, summary=""):
         self.edits.append({"qid": qid, "new": new, "clear": clear, "data": data, "summary": summary})
@@ -421,6 +429,100 @@ def test_api_stage_job_items_review_and_refine(client, conn):
     assert client.get(f"/wikibase/preview/{key}").status_code == 200
     assert client.get("/wikibase/clusters").status_code == 200
     assert client.get("/wikibase/plan/999").status_code == 404
+
+
+def test_jobs_stop_lost_and_boot(conn, monkeypatch):
+    # a job asked to stop ends at its next beat, as "stopped", and says so in its log
+    def slow(c, log, params):
+        log("working")
+        jobs.stop(c, log.run_id)                   # the Stop button, from another request
+        log.beat(force=True)                       # the pusher's per-item beat
+        raise AssertionError("not reached")
+    rid = jobs.start(conn, "pull", slow, {}, thread=False)
+    st = jobs.status(conn, rid)
+    assert st["status"] == "stopped" and any("stopped" in ln["line"] for ln in st["lines"])
+    assert st["summary"]["stopped"].startswith("stopped from the page")
+    assert jobs.stop(conn, rid)["status"] == "stopped" and jobs.stop(conn, 99999) is None
+    # a fresh running row blocks the next start; asking it to stop marks it stopping (still blocks)
+    conn.execute("UPDATE wb_runs SET status='running', heartbeat=? WHERE id=?", (store.now(), rid))
+    conn.commit()
+    with pytest.raises(jobs.Busy):
+        jobs.start(conn, "dedupe", dedupe.run, {}, thread=False)
+    assert jobs.stop(conn, rid)["status"] == "stopping"
+    with pytest.raises(jobs.Busy):
+        jobs.start(conn, "dedupe", dedupe.run, {}, thread=False)
+    # a run from before this process booted that has not beaten since is dead, not a blocker
+    monkeypatch.setattr(jobs, "BOOT", jobs._now())
+    old = (datetime.now(timezone.utc) - timedelta(seconds=jobs.GRACE + 5)).isoformat(timespec="seconds")
+    conn.execute("UPDATE wb_runs SET status='running', heartbeat=? WHERE id=?", (old, rid))
+    conn.commit()
+    assert jobs.running(conn) is None and store.run(conn, rid)["status"] == "lost"
+    # …but one that beat a moment ago is alive even if it started before the boot
+    conn.execute("UPDATE wb_runs SET status='running', heartbeat=? WHERE id=?", (store.now(), rid))
+    conn.commit()
+    assert jobs.running(conn)["id"] == rid
+    # a live run that finds itself marked lost stops itself at the next beat
+    conn.execute("UPDATE wb_runs SET status='lost' WHERE id=?", (rid,))
+    conn.commit()
+    with pytest.raises(jobs.Cancelled):
+        jobs.Logger(conn, rid).beat(force=True)
+    conn.execute("UPDATE wb_runs SET status='done' WHERE id=?", (rid,))
+    conn.commit()
+
+
+def test_client_names_the_real_error_and_retries_conflicts(monkeypatch):
+    from central.wikibase import client as cl
+    err = {"code": "failed-save", "info": "The save has failed.",
+           "messages": [{"name": "wikibase-api-failed-save"}, {"name": "edit-conflict"}]}
+    assert cl.error_text("wbeditentity", err) == "wbeditentity: failed-save: The save has failed. [edit-conflict]"
+    assert cl.error_text("wbeditentity", {"code": "badtoken", "info": "Invalid CSRF token."}) == "wbeditentity: badtoken: Invalid CSRF token."
+    assert cl.is_conflict(WikibaseError("wbeditentity: editconflict: Edit conflict."))
+    assert not cl.is_conflict(WikibaseError("wbeditentity: failed-save: The save has failed. [actionthrottledtext]"))
+
+    class Log:
+        def __init__(self):
+            self.lines, self.beats = [], 0
+
+        def __call__(self, line):
+            self.lines.append(line)
+
+        def beat(self):
+            self.beats += 1
+
+    api = Wikibase("https://fake.wikibase.test", pause=0, log=Log())
+    calls = {"n": 0}
+
+    def once(params):
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise WikibaseError("wbeditentity: failed-save: The save has failed. [edit-conflict]")
+        return {"success": 1}
+    monkeypatch.setattr(api, "_post_once", once)
+    monkeypatch.setattr(cl.time, "sleep", lambda s: None)
+    assert api.post(action="wbeditentity")["success"] == 1 and calls["n"] == 2
+    assert api.log.beats == 2 and any("edit conflict" in ln for ln in api.log.lines)
+    # a stop request raised from the beat ends the call before anything is sent
+    api.log.beat = lambda: (_ for _ in ()).throw(jobs.Cancelled("stopped from the page"))
+    with pytest.raises(jobs.Cancelled):
+        api.post(action="wbeditentity")
+    assert calls["n"] == 2
+
+
+def test_api_stop_run(client, conn):
+    assert client.post("/wikibase/runs/1/stop").status_code == 401
+    assert client.post("/wikibase/runs/999999/stop", headers=_auth()).status_code == 404
+    rid = jobs.start(conn, "dedupe", dedupe.run, {}, thread=False)
+    assert client.post(f"/wikibase/runs/{rid}/stop", headers=_auth()).json()["status"] == "done"
+    conn.execute("UPDATE wb_runs SET status='running', heartbeat=? WHERE id=?", (store.now(), rid))
+    conn.commit()
+    assert client.get("/wikibase/status").json()["running"]["status"] == "running"
+    assert client.post(f"/wikibase/runs/{rid}/stop", headers=_auth()).json()["status"] == "stopping"
+    assert client.get(f"/wikibase/runs/{rid}").json()["status"] == "stopping"
+    assert client.get("/wikibase/status").json()["running"]["status"] == "stopping"
+    conn.execute("UPDATE wb_runs SET status='done' WHERE id=?", (rid,))
+    conn.commit()
+    html = (DEPLOY / "wikibase.html").read_text(encoding="utf-8")
+    assert '"stop-run"' in html and "/stop" in html and "stopping" in html
 
 
 def test_page_markup():

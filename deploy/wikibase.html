@@ -285,7 +285,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       row: D.admin ? btn("Dry run", "dry-run", !st["dry-run"].done) + '<label class="chk" style="font:400 13px var(--sans);color:var(--ink-2)">limit <input type="number" id="limit" min="0" placeholder="all" style="width:5rem;padding:.3rem .4rem;font:inherit"></label>' + "<small>A limit pushes only the first N items in write order (classes and vocabularies first), to try a small batch.</small>" : "" });
     rows.push({ key: "push", cls: running === "push" ? "running" : (st.push.done ? "done" : (st["dry-run"].done ? "todo" : "off")), st: running === "push" ? "running" : (st.push.done ? (st.push.pending ? "more to go" : "done") : "to do"), title: "Push",
       text: plural(st.push.live, "item") + " on the wiki, " + plural(st.push.pending, "item") + " waiting" + (st.push.failed ? ", " + plural(st.push.failed, "failure") + " to look at" : "") + ". Two passes: items are created bare, then every statement is written with a reference back to the page it came from. Re-running pushes only what is new or changed." + last(st.push),
-      row: D.admin ? btn(st.push.done ? "Push what is new or changed" : "Push for real", "push", true) + "<small>Writes to the wiki, one edit a second. Nothing is ever deleted or merged there by this button. It asks once more before it starts.</small>" : "" });
+      row: D.admin ? btn(st.push.done ? "Push what is new or changed" : "Push for real", "push", true) + "<small>Writes to the wiki, one edit a second. Nothing is ever deleted or merged there by this button. It asks once more before it starts. One push at a time: the Runs section shows the one going, with a Stop button. A run that says <i>lost</i> was cut off by a restart of the service; pushing again continues where it stopped.</small>" : "" });
     rows.push({ key: "pull", cls: running === "pull" ? "running" : (st.pull.done ? "done" : (st.push.done ? "todo" : "off")), st: running === "pull" ? "running" : (st.pull.done ? "done" : "to do"), title: "Pull",
       text: plural(st.pull.cached, "item") + " cached from the wiki. Reads back what we pushed, keeps the wiki's copy here for the pages, and reports drift: a label changed by hand, statements added on the wiki, an item gone." + last(st.pull),
       row: D.admin ? btn("Pull", "pull", false) + btn("Check the wiki", "check", false) + "<small>Check reads site info, the bot's rights and the property count, and writes nothing.</small>" : "" });
@@ -371,6 +371,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   /* ---- runs + log --------------------------------------------------------- */
   function summaryText(r) {
     var s = r.summary || {};
+    if (s.stopped) return "stopped: " + esc(s.stopped);
     if (r.kind === "stage") return (s.items ? plural(s.items, "item") : "") + (s.duplicates != null ? ", " + plural(s.duplicates, "duplicate") : "") + (s.orphaned ? ", " + s.orphaned + " orphaned" : "");
     if (r.kind === "dedupe") return plural(s.duplicates || 0, "duplicate") + " in " + plural(s.clusters || 0, "cluster");
     if (r.kind === "pull") return plural(s.fetched || 0, "item") + " fetched" + (s.drift && Object.keys(s.drift).length ? ", drift: " + Object.keys(s.drift).map(function (k) { return k + " " + s.drift[k]; }).join(", ") : "");
@@ -381,7 +382,8 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function renderRuns() {
     var rs = D.st.runs || [];
     $("#runsTbl tbody").innerHTML = rs.map(function (r) {
-      return '<tr data-run="' + r.id + '"><td><a href="#runs" data-run="' + r.id + '">#' + r.id + '</a></td><td>' + esc(r.kind) + '</td><td><span class="st ' + (r.status === "done" ? "ok" : (r.status === "running" ? "" : "hot")) + '">' + esc(r.status) + '</span></td><td>' + esc(when(r.started_at)) + '</td><td>' + esc(r.by_email || "") + '</td><td>' + summaryText(r) + '</td></tr>';
+      var live = r.status === "running" || r.status === "stopping";
+      return '<tr data-run="' + r.id + '"><td><a href="#runs" data-run="' + r.id + '">#' + r.id + '</a></td><td>' + esc(r.kind) + '</td><td><span class="st ' + (r.status === "done" ? "ok" : (live ? "" : "hot")) + '">' + esc(r.status) + '</span></td><td>' + esc(when(r.started_at)) + '</td><td>' + esc(r.by_email || "") + '</td><td>' + summaryText(r) + (D.admin && r.status === "running" ? ' ' + btn("Stop", "stop-run", false, ' data-run="' + r.id + '"') : "") + '</td></tr>';
     }).join("") || '<tr><td colspan="6">No runs yet.</td></tr>';
   }
   function showRun(id, follow) {
@@ -397,7 +399,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
         var el = document.createElement("div"); el.innerHTML = '<span class="t">' + esc(String(l.ts).slice(11, 19)) + '</span>  ' + esc(l.line); log.appendChild(el); D.after = l.id;
       });
       if (r.lines && r.lines.length) log.scrollTop = log.scrollHeight;
-      if (r.status === "running") { D.timer = setTimeout(function () { poll(follow); }, 1500); }
+      if (r.status === "running" || r.status === "stopping") { D.timer = setTimeout(function () { poll(follow); }, 1500); }
       else { D.timer = null; if (follow) { say("Run #" + r.id + " " + (r.status === "done" ? "finished." : r.status + ".")); refresh(); } }
     }).catch(function (e) { say(e.message, true); });
   }
@@ -414,6 +416,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     var b = ev.target.closest("button[data-act]");
     if (b) {
       var act = b.getAttribute("data-act"), lim = $("#limit") ? parseInt($("#limit").value, 10) || 0 : 0;
+      if (act === "stop-run") { var rid = b.getAttribute("data-run"); if (!confirm("Stop run #" + rid + "? It finishes the item it is on and stops. Running the step again later continues where it left off.")) return; return post("/wikibase/runs/" + rid + "/stop", {}).then(function (r) { say("Run #" + rid + " " + r.status + "."); refresh(); }).catch(function (e) { say(e.message, true); }); }
       if (act === "stage") return startJob("stage");
       if (act === "dedupe") return startJob("dedupe");
       if (act === "bootstrap-dry") return startJob("bootstrap", {}, { really: false });

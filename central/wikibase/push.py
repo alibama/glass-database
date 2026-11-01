@@ -40,6 +40,7 @@ from typing import Any, Callable
 
 from central.wikibase import store
 from central.wikibase.client import Wikibase, WikibaseError, error_code, owner_of
+from central.wikibase.jobs import beat
 from central.wikibase.model import (
     EARTH,
     GREGORIAN,
@@ -364,6 +365,7 @@ class Pusher:
     def bootstrap(self) -> None:
         self.log("properties")
         for p in PROPERTIES:
+            beat(self.log)
             if p.label in self.pids:
                 self.record(Write(0, "property", p.label, "skip-exists", qid=self.pids[p.label]))
                 continue
@@ -453,6 +455,7 @@ class Pusher:
     def pass1(self) -> None:
         self.log("pass 1: entities")
         for n, r in enumerate(self.rows, 1):
+            beat(self.log)
             it = self.items[r["key"]]
             self.create(r, it)
             if n % 100 == 0:
@@ -528,6 +531,7 @@ class Pusher:
                 except Exception as e:  # noqa: BLE001
                     self.log(f"  could not read {len(foreign)} existing items ({e})")
         for n, r in enumerate(self.rows, 1):
+            beat(self.log)
             it = self.items[r["key"]]
             self.update(r, it)
             if n % 100 == 0:
