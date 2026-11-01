@@ -77,6 +77,9 @@ def ensure(conn) -> None:
     cols = {r[1] for r in conn.execute("PRAGMA table_info(wb_wikidata)")}
     if "suggestion_json" not in cols:
         conn.execute("ALTER TABLE wb_wikidata ADD COLUMN suggestion_json TEXT DEFAULT ''")
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(wb_items)")}
+    if "enrich_json" not in cols:                 # what an outside search found for a record (website, Instagram, city)
+        conn.execute("ALTER TABLE wb_items ADD COLUMN enrich_json TEXT DEFAULT ''")
     conn.commit()
 
 
@@ -266,7 +269,7 @@ def counts(conn) -> dict:
 
 def set_item(conn, key: str, **fields) -> dict | None:
     allowed = {"status", "cluster", "canonical", "wikidata_qid", "qid", "pushed_hash", "pushed_at", "error", "notes",
-               "item_json", "label", "description", "content_hash", "review_json"}
+               "item_json", "label", "description", "content_hash", "review_json", "enrich_json"}
     sets = {k: v for k, v in fields.items() if k in allowed}
     if not sets:
         return one(conn.execute("SELECT * FROM wb_items WHERE key=?", (key,)))
@@ -335,6 +338,94 @@ def wikidata_rows(conn, *, status=None, kind: str | None = None, keys=None, q: s
             except (ValueError, TypeError):
                 r[col[:-5]] = default
     return out, total
+
+
+ENRICH_FIELDS = ("website", "instagram", "city")
+
+
+def set_enrich(conn, key: str, data: dict | None, by: str = "") -> dict | None:
+    """What an outside search (lexflow's enrich step) proposes for a record: a website, an Instagram account, a
+    city, each with a confidence, a reason and the pages it was read from. Kept on the staged item for a
+    reviewer; nothing enters the item until a person adds it. A field already added keeps its mark when the
+    same value is proposed again. Returns the stored proposal, or None when the key is not staged."""
+    import re as _re
+    r = one(conn.execute("SELECT enrich_json FROM wb_items WHERE key=?", (key,)))
+    if r is None:
+        return None
+    try:
+        old = json.loads(r.get("enrich_json") or "{}")
+    except ValueError:
+        old = {}
+    d = data or {}
+    fields: dict = {}
+    for f in ENRICH_FIELDS:
+        p = (d.get("fields") or {}).get(f) if isinstance(d.get("fields"), dict) else d.get(f)
+        if not isinstance(p, dict):
+            continue
+        value = str(p.get("value") or "").strip()
+        if f == "website":
+            if not _re.fullmatch(r"https?://[^\s<>\"']{4,500}", value):
+                continue
+        elif f == "instagram":
+            value = value.lstrip("@").rstrip("/").rsplit("/", 1)[-1]
+            if not _re.fullmatch(r"[A-Za-z0-9_.]{2,30}", value):
+                continue
+        else:
+            value = value[:120]
+            if not value:
+                continue
+        try:
+            conf = max(0.0, min(1.0, float(p.get("confidence") or 0)))
+        except (TypeError, ValueError):
+            conf = 0.0
+        entry = {"value": value, "confidence": round(conf, 3), "because": str(p.get("because") or "")[:400],
+                 "evidence": [str(u)[:300] for u in (p.get("evidence") or []) if isinstance(u, str)][:6]}
+        if f == "city":
+            for k in ("region", "country"):
+                if p.get(k):
+                    entry[k] = str(p[k])[:120]
+        fields[f] = entry
+    applied = {}
+    for f, when in (old.get("applied") or {}).items():
+        if f in fields and fields[f]["value"] == ((old.get("fields") or {}).get(f) or {}).get("value"):
+            applied[f] = when
+    keep = {"fields": fields, "model": str(d.get("model") or "")[:60], "searched": bool(d.get("searched")),
+            "version": str(d.get("version") or "")[:40], "by": (by or "")[:120], "at": now(), "applied": applied}
+    conn.execute("UPDATE wb_items SET enrich_json=?, updated_at=? WHERE key=?", (json.dumps(keep, ensure_ascii=False), now(), key))
+    conn.commit()
+    return keep
+
+
+def mark_enrich_applied(conn, key: str, field: str) -> None:
+    r = one(conn.execute("SELECT enrich_json FROM wb_items WHERE key=?", (key,)))
+    if not r or not r.get("enrich_json"):
+        return
+    try:
+        en = json.loads(r["enrich_json"])
+    except ValueError:
+        return
+    en.setdefault("applied", {})[field] = now()
+    conn.execute("UPDATE wb_items SET enrich_json=? WHERE key=?", (json.dumps(en, ensure_ascii=False), key))
+    conn.commit()
+
+
+def enrichments(conn, kind: str | None = None, limit: int = 200) -> list[dict]:
+    """Staged items that carry a proposal, newest first, with what the item already has."""
+    where, args = ["enrich_json<>''"], []
+    if kind:
+        where.append("kind=?"); args.append(kind)
+    out = []
+    for r in rows(conn.execute(f"SELECT * FROM wb_items WHERE {' AND '.join(where)} ORDER BY updated_at DESC LIMIT {int(limit)}", args)):
+        try:
+            en = json.loads(r["enrich_json"])
+        except ValueError:
+            continue
+        it = effective_item(r)
+        out.append({"key": r["key"], "kind": r["kind"], "label": r["label"], "description": r["description"],
+                    "status": r["status"], "enrich": en,
+                    "has": {"website": it.values("official website"), "instagram": it.values("Instagram username"),
+                            "place": it.values("work location") + it.values("located in")}})
+    return out
 
 
 def wikidata_counts(conn) -> dict:

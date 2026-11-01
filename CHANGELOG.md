@@ -37,7 +37,12 @@ proof-of-concept features from production-ready ones in its docs.
   (`/api/wikibase/wikidata/suggested`), each with its link. Nothing is written to Wikidata.
   An outside panel of local models (lexflow's `run resolve`) can leave a suggestion on an unsure
   row (`{"suggest": {...}}` on the same admin route); the page shows the panel's answer, its
-  reasons and each model's vote beside the candidates, and a person still decides.
+  reasons and each model's vote beside the candidates, and a person still decides. The same
+  tool's web search can leave a proposal on a record with nothing on Wikidata (`{"enrich": …}`
+  on `POST /api/wikibase/items/{key}`: a website, an Instagram account, a city, each with the
+  pages it was read from), listed under the Wikidata section; *Add the website* and *Add the
+  account* put the statement on the item as a reviewer's edit (`add` on the same route), which a
+  re-stage keeps.
   Also fixed on the way: the hand list of known cities was keyed with commas that the
   normaliser strips, so no city ever matched it; Tacoma, Seattle, Venice and the rest now get
   their ids at staging time.

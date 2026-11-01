@@ -73,6 +73,10 @@ def _slim(r: dict) -> dict:
         d["aliases"] = it.get("aliases") or []
     except ValueError:
         d["url"], d["claims"], d["aliases"] = "", 0, []
+    try:
+        d["enrich"] = json.loads(r.get("enrich_json") or "") or None
+    except (ValueError, TypeError):
+        d["enrich"] = None
     return d
 
 
@@ -183,6 +187,11 @@ def wikidata_rows(status: str = "", kind: str = "", q: str = "", page: int = Que
                                                "suggestion", "checked_at", "decided_by", "decided_at",
                                                "item_description", "item_status", "item_qid")} for r in rows],
             "total": total, "page": page, "per": per, "statuses": list(wikidata.STATUSES)}
+
+
+@router.get("/enrich", summary="Records an outside search found more about: a website, an Instagram account, a city")
+def enrich_rows(kind: str = "", limit: int = Query(200, ge=1, le=1000)):
+    return {"items": store.enrichments(_conn(), kind or None, limit)}
 
 
 @router.get("/wikidata/suggested", summary="Glass artists Wikidata ties to our institutions and places, not held here")
@@ -413,6 +422,9 @@ def post_item(key: str, payload: dict, u: dict = Depends(require_admin)):
     payload = payload or {}
     if payload.get("split"):
         return _slim(dedupe.split(conn, key) or r)
+    if isinstance(payload.get("enrich"), dict):        # an outside search's proposal; nothing enters the item here
+        store.set_enrich(conn, key, payload["enrich"], by=u.get("email") or u.get("name") or "")
+        return _slim(store.one(conn.execute("SELECT * FROM wb_items WHERE key=?", (key,))))
     fields: dict = {}
     st = payload.get("status")
     if st:
@@ -439,7 +451,21 @@ def post_item(key: str, payload: dict, u: dict = Depends(require_admin)):
         if isinstance(al, str):
             al = [a.strip() for a in al.split("|")]
         review["aliases"] = [str(a).strip()[:250] for a in al if str(a).strip()]
-    if any(k in payload for k in ("label", "description", "aliases")):
+    adds = payload.get("add")
+    if isinstance(adds, list):                        # statements a reviewer adds by hand (string, url, id and time properties)
+        from central.wikibase.model import Claim
+        for a in adds:
+            prop = str((a or {}).get("p") or "")
+            pv = refine._parse_value(prop, str((a or {}).get("v") or ""))
+            if pv is None:
+                raise HTTPException(400, f"cannot add {prop!r}: only string, url, external-id and time properties take a typed value")
+            c = Claim(prop, pv).to_json()
+            if c not in review.setdefault("add", []):
+                review["add"].append(c)
+            for field, p in (("website", "official website"), ("instagram", "Instagram username")):
+                if prop == p and ((_slim(r).get("enrich") or {}).get("fields") or {}).get(field, {}).get("value") == pv.value:
+                    store.mark_enrich_applied(conn, key, field)
+    if any(k in payload for k in ("label", "description", "aliases", "add")):
         fields["review_json"] = json.dumps(review, ensure_ascii=False)
     if payload.get("notes") is not None:
         fields["notes"] = str(payload["notes"])[:1000]

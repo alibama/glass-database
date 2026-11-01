@@ -105,7 +105,12 @@ one job runs at a time.
    facts and web search, and posts `{"suggest": {...}}` to `POST /api/wikibase/wikidata/{key}` with
    the API key. The row stays `unsure`; the page shows the panel's answer, its reasons and each
    model's vote beside the candidates, with the suggested button marked, and the person still
-   clicks. An item
+   clicks. The same tool's `run enrich` takes the records with nothing on Wikidata, searches the
+   web for their website, Instagram account and city, and leaves what it found as a proposal on
+   the staged item (`POST /api/wikibase/items/{key}` with `{"enrich": …}`, shown under the
+   Wikidata section with the pages it was read from); *Add the website* / *Add the account* put
+   the statement on the item through the reviewer's own edits (`review_json`, so a re-stage keeps
+   it), and a place stays a note until the row's based-in column is edited. An item
    that already had an id (the hand lists in `model.py`, OpenRefine, a reviewer) is `known`
    and never asked about. A second run looks only at items not yet checked or whose label
    changed; *Look everything up again* (`recheck`) redoes the automatic decisions and never a
