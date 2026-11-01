@@ -91,6 +91,16 @@
   code { font: 400 .92em var(--mono); background: var(--paper-2); padding: .1em .35em; }
   .steps-how { list-style: decimal; margin: 1rem 0 0; padding-left: 1.4rem; max-width: 66ch; color: var(--ink-2); font-size: 15px; }
   .steps-how li { margin: .4rem 0; }
+  .wdlive { display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; font: 500 12px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 1rem; }
+  .wdlive b { color: var(--red); font-weight: 500; }
+  #wikidata h3.sub { font: 500 11px/1.7 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 1.8rem 0 .2rem; padding-top: 1rem; border-top: 1px solid var(--ink); }
+  #wikidata .cl .k b { display: block; font: 500 16px var(--sans); letter-spacing: 0; text-transform: none; color: var(--ink); margin-top: .2rem; }
+  #wikidata .cl .k span { display: block; font: 400 13px/1.4 var(--sans); letter-spacing: 0; text-transform: none; color: var(--ink-2); }
+  #wikidata .cl li .why { color: var(--muted); font: 400 13px var(--sans); }
+  .wdp { list-style: none; margin: .4rem 0 0; padding: 0; }
+  .wdp li { display: flex; gap: .6rem 1.2rem; flex-wrap: wrap; align-items: baseline; padding: .35rem 0; font-size: 15px; border-top: 1px solid var(--rule); }
+  .wdp li b { font-weight: 500; } .wdp li .src { color: var(--muted); font: 400 12px var(--mono); }
+  input.wdq { font: 400 13px var(--mono); padding: .3rem .5rem; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); width: 8rem; }
   @media (max-width: 900px) { .where { grid-template-columns: 1fr; } .where > div { border-right: 0; border-bottom: 1px solid var(--rule); padding-right: 0; } .cl { grid-template-columns: 1fr; } }
   @media (max-width: 680px) { .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; } .detail dl { grid-template-columns: 1fr; } }
 </style>
@@ -104,7 +114,7 @@
   <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
  </nav>
 </header>
-<div class="subnav wrap"><span class="crumb">Admin</span><a href="/review.html">Review queue</a><a href="/events-admin.html">Collecting Events</a><a href="/datasets.html">Tables</a><a href="/analytics.html">Usage</a><a href="/wikibase.html" class="on">Wikibase</a><a href="#pipeline">Pipeline</a><a href="#items">Items</a><a href="#openrefine">OpenRefine</a><a href="#runs">Runs</a></div>
+<div class="subnav wrap"><span class="crumb">Admin</span><a href="/review.html">Review queue</a><a href="/events-admin.html">Collecting Events</a><a href="/datasets.html">Tables</a><a href="/analytics.html">Usage</a><a href="/wikibase.html" class="on">Wikibase</a><a href="#pipeline">Pipeline</a><a href="#items">Items</a><a href="#wikidata">Wikidata</a><a href="#openrefine">OpenRefine</a><a href="#runs">Runs</a></div>
 
 <main id="main">
 <section class="hero" id="hero">
@@ -121,7 +131,7 @@
 <section class="s" id="pipeline" aria-labelledby="h-pipeline">
  <div class="wrap">
   <div class="s-head"><p class="label"><span class="n">№ 02</span> The pipeline</p>
-   <div><h2 id="h-pipeline">Eight steps, <em>in order.</em></h2><p class="lede">Stage the tables into items, fold the duplicates, reconcile names in OpenRefine, create the properties, rehearse, push, then read back what the wiki holds. Each step says where it stands; administrators get the button.</p>
+   <div><h2 id="h-pipeline">Nine steps, <em>in order.</em></h2><p class="lede">Stage the tables into items, fold the duplicates, ask Wikidata what it already knows, finish the names in OpenRefine, create the properties, rehearse, push, then read back what the wiki holds. Each step says where it stands; administrators get the button.</p>
    <p class="goprog" id="goProg"></p></div></div>
   <ol class="go" id="steps"></ol>
  </div>
@@ -165,10 +175,23 @@
  </div>
 </section>
 
-<section class="s" id="openrefine" aria-labelledby="h-refine">
+<section class="s" id="wikidata" aria-labelledby="h-wikidata">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 06</span> OpenRefine</p>
-   <div><h2 id="h-refine">Names to Wikidata, <em>in OpenRefine.</em></h2><p class="lede">The wiki can hold a person without a Wikidata id, and the id arrives as a statement when it is found. OpenRefine does the finding: its built-in Wikidata reconciliation for people, studios, schools and places, and this site's own reconciliation service for what is already staged or on the wiki.</p></div></div>
+  <div class="s-head"><p class="label"><span class="n">№ 06</span> Wikidata</p>
+   <div><h2 id="h-wikidata">What Wikidata <em>already knows.</em></h2><p class="lede">Before anyone opens OpenRefine, the lookup asks Wikidata itself: every person it lists in the glass occupations, and its reconciliation service for places, schools, museums, studios, shows and the vocabularies. A name that matches exactly one item, with the region or the glass work to confirm it, gets its Wikidata id and carries it to the wiki on the next push; namesakes wait here for a person. It also reports what Wikidata holds that we do not: the museums with our people's work, websites and Instagram accounts we lack, and the people Wikidata ties to our own institutions and places that have no row here.</p></div></div>
+  <p class="live wdlive" id="wdMeta">Loading…</p>
+  <div id="wdAdds"></div>
+  <h3 class="sub">Waiting on a person</h3>
+  <div id="wdUnsure"><p class="empty">Nothing waiting. Run the lookup from the pipeline.</p></div>
+  <h3 class="sub">Glass artists Wikidata ties to our institutions and places, with no row here</h3>
+  <div id="wdSuggested"><p class="empty">Run the lookup to see them.</p></div>
+ </div>
+</section>
+
+<section class="s alt" id="openrefine" aria-labelledby="h-refine">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 07</span> OpenRefine</p>
+   <div><h2 id="h-refine">The rest of the names, <em>in OpenRefine.</em></h2><p class="lede">The wiki can hold a person without a Wikidata id, and the id arrives as a statement when it is found. The lookup above finds the certain ones; OpenRefine is for the rest: its built-in Wikidata reconciliation for people, studios, schools and places, and this site's own reconciliation service for what is already staged or on the wiki.</p></div></div>
   <ol class="steps-how">
    <li>Download a kind below (people, studios, places, schools…). The CSV has a <code>key</code> per row, the label, description, aliases and the properties staging built.</li>
    <li>In OpenRefine, reconcile the <code>label</code> column against <b>Wikidata</b> (the type it suggests, or <code>Q5</code> for people). Copy the match into <code>wikidata_qid</code>: <code>cell.recon.match.id</code>.</li>
@@ -182,18 +205,18 @@
  </div>
 </section>
 
-<section class="s alt" id="runs" aria-labelledby="h-runs">
+<section class="s" id="runs" aria-labelledby="h-runs">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 07</span> Runs</p>
+  <div class="s-head"><p class="label"><span class="n">№ 08</span> Runs</p>
    <div><h2 id="h-runs">Every run, <em>with its log.</em></h2><p class="lede">What each job did, who started it, and the log as it was written. A dry run's plan holds every request body it would have sent.</p></div></div>
   <div class="tbl runs"><table id="runsTbl"><thead><tr><th>Run</th><th>Job</th><th>Status</th><th>Started</th><th>By</th><th>Summary</th></tr></thead><tbody></tbody></table></div>
   <pre class="log" id="log" aria-live="polite">No run selected.</pre>
  </div>
 </section>
 
-<section class="s" id="settings" aria-labelledby="h-settings" hidden>
+<section class="s alt" id="settings" aria-labelledby="h-settings" hidden>
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 08</span> The bot</p>
+  <div class="s-head"><p class="label"><span class="n">№ 09</span> The bot</p>
    <div><h2 id="h-settings">Who writes <em>to the wiki.</em></h2><p class="lede">A bot password made on the wiki (<a id="botPwLink" href="https://glass.wikibase.cloud/wiki/Special:BotPasswords">Special:BotPasswords</a>) with the grants <i>Edit existing pages</i>, <i>Create, edit, and move pages</i> and <i>High-volume editing</i>. The password is stored encrypted with the site secret and never shown again; the site's own secret is the key.</p></div></div>
   <form class="row" id="botForm">
    <label>Wiki URL<input type="url" id="sUrl" placeholder="https://glass.wikibase.cloud" required></label>
@@ -274,8 +297,12 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     rows.push({ key: "dedupe", cls: running === "dedupe" ? "running" : (st.dedupe.done ? "done" : (st.stage.done ? "todo" : "off")), st: running === "dedupe" ? "running" : (st.dedupe.done ? "done" : "to do"), title: "Duplicates",
       text: (st.dedupe.duplicates ? plural(st.dedupe.duplicates, "duplicate") + " folded into " + plural(st.dedupe.clusters, "cluster") + ". " : "No duplicates found yet. ") + "Review the clusters below; keep apart what is really two things." + last(st.dedupe),
       row: D.admin ? btn("Find duplicates again", "dedupe", false) + '<a class="btn btn--line sm" href="#dupes">Review</a>' : "" });
+    var wd = st.wikidata || {};
+    rows.push({ key: "wikidata", cls: running === "wikidata" ? "running" : (wd.done ? "done" : (st.stage.done ? "todo" : "off")), st: running === "wikidata" ? "running" : (wd.done ? (wd.unsure ? plural(wd.unsure, "item") + " to decide" : "done") : "to do"), title: "Wikidata",
+      text: (wd.linked ? plural(wd.linked, "item") + " carry a Wikidata id" + (wd.matched || wd.confirmed ? " (" + (wd.matched || 0) + " found by the lookup" + (wd.confirmed ? ", " + wd.confirmed + " decided on this page" : "") + ", the rest from the hand lists and OpenRefine)" : "") + ". " : "No item carries a Wikidata id yet. ") + (wd.unsure ? plural(wd.unsure, "item") + " wait on a person below. " : "") + "The lookup reads Wikidata's glass artists and its reconciliation service, links what is certain, and reports what Wikidata already holds about our people and institutions." + last(wd),
+      row: D.admin ? btn(wd.done ? "Look up what is new" : "Look up on Wikidata", "wikidata", !wd.done) + btn("Look everything up again", "wikidata-recheck", false) + '<a class="btn btn--line sm" href="#wikidata">Review</a>' + "<small>Reads only: an id is written to the staged item, never to Wikidata, and the next push carries it to the wiki. A second run looks only at new items; what a person decided here stays either way.</small>" : '<a class="btn btn--line sm" href="#wikidata">What it found</a>' });
     rows.push({ key: "refine", cls: st.refine.done ? "done" : (st.stage.done ? "todo" : "off"), st: st.refine.done ? "in progress" : "optional", title: "OpenRefine",
-      text: (st.refine.with_wikidata ? plural(st.refine.with_wikidata, "item") + " carry a Wikidata id so far. " : "") + "Export a kind, reconcile the names against Wikidata and against this site's own service, import the CSV back. The wiki can be loaded before this and completed after.",
+      text: (st.refine.with_wikidata ? plural(st.refine.with_wikidata, "item") + " carry a Wikidata id so far. " : "") + "For the names the lookup could not settle: export a kind, reconcile against Wikidata and against this site's own service, import the CSV back. The wiki can be loaded before this and completed after.",
       row: '<a class="btn btn--line sm" href="#openrefine">' + (D.admin ? "Export and import" : "How it works") + '</a>' });
     rows.push({ key: "bootstrap", cls: running === "bootstrap" ? "running" : (st.bootstrap.done ? "done" : (st.settings.done ? "todo" : "off")), st: running === "bootstrap" ? "running" : (st.bootstrap.done ? "done" : "to do"), title: "Bootstrap the properties",
       text: st.bootstrap.properties_on_wiki + " of " + st.bootstrap.properties_total + " properties exist on the wiki. Each one says which Wikidata property it mirrors, so a statement here can be copied there without translation." + last(st.bootstrap),
@@ -368,6 +395,34 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     }).catch(function () {});
   }
 
+  /* ---- wikidata ----------------------------------------------------------- */
+  function wdLink(q) { return q ? '<a class="link" href="https://www.wikidata.org/wiki/' + esc(q) + '">' + esc(q) + '</a>' : ""; }
+  function loadWikidata() {
+    var wd = (D.st && D.st.steps && D.st.steps.wikidata) || {};
+    $("#wdMeta").innerHTML = (wd.done || wd.linked) ? "<span><b>" + (wd.linked || 0) + "</b> items with a Wikidata id</span><span><b>" + (wd.matched || 0) + "</b> found by the lookup</span><span><b>" + (wd.confirmed || 0) + "</b> decided here</span><span><b>" + (wd.unsure || 0) + "</b> waiting on a person</span><span><b>" + (wd.none || 0) + "</b> not on Wikidata</span>" : "The lookup has not run yet.";
+    GDB.json("/wikibase/wikidata/suggested").then(function (j) {
+      var adds = j.adds || {}, coll = j.in_collections || {}, museums = Object.keys(coll);
+      $("#wdAdds").innerHTML = (adds.website || adds.instagram ? '<p class="lede">Wikidata has ' + plural(adds.website || 0, "website") + ' and ' + plural(adds.instagram || 0, "Instagram account") + ' for our people that we lack.</p>' : "") +
+        (museums.length ? '<h3 class="sub">Museums holding our people\'s work, according to Wikidata</h3>' + museums.map(function (m) { return '<div class="cl"><div class="k">' + esc(m) + '</div><ul><li>' + coll[m].map(esc).join(", ") + '</li></ul></div>'; }).join("") : "");
+      var ps = j.people || [];
+      $("#wdSuggested").innerHTML = ps.length ? '<ul class="wdp">' + ps.slice(0, 150).map(function (p) {
+        return '<li><b>' + esc(p.label) + '</b> <span>' + esc(p.description || "") + '</span> <span class="src">' + wdLink(p.qid) + ' · ' + esc((p.via || []).join("; ")) + '</span></li>';
+      }).join("") + '</ul>' + (j.total > 150 ? '<p class="empty">Showing 150 of ' + j.total + '.</p>' : "") : '<p class="empty">' + (j.run ? "Nobody beyond the people we already hold." : "Run the lookup to see them.") + '</p>';
+    }).catch(function () {});
+    GDB.json("/wikibase/wikidata?status=unsure&per=100").then(function (j) {
+      var rows = j.items || [];
+      $("#wdUnsure").innerHTML = rows.length ? rows.map(function (r) {
+        return '<div class="cl"><div class="k">' + esc(r.kind) + '<b>' + esc(r.label) + '</b><span>' + esc(r.item_description || "") + '</span></div><ul>' + (r.candidates || []).map(function (c) {
+          return '<li><b>' + esc(c.label) + '</b> <span>' + esc(c.description || "") + '</span> <span class="src">' + wdLink(c.qid) + (c.types && c.types.length ? ' · ' + esc(c.types.slice(0, 2).join(", ")) : "") + '</span>' + (D.admin ? ' ' + btn("This one", "wd-use", false, ' data-wd="' + esc(r.key) + '" data-qid="' + esc(c.qid) + '"') : "") + '</li>';
+        }).join("") + '<li><span class="why">' + esc(r.why || "") + '</span>' + (D.admin ? ' ' + btn("None of these", "wd-none", false, ' data-wd="' + esc(r.key) + '"') + ' <input class="wdq" placeholder="or a Q id ⏎" aria-label="Wikidata id" data-wd="' + esc(r.key) + '">' : "") + '</li></ul></div>';
+      }).join("") + (j.total > rows.length ? '<p class="empty">Showing ' + rows.length + ' of ' + j.total + '.</p>' : "") : '<p class="empty">' + (wd.done ? "Nothing waiting on a person." : "Nothing waiting. Run the lookup from the pipeline.") + '</p>';
+    }).catch(function () {});
+  }
+  function decideWikidata(key, qid) {
+    return post("/wikibase/wikidata/" + key, { qid: qid }).then(function (r) { say(qid ? esc(r.label) + " is " + qid + " on Wikidata." : r.label + " is not on Wikidata."); return GDB.json("/wikibase/status"); })
+      .then(function (s) { D.st = s; renderSteps(); loadWikidata(); }).catch(function (e) { say(e.message, true); });
+  }
+
   /* ---- runs + log --------------------------------------------------------- */
   function summaryText(r) {
     var s = r.summary || {};
@@ -375,6 +430,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     if (r.kind === "stage") return (s.items ? plural(s.items, "item") : "") + (s.duplicates != null ? ", " + plural(s.duplicates, "duplicate") : "") + (s.orphaned ? ", " + s.orphaned + " orphaned" : "");
     if (r.kind === "dedupe") return plural(s.duplicates || 0, "duplicate") + " in " + plural(s.clusters || 0, "cluster");
     if (r.kind === "pull") return plural(s.fetched || 0, "item") + " fetched" + (s.drift && Object.keys(s.drift).length ? ", drift: " + Object.keys(s.drift).map(function (k) { return k + " " + s.drift[k]; }).join(", ") : "");
+    if (r.kind === "wikidata") { var bs = s.by_status || {}; return plural(s.looked_up || 0, "item") + " looked up" + (Object.keys(bs).length ? ": " + Object.keys(bs).map(function (k) { return k + " " + bs[k]; }).join(", ") : "") + (s.suggested_n ? "; " + plural(s.suggested_n, "person") + " Wikidata ties to our institutions" : ""); }
     if (r.kind === "check") return s.ok ? "reachable" + (s.login && s.login.name ? ", signed in as " + s.login.name : "") : (s.error || (s.login && s.login.error) || "see the log");
     var f = s.failures_by_code && Object.keys(s.failures_by_code).length ? ", failures: " + Object.keys(s.failures_by_code).map(function (k) { return k + " " + s.failures_by_code[k]; }).join(", ") : "";
     return (s.creates != null ? s.creates + " creates, " + s.updates + " updates" : "") + (s.dry_run ? " (dry run)" : "") + f + (s.plan ? ' · <a href="' + esc(GDB.API + "/wikibase/plan/" + r.id) + '">plan</a>' : "");
@@ -419,6 +475,9 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       if (act === "stop-run") { var rid = b.getAttribute("data-run"); if (!confirm("Stop run #" + rid + "? It finishes the item it is on and stops. Running the step again later continues where it left off.")) return; return post("/wikibase/runs/" + rid + "/stop", {}).then(function (r) { say("Run #" + rid + " " + r.status + "."); refresh(); }).catch(function (e) { say(e.message, true); }); }
       if (act === "stage") return startJob("stage");
       if (act === "dedupe") return startJob("dedupe");
+      if (act === "wikidata") return startJob("wikidata");
+      if (act === "wikidata-recheck") { if (!confirm("Look every item up again? The automatic matches are redone; what a person decided on this page stays.")) return; return startJob("wikidata", { recheck: true }); }
+      if (act === "wd-use" || act === "wd-none") return decideWikidata(b.getAttribute("data-wd"), act === "wd-use" ? b.getAttribute("data-qid") : "");
       if (act === "bootstrap-dry") return startJob("bootstrap", {}, { really: false });
       if (act === "bootstrap") { if (!confirm("Create the missing properties on " + D.st.wiki + "? Properties cannot be deleted by a normal user afterwards.")) return; return startJob("bootstrap", {}, { really: true }); }
       if (act === "dry-run") return startJob("dry-run", lim ? { limit: lim } : {});
@@ -440,6 +499,14 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     if (pg) { ev.preventDefault(); D.page = parseInt(pg.getAttribute("data-page"), 10) || 1; loadItems(); return; }
     var rn = ev.target.closest("a[data-run]");
     if (rn) { ev.preventDefault(); showRun(parseInt(rn.getAttribute("data-run"), 10), false); return; }
+  });
+  document.addEventListener("keydown", function (ev) {
+    var i = ev.target && ev.target.closest ? ev.target.closest("input.wdq") : null;
+    if (!i || ev.key !== "Enter") return;
+    ev.preventDefault();
+    var v = i.value.trim().toUpperCase();
+    if (!/^Q\d+$/.test(v)) { say("A Wikidata id looks like Q123.", true); return; }
+    decideWikidata(i.getAttribute("data-wd"), v);
   });
   function reviewItem(body) {
     if (!D.key) return;
@@ -486,6 +553,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     return GDB.json("/wikibase/status").then(function (s) {
       D.st = s; renderHero(); renderSteps(); renderKinds(); renderRuns();
       if (s.running && (!D.run || D.run !== s.running.id)) showRun(s.running.id, true);
+      loadWikidata();
       return Promise.all([loadItems(), loadClusters()]);
     }).catch(function (e) { $("#heroMeta").textContent = "The API did not answer: " + e.message; });
   }

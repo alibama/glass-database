@@ -2,14 +2,16 @@
 api.wikibase — the migration to glass.wikibase.cloud, viewable by anyone, run by admins
 =====================================================================================
 What ``/wikibase.html`` reads and presses. The pipeline itself is ``central.wikibase``
-(stage → dedupe → OpenRefine → bootstrap → dry run → push → pull); jobs run in the
-background with a log the page polls, and their state is in the database so every API
-worker sees it.
+(stage → dedupe → Wikidata lookup → OpenRefine → bootstrap → dry run → push → pull); jobs
+run in the background with a log the page polls, and their state is in the database so every
+API worker sees it.
 
 Public (the migration is part of the record):
   GET  /wikibase/status                 counts, steps, settings without secrets, the last runs
   GET  /wikibase/items?kind&status&q    staged items, paged           GET /wikibase/items/{key}
   GET  /wikibase/clusters?kind          duplicate clusters for review
+  GET  /wikibase/wikidata?status&kind   what the Wikidata lookup decided per item, with candidates
+  GET  /wikibase/wikidata/suggested     glass artists Wikidata ties to our institutions, not held here
   GET  /wikibase/runs · /runs/{id}?after=N   a run and its log lines after line N
   GET  /wikibase/plan/{id}              the dry run's plan (every request body)
   GET  /wikibase/go/{id}                resolver: a key or a Q id → the page on the site / the wiki
@@ -20,8 +22,9 @@ Public (the migration is part of the record):
 Admin (``require_admin``: an admin email, or X-API-Key):
   GET|POST /wikibase/settings           wiki URL, bot user, bot password (write-only), bot flag, pause
   POST /wikibase/settings/test          sign in and report rights (nothing written)
-  POST /wikibase/jobs                   {kind: stage|dedupe|bootstrap|dry-run|push|pull|check, params}
+  POST /wikibase/jobs                   {kind: stage|dedupe|wikidata|bootstrap|dry-run|push|pull|check, params}
   POST /wikibase/items/{key}            {status?, wikidata_qid?, label?, description?, aliases?, split?}
+  POST /wikibase/wikidata/{key}         {qid: "Q123"} links the item; {qid: ""} says it is not on Wikidata
   GET  /wikibase/refine/{kind}.csv      CSV out to OpenRefine
   POST /wikibase/refine/import          the edited CSV back (multipart "file" or text/csv body)
 """
@@ -39,11 +42,11 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Resp
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from api.auth import require_admin  # noqa: E402
-from central.wikibase import dedupe, jobs, push, refine, stage, store, sync  # noqa: E402
+from central.wikibase import dedupe, jobs, push, refine, stage, store, sync, wikidata  # noqa: E402
 from central.wikibase.model import CLASSES, KIND_ORDER, PROPERTIES  # noqa: E402
 
 router = APIRouter(prefix="/wikibase", tags=["wikibase"])
-STEPS = ("settings", "stage", "dedupe", "refine", "bootstrap", "dry-run", "push", "pull")
+STEPS = ("settings", "stage", "dedupe", "wikidata", "refine", "bootstrap", "dry-run", "push", "pull")
 
 
 def _conn():
@@ -85,7 +88,9 @@ def _small_summary(s: dict) -> dict:
     out = {}
     for k in ("items", "kinds", "statuses", "orphaned", "dropped", "places", "clusters", "duplicates", "by_kind",
               "creates", "updates", "api_writes", "failures_by_code", "dropped_snaks", "seconds", "dry_run",
-              "fetched", "drift", "ok", "properties", "keys_on_wiki", "sparql", "login", "error", "plan"):
+              "fetched", "drift", "ok", "properties", "keys_on_wiki", "sparql", "login", "error", "plan",
+              "looked_up", "by_status", "totals", "index_people", "service_errors", "adds", "in_collections",
+              "suggested_n", "stopped"):
         if k in s:
             out[k] = s[k]
     if "login" in out and isinstance(out["login"], dict):
@@ -107,6 +112,7 @@ def status(request: Request):
         "settings": {"done": bool(s["user"] and s["password_set"]), "url": s["url"], "user": s["user"]},
         "stage": {"done": counts["total"] > 0, "last": _last(runs, "stage"), "items": counts["total"]},
         "dedupe": {"done": bool(_last(runs, "dedupe")), "last": _last(runs, "dedupe"), **dedupe.summary(conn)},
+        "wikidata": {"done": bool(_last(runs, "wikidata")), "last": _last(runs, "wikidata"), **store.wikidata_counts(conn)},
         "refine": {"done": wd > 0, "with_wikidata": wd, "kinds": [c for c in KIND_ORDER if c in counts["kinds"]]},
         "bootstrap": {"done": props_on_wiki >= len(PROPERTIES), "properties_on_wiki": props_on_wiki,
                       "properties_total": len(PROPERTIES), "last": _last(runs, "bootstrap")},
@@ -167,6 +173,28 @@ def item_one(key: str):
 @router.get("/clusters", summary="Duplicate clusters")
 def clusters(kind: str = ""):
     return {"clusters": dedupe.clusters(_conn(), kind or None)}
+
+
+@router.get("/wikidata", summary="What the Wikidata lookup decided, per staged item")
+def wikidata_rows(status: str = "", kind: str = "", q: str = "", page: int = Query(1, ge=1), per: int = Query(100, ge=1, le=500)):
+    sts = [x for x in status.split(",") if x] or None
+    rows, total = store.wikidata_rows(_conn(), status=sts, kind=kind or None, q=q, limit=per, offset=(page - 1) * per)
+    return {"items": [{k: r.get(k) for k in ("key", "kind", "label", "status", "qid", "why", "candidates", "facts",
+                                               "checked_at", "decided_by", "decided_at", "item_description",
+                                               "item_status", "item_qid")} for r in rows],
+            "total": total, "page": page, "per": per, "statuses": list(wikidata.STATUSES)}
+
+
+@router.get("/wikidata/suggested", summary="Glass artists Wikidata ties to our institutions and places, not held here")
+def wikidata_suggested():
+    conn = _conn()
+    for r in store.runs(conn, 60):
+        if r["kind"] == "wikidata" and r["status"] == "done":
+            s = r.get("summary") or {}
+            return {"run": r["id"], "finished_at": r.get("finished_at"), "people": s.get("suggested") or [],
+                    "total": s.get("suggested_n", len(s.get("suggested") or [])), "in_collections": s.get("in_collections") or {},
+                    "adds": s.get("adds") or {}}
+    return {"run": None, "people": [], "total": 0, "in_collections": {}, "adds": {}}
 
 
 @router.get("/runs", summary="Recent runs")
@@ -335,11 +363,11 @@ def _stage_job(conn, log, params):
     return {**s1, "clusters": s2.get("clusters"), "duplicates": s2.get("duplicates"), "by_kind": s2.get("by_kind")}
 
 
-JOB_FNS = {"stage": _stage_job, "dedupe": dedupe.run, "bootstrap": push.run, "dry-run": push.run, "push": push.run,
-           "pull": sync.pull, "check": sync.check}
+JOB_FNS = {"stage": _stage_job, "dedupe": dedupe.run, "wikidata": wikidata.run, "bootstrap": push.run,
+           "dry-run": push.run, "push": push.run, "pull": sync.pull, "check": sync.check}
 
 
-@router.post("/jobs", summary="Start a job: stage, dedupe, bootstrap, dry-run, push, pull, check")
+@router.post("/jobs", summary="Start a job: stage, dedupe, wikidata, bootstrap, dry-run, push, pull, check")
 def start_job(payload: dict, u: dict = Depends(require_admin)):
     payload = payload or {}
     kind = payload.get("kind")
@@ -356,6 +384,8 @@ def start_job(payload: dict, u: dict = Depends(require_admin)):
             raise HTTPException(400, "limit must be a number")
     if kind == "bootstrap":
         params.update(what="properties", really=bool(payload.get("really")))
+    elif kind == "wikidata":
+        params["recheck"] = bool(params.get("recheck"))
     elif kind == "dry-run":
         params.update(really=False)
     elif kind == "push":
@@ -421,6 +451,18 @@ def post_item(key: str, payload: dict, u: dict = Depends(require_admin)):
             fields["status"] = "pushed" if eff.content_hash() == r["pushed_hash"] else "changed"
         r = store.set_item(conn, key, **fields)
     return _slim(r)
+
+
+@router.post("/wikidata/{key:path}", summary="Decide a Wikidata link by hand: {qid: 'Q123'} links, {qid: ''} rules it out")
+def post_wikidata(key: str, payload: dict, u: dict = Depends(require_admin)):
+    payload = payload or {}
+    q = str(payload.get("qid") or "").strip()
+    if q and not re.fullmatch(r"Q\d+", q):
+        raise HTTPException(400, "a Wikidata id looks like Q123")
+    r = wikidata.confirm(_conn(), key, q, by=u.get("email") or u.get("name") or "")
+    if not r:
+        raise HTTPException(404, "no such staged item")
+    return {k: r.get(k) for k in ("key", "kind", "label", "status", "qid", "why", "decided_by", "decided_at", "item_status")}
 
 
 @router.get("/refine/{kind}.csv", summary="CSV for OpenRefine")

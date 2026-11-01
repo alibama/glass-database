@@ -18,6 +18,26 @@ proof-of-concept features from production-ready ones in its docs.
   than one item, with the merge link for a person (the loader still never merges or deletes).
 
 ### Added
+- **The migration asks Wikidata what it already knows.** A new step between Duplicates and
+  OpenRefine (`central/wikibase/wikidata.py`, the page's *Look up on Wikidata* button, `python
+  -m central.wikibase wikidata`) finds the Wikidata item for staged people, places, countries,
+  museums, schools, studios, funders, awards, shows and the colour, occupation, technique and
+  trait vocabularies, and writes it into the same `wikidata_qid` the OpenRefine import fills,
+  so the next push carries it to the wiki. People are matched against every person Wikidata
+  lists in the glass occupations (one bulk read, about 2,100 of them); everything else goes
+  through Wikidata's own reconciliation service with the class and country the kind calls
+  for. The rules are narrow: exact name, the region in the description for a town, glass in
+  the description for a studio, a technique or a person found only through the service. What
+  passes once is `matched`; namesakes are `unsure` and wait in the page's new Wikidata section,
+  where an administrator picks one, types a Q id or says none (`POST
+  /api/wikibase/wikidata/{key}`); ids that were already there are `known` and never asked
+  about; a person's decisions survive a re-run. The run reports the museums Wikidata says hold
+  our people's work, the websites and Instagram accounts it has that we lack, and the glass
+  artists it ties to our own institutions and places that have no row here
+  (`/api/wikibase/wikidata/suggested`), each with its link. Nothing is written to Wikidata.
+  Also fixed on the way: the hand list of known cities was keyed with commas that the
+  normaliser strips, so no city ever matched it; Tacoma, Seattle, Venice and the rest now get
+  their ids at staging time.
 - **The console's last sections are pages; the Streamlit admin can be switched off.**
   `/events-admin.html` creates and runs collecting events (title, theme, dates, rules, prize
   note, votes per voter, the award categories as `title | vote|measured | solo` lines with the

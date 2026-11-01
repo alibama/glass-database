@@ -4,6 +4,9 @@ python -m central.wikibase <command>
   status                 counts per kind and status, the last runs
   stage                  site tables → staged items (idempotent; run after new approvals)
   dedupe                 cluster the same people / studios / places; one canonical each
+  wikidata [--recheck] [--kinds a,b] [--limit N]
+                         find the Wikidata item for people, places, institutions and terms;
+                         --recheck redoes the automatic decisions (never a person's)
   check                  reach the wiki; sign in if credentials are saved; count properties
   bootstrap [--really]   create the properties (dry run unless --really)
   dry-run [--kinds a,b] [--limit N]
@@ -23,16 +26,17 @@ import argparse
 import os
 import sys
 
-from central.wikibase import dedupe, jobs, push, refine, stage, store, sync
+from central.wikibase import dedupe, jobs, push, refine, stage, store, sync, wikidata
 
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="python -m central.wikibase", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["status", "stage", "dedupe", "check", "bootstrap", "dry-run", "push", "pull",
-                                        "export", "import", "set-bot"])
+    ap.add_argument("command", choices=["status", "stage", "dedupe", "wikidata", "check", "bootstrap", "dry-run", "push",
+                                        "pull", "export", "import", "set-bot"])
     ap.add_argument("args", nargs="*")
     ap.add_argument("--really", action="store_true")
+    ap.add_argument("--recheck", action="store_true", help="wikidata: redo the automatic decisions")
     ap.add_argument("--kinds")
     ap.add_argument("--keys")
     ap.add_argument("--limit", type=int)
@@ -82,7 +86,9 @@ def main(argv=None) -> int:
         params["limit"] = a.limit
     if a.no_live:
         params["live"] = False
-    fn = {"stage": stage.run, "dedupe": dedupe.run, "check": sync.check, "pull": sync.pull,
+    if a.recheck:
+        params["recheck"] = True
+    fn = {"stage": stage.run, "dedupe": dedupe.run, "wikidata": wikidata.run, "check": sync.check, "pull": sync.pull,
           "bootstrap": push.run, "dry-run": push.run, "push": push.run}[cmd]
     if cmd == "bootstrap":
         params.update(what="properties", really=a.really)

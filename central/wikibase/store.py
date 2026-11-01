@@ -10,6 +10,8 @@ The local tables behind the migration, in the central database (``central.dbconn
   wb_runs    every job (stage, dedupe, bootstrap, dry run, push, pull), with a summary
   wb_log     the lines a run wrote, which the page polls
   wb_cache   the wiki's copy of what we pushed (entity JSON), for the rebuild's cache
+  wb_wikidata  what the Wikidata lookup decided per staged item (known / matched / unsure /
+             none, and a person's confirmed / rejected), with the candidates it saw
 
 Settings (``central.settings``): the wiki URL, the bot user, the bot password (encrypted
 with the site secret, like connected social accounts), whether to send ``bot=1``, the
@@ -57,6 +59,11 @@ CREATE TABLE IF NOT EXISTS wb_log (
 CREATE INDEX IF NOT EXISTS ix_wb_log_run ON wb_log(run_id, id);
 CREATE TABLE IF NOT EXISTS wb_cache (
     qid TEXT PRIMARY KEY, key TEXT, kind TEXT, label TEXT, json TEXT, fetched_at TEXT);
+CREATE TABLE IF NOT EXISTS wb_wikidata (
+    key TEXT PRIMARY KEY, kind TEXT DEFAULT '', label TEXT DEFAULT '', status TEXT DEFAULT 'none',
+    qid TEXT DEFAULT '', why TEXT DEFAULT '', candidates_json TEXT DEFAULT '[]', facts_json TEXT DEFAULT '{}',
+    checked_at TEXT, decided_by TEXT DEFAULT '', decided_at TEXT);
+CREATE INDEX IF NOT EXISTS ix_wb_wikidata_status ON wb_wikidata(status, kind);
 """
 
 
@@ -263,6 +270,74 @@ def set_item(conn, key: str, **fields) -> dict | None:
     conn.execute(f"UPDATE wb_items SET {', '.join(k + '=?' for k in sets)} WHERE key=?", (*sets.values(), key))
     conn.commit()
     return one(conn.execute("SELECT * FROM wb_items WHERE key=?", (key,)))
+
+
+def set_wikidata_qid(conn, key: str, qid: str) -> dict | None:
+    """Give a staged item its Wikidata id (or take it away with ``""``) and keep the item's
+    record true: the content hash, the shown label and description, and ``pushed`` ↔
+    ``changed`` for an item that is on the wiki. The same rule the review route applies."""
+    r = one(conn.execute("SELECT * FROM wb_items WHERE key=?", (key,)))
+    if not r:
+        return None
+    qid = (qid or "").strip()
+    eff = effective_item(dict(r, wikidata_qid=qid))
+    fields = {"wikidata_qid": qid, "content_hash": eff.content_hash(), "label": eff.label, "description": eff.description}
+    if r["status"] in ("pushed", "changed"):
+        fields["status"] = "pushed" if eff.content_hash() == r["pushed_hash"] else "changed"
+    return set_item(conn, key, **fields)
+
+
+# --------------------------------------------------------------------------- the Wikidata lookup
+def upsert_wikidata(conn, key: str, kind: str, label: str, status: str, qid: str = "", why: str = "", *,
+                    candidates=None, facts=None, checked_at: str | None = None, decided_by: str | None = None,
+                    decided_at: str | None = None) -> None:
+    """One lookup row per staged item. A person's decision (``decided_by``) is kept when an
+    automatic pass writes the row again."""
+    conn.execute(
+        "INSERT INTO wb_wikidata (key,kind,label,status,qid,why,candidates_json,facts_json,checked_at,decided_by,decided_at) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(key) DO UPDATE SET kind=excluded.kind, label=excluded.label, "
+        "status=excluded.status, qid=excluded.qid, why=excluded.why, candidates_json=excluded.candidates_json, "
+        "facts_json=excluded.facts_json, checked_at=COALESCE(excluded.checked_at, wb_wikidata.checked_at), "
+        "decided_by=COALESCE(excluded.decided_by, wb_wikidata.decided_by), "
+        "decided_at=COALESCE(excluded.decided_at, wb_wikidata.decided_at)",
+        (key, kind, label, status, qid or "", why or "", json.dumps(candidates or [], ensure_ascii=False),
+         json.dumps(facts or {}, ensure_ascii=False), checked_at, decided_by, decided_at))
+
+
+def wikidata_rows(conn, *, status=None, kind: str | None = None, keys=None, q: str = "", limit: int = 100,
+                  offset: int = 0) -> tuple[list[dict], int]:
+    """Lookup rows with the staged item's description and status beside them, and the total."""
+    where, args = [], []
+    if status:
+        sts = [status] if isinstance(status, str) else list(status)
+        where.append(f"w.status IN ({','.join('?' * len(sts))})"); args += sts
+    if kind:
+        where.append("w.kind=?"); args.append(kind)
+    if keys:
+        ks = list(keys)
+        where.append(f"w.key IN ({','.join('?' * len(ks))})"); args += ks
+    if q:
+        where.append("(w.label LIKE ? OR w.key LIKE ?)"); args += [f"%{q}%"] * 2
+    sql_where = (" WHERE " + " AND ".join(where)) if where else ""
+    total = conn.execute(f"SELECT COUNT(*) FROM wb_wikidata w{sql_where}", args).fetchone()[0]
+    out = rows(conn.execute(
+        "SELECT w.*, i.description AS item_description, i.status AS item_status, i.qid AS item_qid, i.wikidata_qid "
+        f"FROM wb_wikidata w LEFT JOIN wb_items i ON i.key=w.key{sql_where} "
+        f"ORDER BY w.kind, w.label, w.key LIMIT {int(limit)} OFFSET {int(offset)}", args))
+    for r in out:
+        for col, default in (("candidates_json", []), ("facts_json", {})):
+            try:
+                r[col[:-5]] = json.loads(r.pop(col) or "")
+            except (ValueError, TypeError):
+                r[col[:-5]] = default
+    return out, total
+
+
+def wikidata_counts(conn) -> dict:
+    """Lookup rows per status, and how many staged items carry a Wikidata id from any source."""
+    out = {r["status"]: r["n"] for r in rows(conn.execute("SELECT status, COUNT(*) n FROM wb_wikidata GROUP BY status"))}
+    out["linked"] = conn.execute("SELECT COUNT(*) FROM wb_items WHERE wikidata_qid<>'' OR item_json LIKE '%\"wikidata\": \"Q%'").fetchone()[0]
+    return out
 
 
 def props(conn) -> dict[str, dict]:

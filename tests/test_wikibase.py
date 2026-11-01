@@ -9,7 +9,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from central import sessions
-from central.wikibase import dedupe, jobs, model, push, refine, stage, store, sync
+from central.wikibase import dedupe, jobs, model, push, refine, stage, store, sync, wikidata
 from central.wikibase.client import Wikibase, WikibaseError
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -21,13 +21,13 @@ BOSS = "wiki-boss@example.com"
 def conn(demo_db, monkeypatch, tmp_path):
     monkeypatch.setenv("GLASSDB_SESSION_SECRET", "test-secret")
     c = store.open_db()
-    for t in ("wb_items", "wb_props", "wb_runs", "wb_log", "wb_cache"):
+    for t in ("wb_items", "wb_props", "wb_runs", "wb_log", "wb_cache", "wb_wikidata"):
         c.execute(f"DELETE FROM {t}")
     c.execute("DELETE FROM _settings WHERE key LIKE 'wikibase_%'")
     c.commit()
     monkeypatch.setattr(push, "OUT_DIR", tmp_path / "wb")
     yield c
-    for t in ("wb_items", "wb_props", "wb_runs", "wb_log", "wb_cache"):
+    for t in ("wb_items", "wb_props", "wb_runs", "wb_log", "wb_cache", "wb_wikidata"):
         c.execute(f"DELETE FROM {t}")
     c.execute("DELETE FROM _settings WHERE key LIKE 'wikibase_%'")
     c.commit()
@@ -61,6 +61,9 @@ def test_model_is_consistent():
     assert model.country_key("USA") == "gdb:country:united-states" == model.country_key("United States")
     assert model.time_value("2026")  .precision == 9 and model.time_value("2026-10-31").precision == 11
     assert model.time_value("sometime") is None
+    # the known-city list is keyed the way stage looks it up (norm drops the comma)
+    assert all(k == model.norm(k) for k in model.KNOWN_PLACES)
+    assert model.KNOWN_PLACES[model.norm("Tacoma, Washington")] == "Q199797"
 
 
 def test_item_round_trip_and_hash():
@@ -528,10 +531,12 @@ def test_api_stop_run(client, conn):
 def test_page_markup():
     page = (DEPLOY / "wikibase.html").read_text(encoding="utf-8")
     assert '<ul id="menu" data-nav data-active=""></ul>' in page
-    for anchor in ("#pipeline", "#items", "#openrefine", "#runs", "#settings", "/review.html"):
+    for anchor in ("#pipeline", "#items", "#wikidata", "#openrefine", "#runs", "#settings", "/review.html"):
         assert anchor in page
     for must in ("/wikibase/status", "/wikibase/jobs", "/wikibase/runs/", "/wikibase/settings", "/wikibase/refine/import",
-                 "Collectors", "Special:BotPasswords", "openrefine-manifest.json", "confirm("):
+                 "Collectors", "Special:BotPasswords", "openrefine-manifest.json", "confirm(", "Nine steps",
+                 "/wikibase/wikidata/suggested", "/wikibase/wikidata?status=unsure", '"wd-use"', '"wd-none"',
+                 '"wikidata-recheck"', "www.wikidata.org/wiki/"):
         assert must in page, must
     assert 'type="password"' in page and "GDB.me()" in page
     # the proxy, the dev site and the installer know the page
@@ -539,3 +544,212 @@ def test_page_markup():
     assert "wikibase.html" in (ROOT / "scripts" / "dev_site.py").read_text(encoding="utf-8")
     inst = (DEPLOY / "install.sh").read_text(encoding="utf-8")
     assert "wikibase.html" in inst and "--exclude 'data/wikibase'" in inst and "--exclude 'data/splat_media'" in inst
+
+
+# --------------------------------------------------------------------------- the Wikidata lookup
+def _people():
+    P = wikidata.Person
+    return [
+        P("Q900001", "Nadia Okonkwo", "Nigerian glass artist", [],
+          [("has works in the collection", "Q2894440", "Museum of Glass"), ("educated at", "Q16898382", "Pilchuck Glass School")],
+          "https://nadia.example", "nadia.glass"),
+        P("Q900002", "Ivo Marchetti", "Italian glass artist (born 1950)", [], [("work location", "Q641", "Venice")]),
+        P("Q900003", "Ivo Marchetti", "Italian glassblower (born 1971)", ["Ivo F. Marchetti"], []),
+        P("Q900010", "Pike Example", "American glass artist", [],
+          [("educated at", "Q16898382", "Pilchuck Glass School"), ("work location", "Q1141856", "Crozet")]),
+        P("Q900011", "Far Away", "Swedish glass artist", [], [("work location", "Q1754", "Stockholm")]),
+        P("Q900012", "State Wide", "American glass artist", [], [("work location", "Q1370", "Virginia")]),
+    ]
+
+
+def _svc(name, qid, desc, *, match=False, types=("human",), alias_only=False):
+    return {"id": qid, "name": name, "score": 100.0, "match": match, "description": desc,
+            "type": [{"id": "Qx", "name": t} for t in types], "features": [{"id": "all_labels", "value": 100}]}
+
+
+SERVICE = {
+    "crozet": [_svc("Crozet", "Q1141856", "census designated place in Albemarle County, Virginia, United States", match=True,
+                    types=("census-designated place in the United States",))],
+    "venice": [_svc("Venice", "Q641", "comune and city in Veneto, Italy", types=("city",)),
+               _svc("Venice", "Q845634", "city in Sarasota County, Florida, United States", types=("city",))],
+    "virginia": [_svc("Virginia", "Q1370", "state of the United States of America", match=True, types=("U.S. state",))],
+    "rae sutter": [_svc("Rae Sutter", "Q900100", "American politician")],
+    "theo park": [_svc("Theo Park", "Q900101", "British sculptor"), _svc("Theo Park", "Q900102", "Canadian ice hockey player")],
+    "bea lindqvist": [_svc("Bea Lindqvist", "Q900103", "Swedish glass sculptor")],
+    "teal": [_svc("teal", "Q1078214", "low-saturated color", types=("color",)), _svc("teal", "Q87067389", "eye color", types=("eye color",))],
+    "stained glass": [_svc("Stained Glass", "Q483121", "South Korea television drama series", types=("television series",)),
+                      _svc("stained glass", "Q1473346", "colored glass used as an art material", types=("type of work of art",))],
+    "cane": [_svc("cane", "Q1", "walking stick", types=("walking stick",))],
+    "fusing": [_svc("glass fusing", "Q2527106", "process of joining glass by heating it", types=("technique",))],
+}
+
+
+@pytest.fixture
+def fake_wikidata(monkeypatch):
+    asked: list[dict] = []
+
+    def reconcile(client, queries):
+        asked.extend(queries.values())
+        return {k: {"result": SERVICE.get(model.norm(q["query"]), [])} for k, q in queries.items()}
+
+    monkeypatch.setattr(wikidata, "fetch_index", lambda client, log=print: _people())
+    monkeypatch.setattr(wikidata, "reconcile_batch", reconcile)
+    monkeypatch.setattr(wikidata, "PAUSE", 0)
+    return asked
+
+
+def test_wikidata_decisions_and_queries():
+    c = lambda qid, name, desc, by=True, match=False, types=("human",): {  # noqa: E731
+        "qid": qid, "label": name, "description": desc, "score": 100.0, "match": match, "types": list(types), "exact": True, "by_name": by}
+    # a town: the region in the description settles two namesakes
+    st, q, _ = wikidata.decide([c("Q1", "Tacoma", "county seat of Pierce County, Washington, United States"),
+                                c("Q2", "Tacoma", "unincorporated community in Wise County, Virginia")], context=[["Washington"], ["United States"]])
+    assert (st, q) == ("matched", "Q1")
+    # two colours of the same name, both named exactly: a person picks
+    assert wikidata.decide([c("Q1", "teal", "a colour", types=("color",)), c("Q2", "teal", "eye color", types=("eye color",))])[0] == "unsure"
+    # an alias match loses to the item whose own name is ours
+    assert wikidata.decide([c("Q1", "curator", "specialist"), c("Q2", "exhibition curator", "organiser", by=False)])[1] == "Q1"
+    # glass required: the TV series and the band fall away
+    assert wikidata.decide([c("Q1", "Stained Glass", "television drama series"), c("Q2", "stained glass", "colored glass used as an art material")], glass=True)[1] == "Q2"
+    # a person found only through the service: another kind of artist waits, a politician is dropped
+    assert wikidata.decide([c("Q1", "David Smith", "American visual artist")], glass=True, art_is_unsure=True)[0] == "unsure"
+    assert wikidata.decide([c("Q1", "Rae Sutter", "American politician")], glass=True, art_is_unsure=True)[0] == "none"
+    assert wikidata.decide([], context=[["x"]])[0] == "none"
+    # the service's own unique match passes when no description names our place; otherwise it waits
+    assert wikidata.decide([c("Q1", "Venini", "Italian glassmaking company", match=True)], context=[["Venice"], ["Italy"]], glass=True)[0] == "matched"
+    assert wikidata.decide([c("Q1", "Venini", "Italian glassmaking company")], context=[["Venice"], ["Italy"]], glass=True)[0] == "unsure"
+    # the service's result → our candidate: the name it returns can be in any language
+    cand = wikidata.candidate({"id": "Q613380", "name": "دال كيهولى", "score": 100, "match": True, "description": "American glass sculptor",
+                               "type": [{"id": "Q5", "name": "human"}], "features": [{"id": "all_labels", "value": 100}]}, {"dale chihuly"})
+    assert cand["exact"] is True and cand["by_name"] is False and cand["types"] == ["human"]
+    # what is asked, per kind
+    items = {}
+    person = model.Item("gdb:artists:1", "person", "Rae Sutter", "glass artist, Crozet, Virginia", [], "gdb:class:person")
+    q = wikidata.query_for(person, items)
+    assert q["type"] == "Q5" and q["glass"] and q["art_is_unsure"] and q["properties"] == [{"pid": "P106", "v": {"id": "Q2865798"}}]
+    tech = model.Item("gdb:technique:hot-sculpted", "technique", "Hot-Sculpted Solid Glass (Massiccio)", "x", [], "gdb:class:technique")
+    q = wikidata.query_for(tech, items)
+    assert q["query"] == "Hot-Sculpted Solid Glass" and "type" not in q and q["shortened"] is True
+    assert wikidata.query_for(model.Item("gdb:trait:merese", "trait", "Merese", "x", [], "gdb:class:trait"), items)["shortened"] is False
+    fair = model.Item("gdb:art_fairs:1", "show", "Glass Fair (2026)", "art fair in Tacoma", [], "gdb:class:art-fair")
+    q = wikidata.query_for(fair, items)
+    assert q["query"] == "Glass Fair" and q["type"] == "Q1792535" and q["context"] == [["Tacoma"], []]
+    studio = model.Item("gdb:studios:1", "studio", "Blue Ridge Hot Glass", "hot shop in Crozet, Virginia", [], "gdb:class:hot-shop")
+    studio.add("country", model.item("gdb:country:united-states"))
+    q = wikidata.query_for(studio, items)
+    assert q["type"] == "Q43229" and q["glass"] and q["context"] == [["Crozet"], ["Virginia"]] and {"pid": "P17", "v": {"id": "Q30"}} in q["properties"]
+    town = model.Item("gdb:place:crozet-virginia", "place", "Crozet", "Virginia, United States", [], "gdb:class:place")
+    town.add("located in", model.item("gdb:place:virginia-united-states"))
+    region = model.Item("gdb:place:virginia-united-states", "place", "Virginia", "United States", [], "gdb:class:place")
+    items = {town.key: town, region.key: region}
+    parents = wikidata.parents_of(items)
+    assert wikidata.query_for(town, items, parents)["type"] == "Q486972" and wikidata.query_for(town, items, parents)["context"] == [["Virginia"], ["United States"]]
+    assert wikidata.query_for(region, items, parents)["type"] == "Q35657"
+    veneto = model.Item("gdb:place:veneto-italy", "place", "Veneto", "Italy", [], "gdb:class:place")
+    assert wikidata.query_for(veneto, items, {veneto.key})["type"] == "Q10864048"
+    assert wikidata.query_for(veneto, items, set())["type"] == "Q486972"       # nothing is located in it: a town
+
+
+def test_wikidata_lookup_matches_waits_and_reports(conn, fake_wikidata, monkeypatch):
+    stage.run(conn, lambda *_: None)
+    dedupe.run(conn, lambda *_: None)
+    nadia = store.one(conn.execute("SELECT * FROM wb_items WHERE label='Nadia Okonkwo'"))
+    store.set_item(conn, nadia["key"], status="pushed", qid="Q77", pushed_hash=nadia["content_hash"])
+    lines = []
+    s = wikidata.run(conn, lines.append, {})
+    rows = {r["key"]: r for r in store.wikidata_rows(conn, limit=5000)[0]}
+    by_label = {r["label"]: r for r in rows.values()}
+    # people: the index first (one namesake → matched, two → unsure), then the service
+    assert by_label["Nadia Okonkwo"]["status"] == "matched" and by_label["Nadia Okonkwo"]["qid"] == "Q900001"
+    assert by_label["Nadia Okonkwo"]["facts"]["links"]["has works in the collection"] == ["Museum of Glass"]
+    assert by_label["Ivo Marchetti"]["status"] == "unsure" and len(by_label["Ivo Marchetti"]["candidates"]) == 2
+    assert by_label["Rae Sutter"]["status"] == "none"                    # a politician is not a glass artist
+    assert by_label["Theo Park"]["status"] == "unsure"                   # a sculptor namesake waits for a person
+    assert by_label["Bea Lindqvist"]["status"] == "matched" and by_label["Bea Lindqvist"]["qid"] == "Q900103"
+    # places: the region in the description decides; a U.S. state is asked for as one
+    assert by_label["Crozet"]["qid"] == "Q1141856" and by_label["Virginia"]["qid"] == "Q1370"
+    venice = rows["gdb:place:venice-veneto"]
+    assert venice["status"] == "matched" and venice["qid"] == "Q641"
+    assert "gdb:place:venice-italy" not in rows                          # a duplicate is never looked up
+    assert rows["gdb:studios:studios-0000"]["status"] == "none"
+    # vocabularies: hand-listed ids are known and never asked about; glass settles a technique
+    assert rows["gdb:colour:red"]["status"] == "known" and rows["gdb:colour:red"]["qid"] == "Q3142"
+    assert rows["gdb:colour:teal"]["status"] == "unsure"
+    assert rows["gdb:technique:stained-glass"]["qid"] == "Q1473346"
+    assert rows["gdb:technique:cane-murrine"]["status"] == "none"
+    fusing = rows["gdb:technique:fusing-slumping"]                      # asked as "Fusing": right, but a person confirms
+    assert fusing["status"] == "unsure" and fusing["candidates"][0]["qid"] == "Q2527106" and "shortened" in fusing["why"]
+    assert rows["gdb:country:united-states"]["status"] == "known"
+    assert not any(model.norm(q["query"]) in ("red", "united states", "offhand blown glass") for q in fake_wikidata)
+    # the id went onto the staged item, and the pushed item now reads changed
+    nadia = store.one(conn.execute("SELECT * FROM wb_items WHERE key=?", (nadia["key"],)))
+    assert nadia["wikidata_qid"] == "Q900001" and nadia["status"] == "changed"
+    assert "Q900001" in store.effective_item(nadia).values(model.WIKIDATA_PROP)
+    bea = store.one(conn.execute("SELECT * FROM wb_items WHERE label='Bea Lindqvist'"))
+    assert bea["wikidata_qid"] == "Q900103" and bea["status"] == "new"
+    # the report: museums holding our people's work, what we lack, and whom Wikidata ties to our places
+    assert s["in_collections"] == {"Museum of Glass": ["Nadia Okonkwo"]}
+    assert s["adds"]["website"] == (0 if store.effective_item(nadia).has("official website") else 1)
+    names = [p["label"] for p in s["suggested"]]
+    assert "Pike Example" in names and "Far Away" not in names and "Nadia Okonkwo" not in names and "Ivo Marchetti" not in names
+    assert "State Wide" not in names                                     # a state is not an anchor, a town is
+    pike = next(p for p in s["suggested"] if p["label"] == "Pike Example")
+    assert pike["via"] == ["Crozet (work location)"] and s["suggested_n"] == 1
+    assert s["by_status"]["matched"] >= 4 and s["totals"]["linked"] >= 60 and any("Museum of Glass" in ln for ln in lines)
+    # a second run asks about nothing; a recheck redoes the automatic decisions, never a person's
+    n_asked = len(fake_wikidata)
+    assert wikidata.run(conn, lambda *_: None, {})["looked_up"] == 0 and len(fake_wikidata) == n_asked
+    ivo = store.one(conn.execute("SELECT * FROM wb_items WHERE label='Ivo Marchetti'"))
+    r = wikidata.confirm(conn, ivo["key"], "Q900003", "boss@example.com")
+    assert r["status"] == "confirmed" and r["decided_by"] == "boss@example.com"
+    assert store.one(conn.execute("SELECT wikidata_qid FROM wb_items WHERE key=?", (ivo["key"],)))["wikidata_qid"] == "Q900003"
+    r = wikidata.confirm(conn, bea["key"], "")
+    assert r["status"] == "rejected"
+    assert store.one(conn.execute("SELECT wikidata_qid FROM wb_items WHERE key=?", (bea["key"],)))["wikidata_qid"] == ""
+    # Wikidata changed its mind about Crozet: a recheck revisits the lookup's own matches and
+    # takes back an id it set, while a person's decisions and the hand lists stand
+    monkeypatch.setitem(SERVICE, "crozet", [])
+    s2 = wikidata.run(conn, lambda *_: None, {"recheck": True})
+    assert s2["looked_up"] > 0 and s2["by_status"]["matched"] >= 4
+    rows = {r["key"]: r for r in store.wikidata_rows(conn, limit=5000)[0]}
+    assert rows[ivo["key"]]["status"] == "confirmed" and rows[bea["key"]]["status"] == "rejected"
+    assert rows[nadia["key"]]["status"] == "matched" and rows["gdb:colour:red"]["status"] == "known"
+    assert rows["gdb:place:crozet-virginia"]["status"] == "none"
+    assert store.one(conn.execute("SELECT wikidata_qid FROM wb_items WHERE key='gdb:place:crozet-virginia'"))["wikidata_qid"] == ""
+    assert store.one(conn.execute("SELECT wikidata_qid FROM wb_items WHERE key=?", (nadia["key"],)))["wikidata_qid"] == "Q900001"
+    assert store.one(conn.execute("SELECT wikidata_qid FROM wb_items WHERE key=?", (bea["key"],)))["wikidata_qid"] == ""
+    counts = store.wikidata_counts(conn)
+    assert counts["confirmed"] == 1 and counts["rejected"] == 1 and counts["unsure"] >= 2
+    assert wikidata.confirm(conn, "gdb:nobody:1", "Q1") is None
+
+
+def test_api_wikidata_rows_decisions_and_job(client, conn, fake_wikidata):
+    import time
+    stage.run(conn, lambda *_: None)
+    wikidata.run(conn, lambda *_: None, {})
+    j = client.get("/wikibase/wikidata", params={"status": "unsure"}).json()
+    assert j["total"] >= 2 and all(r["status"] == "unsure" and r["candidates"] for r in j["items"])
+    theo = next(r for r in j["items"] if r["label"] == "Theo Park")
+    assert theo["item_description"].startswith("glass artist") and theo["candidates"][0]["qid"] == "Q900101"
+    assert client.post(f"/wikibase/wikidata/{theo['key']}", json={"qid": "Q900101"}).status_code == 401
+    assert client.post(f"/wikibase/wikidata/{theo['key']}", json={"qid": "nope"}, headers=_auth()).status_code == 400
+    assert client.post("/wikibase/wikidata/gdb:nobody:1", json={"qid": "Q1"}, headers=_auth()).status_code == 404
+    r = client.post(f"/wikibase/wikidata/{theo['key']}", json={"qid": "Q900101"}, headers=_auth())
+    assert r.status_code == 200 and r.json()["status"] == "confirmed" and r.json()["decided_by"] == BOSS
+    assert client.get(f"/wikibase/items/{theo['key']}").json()["wikidata_qid"] == "Q900101"
+    sg = client.get("/wikibase/wikidata/suggested").json()
+    assert sg["run"] is None or sg["run"]        # the direct run above wrote no wb_runs row; the job below does
+    st = client.get("/wikibase/status").json()
+    assert st["steps"]["wikidata"]["matched"] >= 3 and st["steps"]["wikidata"]["confirmed"] == 1 and "wikidata" in st["steps"]
+    r = client.post("/wikibase/jobs", json={"kind": "wikidata", "params": {"recheck": True}}, headers=_auth())
+    assert r.status_code == 200 and r.json()["params"]["recheck"] is True
+    rid = r.json()["run_id"]
+    for _ in range(200):
+        run = client.get(f"/wikibase/runs/{rid}").json()
+        if run["status"] not in ("running", "stopping"):
+            break
+        time.sleep(0.2)
+    assert run["status"] == "done" and run["summary"]["suggested_n"] == 1 and "suggested" not in run["summary"]
+    sg = client.get("/wikibase/wikidata/suggested").json()
+    assert sg["run"] == rid and sg["people"][0]["label"] == "Pike Example" and sg["in_collections"] == {"Museum of Glass": ["Nadia Okonkwo"]}
+    assert client.get("/wikibase/wikidata", params={"status": "confirmed"}).json()["total"] == 1

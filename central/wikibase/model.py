@@ -404,9 +404,10 @@ US_STATES = {
 }
 US_STATE_NAMES = {norm(v): v for v in US_STATES.values()}
 
-# Places whose Wikidata item is certain; the OpenRefine pass finds the rest. Keyed by the
-# normalised "city, region" or "city, country" the place item is built from.
-KNOWN_PLACES: dict[str, str] = {
+# Places whose Wikidata item is certain; the Wikidata lookup (``central.wikibase.wikidata``)
+# finds the rest. Keyed by ``norm("city, region")`` or ``norm("city, country")``, the form the
+# place item is built from (``norm`` drops the comma, so the keys are normalised below).
+KNOWN_PLACES: dict[str, str] = {norm(k): v for k, v in {
     "tacoma, washington": "Q199797", "seattle, washington": "Q5083", "portland, oregon": "Q6106",
     "venice, italy": "Q641", "new york, new york": "Q60", "new york city, new york": "Q60",
     "chicago, illinois": "Q1297", "los angeles, california": "Q65", "san francisco, california": "Q62",
@@ -415,7 +416,7 @@ KNOWN_PLACES: dict[str, str] = {
     "pittsburgh, pennsylvania": "Q1342", "philadelphia, pennsylvania": "Q1345", "boston, massachusetts": "Q100",
     "washington, district of columbia": "Q61", "toledo, ohio": "Q485172", "bristol, united kingdom": "Q23154",
     "bristol, england": "Q23154",
-}
+}.items()}
 
 # People and organisations whose Wikidata item is certain (normalised label → id).
 KNOWN_ENTITIES: dict[tuple[str, str], str] = {
