@@ -180,8 +180,8 @@ def wikidata_rows(status: str = "", kind: str = "", q: str = "", page: int = Que
     sts = [x for x in status.split(",") if x] or None
     rows, total = store.wikidata_rows(_conn(), status=sts, kind=kind or None, q=q, limit=per, offset=(page - 1) * per)
     return {"items": [{k: r.get(k) for k in ("key", "kind", "label", "status", "qid", "why", "candidates", "facts",
-                                               "checked_at", "decided_by", "decided_at", "item_description",
-                                               "item_status", "item_qid")} for r in rows],
+                                               "suggestion", "checked_at", "decided_by", "decided_at",
+                                               "item_description", "item_status", "item_qid")} for r in rows],
             "total": total, "page": page, "per": per, "statuses": list(wikidata.STATUSES)}
 
 
@@ -453,9 +453,15 @@ def post_item(key: str, payload: dict, u: dict = Depends(require_admin)):
     return _slim(r)
 
 
-@router.post("/wikidata/{key:path}", summary="Decide a Wikidata link by hand: {qid: 'Q123'} links, {qid: ''} rules it out")
+@router.post("/wikidata/{key:path}", summary="Decide a Wikidata link by hand: {qid: 'Q123'} links, {qid: ''} rules it out; "
+                                             "{suggest: {...}} leaves a suggestion for the reviewer")
 def post_wikidata(key: str, payload: dict, u: dict = Depends(require_admin)):
     payload = payload or {}
+    if isinstance(payload.get("suggest"), dict):
+        r = wikidata.suggest(_conn(), key, payload["suggest"], by=u.get("email") or u.get("name") or "")
+        if not r:
+            raise HTTPException(404, "no lookup row for that key; run the lookup first")
+        return {k: r.get(k) for k in ("key", "kind", "label", "status", "qid", "suggestion")}
     q = str(payload.get("qid") or "").strip()
     if q and not re.fullmatch(r"Q\d+", q):
         raise HTTPException(400, "a Wikidata id looks like Q123")

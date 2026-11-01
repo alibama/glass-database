@@ -536,7 +536,7 @@ def test_page_markup():
     for must in ("/wikibase/status", "/wikibase/jobs", "/wikibase/runs/", "/wikibase/settings", "/wikibase/refine/import",
                  "Collectors", "Special:BotPasswords", "openrefine-manifest.json", "confirm(", "Nine steps",
                  "/wikibase/wikidata/suggested", "/wikibase/wikidata?status=unsure", '"wd-use"', '"wd-none"',
-                 '"wikidata-recheck"', "www.wikidata.org/wiki/"):
+                 '"wikidata-recheck"', "www.wikidata.org/wiki/", "as suggested", "local model panel"):
         assert must in page, must
     assert 'type="password"' in page and "GDB.me()" in page
     # the proxy, the dev site and the installer know the page
@@ -737,8 +737,17 @@ def test_api_wikidata_rows_decisions_and_job(client, conn, fake_wikidata):
     r = client.post(f"/wikibase/wikidata/{theo['key']}", json={"qid": "Q900101"}, headers=_auth())
     assert r.status_code == 200 and r.json()["status"] == "confirmed" and r.json()["decided_by"] == BOSS
     assert client.get(f"/wikibase/items/{theo['key']}").json()["wikidata_qid"] == "Q900101"
-    sg = client.get("/wikibase/wikidata/suggested").json()
-    assert sg["run"] is None or sg["run"]        # the direct run above wrote no wb_runs row; the job below does
+    # an outside panel (lexflow run resolve) leaves a suggestion on an unsure row; the row stays unsure, the page shows it
+    ivo = next(r for r in j["items"] if r["label"] == "Ivo Marchetti")
+    r = client.post(f"/wikibase/wikidata/{ivo['key']}", json={"suggest": {"qid": "q900003", "confidence": 0.91, "settled": True,
+                    "because": "the glassblower born 1971 works in Venice", "models": {"qwen3:8b": {"verdict": "Q900003", "confidence": 0.91}},
+                    "version": "1-abc"}}, headers=_auth())
+    assert r.status_code == 200 and r.json()["status"] == "unsure" and r.json()["suggestion"]["qid"] == "Q900003"
+    assert r.json()["suggestion"]["by"] == BOSS and r.json()["suggestion"]["models"]["qwen3:8b"]["verdict"] == "Q900003"
+    row = next(x for x in client.get("/wikibase/wikidata", params={"status": "unsure"}).json()["items"] if x["key"] == ivo["key"])
+    assert row["suggestion"]["confidence"] == 0.91 and row["suggestion"]["settled"] is True
+    assert client.post("/wikibase/wikidata/gdb:nobody:1", json={"suggest": {"qid": "Q1"}}, headers=_auth()).status_code == 404
+    assert client.post(f"/wikibase/wikidata/{ivo['key']}", json={"suggest": {"qid": "Q1"}}).status_code == 401
     st = client.get("/wikibase/status").json()
     assert st["steps"]["wikidata"]["matched"] >= 3 and st["steps"]["wikidata"]["confirmed"] == 1 and "wikidata" in st["steps"]
     r = client.post("/wikibase/jobs", json={"kind": "wikidata", "params": {"recheck": True}}, headers=_auth())

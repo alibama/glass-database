@@ -99,7 +99,13 @@ one job runs at a time.
    left `unsure`, anyone else dropped); a technique, trait or studio must be described in
    terms of glass. One candidate that passes is `matched` and written to the item; several
    are `unsure` and wait in the page's Wikidata section, where an administrator picks one
-   (`confirmed`), types a Q id, or says none (`rejected`); no candidate is `none`. An item
+   (`confirmed`), types a Q id, or says none (`rejected`); no candidate is `none`. A local-model
+   panel can work the unsure rows first (lexflow's `run resolve`, `docs/resolve.md` in that
+   repository): it reads the queue over this API, judges each case with the candidates' Wikidata
+   facts and web search, and posts `{"suggest": {...}}` to `POST /api/wikibase/wikidata/{key}` with
+   the API key. The row stays `unsure`; the page shows the panel's answer, its reasons and each
+   model's vote beside the candidates, with the suggested button marked, and the person still
+   clicks. An item
    that already had an id (the hand lists in `model.py`, OpenRefine, a reviewer) is `known`
    and never asked about. A second run looks only at items not yet checked or whose label
    changed; *Look everything up again* (`recheck`) redoes the automatic decisions and never a

@@ -35,6 +35,9 @@ proof-of-concept features from production-ready ones in its docs.
   our people's work, the websites and Instagram accounts it has that we lack, and the glass
   artists it ties to our own institutions and places that have no row here
   (`/api/wikibase/wikidata/suggested`), each with its link. Nothing is written to Wikidata.
+  An outside panel of local models (lexflow's `run resolve`) can leave a suggestion on an unsure
+  row (`{"suggest": {...}}` on the same admin route); the page shows the panel's answer, its
+  reasons and each model's vote beside the candidates, and a person still decides.
   Also fixed on the way: the hand list of known cities was keyed with commas that the
   normaliser strips, so no city ever matched it; Tacoma, Seattle, Venice and the rest now get
   their ids at staging time.
