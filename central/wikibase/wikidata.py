@@ -526,6 +526,37 @@ def _report(conn, index: Index | None, all_items: dict[str, Item], log) -> dict:
     return out
 
 
+def suggest(conn, key: str, suggestion: dict, by: str = "") -> dict | None:
+    """A suggestion from outside (lexflow's local-model panel, ``lexflow run resolve``): kept on the lookup row
+    for the reviewer, who still decides. The row's status does not change and nothing is written to the item.
+    Returns the row, or None when the key has no lookup row."""
+    if not store.one(conn.execute("SELECT key FROM wb_wikidata WHERE key=?", (key,))):
+        return None
+    s = suggestion or {}
+    qid = str(s.get("qid") or "").strip().upper()
+    qid = qid if re.fullmatch(r"Q\d+", qid) else ""
+    verdict = str(s.get("verdict") or (qid or "none")).strip()[:20]
+    try:
+        conf = max(0.0, min(1.0, float(s.get("confidence") or 0)))
+    except (TypeError, ValueError):
+        conf = 0.0
+    models = {}
+    for m, d in list((s.get("models") or {}).items())[:8]:
+        if isinstance(d, dict):
+            try:
+                mc = max(0.0, min(1.0, float(d.get("confidence") or 0)))
+            except (TypeError, ValueError):
+                mc = 0.0
+            models[str(m)[:60]] = {"verdict": str(d.get("verdict") or "")[:20], "confidence": round(mc, 3),
+                                   "because": str(d.get("because") or "")[:300]}
+    keep = {"qid": qid, "verdict": verdict, "confidence": round(conf, 3), "because": str(s.get("because") or "")[:600],
+            "settled": bool(s.get("settled")), "models": models, "searched": bool(s.get("searched")),
+            "version": str(s.get("version") or "")[:40], "by": (by or "")[:120], "at": store.now()}
+    conn.execute("UPDATE wb_wikidata SET suggestion_json=? WHERE key=?", (json.dumps(keep, ensure_ascii=False), key))
+    conn.commit()
+    return store.wikidata_rows(conn, keys=[key])[0][0]
+
+
 def confirm(conn, key: str, qid: str, by: str = "") -> dict | None:
     """A person's decision from the page: ``qid`` links the item (``confirmed``); an empty
     ``qid`` says it is not on Wikidata (``rejected``) and takes away an id the lookup set.

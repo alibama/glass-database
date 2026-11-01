@@ -412,9 +412,12 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     GDB.json("/wikibase/wikidata?status=unsure&per=100").then(function (j) {
       var rows = j.items || [];
       $("#wdUnsure").innerHTML = rows.length ? rows.map(function (r) {
-        return '<div class="cl"><div class="k">' + esc(r.kind) + '<b>' + esc(r.label) + '</b><span>' + esc(r.item_description || "") + '</span></div><ul>' + (r.candidates || []).map(function (c) {
-          return '<li><b>' + esc(c.label) + '</b> <span>' + esc(c.description || "") + '</span> <span class="src">' + wdLink(c.qid) + (c.types && c.types.length ? ' · ' + esc(c.types.slice(0, 2).join(", ")) : "") + '</span>' + (D.admin ? ' ' + btn("This one", "wd-use", false, ' data-wd="' + esc(r.key) + '" data-qid="' + esc(c.qid) + '"') : "") + '</li>';
-        }).join("") + '<li><span class="why">' + esc(r.why || "") + '</span>' + (D.admin ? ' ' + btn("None of these", "wd-none", false, ' data-wd="' + esc(r.key) + '"') + ' <input class="wdq" placeholder="or a Q id ⏎" aria-label="Wikidata id" data-wd="' + esc(r.key) + '">' : "") + '</li></ul></div>';
+        var sg = r.suggestion && r.suggestion.verdict ? r.suggestion : null;
+        var sgLine = sg ? '<li><span class="why">A local model panel says <b>' + esc(sg.verdict) + '</b>' + (sg.confidence ? ' (' + Math.round(sg.confidence * 100) + '% sure' + (sg.settled ? ', every model agrees' : '') + ')' : '') + (sg.because ? ': ' + esc(sg.because) : '') + (sg.models ? ' <span class="src">' + esc(Object.keys(sg.models).map(function (m) { return m + " → " + sg.models[m].verdict; }).join(" · ")) + '</span>' : '') + '</span></li>' : "";
+        return '<div class="cl"><div class="k">' + esc(r.kind) + '<b>' + esc(r.label) + '</b><span>' + esc(r.item_description || "") + '</span></div><ul>' + sgLine + (r.candidates || []).map(function (c) {
+          var picked = sg && sg.qid === c.qid;
+          return '<li><b>' + esc(c.label) + '</b> <span>' + esc(c.description || "") + '</span> <span class="src">' + wdLink(c.qid) + (c.types && c.types.length ? ' · ' + esc(c.types.slice(0, 2).join(", ")) : "") + '</span>' + (D.admin ? ' ' + btn(picked ? "This one, as suggested" : "This one", "wd-use", picked, ' data-wd="' + esc(r.key) + '" data-qid="' + esc(c.qid) + '"') : "") + '</li>';
+        }).join("") + '<li><span class="why">' + esc(r.why || "") + '</span>' + (D.admin ? ' ' + btn(sg && sg.verdict === "none" ? "None of these, as suggested" : "None of these", "wd-none", !!(sg && sg.verdict === "none"), ' data-wd="' + esc(r.key) + '"') + ' <input class="wdq" placeholder="or a Q id ⏎" aria-label="Wikidata id" data-wd="' + esc(r.key) + '">' : "") + '</li></ul></div>';
       }).join("") + (j.total > rows.length ? '<p class="empty">Showing ' + rows.length + ' of ' + j.total + '.</p>' : "") : '<p class="empty">' + (wd.done ? "Nothing waiting on a person." : "Nothing waiting. Run the lookup from the pipeline.") + '</p>';
     }).catch(function () {});
   }

@@ -73,6 +73,10 @@ def now() -> str:
 
 def ensure(conn) -> None:
     conn.executescript(DDL)
+    # columns added after a table first shipped
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(wb_wikidata)")}
+    if "suggestion_json" not in cols:
+        conn.execute("ALTER TABLE wb_wikidata ADD COLUMN suggestion_json TEXT DEFAULT ''")
     conn.commit()
 
 
@@ -325,9 +329,9 @@ def wikidata_rows(conn, *, status=None, kind: str | None = None, keys=None, q: s
         f"FROM wb_wikidata w LEFT JOIN wb_items i ON i.key=w.key{sql_where} "
         f"ORDER BY w.kind, w.label, w.key LIMIT {int(limit)} OFFSET {int(offset)}", args))
     for r in out:
-        for col, default in (("candidates_json", []), ("facts_json", {})):
+        for col, default in (("candidates_json", []), ("facts_json", {}), ("suggestion_json", {})):
             try:
-                r[col[:-5]] = json.loads(r.pop(col) or "")
+                r[col[:-5]] = json.loads(r.pop(col, None) or "")
             except (ValueError, TypeError):
                 r[col[:-5]] = default
     return out, total
