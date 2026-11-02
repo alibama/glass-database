@@ -7,6 +7,8 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Fixed
+- **"See the standings" on My account led nowhere.** The links went to `#e-<id>`; the
+  Collecting Events page scrolls to `#entry-<id>`.
 - **The second real push failed on every item with coordinates.** The pusher wrote a coordinate's
   value type as `globe-coordinate`, the property's datatype, where the wiki wants `globecoordinate`;
   219 studios came back `Data value corrupt`. Fixed, and two smaller refusals from the same run with
@@ -24,6 +26,31 @@ proof-of-concept features from production-ready ones in its docs.
   than one item, with the merge link for a person (the loader still never merges or deletes).
 
 ### Added
+- **Prizes on a collecting event, and the boards to back them.** Every event now carries a
+  list of prizes an administrator edits any time from `/events-admin.html` (a textarea on the
+  create form, then a block per event: title, what it is awarded for, what the prize is,
+  sponsor and link, and the winner; `POST/DELETE /api/admin/events/{id}/prizes[/{pid}]`).
+  What a prize is awarded for is one of fourteen kinds or one of the event's awards: the shop
+  with the most different makers entering, the maker with the most pieces entered with a
+  Glass ID, the most-voted piece, the collector with the most points, the best first-time
+  maker, the first piece in, a judges' pick named by hand… The standings come straight off
+  the boards (`GET /api/seasons/{slug}/prizes`, and on the public page under *What's on the
+  table*), and closing the event writes each leader in as the winner. The defaults for a
+  theme are recognition only: *Most makers from one shop*, *Most registered pumpkins*, *Crowd
+  favourite*, *Collector of the event*. New **Makers** board (registered pieces first); the
+  **Studios** board groups a shop's spellings together, counts its makers and lists
+  *Independent* last; the Points board counts studios held.
+- **The shop a piece is entered from is asked for, offered and shown.** The one-click entry on
+  *My account* now has a studio field (prefilled with the maker's last, with the Directory's
+  studios and the event's names to pick from, `GET /api/seasons/studios`), the Glowtbook form
+  says why it matters, every entry card shows its studio, and an administrator can set an
+  entry's studio right from the entries table (`POST /api/admin/events/entries/{id}`), so one
+  shop is one name on the board.
+- **The Lima study opens on Lima.** *Blowing Glass in Lima* now carries a photograph of the
+  Costa Verde from Barranco, looking north to Miraflores (David Almeida, CC BY-SA 2.0, via
+  Wikimedia Commons), as its picture on the blog index and the homepage and as a captioned
+  figure at the top of the post; the blog's pages now carry Open Graph tags (the post's
+  picture is the link preview) and the feed's links and pictures are absolute.
 - **The migration asks Wikidata what it already knows.** A new step between Duplicates and
   OpenRefine (`central/wikibase/wikidata.py`, the page's *Look up on Wikidata* button, `python
   -m central.wikibase wikidata`) finds the Wikidata item for staged people, places, countries,

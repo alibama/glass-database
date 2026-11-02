@@ -73,6 +73,27 @@
   .award .mine b { color: var(--red); font-weight: 500; }
   .award .note { margin: 0; font-size: 14px; color: var(--muted); }
 
+  /* prizes: what is on the table, who is in line for it */
+  .prizes { margin-top: 1.5rem; border-top: 1px solid var(--ink); }
+  .prize { display: grid; grid-template-columns: minmax(12rem, 1.1fr) 1.6fr minmax(14rem, 1fr); gap: .6rem 2rem; align-items: start; padding: 1.3rem 0; border-bottom: 1px solid var(--rule); }
+  .prize h3 { margin: 0 0 .4rem; font-size: 1.45rem; }
+  .prize .for { font: 500 11px/1.5 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .prize .for b { color: var(--red); font-weight: 500; }
+  .prize .detail { margin: 0; font-size: 15px; color: var(--ink-2); max-width: 52ch; }
+  .prize .sponsor { margin: .5rem 0 0; font: 400 13px var(--sans); color: var(--muted); }
+  .prize .sponsor a { color: var(--ink); }
+  .prize .lead { margin: 0; font-size: 16px; }
+  .prize .lead small { display: block; color: var(--muted); font-size: 13px; margin-top: .2rem; }
+  .prize .lead .val { display: block; margin-top: .3rem; font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); }
+  .prize .lead .val b { color: var(--ink); font-weight: 500; }
+  .prize .std { margin: .6rem 0 0; padding: 0; list-style: none; font: 400 12px/1.7 var(--mono); color: var(--muted); letter-spacing: .03em; }
+  .prize .std b { color: var(--ink); font-weight: 500; }
+  .prize .won { margin: 0; font-size: 16px; }
+  .prize .won b { color: var(--red); font-weight: 500; }
+  .prize .note { margin: 0; font-size: 14px; color: var(--muted); }
+  @media (max-width: 900px) { .prize { grid-template-columns: 1fr 1fr; } .prize .lead-cell { grid-column: 1 / -1; } }
+  @media (max-width: 680px) { .prize { grid-template-columns: 1fr; } }
+
   /* how it works */
   button.link { background: none; border: 0; border-bottom: 1px solid currentColor; cursor: pointer; padding: 0 0 3px; }
 
@@ -211,7 +232,7 @@
     <ul class="list how">
      <li><span>Glass ID</span><p>Log the piece in <a href="/glowtbook/">Glowtbook</a> and <a href="/fingerprint/enroll.html">register it</a>: walk around it with your phone and it gets its Glass ID, so a phone can recognise <em>this</em> pumpkin later.</p></li>
      <li><span>Publish</span><p>Push it to the public directory. Once it's approved it has a page of its own and a link anyone can use to check it.</p></li>
-     <li><span>Enter</span><p>Enter it in the collecting event with your studio, the edition size and where to buy. Then tell your people.</p></li>
+     <li><span>Enter</span><p>Enter it in the collecting event with your studio (spelled the way the shop spells it, so the studio prizes count you), the edition size and where to buy. Then tell your people.</p></li>
     </ul>
    </div>
    <div>
@@ -228,7 +249,7 @@
     <ul class="list how">
      <li><span>List</span><p>Get your studio on the record: <a href="/explore/?view=submit">submit it</a> to the Directory, or say it's yours if it's already there.</p></li>
      <li><span>Host</span><p>Running an ornament day or a pop-up? Open <a href="/glowtbook/?page=events">Glowtbook → Shows &amp; Sales</a>, make the event, print the QR for the table. Buyers add their piece to their collection on the spot.</p></li>
-     <li><span>Enter</span><p>Every maker at your table enters their own pieces from their own Glowtbook — up to five each, one legendary. The studio board adds them up.</p></li>
+     <li><span>Enter</span><p>Every maker at your table enters their own pieces from their own Glowtbook — up to five each, one legendary — and names your shop. The studio board adds them up, and the studio prizes count the makers.</p></li>
      <li><span>Ask</span><p>Want a collecting event themed around your shop or show? Propose it on the <a href="https://discord.gg/9ek2UxvPT">Discord</a>.</p></li>
     </ul>
    </div>
@@ -241,6 +262,7 @@
      <ol>
       <li>Enter your own work, made for this collecting event.</li>
       <li>Up to five entries per collecting event.</li>
+      <li>Name the shop you're entering from, spelled the way the shop spells it: the studio board and the studio prizes count makers and pieces per shop.</li>
       <li>Register a piece (give it its Glass ID) before you enter it. That is what makes it Uncommon or better, and what the measured awards use.</li>
       <li>One legendary per maker per collecting event: an edition of one, with a Glass ID and its legend written. Don't say which piece it is — the collector finds out when they add it to their collection.</li>
       <li>You can't vote for your own pieces.</li>
@@ -289,14 +311,23 @@
  </div>
 </section>
 
-<section class="s alt" id="boards" aria-labelledby="h-boards">
+<section class="s alt" id="prizes" aria-labelledby="h-prizes">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 05</span> Leaderboards</p>
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Prizes</p>
+   <div><h2 id="h-prizes">What's <em>on the table.</em></h2><p class="lede">Each prize says what it is awarded for; who is in line comes straight off the boards and settles when the collecting event closes. The studio prizes count every maker who enters from a shop, so name your shop when you enter.</p></div></div>
+  <div class="prizes" id="prizesBody"></div>
+ </div>
+</section>
+
+<section class="s" id="boards" aria-labelledby="h-boards">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 06</span> Leaderboards</p>
    <div><h2 id="h-boards">Who's <em>ahead.</em></h2></div></div>
   <div class="tabs" role="tablist" id="tabs" aria-label="Leaderboards">
    <button role="tab" aria-selected="true" data-tab="peoples_choice">People's choice</button>
    <button role="tab" aria-selected="false" data-tab="most_collected">Most collected</button>
    <button role="tab" aria-selected="false" data-tab="studios">Studios</button>
+   <button role="tab" aria-selected="false" data-tab="makers">Makers</button>
    <button role="tab" aria-selected="false" data-tab="points">Points</button>
    <button role="tab" aria-selected="false" data-tab="collectors">Collectors</button>
   </div>
@@ -304,17 +335,17 @@
  </div>
 </section>
 
-<section class="s" id="mine" aria-labelledby="h-mine">
+<section class="s alt" id="mine" aria-labelledby="h-mine">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 06</span> Yours</p>
+  <div class="s-head"><p class="label"><span class="n">№ 07</span> Yours</p>
    <div><h2 id="h-mine">My <em>collection.</em></h2></div></div>
   <div id="mineBody"></div>
  </div>
 </section>
 
-<section class="s alt" id="past" aria-labelledby="h-past">
+<section class="s" id="past" aria-labelledby="h-past">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 07</span> Past &amp; upcoming</p>
+  <div class="s-head"><p class="label"><span class="n">№ 08</span> Past &amp; upcoming</p>
    <div><h2 id="h-past">Other <em>collecting events.</em></h2></div></div>
   <div class="two">
    <div>
@@ -332,9 +363,9 @@
  </div>
 </section>
 
-<section class="s" id="why" aria-labelledby="h-why">
+<section class="s alt" id="why" aria-labelledby="h-why">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 08</span> Why this exists</p>
+  <div class="s-head"><p class="label"><span class="n">№ 09</span> Why this exists</p>
    <div><h2 id="h-why">A reason to buy <em>from a working shop.</em></h2>
     <p class="lede">Independent glass artists need collectors who come back, and collectors want to know the piece on the shelf is the piece the maker made. Collecting Events are a reason to buy from a working shop this month, a way to prove what you own without a certificate in a drawer, and — quietly — a census of who is making what, where. No cash prizes, no entry fees: recognition, badges, a homepage feature, and a growing record of real glass in real collections. Data stays open under CC&nbsp;BY&nbsp;4.0.</p>
     <div class="btns"><div class="act"><a class="btn btn--line" href="https://discord.gg/9ek2UxvPT">Propose a collecting event on Discord</a><small>Opens the Discord, where new themes get talked through.</small></div><a class="link" href="/events.html">See the shows &amp; sales</a></div></div></div>
@@ -366,7 +397,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   var $ = function (s) { return document.querySelector(s); };
   var esc = GDB.esc;
   var S = { season: null, entries: [], myVotes: [], remaining: 0, canVote: false, signedIn: false,
-            lb: null, seasons: [], tab: "peoples_choice", me: null, awards: [], myPicks: {}, legendOut: 0 };
+            lb: null, seasons: [], tab: "peoples_choice", me: null, awards: [], myPicks: {}, legendOut: 0, prizes: [] };
   var ENTER_URL = "/account.html#golive";
   var VERIFY_URL = "/fingerprint/verify.html";
 
@@ -446,6 +477,8 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       "<span><b>" + plural(s.entry_count || 0, "entry").replace("entrys", "entries") + "</b></span>" +
       "<span><b>" + plural(s.vote_count || 0, "vote") + "</b></span>" +
       "<span><b>" + plural(s.claim_count || 0, "piece") + " collected</b></span>" +
+      (S.lb && S.lb.makers && S.lb.makers.length ? "<span><b>" + plural(S.lb.makers.length, "maker") + "</b> from <b>" +
+        plural((S.lb.studios || []).filter(function (x) { return !x.independent; }).length, "studio") + "</b></span>" : "") +
       (s.entries_close ? "<span>entries close <b>" + esc(s.entries_close) + "</b></span>" : "") +
       (s.voting_closes ? "<span>voting closes <b>" + esc(s.voting_closes) + "</b></span>" : "");
     var cta = "";
@@ -477,6 +510,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       serial: "ref " + String(e.object_row_id || "").slice(0, 8), set: S.season ? S.season.title : "",
       quote: e.rarity === "legendary" && e.legend ? e.legend : "",
       stats: [
+        { k: "Studio", v: e.studio || "Independent", sub: e.studio ? "counts for the studio board and prizes" : "no shop named", off: !e.studio },
         { k: "Glass ID", v: e.fingerprinted ? "Registered" : "Not registered", sub: e.fingerprinted ? "any phone can check this piece" : "counts as common until the maker registers it", off: !e.fingerprinted },
         { k: "Edition", v: ed + (e.price_note ? " · " + e.price_note : ""), sub: e.height_mm ? mm(e.height_mm) + " tall" : "" },
         { k: "Collected", v: plural(e.claim_count || 0, "collector"), sub: (e.points || 0) + " points to whoever adds it" }
@@ -641,7 +675,41 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       S.awards = d.awards || []; S.myPicks = d.my_picks || {}; S.legendOut = d.legendaries_out || 0;
       renderAwards();
       $("#heroLegend").hidden = !(S.legendOut > 0);
+      refreshPrizes();
     }).catch(function () {});
+  }
+
+  /* --- prizes ------------------------------------------------------- */
+  function unitWord(n, u) { return (n === 1 && u && u !== "mm" && /s$/.test(u)) ? u.slice(0, -1) : (u || ""); }
+  function valWord(s) {
+    if (s.value === null || s.value === undefined || s.value === "") return "";
+    return (s.unit === "mm" ? mm(s.value) : s.value + " " + unitWord(s.value, s.unit)).trim();
+  }
+  function prizeRow(p) {
+    var who = { piece: "a piece", studio: "a studio", maker: "a maker", collector: "a collector", hand: "named by hand" }[p.who] || "";
+    var left = "<div><h3>" + esc(p.title) + '</h3><p class="for"><b>' + esc(p.for_label || "") + "</b>" + (who ? " · " + esc(who) : "") + "</p></div>";
+    var mid = "<div>" + (p.detail ? '<p class="detail">' + esc(p.detail) + "</p>" : "") +
+      (p.sponsor ? '<p class="sponsor">Put up by ' + (p.sponsor_url ? '<a href="' + esc(p.sponsor_url) + '" rel="noopener">' + esc(p.sponsor) + "</a>" : esc(p.sponsor)) + "</p>" : "") + "</div>";
+    var right;
+    if (p.winner) right = '<p class="won">Winner: <b>' + esc(p.winner) + "</b></p>";
+    else if (p.leader) {
+      var L = p.leader, v = valWord(L);
+      right = '<p class="lead">' + (L.entry_id ? '<a href="#entry-' + L.entry_id + '" style="color:inherit">' + esc(L.name) + "</a>" : esc(L.name)) +
+        (L.sub ? "<small>" + esc(L.sub) + "</small>" : "") + (v ? '<span class="val">leading with <b>' + esc(v) + "</b></span>" : '<span class="val">first in</span>') + "</p>";
+      var rest = (p.standings || []).slice(1);
+      if (rest.length) right += '<ul class="std">' + rest.map(function (s, i) { return "<li>" + (i + 2) + " · <b>" + esc(s.name) + "</b>" + (valWord(s) ? " · " + esc(valWord(s)) : "") + "</li>"; }).join("") + "</ul>";
+    } else right = '<p class="note">' + (p.who === "hand" ? "Named when the collecting event closes." : "Nobody in line yet.") + "</p>";
+    return '<div class="prize" id="prize-' + esc(p.slug) + '">' + left + mid + '<div class="lead-cell">' + right + "</div></div>";
+  }
+  function renderPrizes() {
+    var el = $("#prizesBody"); if (!el) return;
+    if (!S.season) { el.innerHTML = '<div class="empty" style="margin-top:0;border:0;padding-left:0">Prizes are set when a collecting event opens.</div>'; return; }
+    if (!S.prizes.length) { el.innerHTML = '<div class="empty" style="margin-top:0;border:0;padding-left:0">Recognition only this time: the badges, a homepage feature, your name at the top of a board.</div>'; return; }
+    el.innerHTML = S.prizes.map(prizeRow).join("");
+  }
+  function refreshPrizes() {
+    if (!S.season) return;
+    GDB.json("/seasons/" + encodeURIComponent(S.season.slug) + "/prizes").then(function (d) { S.prizes = d.prizes || []; renderPrizes(); }).catch(function () {});
   }
 
   /* --- boards ------------------------------------------------------- */
@@ -656,14 +724,17 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     else if (S.tab === "most_collected") html = list.map(function (e) {
       return row(e.rank, esc(e.title), esc(e.artist_name || "") + (e.studio ? " · " + esc(e.studio) : ""), "in <b>" + e.claim_count + "</b> " + (e.claim_count === 1 ? "collection" : "collections"), "#entry-" + e.id); }).join("");
     else if (S.tab === "studios") html = list.map(function (s) {
-      return row(s.rank, esc(s.studio), plural(s.entries, "entry").replace("entrys", "entries"), "<b>" + s.votes + "</b> votes · <b>" + s.claims + "</b> collected"); }).join("");
+      return row(s.rank, esc(s.studio), plural(s.makers || 0, "maker") + " · " + plural(s.entries, "entry").replace("entrys", "entries") + (s.registered ? " · " + s.registered + " with a Glass ID" : ""), "<b>" + s.votes + "</b> " + (s.votes === 1 ? "vote" : "votes") + " · <b>" + s.claims + "</b> collected"); }).join("");
+    else if (S.tab === "makers") html = list.map(function (m) {
+      return row(m.rank, esc(m.artist_name), (m.studio ? esc(m.studio) + " · " : "") + plural(m.entries, "entry").replace("entrys", "entries") + " · " + m.claims + " collected", "<b>" + m.registered + "</b> registered · <b>" + m.votes + "</b> " + (m.votes === 1 ? "vote" : "votes")); }).join("");
     else if (S.tab === "points") html = list.map(function (c) {
-      return row(c.rank, esc(c.collector_name), plural(c.pieces, "piece") + (c.legendaries ? " · " + plural(c.legendaries, "legendary").replace("legendarys", "legendaries") : ""), "<b>" + c.points + "</b> " + (c.points === 1 ? "point" : "points")); }).join("");
+      return row(c.rank, esc(c.collector_name), plural(c.pieces, "piece") + (c.studios ? " · " + plural(c.studios, "studio") : "") + (c.legendaries ? " · " + plural(c.legendaries, "legendary").replace("legendarys", "legendaries") : ""), "<b>" + c.points + "</b> " + (c.points === 1 ? "point" : "points")); }).join("");
     else if (S.tab === "collectors") html = list.map(function (c) {
       return row(c.rank, esc(c.collector_name), plural(c.studios, "studio") + " · " + plural(c.seasons, "collecting event") + (c.badges ? " · " + plural(c.badges, "badge") : ""), "<b>" + c.pieces + "</b> " + (c.pieces === 1 ? "piece" : "pieces")); }).join("");
     var empty = { peoples_choice: "No votes yet. Be the first — it takes a tap.",
                   most_collected: "No checked pieces in any collection yet. Buy one, check it, add it.",
                   studios: "No studios on the board until there are entries.",
+                  makers: "The makers' board fills as pieces are entered: registered pieces first, then pieces, then what came of them.",
                   points: "Points come with every piece you add: common 1 · uncommon 2 · rare 5 · legendary 20.",
                   collectors: "The collectors' board fills as pieces are checked and added — across every collecting event." }[S.tab];
     b.innerHTML = html || '<div class="empty">' + empty + "</div>";
@@ -671,7 +742,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function refreshBoards() {
     if (!S.season) return;
     GDB.json("/seasons/" + encodeURIComponent(S.season.slug) + "/leaderboard").then(function (lb) {
-      S.lb = lb; renderBoards(); renderStandings();
+      S.lb = lb; renderBoards(); renderStandings(); refreshPrizes();
       var rank = {}; (lb.peoples_choice || []).forEach(function (r) { rank[r.id] = r.rank; });
       S.entries.forEach(function (e) {
         var el = document.querySelector('#entry-' + e.id + ' .rank'); var r = rank[e.id];
@@ -804,13 +875,13 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     return GDB.json("/seasons").then(function (all) {
       S.seasons = all.seasons || [];
       var pick = want || (all.current && all.current.slug);
-      if (!pick) { S.season = null; renderHero(); renderEntries(); renderAwards(); renderBoards(); renderPast(S.seasons, null); return; }
+      if (!pick) { S.season = null; renderHero(); renderEntries(); renderAwards(); renderPrizes(); renderBoards(); renderPast(S.seasons, null); return; }
       return GDB.json("/seasons/" + encodeURIComponent(pick)).then(function (d) {
         S.season = d.season; S.entries = d.entries || []; S.myVotes = d.my_votes || []; S.remaining = d.remaining_votes || 0;
         S.canVote = !!d.can_vote; S.signedIn = !!d.signed_in; S.lb = d.leaderboard || null;
-        S.awards = d.awards || []; S.myPicks = d.my_picks || {}; S.legendOut = d.legendaries_out || 0;
+        S.awards = d.awards || []; S.myPicks = d.my_picks || {}; S.legendOut = d.legendaries_out || 0; S.prizes = d.prizes || [];
         document.title = d.season.title + " — Collecting Events — Glass Database";
-        renderHero(); renderEntries(); renderAwards(); renderBoards(); renderPast(S.seasons, d.season.slug); deepLink();
+        renderHero(); renderEntries(); renderAwards(); renderPrizes(); renderBoards(); renderPast(S.seasons, d.season.slug); deepLink();
       }).catch(function (err) {
         if (err.status === 404 && want) { history.replaceState(null, "", location.pathname); return load(); }
         throw err;

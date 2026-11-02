@@ -757,8 +757,11 @@ elif page == "objects":
                                      "collector who adds it to their collection finds out, and it's worth "
                                      "20 points to them.")
                             with st.form(f"season_enter_{oid}"):
-                                studio = st.text_input("Studio / shop it's sold from",
-                                                       value=(profile_row()["nationality_base"] or "")[:80])
+                                studio = st.text_input(
+                                    "Studio / shop it's sold from",
+                                    value=(profile_row()["nationality_base"] or "")[:80],
+                                    help="Spell it the way the shop spells it: the studio board and the "
+                                         "studio prizes count makers and pieces per shop.")
                                 edition = st.number_input("Edition size (how many of this piece exist)",
                                                           min_value=1, max_value=10000, value=1)
                                 price_note = st.text_input("Price / where to buy (optional)",

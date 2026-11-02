@@ -65,7 +65,7 @@ admin meanwhile. Propose new themes on the Discord.
 | Role | What they do | Where |
 |---|---|---|
 | **Maker** | Fingerprints a piece in Glowtbook → publishes it → enters the season with studio, edition size, price note → confirms or rejects low-confidence claims on it | Glowtbook → Objects → *Seasons* tab (or `POST /api/seasons/{slug}/entries`; the inbox is `GET /api/me/claims`) |
-| **Shop / studio** | The name on the entry; appears on the Studios board; can tell customers "scan it to claim it" | Entry's `studio` field |
+| **Shop / studio** | The name on the entry, spelled one way; the Studios board counts its makers and pieces and the studio prizes go by it; can tell customers "scan it to claim it" | Entry's `studio` field (offered from `GET /api/seasons/studios`; an admin can set it right) |
 | **Collector** | Buys → scans with Verify → claims → builds a collection and badges | `/fingerprint/verify.html` → *Claim* → `/games.html#mine` |
 | **Voter** | Anyone signed in; N votes per season, swappable | `/games.html` Vote buttons |
 | **Admin** | Creates/opens/closes seasons, can pull an entry (approves them only in review mode); backstop for low-confidence claims the maker hasn't got to | `/events-admin.html`; entries and claims that wait in `/review.html` |
@@ -91,9 +91,11 @@ admin meanwhile. Propose new themes on the Discord.
   Only verified/approved claims count on the boards and towards badges.
 * **Only public, approved objects** can be entered or claimed — the same publication gate
   as everything else (`central/approvals.py`).
-* **No cash prizes needed.** Recognition: the Crowd Favourite badge, a homepage feature,
-  an Instagram post from @glassdatabase. That keeps the stakes friendly and the incentive
-  to game it low. If a supplier wants to put up a prize later, the boards are already there.
+* **Prizes are recognition unless someone puts something up.** Every event carries a list of
+  prizes an admin edits any time (see *Prizes*); the defaults are a homepage feature, an
+  Instagram post from @glassdatabase and a name at the top of a board, which keeps the stakes
+  friendly and the incentive to game it low. A supplier's prize goes on the same list with the
+  sponsor named; the rules never change.
 * Account ids never leave the API: entries expose `mine` (for the caller), never
   `artist_uid`; collector boards show names only.
 
@@ -123,6 +125,49 @@ The admin's create form has a textarea, one award per line — `title | vote` or
 (`seasons.awards`) list the top five by picks for vote kinds and every measured entry, tallest
 first, for measured kinds. The page shows each award with its kind, the current leader and a
 select-and-Pick control. Picks are open while the season is `open` or `voting`.
+
+## Prizes
+
+What is on the table, written by an admin and edited any time (`season_prizes`, one row per
+prize): a **title**, what it is **awarded for**, a line of **detail** (what the prize is), a
+**sponsor** and the sponsor's link, and a **winner** once there is one. "Awarded for" is one
+of `seasons.PRIZE_FOR`, or `award:<slug>` for one of the event's award categories:
+
+| Key | Who | Standings come from |
+|---|---|---|
+| `peoples_choice` · `most_collected` · `first_in` | a piece | the People's choice and Most collected boards; the earliest approved entry |
+| `studio_most_makers` · `studio_most_pieces` · `studio_most_collected` | a studio | the Studios board: distinct makers, pieces, collections per shop (never *Independent*) |
+| `maker_most_registered` · `maker_most_collected` · `maker_most_votes` · `rookie` | a maker | the Makers board: pieces with a Glass ID, collections, votes; a rookie has no approved entry in any other event |
+| `collector_most_points` · `collector_most_pieces` · `collector_most_studios` | a collector | the Points board |
+| `award:<slug>` | a piece | that award's standings (picks, or the mat's height) |
+| `judges` | named by hand | nothing; the admin writes the winner |
+
+Standings are computed from the boards on every read (`seasons.prize_standings`: each prize
+with its top three, its `leader` and its `winner`), so they move as votes and collections
+land and carry no account ids. **Closing** the event writes each prize's leader into
+`winner_text` ("Blue Ridge Hot Glass · 3 makers"); a winner an admin typed by hand beforehand
+stays, and any winner can be rewritten afterwards.
+
+Defaults when the admin doesn't list any (`seasons.default_prizes`, worded for the theme):
+*Most makers from one shop* (studio_most_makers), *Most registered pumpkins* / *pieces* /
+*ornaments* (maker_most_registered), *Crowd favourite* (peoples_choice) and *Collector of the
+event* (collector_most_points). The create form has a textarea, one prize per line —
+`title | awarded for | detail | sponsor | link`, where *awarded for* is a kind's label, its key
+or an award's title (`seasons.parse_prizes`, resolved against the event's awards when the
+prizes are added; an unknown kind refuses the whole create). Afterwards each event's
+*prizes* block on `/events-admin.html` edits, removes, adds (or adds the theme's defaults to an
+event that has none) and names winners: `POST/DELETE /api/admin/events/{id}/prizes[/{pid}]`.
+
+The public page lists the prizes under *What's on the table* with the leader and the two
+behind, and the winner once it is settled. The boards behind them: **Studios** now groups
+entries by the shop's name regardless of case and spacing (the most-used spelling is shown),
+counts distinct `makers` and `registered` pieces, ranks makers first and lists *Independent*
+last; **Makers** (new) ranks makers by registered pieces, then pieces, then collections and
+votes; **Points** carries the number of `studios` each collector holds. Because the shop's
+name is what the studio prizes go by, the entry forms ask for it with the Directory's studio
+names and the names already on the event to pick from (`GET /api/seasons/studios`), and an
+admin can set an entry's studio right from the entries table
+(`POST /api/admin/events/entries/{id}` `{studio}`).
 
 ## Rarity
 
@@ -158,13 +203,15 @@ event, Glass ID, add to your collection).
 
 1. Enter your own work, made for this collecting event.
 2. Up to five entries per collecting event.
-3. Register a piece (give it its Glass ID) before you enter it: that is what makes it
+3. Name the shop you're entering from, spelled the way the shop spells it: the studio board
+   and the studio prizes count makers and pieces per shop.
+4. Register a piece (give it its Glass ID) before you enter it: that is what makes it
    Uncommon or better and what the measured awards use.
-4. One legendary per maker per collecting event: an edition of one, with a Glass ID and its
+5. One legendary per maker per collecting event: an edition of one, with a Glass ID and its
    legend written. Don't say which piece it is; the collector finds out when they add it to
    their collection.
-5. You can't vote for your own pieces.
-6. "Solo" means made without an assistant on the pipe, on your honour.
+6. You can't vote for your own pieces.
+7. "Solo" means made without an assistant on the pipe, on your honour.
 
 **Collectors**
 
@@ -212,7 +259,10 @@ can show earned and unearned badges side by side.
 
 1. **Create** — `/events-admin.html` → *Call the makers*: title, one-line theme, dates
    (starts / entries close / voting closes / ends), rules, prize note, votes per voter, the
-   award categories (a preset per theme, one `title | vote|measured | solo` line each).
+   award categories (a preset per theme, one `title | vote|measured | solo` line each) and
+   the prizes (a preset per theme, one `title | awarded for | detail | sponsor | link` line
+   each; edited any time afterwards from the event's *prizes* block, where winners are
+   named too).
    It starts as a `draft` (invisible on the public page) unless you tick *Open for entries
    right away*. The words and dates can be edited later from the same page.
 2. **Open** — the season appears on `/games.html` as the current season; makers can enter.
@@ -228,7 +278,8 @@ can show earned and unearned badges side by side.
 5. **Review claims** — scans under 70 wait in the Review queue under *Collecting Events*. The maker usually gets there
    first from Glowtbook; approve the stragglers yourself if you can vouch for the piece.
 6. **Close** — sets `closed`, awards **Crowd Favourite** to the top-voted entry's maker and
-   **Set Complete** to collectors who covered every studio. The page shows final boards and
+   **Set Complete** to collectors who covered every studio, and writes each prize's leader in
+   as its winner (a winner named by hand beforehand stays; any can be rewritten after). The page shows final boards and
    the season moves to *Past & upcoming*. Feature the winner on the homepage / Instagram.
 
 Status flow: `draft → open → voting → closed` (`set_status` allows any transition if you
@@ -268,9 +319,11 @@ status change, and a status set to what it already is posts nothing.
 | Method | Path | Auth | Returns |
 |---|---|---|---|
 | GET | `/api/seasons` | – | `{current, seasons[], badges, signed_in}` (non-draft) |
-| GET | `/api/seasons/{slug}` | – | season (+ `legendaries_out`) + approved entries (`vote_count`, `claim_count`, `image_url`, `mine`, `rarity`, `points`, `solo`, `height_mm`) + `my_votes` + `remaining_votes` + `can_vote` + `leaderboard` + `awards` + `my_picks` |
-| GET | `/api/seasons/{slug}/leaderboard` | – | `peoples_choice`, `most_collected`, `studios`, `points`, `collectors` |
+| GET | `/api/seasons/studios` | – | `{studios[]}` — `{name, city, country, listed}`: the Directory's studios, then names already on entries |
+| GET | `/api/seasons/{slug}` | – | season (+ `legendaries_out`) + approved entries (`vote_count`, `claim_count`, `image_url`, `mine`, `rarity`, `points`, `solo`, `height_mm`) + `my_votes` + `remaining_votes` + `can_vote` + `leaderboard` + `awards` + `my_picks` + `prizes` |
+| GET | `/api/seasons/{slug}/leaderboard` | – | `peoples_choice`, `most_collected`, `studios` (with `makers`, `registered`, `independent`), `makers`, `points` (with `studios`), `collectors` |
 | GET | `/api/seasons/{slug}/awards` | – | `{awards[], my_picks, can_vote, signed_in, legendaries_out}` — each award with `standings[]`, `leader`, `eligible[]` |
+| GET | `/api/seasons/{slug}/prizes` | – | `{season, prizes[], kinds}` — each prize with `for_label`, `who`, `unit`, `standings[]` (top three), `leader`, `winner`, `settled` |
 | GET | `/api/seasons/{slug}/entries/{id}` | – | one entry (+ `voted` for the caller) |
 | POST | `/api/seasons/{slug}/entries` | sign-in | `{object_row_id, studio, edition_size, price_note, title, solo, legendary, legend}` → pending entry |
 | POST | `/api/seasons/{slug}/vote` | sign-in | `{entry_id}` → `{voted, votes, remaining}`; 400 when capped/closed |
@@ -287,14 +340,17 @@ enter, my_entries, entries, approve_entry, vote, my_votes, claim, set_claim_stat
 claims_on, claims_on_my_pieces, claim_counts, confirm_claim, collection, leaderboard,
 collectors, badges_for, award_badges, summary, default_categories, parse_categories,
 add_categories, categories, get_category, award_vote, my_award_votes, awards, rarity_of,
-has_fingerprint, parse_height_mm, legendaries_out}`.
+has_fingerprint, parse_height_mm, legendaries_out, default_prizes, parse_prizes, prizes_text,
+add_prizes, add_prize, prizes, get_prize, update_prize, delete_prize, prize_board,
+prize_standings, settle_prizes, set_entry_studio, known_studios}`.
 
 ### Tables
 
 `seasons`, `season_entries` (UNIQUE season × object; `solo`, `legendary`, `legend` flags),
 `season_votes` (UNIQUE season × entry × voter), `season_claims` (UNIQUE object × collector),
 `season_badges` (UNIQUE uid × badge × season), `season_categories` (UNIQUE season × slug),
-`season_award_votes` (UNIQUE season × category × voter). Created lazily by
+`season_award_votes` (UNIQUE season × category × voter), `season_prizes` (UNIQUE season × slug;
+`awarded_for`, `detail`, `sponsor`, `sponsor_url`, `winner_text`, `sort`). Created lazily by
 `seasons.ensure(conn)`, which also adds the entry flag columns to an older table; not
 registered in `_datasets`, so the generic read API never serves them — only the routes above do.
 
@@ -307,8 +363,8 @@ registered in `_datasets`, so the generic read API never serves them — only th
   map so a season can be a road trip.
 * **Trading via the Exchange board** — a collector with two Blue Ridge pumpkins and no
   Tidewater ornament lists a swap; the claim moves with the piece (a `transferred` event).
-* **Prizes from suppliers** — once the boards have an audience, a colour-rod or tool
-  supplier can sponsor a season without changing a line of the rules.
+* **Sponsor logos on the prizes** — a prize carries its sponsor's name and link today; a
+  small logo on the prize card and the share card is the next step once a supplier signs up.
 * **More season-scoped notifications** — openings, voting and claims post today; next, a
   Discord post when an entry is approved and when the boards change hands in the final
   24 hours.

@@ -226,6 +226,10 @@ CSS = """
   article.post blockquote p { margin: 0; }
   article.post hr { border: 0; height: 1px; background: var(--rule); margin: 2.6em 0; }
   article.post .tbl table { min-width: 520px; }
+  article.post figure.fig { margin: 0 0 2em; }
+  article.post figure.fig img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); background: var(--paper-2); }
+  article.post figure.fig figcaption { margin-top: .7rem; font: 400 13px/1.55 var(--sans); color: var(--muted); }
+  article.post figure.fig figcaption a { color: var(--muted); }
   .post-foot { max-width: 68ch; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--ink); }
   .post-foot .sign { margin-top: 1rem; }
   .post-nav { display: flex; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
@@ -381,7 +385,18 @@ def render_post(p: dict, prev: dict | None, nxt: dict | None, base: str) -> str:
     ld = {"@context": "https://schema.org", "@type": "Article", "headline": p["title"],
           "datePublished": p["date"], "author": {"@type": "Organization", "name": p["author"] or SITE_TITLE},
           "description": p["summary"], "url": base + post_url(p), "license": "https://creativecommons.org/licenses/by/4.0/"}
-    extra = f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>'
+    # the link preview: title, summary and, when the post has one, its picture
+    og = ['<meta property="og:type" content="article">',
+          f'<meta property="og:title" content="{html.escape(p["title"], quote=True)}">',
+          f'<meta property="og:description" content="{html.escape(p["summary"] or p["title"], quote=True)}">',
+          f'<meta property="og:url" content="{html.escape(base + post_url(p), quote=True)}">']
+    if p.get("image"):
+        img = p["image"] if p["image"].startswith("http") else base + p["image"]
+        og += [f'<meta property="og:image" content="{html.escape(img, quote=True)}">',
+               f'<meta property="og:image:alt" content="{html.escape(p.get("image_alt") or p["title"], quote=True)}">',
+               '<meta name="twitter:card" content="summary_large_image">']
+        ld["image"] = img
+    extra = "\n" + "\n".join(og) + f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>'
     return _page(f"{p['title']} — {SITE_TITLE}", p["summary"] or p["title"], body, base + post_url(p), extra)
 
 
@@ -422,6 +437,11 @@ def render_index(posts: list[dict], base: str) -> str:
     return _page(f"{BLOG_TITLE} — {SITE_TITLE}", BLOG_TAGLINE, body, base + "/blog/", index_on=True)
 
 
+def _absolute(html_text: str, base: str) -> str:
+    """Site-relative links and pictures made absolute, for readers that are not on the site."""
+    return re.sub(r'((?:src|href)=")/(?!/)', lambda m: m.group(1) + base + "/", html_text)
+
+
 def render_feed(posts: list[dict], base: str) -> str:
     def rfc(d):
         try:
@@ -436,7 +456,7 @@ def render_feed(posts: list[dict], base: str) -> str:
     <guid isPermaLink="true">{base}{post_url(p)}</guid>
     <pubDate>{rfc(p['date'])}</pubDate>
     <description>{html.escape(p['summary'])}</description>
-    <content:encoded><![CDATA[{render_markdown(p['body_md'])}]]></content:encoded>
+    <content:encoded><![CDATA[{_absolute(render_markdown(p['body_md']), base)}]]></content:encoded>
   </item>""")
     # Deterministic: the newest post's date, not "now". The installer rebuilds the blog
     # on the server, and a changing stamp would dirty a tracked file on every deploy.

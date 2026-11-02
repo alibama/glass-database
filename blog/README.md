@@ -38,6 +38,11 @@ Raw HTML lines (starting with `<`) pass straight through if you need them.
 - `draft: true` keeps a post out of the build (pass `--drafts` to preview it).
 - `series:` is shown as the amber tag; `tags:` is a comma list kept in
   `posts.json` for later.
+- `image:` (a site path under `deploy/img/`, or a full URL) with `image_alt:` is the
+  post's picture: on the index and homepage cards when it is the latest post, and as the
+  link preview (`og:image`) wherever the post is shared. To show it in the post itself,
+  add a `<figure class="fig">` with the `<img>` and a `<figcaption>` carrying the credit
+  as raw HTML lines at the top of the body.
 - Keep the opening paragraph strong: it is what the homepage card and the feed
   show after the title.
 

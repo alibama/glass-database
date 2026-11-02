@@ -71,6 +71,16 @@
   .tbl table { min-width: 0; }
   .tbl td.acts { white-space: nowrap; }
   .tbl td .mono { font: 400 12px var(--mono); color: var(--muted); }
+  .tbl input.studio { font: 400 14px var(--sans); padding: .35rem .5rem; border: 1px solid var(--rule); background: var(--paper); color: var(--ink); min-width: 11rem; }
+  .tbl input.studio:focus { border-color: var(--ink); outline: none; }
+  /* prizes: one small form per prize, and one to add the next */
+  details.prizes { margin-top: 1rem; grid-column: 1 / -1; }
+  details.prizes summary { cursor: pointer; font: 500 12px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink); }
+  details.prizes summary:hover { color: var(--red); }
+  form.ev.prize { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--rule); }
+  form.ev.prize .submit { gap: .8rem 1.2rem; }
+  form.ev .hint.lead { color: var(--ink); }
+  form.ev .hint.lead b { color: var(--red); font-weight: 500; }
   .ok { color: var(--ink); } .warn { color: var(--red); }
   @media (max-width: 900px) { form.ev { grid-template-columns: 1fr 1fr; } form.ev label.w4, form.ev .submit { grid-column: span 2; } }
   @media (max-width: 680px) { .evrow { grid-template-columns: 1fr; } form.ev { grid-template-columns: 1fr; } form.ev label.w2, form.ev label.w4, form.ev label.chk, form.ev .submit { grid-column: span 1; } .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; } }
@@ -181,6 +191,8 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       '<label class="chk"><input type="checkbox" name="open"> Open for entries right away</label>' +
       area("Award categories, one per line: title | vote or measured | solo", "categories", p.categories_text, "w4",
         "People's choice is always on. 'measured' ranks by the height the Photo Mat wrote onto the piece; 'solo' limits an award to pieces made solo. Leave it blank and the theme picks the defaults.", true) +
+      area("Prizes, one per line: title | awarded for | detail | sponsor | link", "prizes", p.prizes_text, "w4",
+        "What is on the table and what wins it. 'Awarded for' is one of: " + kindsList() + " — or the title of one of the awards above. Leave it blank for the theme's defaults; every prize can be edited, removed or added to afterwards, and the winner named by hand.", true) +
       '<div class="submit"><div class="act"><button class="btn btn--red" type="submit">Create collecting event</button><small>It starts as a draft, invisible on the public page, unless you ticked open.</small></div></div>' +
       "</form>";
     return presets + form;
@@ -193,7 +205,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       field("Voting closes", "voting_closes", "date", s.voting_closes) + field("Ends", "ends", "date", s.ends) +
       area("Rules", "rules", s.rules, "w4") + field("Prize note", "prize_note", "text", s.prize_note, "w2") +
       field("Votes per voter", "votes_per_voter", "number", s.votes_per_voter, "", ' min="1" max="10"') +
-      '<div class="submit"><div class="act"><button class="btn btn--line sm" type="submit">Save changes</button><small>The words and dates only; the awards stay as they were created.</small></div></div></form>';
+      '<div class="submit"><div class="act"><button class="btn btn--line sm" type="submit">Save changes</button><small>The words and dates only; the awards stay as they were created, and the prizes have their own block above.</small></div></div></form>';
   }
   function formData(f) {
     var o = {};
@@ -202,6 +214,48 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       o[el.name] = el.type === "checkbox" ? el.checked : el.value;
     });
     return o;
+  }
+
+  /* ---- prizes: what is on the table, editable any time ---------------------------- */
+  function kindsList() { return ((D.ov && D.ov.prize_kinds) || []).map(function (k) { return k.label; }).join(" · "); }
+  function unitWord(n, u) { return (n === 1 && u && u !== "mm" && /s$/.test(u)) ? u.slice(0, -1) : (u || ""); }
+  function leadWord(p) {
+    if (!p || !p.leader) return "";
+    var L = p.leader, v = (L.value === null || L.value === undefined || L.value === "") ? "" : (L.unit === "mm" ? L.value + " mm" : L.value + " " + unitWord(L.value, L.unit));
+    return "leading now: <b>" + esc(L.name) + "</b>" + (v ? " · " + esc(v.trim()) : "");
+  }
+  function prizeKindOptions(s, selected) {
+    var opts = ((D.ov && D.ov.prize_kinds) || []).map(function (k) { return '<option value="' + esc(k.key) + '"' + (k.key === selected ? " selected" : "") + ">" + esc(k.label) + "</option>"; });
+    (s.categories || []).forEach(function (c) { var v = "award:" + c.slug; opts.push('<option value="' + esc(v) + '"' + (v === selected ? " selected" : "") + ">Award: " + esc(c.title) + "</option>"); });
+    return opts.join("");
+  }
+  function prizeForm(s, p) {
+    var id = p ? p.id : "new", lead = leadWord(p);
+    return '<form class="ev prize" data-prize="' + id + '" data-event="' + s.id + '">' +
+      field("Title", "title", "text", p ? p.title : "", "w2", p ? " required" : ' placeholder="Most makers from one shop" required') +
+      '<label class="w2">Awarded for<select name="awarded_for">' + prizeKindOptions(s, p ? p.awarded_for : "studio_most_makers") + "</select>" +
+        (lead ? '<span class="hint lead">' + lead + "</span>" : (p ? '<span class="hint">nobody in line yet</span>' : "")) + "</label>" +
+      field("What the prize is", "detail", "text", p ? p.detail : "", "w4", ' placeholder="A feature on the homepage and the Instagram"') +
+      field("Sponsor", "sponsor", "text", p ? p.sponsor : "", "w2", ' placeholder="optional"') +
+      field("Sponsor's link", "sponsor_url", "text", p ? p.sponsor_url : "", "w2", ' placeholder="https://"') +
+      (p ? field("Winner (filled in when the event closes; write one to settle it by hand)", "winner_text", "text", p.winner_text, "w4") : "") +
+      '<div class="submit"><div class="act"><button class="btn btn--line sm" type="submit">' + (p ? "Save the prize" : "Add the prize") + "</button></div>" +
+      (p ? '<div class="act"><button class="btn sm btn--line" type="button" data-prize-delete="' + p.id + '" data-event="' + s.id + '" data-title="' + esc(p.title) + '">Remove</button></div>' : "") +
+      "</div></form>";
+  }
+  function prizeBlock(s) {
+    var prizes = s.prizes || [];
+    return (prizes.length ? prizes.map(function (p) { return prizeForm(s, p); }).join("") :
+        '<p class="empty small">No prizes on the table. <button type="button" class="btn sm btn--line" data-prize-defaults="' + s.id + '">Add the theme\'s default prizes</button> or write one below.</p>') +
+      '<p class="label" style="margin-top:1.6rem">Add a prize</p>' + prizeForm(s, null);
+  }
+  function studioCell(e) {
+    return '<input type="text" class="studio" list="studioNames" data-studio-for="' + e.id + '" value="' + esc(e.studio || "") + '" placeholder="Independent" aria-label="Studio"> ' +
+      '<button type="button" class="btn sm btn--line" data-studio-save="' + e.id + '">Set</button>';
+  }
+  function studioList() {
+    return '<datalist id="studioNames">' + ((D.ov && D.ov.studios) || []).map(function (s) {
+      return '<option value="' + esc(s.name) + '">' + esc([s.city, s.country].filter(Boolean).join(", ")) + "</option>"; }).join("") + "</datalist>";
   }
 
   /* ---- the list ---------------------------------------------------------------- */
@@ -215,17 +269,18 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     var entries = s.entries || [];
     var table = entries.length ? '<div class="tbl"><table><thead><tr><th>Piece</th><th>Maker</th><th>Studio</th><th>Edition</th><th>Votes</th><th>Collected</th><th>Rarity</th><th></th></tr></thead><tbody>' +
       entries.map(function (e) {
-        return "<tr><td>" + esc(e.title || "Untitled") + (e.legendary ? ' <span class="pill red">Legendary</span>' : "") + (e.solo ? ' <span class="pill">solo</span>' : "") + '<br><span class="mono">' + esc(e.object_row_id) + "</span></td><td>" + esc(e.artist_name || "") + "</td><td>" + esc(e.studio || "Independent") + "</td><td>" + esc(e.edition_size) + "</td><td>" + esc(e.vote_count) + "</td><td>" + esc(e.claim_count) + "</td><td>" + esc(e.rarity || "") + "</td>" +
+        return "<tr><td>" + esc(e.title || "Untitled") + (e.legendary ? ' <span class="pill red">Legendary</span>' : "") + (e.solo ? ' <span class="pill">solo</span>' : "") + '<br><span class="mono">' + esc(e.object_row_id) + "</span></td><td>" + esc(e.artist_name || "") + "</td><td>" + studioCell(e) + "</td><td>" + esc(e.edition_size) + "</td><td>" + esc(e.vote_count) + "</td><td>" + esc(e.claim_count) + "</td><td>" + esc(e.rarity || "") + "</td>" +
           '<td class="acts"><button class="btn sm btn--line" data-pull="' + e.id + '" data-title="' + esc(e.title || "") + '">Pull</button></td></tr>';
       }).join("") + "</tbody></table></div>" : '<p class="empty small">No approved entries yet.</p>';
     return '<article class="evrow" id="ev-' + s.id + '"><div>' +
       "<h3>" + esc(s.title) + statusPill(s.status) + "</h3>" +
       (s.theme ? '<p class="theme">' + esc(s.theme) + "</p>" : "") +
-      facts([["Entries", s.entry_count], ["Votes", s.vote_count], ["Collected", s.claim_count], ["Votes per voter", s.votes_per_voter], ["Legendaries still out", s.legendaries_out || 0], ["Waiting for review", s.pending_entries ? s.pending_entries + ' (<a href="/review.html#events">queue</a>)' : "", true], ["Page", '<a href="' + esc(s.page) + '">' + esc(s.page) + "</a>", true]]) +
+      facts([["Entries", s.entry_count], ["Votes", s.vote_count], ["Collected", s.claim_count], ["Prizes", (s.prizes || []).length], ["Votes per voter", s.votes_per_voter], ["Legendaries still out", s.legendaries_out || 0], ["Waiting for review", s.pending_entries ? s.pending_entries + ' (<a href="/review.html#events">queue</a>)' : "", true], ["Page", '<a href="' + esc(s.page) + '">' + esc(s.page) + "</a>", true]]) +
       '<p class="cal"><span>starts <b>' + esc(s.starts || "—") + "</b></span><span>entries close <b>" + esc(s.entries_close || "—") + "</b></span><span>voting closes <b>" + esc(s.voting_closes || "—") + "</b></span><span>ends <b>" + esc(s.ends || "—") + "</b></span></p>" +
       '<p class="awards">Awards: ' + awards + "</p>" +
       '</div><div class="qacts">' + acts + "</div>" +
-      '<details class="entries"' + (D.open["e" + s.id] ? " open" : "") + ' data-keep="e' + s.id + '"><summary>' + plural(entries.length, "approved entry").replace("entrys", "entries") + "</summary>" + table + "</details>" +
+      '<details class="entries"' + (D.open["e" + s.id] ? " open" : "") + ' data-keep="e' + s.id + '"><summary>' + plural(entries.length, "approved entry").replace("entrys", "entries") + " · set each one's studio</summary>" + table + "</details>" +
+      '<details class="prizes"' + (D.open["p" + s.id] ? " open" : "") + ' data-keep="p' + s.id + '"><summary>' + plural((s.prizes || []).length, "prize") + " on the table</summary>" + prizeBlock(s) + "</details>" +
       '<details class="edit"' + (D.open["f" + s.id] ? " open" : "") + ' data-keep="f' + s.id + '"><summary>Edit the words and dates</summary>' + editForm(s) + "</details>" +
       "</article>";
   }
@@ -234,8 +289,9 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     var list = (ov.events || []).length ? '<div class="ev-list">' + ov.events.map(eventRow).join("") + "</div>" :
       '<p class="empty">No collecting events yet. Create the first one above. A calendar that has worked: Court of the Gourds in October, Heirloom Ornaments in December, paperweights in spring, drinkware in summer.</p>';
     $("#body").innerHTML =
-      section(2, "create", "New", "Call the <em>makers.</em>", "Title, theme and dates, the rules in plain words, the prize, how many votes each person gets, and the awards. The preset fills the awards for the theme; edit the lines freely.", createForm()) +
-      section(3, "events", "Every event", "Open, voting, <em>closed.</em>", "The status buttons are what gate the behaviour; the dates on the page are what people read. Opening and starting the voting post a Discord nudge when the webhook is set." + (ov.review_mode ? " Review mode is on: new entries wait in the Review queue." : " Entries of a published piece go live on their own."), list);
+      section(2, "create", "New", "Call the <em>makers.</em>", "Title, theme and dates, the rules in plain words, the prizes on the table, how many votes each person gets, and the awards. The preset fills the awards and the prizes for the theme; edit the lines freely.", createForm()) +
+      section(3, "events", "Every event", "Open, voting, <em>closed.</em>", "The status buttons are what gate the behaviour; the dates on the page are what people read. Opening and starting the voting post a Discord nudge when the webhook is set. Each event's prizes are edited in its own block, and an entry's studio can be set right so one shop is one name on the board." + (ov.review_mode ? " Review mode is on: new entries wait in the Review queue." : " Entries of a published piece go live on their own."), list) +
+      studioList();
     $("#heroMeta").innerHTML = "<span><b>" + plural(sm.seasons, "collecting event") + "</b></span><span>" + (sm.live || 0) + " live</span><span>" + plural(sm.entries, "entry").replace("entrys", "entries") + "</span><span>" + plural(sm.votes, "vote") + "</span><span>" + plural(sm.claims, "piece") + " collected</span>" +
       (sm.pending_entries || sm.pending_claims ? '<span class="warn">' + (sm.pending_entries || 0) + " entries · " + (sm.pending_claims || 0) + ' requests <a href="/review.html#events">waiting</a></span>' : "");
     document.title = "Collecting Events admin — Glass Database";
@@ -271,6 +327,20 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       busy(true); say("Working…"); keep();
       post("/admin/events/entries/" + b.dataset.pull + "/pull").then(function () { say("Pulled: " + (b.dataset.title || "the entry") + " is off the page."); return load(); })
         .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    } else if (b.dataset.prizeDelete) {
+      if (!confirm("Remove the prize “" + (b.dataset.title || "") + "”?")) return;
+      busy(true); say("Working…"); keep();
+      post("/admin/events/" + b.dataset.event + "/prizes/" + b.dataset.prizeDelete, {}, "DELETE").then(function () { say("Prize removed."); return load(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    } else if (b.dataset.prizeDefaults) {
+      busy(true); say("Working…"); keep();
+      post("/admin/events/" + b.dataset.prizeDefaults + "/prizes", { defaults: true }).then(function () { say("The default prizes are on the table; edit them freely."); return load(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    } else if (b.dataset.studioSave) {
+      var inp = document.querySelector('input[data-studio-for="' + b.dataset.studioSave + '"]'); if (!inp) return;
+      busy(true); say("Working…"); keep();
+      post("/admin/events/entries/" + b.dataset.studioSave, { studio: inp.value }).then(function (j) { say("Studio set: " + ((j.entry && j.entry.studio) || "Independent") + "."); return load(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
     }
   });
   document.addEventListener("submit", function (ev) {
@@ -286,6 +356,14 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       ev.preventDefault();
       busy(true); say("Saving…"); keep();
       post("/admin/events/" + f.dataset.edit, formData(f)).then(function (j) { say("Saved “" + (j.event ? j.event.title : "") + "”."); return load(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    } else if (f.dataset.prize) {
+      ev.preventDefault();
+      var pbody = formData(f), pid = f.dataset.prize;
+      if (!(pbody.title || "").trim()) { say("A prize needs a title.", true); return; }
+      busy(true); say("Saving…"); keep();
+      post("/admin/events/" + f.dataset.event + "/prizes" + (pid === "new" ? "" : "/" + pid), pbody)
+        .then(function () { say(pid === "new" ? "Prize added: “" + pbody.title + "”." : "Prize saved: “" + pbody.title + "”."); return load(); })
         .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
     }
   });
