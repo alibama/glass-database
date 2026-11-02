@@ -415,7 +415,8 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       var rows = j.items || [];
       $("#wdUnsure").innerHTML = rows.length ? rows.map(function (r) {
         var sg = r.suggestion && r.suggestion.verdict ? r.suggestion : null;
-        var sgLine = sg ? '<li><span class="why">A local model panel says <b>' + esc(sg.verdict) + '</b>' + (sg.confidence ? ' (' + Math.round(sg.confidence * 100) + '% sure' + (sg.settled ? ', every model agrees' : '') + ')' : '') + (sg.because ? ': ' + esc(sg.because) : '') + (sg.models ? ' <span class="src">' + esc(Object.keys(sg.models).map(function (m) { return m + " → " + sg.models[m].verdict; }).join(" · ")) + '</span>' : '') + '</span></li>' : "";
+        var nModels = sg && sg.models ? Object.keys(sg.models).length : 0;
+        var sgLine = sg ? '<li><span class="why">A local model panel says <b>' + esc(sg.verdict) + '</b>' + (sg.confidence ? ' (' + Math.round(sg.confidence * 100) + '% sure' + (sg.settled && nModels > 1 ? ', all ' + nModels + ' models agree' : nModels === 1 ? ', one model' : '') + ')' : '') + (sg.because ? ': ' + esc(sg.because) : '') + (sg.models ? ' <span class="src">' + esc(Object.keys(sg.models).map(function (m) { return m + " → " + sg.models[m].verdict; }).join(" · ")) + '</span>' : '') + '</span></li>' : "";
         return '<div class="cl"><div class="k">' + esc(r.kind) + '<b>' + esc(r.label) + '</b><span>' + esc(r.item_description || "") + '</span></div><ul>' + sgLine + (r.candidates || []).map(function (c) {
           var picked = sg && sg.qid === c.qid;
           return '<li><b>' + esc(c.label) + '</b> <span>' + esc(c.description || "") + '</span> <span class="src">' + wdLink(c.qid) + (c.types && c.types.length ? ' · ' + esc(c.types.slice(0, 2).join(", ")) : "") + '</span>' + (D.admin ? ' ' + btn(picked ? "This one, as suggested" : "This one", "wd-use", picked, ' data-wd="' + esc(r.key) + '" data-qid="' + esc(c.qid) + '"') : "") + '</li>';
