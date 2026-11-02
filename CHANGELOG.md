@@ -7,6 +7,12 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Fixed
+- **The second real push failed on every item with coordinates.** The pusher wrote a coordinate's
+  value type as `globe-coordinate`, the property's datatype, where the wiki wants `globecoordinate`;
+  219 studios came back `Data value corrupt`. Fixed, and two smaller refusals from the same run with
+  it: a URL with square brackets or spaces (a Facebook event link) is percent-encoded at staging and
+  at push time, and when the wiki's spam blacklist refuses a link (a link shortener), the item goes
+  up without its outside links and its row says which were left off, instead of failing whole.
 - **Wikibase runs could overlap.** A run's heartbeat only beat on log lines, and a push logs
   every 100 items (about three minutes), so the page declared a live push *lost* and let the
   next one start; three pushes then wrote the same items at once, which showed up as

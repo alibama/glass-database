@@ -101,7 +101,10 @@ def snak(pid: str, v: Value, qid_of: Callable[[str], str], entity_base: str) -> 
     elif k in ("string", "external-id"):
         dv = {"type": "string", "value": str(v.value)[:STRING_MAX]}
     elif k == "url":
-        dv = {"type": "string", "value": str(v.value)[:URL_MAX]}
+        u = url(v.value).value                    # the cleaning staging does, for items staged before it existed
+        if not re.fullmatch(r"https?://[^\s\[\]{}<>|\"\\^`]+", u):
+            raise ValueError(f"not a URL the wiki takes: {u[:80]}")
+        dv = {"type": "string", "value": u[:URL_MAX]}
     elif k == "time":
         dv = {"type": "time", "value": time_dv(v)}
     elif k == "quantity":
@@ -110,8 +113,10 @@ def snak(pid: str, v: Value, qid_of: Callable[[str], str], entity_base: str) -> 
     elif k in ("monolingual", "monolingualtext"):
         dv = {"type": "monolingualtext", "value": {"text": str(v.value)[:STRING_MAX], "language": v.lang or LANG}}
     elif k == "coordinate":
+        # the property's datatype is "globe-coordinate"; the value's type is "globecoordinate", no hyphen: the
+        # wiki answers "Data value corrupt: Type globe-coordinate is unsupported" to the other spelling
         lat, lng = (float(x) for x in v.value.split(","))
-        dv = {"type": "globe-coordinate", "value": {"latitude": lat, "longitude": lng, "precision": 0.0001, "globe": EARTH}}
+        dv = {"type": "globecoordinate", "value": {"latitude": lat, "longitude": lng, "precision": 0.0001, "globe": EARTH}}
     else:
         raise ValueError(f"unknown value kind {k!r}")
     return {"snaktype": "value", "property": pid, "datavalue": dv}
@@ -133,7 +138,7 @@ def snak_sig(s: dict) -> tuple:
         return (s.get("property"), "quantity", a, (v or {}).get("unit"))
     if t == "monolingualtext":
         return (s.get("property"), "mono", (v or {}).get("text"), (v or {}).get("language"))
-    if t == "globe-coordinate":
+    if t in ("globecoordinate", "globe-coordinate"):
         return (s.get("property"), "coord", round(float((v or {}).get("latitude", 0)), 4),
                 round(float((v or {}).get("longitude", 0)), 4))
     return (s.get("property"), "string", v if isinstance(v, str) else json.dumps(v, sort_keys=True))
@@ -566,15 +571,51 @@ class Pusher:
             self.dropped += [f"{key}: {d}" for d in dropped]
         if self.dry_run:
             return self.record(w)
+        summary = f"Glass Database: {it.kind} {key} ({'replace' if own else 'append'}; {it.source_table})"
         try:
-            self.api.edit(body, qid=qid, clear=(w.action == "clear"),
-                          summary=f"Glass Database: {it.kind} {key} ({'replace' if own else 'append'}; {it.source_table})")
+            self.api.edit(body, qid=qid, clear=(w.action == "clear"), summary=summary)
             store.set_item(self.conn, key, status="pushed", pushed_hash=it.content_hash(), pushed_at=store.now(), error="")
         except WikibaseError as e:
+            if "spam-blacklisted-link" in str(e):
+                # the wiki's spam blacklist refuses one of the item's links (a link shortener, usually): the item
+                # goes up without its outside links, and the row says which were left off
+                kept, cut = self.without_outside_links(body)
+                if cut:
+                    self.log(f"  {key}: the wiki's spam blacklist refused a link; retrying without {', '.join(cut)}")
+                    try:
+                        self.api.edit(kept, qid=qid, clear=(w.action == "clear"), summary=summary)
+                        note = "links left off (the wiki's spam blacklist): " + ", ".join(cut)
+                        w.note = (w.note + "; " if w.note else "") + note
+                        self.dropped += [f"{key}: {c} (spam blacklist)" for c in cut]
+                        store.set_item(self.conn, key, status="pushed", pushed_hash=it.content_hash(), pushed_at=store.now(),
+                                       error="", notes=note)
+                        return self.record(w)
+                    except WikibaseError as e2:
+                        e = e2
             w.action, w.error, w.code = "fail", str(e)[:300], error_code(e)
             store.set_item(self.conn, key, status="failed", error=w.error)
             self.log(f"  {key}: {e}")
         return self.record(w)
+
+    def without_outside_links(self, body: dict) -> tuple[dict, list[str]]:
+        """``body`` without the statements whose value is a URL on another site (our own pages stay): what to send
+        when the wiki's spam blacklist refuses a link.  Returns the body and the links cut."""
+        url_pids = set()
+        for p in PROPERTIES:
+            if p.datatype == "url":
+                try:
+                    url_pids.add(self.pid(p.label))
+                except Unresolved:
+                    pass
+        kept, cut = [], []
+        for st in body.get("claims") or []:
+            snak_ = st.get("mainsnak") or {}
+            value = (snak_.get("datavalue") or {}).get("value")
+            if snak_.get("property") in url_pids and isinstance(value, str) and not value.startswith(self.base.rstrip("/")):
+                cut.append(value[:120])
+                continue
+            kept.append(st)
+        return {**body, "claims": kept} if cut else body, cut
 
     # ---- summary
     def summary(self) -> dict:

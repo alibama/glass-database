@@ -254,8 +254,15 @@ def ext(s: str) -> Value:
     return Value("external-id", clip(s, STRING_MAX))
 
 
+_URL_SAFE = ":/?#@!$&'()*+,;=%-._~"       # RFC 3986's reserved and unreserved characters, and % so an encoded URL stays
+
+
 def url(u: str) -> Value:
-    return Value("url", str(u).strip()[:URL_MAX])
+    """A URL value the wiki takes: spaces, brackets, braces, quotes, pipes and other characters it refuses are
+    percent-encoded (a Facebook event link carries ``[`` and ``]``), at most URL_MAX characters."""
+    from urllib.parse import quote
+    s = " ".join(str(u or "").split())
+    return Value("url", quote(s, safe=_URL_SAFE)[:URL_MAX])
 
 
 def mono(text: str, lang: str = LANG) -> Value:
