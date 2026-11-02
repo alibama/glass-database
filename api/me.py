@@ -156,6 +156,22 @@ def _with_next(central, uid: str, cards: list[dict]) -> list[dict]:
     return cards
 
 
+@router.get("/card", summary="My maker card: traits, bio completeness, knowledge score, career")
+def my_card(u: dict = Depends(require_user)):
+    """The signed-in maker's own card (central.makers), with the fields still empty and
+    where each one is filled in; the public card is GET /api/makers/{gid}."""
+    from central import makers
+    central = _central()
+    if central is None:
+        raise HTTPException(503, "The registry is not available")
+    m = makers.find(central, uid=u["uid"], name=u.get("name") or "", email=u.get("email") or "")
+    if not m:
+        m = {"name": u.get("name") or (u.get("email") or "A maker").split("@")[0], "names": [u.get("name") or ""],
+             "gid": "", "uid": u["uid"], "email": u.get("email") or "", "row": None, "table": "", "wiki": None,
+             "profile": None}
+    return makers.card(central, m, private=True)
+
+
 @router.get("/objects", summary="My pieces")
 def my_objects(request: Request, u: dict = Depends(require_user)):
     central = _central(); store = _store()

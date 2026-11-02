@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The numbers — Glass Database</title>
+<meta name="description" content="What the Glass Database holds today: pieces and Glass IDs, makers and studios, collecting events, what has been pushed to the wiki and matched on Wikidata, and the makers the record knows best.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav ul a.on { color: var(--red); }
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 18ch; }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; }
+  /* a row of numbers: the figure large, its name small */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 1px; margin-top: 1.6rem; background: var(--rule); border: 1px solid var(--rule); }
+  .tile { background: var(--paper); padding: 1.1rem 1.1rem 1rem; }
+  .tile b { display: block; font: 400 2.4rem/1 var(--serif); color: var(--ink); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .tile b.hot { color: var(--red); }
+  .tile span { display: block; margin-top: .5rem; font: 500 11px/1.5 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .tile small { display: block; margin-top: .25rem; font: 400 13px/1.4 var(--sans); color: var(--ink-2); }
+  .tbl table { min-width: 0; }
+  .tbl td .mono { font: 400 12px var(--mono); color: var(--muted); }
+  .note { margin-top: 1rem; font-size: 14px; color: var(--muted); max-width: 62ch; }
+  .board { margin-top: 1.2rem; border-top: 1px solid var(--rule); }
+  .board .row { display: grid; grid-template-columns: 2.2rem 1fr auto; gap: .5rem 1rem; align-items: center; padding: .8rem 0; border-bottom: 1px solid var(--rule); text-decoration: none; color: inherit; }
+  .board a.row:hover p { color: var(--red); }
+  .board .num { font: 400 13px var(--mono); color: var(--red); }
+  .board p { margin: 0; max-width: none; font-size: 16px; }
+  .board p small { display: block; color: var(--muted); font-size: 13px; margin-top: .15rem; }
+  .board .val { font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+  .board .val b { color: var(--ink); font-weight: 500; }
+  .four { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem 3rem; margin-top: 1.5rem; }
+  .empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .skel { height: 120px; background: linear-gradient(90deg, var(--paper-2), var(--paper-3), var(--paper-2)); background-size: 200% 100%; animation: sh 1.4s infinite; }
+  @keyframes sh { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+  @media (max-width: 760px) { .four { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active="about"></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">The numbers</span><a href="/explore/">The Directory</a><a href="/games.html">Collecting Events</a><a href="/infrastructure.html">How it runs</a><a href="/wikibase.html">The wiki migration</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> The numbers</p>
+  <h1 id="heroTitle">What the record <em>holds.</em></h1>
+  <p class="lede">A voluntary census of who makes glass, where, and what they have made, counted live: the pieces and their Glass IDs, the people and studios, the collecting events, what has gone to the wiki and been matched on Wikidata, and the makers the record knows best. Open data, CC BY 4.0.</p>
+  <p class="live" id="heroMeta" aria-live="polite"></p>
+ </div>
+</section>
+
+<section class="s alt" id="record" aria-labelledby="h-record">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> The record</p>
+   <div><h2 id="h-record">Pieces, people, <em>places.</em></h2><p class="lede">Only approved, public rows count. A registered piece carries a Glass ID any phone can check; a credentialed one carries Content Credentials on its photographs.</p></div></div>
+  <div class="tiles" id="recordTiles"><div class="skel"></div></div>
+  <div class="tbl" id="datasets" style="margin-top:1.6rem"></div>
+ </div>
+</section>
+
+<section class="s" id="events" aria-labelledby="h-events">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> Collecting events</p>
+   <div><h2 id="h-events">Entered, voted, <em>collected.</em></h2><p class="lede">Across every collecting event the site has run.</p></div></div>
+  <div class="tiles" id="eventTiles"></div>
+ </div>
+</section>
+
+<section class="s alt" id="wiki" aria-labelledby="h-wiki">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> The wiki and Wikidata</p>
+   <div><h2 id="h-wiki">On the <em>wider record.</em></h2><p class="lede" id="wikiLede">The public, durable half of the data lives on the site's own Wikibase, with every item keyed by its Glass Database ID and cross-referenced to Wikidata where the same thing exists there.</p></div></div>
+  <div class="tiles" id="wikiTiles"></div>
+  <div class="four">
+   <div><p class="label">Items by kind</p><div class="tbl" id="kinds"></div></div>
+   <div><p class="label">The Wikidata lookup</p><div class="tbl" id="wikidata"></div><p class="note">Known: an id that was already on the row. Matched: the lookup found exactly one. Unsure: namesakes waiting for a reviewer, or for the Resolve tool's suggestion. Confirmed and rejected: a person decided.</p></div>
+  </div>
+ </div>
+</section>
+
+<section class="s" id="makers" aria-labelledby="h-makers">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Makers</p>
+   <div><h2 id="h-makers">Who the record <em>knows best.</em></h2><p class="lede">Every named maker scored the same way: forty points for the bio, twenty for pieces, ten for the share with a Glass ID, ten for collecting events, ten for votes and honours, ten for links out. Click a name for the card.</p></div></div>
+  <div class="tiles" id="makerTiles"></div>
+  <div class="four">
+   <div><p class="label">Knowledge</p><div class="board" id="bKnowledge"></div></div>
+   <div><p class="label">Most complete bios</p><div class="board" id="bComplete"></div></div>
+   <div><p class="label">Most pieces in the record</p><div class="board" id="bPieces"></div></div>
+   <div><p class="label">Most collecting events</p><div class="board" id="bEvents"></div></div>
+  </div>
+  <p class="note" id="makerNote"></p>
+ </div>
+</section>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/stats.html">The numbers</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  function n(v) { return v == null ? 0 : +v; }
+  function fmt(v) { return n(v).toLocaleString("en-US"); }
+  function plural(x, w) { x = n(x); return x + " " + w + (x === 1 ? "" : "s"); }
+  function tile(v, label, sub, hot) { return '<div class="tile"><b' + (hot ? ' class="hot"' : "") + ">" + esc(v == null ? "—" : (typeof v === "number" ? fmt(v) : v)) + "</b><span>" + esc(label) + "</span>" + (sub ? "<small>" + esc(sub) + "</small>" : "") + "</div>"; }
+  function row(i, main, sub, val, href) {
+    var inner = '<span class="num">' + i + "</span><p>" + main + (sub ? "<small>" + sub + "</small>" : "") + '</p><span class="val">' + val + "</span>";
+    return href ? '<a class="row" href="' + esc(href) + '">' + inner + "</a>" : '<div class="row">' + inner + "</div>";
+  }
+
+  function renderStats(s) {
+    var p = s.pieces || {}, pe = s.people || {}, ev = s.events || {}, wb = s.wikibase || {}, wd = s.wikidata || {}, mk = s.makers || {};
+    $("#heroMeta").innerHTML = "<span><b>" + plural(p.total, "piece") + "</b></span><span><b>" + fmt(p.registered) + "</b> with a Glass ID</span><span><b>" + plural(mk.makers, "maker") + "</b> named</span><span><b>" + plural(pe.studios, "studio") + "</b></span><span><b>" + fmt(wb.items_pushed) + "</b> items on the wiki</span><span>counted " + esc(String(s.as_of || "").slice(0, 16).replace("T", " ")) + " UTC</span>";
+    $("#recordTiles").innerHTML = tile(p.total, "pieces", "published to the public record", true) + tile(p.registered, "with a Glass ID", p.total ? Math.round(100 * n(p.registered) / n(p.total)) + "% of the pieces" : "") + tile(p.credentialed, "with Content Credentials", "signed photographs") + tile(p.with_images, "with photographs") + tile(p.makers, "makers of those pieces") + tile(pe.artists, "artists in the Directory") + tile(pe.studios, "studios in the Directory") + tile(pe.accounts, "accounts", "people who have signed in") + tile(pe.lineage_links, "lineage links", "who taught whom, reviewed");
+    var ds = (s.directory && s.directory.datasets) || [];
+    $("#datasets").innerHTML = ds.length ? "<table><thead><tr><th>Table</th><th>Domain</th><th>Rows</th><th>Last updated</th></tr></thead><tbody>" + ds.map(function (d) { return "<tr><td>" + esc(d.table) + '<br><span class="mono">' + esc(d.description) + "</span></td><td>" + esc(d.domain) + "</td><td>" + fmt(d.rows) + "</td><td>" + esc(String(d.updated_at || "").slice(0, 10)) + "</td></tr>"; }).join("") + "</tbody></table>" : "";
+    $("#eventTiles").innerHTML = tile(ev.seasons, "collecting events", (ev.live || 0) + " live now", true) + tile(ev.entries, "pieces entered") + tile(ev.makers_entering, "makers who entered") + tile(ev.studios_entering, "studios named") + tile(ev.votes, "votes") + tile(ev.claims, "pieces collected", "checked against a Glass ID or confirmed") + tile(ev.award_votes, "award picks") + tile(ev.prizes, "prizes on the table", (ev.prizes_settled || 0) + " settled") + tile(ev.badges, "badges earned");
+    var live = wb.live;
+    $("#wikiTiles").innerHTML = tile(wb.items_pushed, "items on the wiki", wb.last_push ? "last push " + String(wb.last_push).slice(0, 10) : "", true) + tile(wb.items_staged, "items staged", (wb.duplicates_folded || 0) + " duplicates folded") + tile(wb.with_wikidata, "with a Wikidata id", wb.items_staged ? Math.round(100 * n(wb.with_wikidata) / n(wb.items_staged)) + "% of staged items" : "") + tile(wb.properties, "properties") + (live ? tile(live.items, "items the wiki reports", "live from the wiki") + tile(live.edits, "edits on the wiki") + tile(live.users, "wiki accounts") : tile("—", "the wiki itself", wb.configured ? "did not answer just now" : "not configured"));
+    $("#wikiLede").innerHTML = 'The public, durable half of the data lives on <a href="' + esc(wb.url || "#") + '">the site\'s own Wikibase</a>, every item keyed by its Glass Database ID with a <a href="/record.html">record page</a> behind it, and cross-referenced to Wikidata where the same thing exists there.';
+    var kinds = wb.by_kind || [];
+    $("#kinds").innerHTML = kinds.length ? "<table><thead><tr><th>Kind</th><th>Staged</th><th>Pushed</th><th>On Wikidata</th></tr></thead><tbody>" + kinds.map(function (k) { return "<tr><td>" + esc(k.kind) + "</td><td>" + fmt(k.staged) + "</td><td>" + fmt(k.pushed) + "</td><td>" + fmt(k.wikidata) + "</td></tr>"; }).join("") + "</tbody></table>" : '<div class="empty" style="margin-top:.8rem">Nothing staged yet.</div>';
+    var order = ["known", "matched", "confirmed", "unsure", "none", "rejected"];
+    $("#wikidata").innerHTML = Object.keys(wd).length ? "<table><thead><tr><th>Status</th><th>Rows</th></tr></thead><tbody>" + order.filter(function (k) { return wd[k] != null; }).map(function (k) { return "<tr><td>" + esc(k) + "</td><td>" + fmt(wd[k]) + "</td></tr>"; }).join("") + "<tr><td>with a suggestion from the Resolve tool</td><td>" + fmt(wd.suggested) + "</td></tr><tr><td>enrichment proposals (website, Instagram, town)</td><td>" + fmt(wd.enriched) + "</td></tr></tbody></table>" : '<div class="empty" style="margin-top:.8rem">The lookup has not run yet.</div>';
+    $("#makerTiles").innerHTML = tile(mk.makers, "named makers", "Directory rows, wiki items and the names on pieces", true) + tile(mk.with_pieces, "with pieces in the record") + tile(mk.with_registered_pieces, "with a registered piece") + tile(mk.in_events, "in a collecting event") + tile(mk.on_wikidata, "matched on Wikidata") + tile(mk.bios_half_complete, "bios at least half complete") + tile((mk.average_completeness || 0) + "%", "average bio completeness") + tile(mk.average_knowledge, "average knowledge", "out of 100");
+  }
+  function renderBoards(b) {
+    function board(el, list, val) {
+      $(el).innerHTML = (list || []).length ? list.map(function (m, i) { return row(i + 1, esc(m.name), (m.studio ? esc(m.studio) + " · " : "") + esc(m.level || ""), val(m), m.url); }).join("") : '<div class="empty" style="margin-top:.8rem;border:0;padding-left:0">Nobody yet.</div>';
+    }
+    board("#bKnowledge", b.knowledge, function (m) { return "<b>" + m.knowledge + "</b> / 100"; });
+    board("#bComplete", b.completeness, function (m) { return "<b>" + m.completeness + "%</b> complete"; });
+    board("#bPieces", b.pieces, function (m) { return "<b>" + m.pieces + "</b> pieces · " + m.registered + " registered"; });
+    board("#bEvents", b.events, function (m) { return "<b>" + m.events + "</b> events · " + m.votes + " votes"; });
+    $("#makerNote").textContent = "Scored " + String(b.computed_at || "").slice(0, 16).replace("T", " ") + " UTC; the boards refresh every fifteen minutes. A maker's own card, signed in, shows exactly what to fill in to move up.";
+  }
+
+  GDB.json("/stats").then(renderStats).catch(function (err) {
+    $("#heroTitle").innerHTML = "The numbers are <em>offline.</em>";
+    $("#recordTiles").innerHTML = '<div class="empty" style="margin-top:0">Couldn\'t reach the API (' + esc(err.message || "network") + ").</div>";
+  });
+  GDB.json("/stats/makers").then(renderBoards).catch(function () { $("#makerNote").textContent = "The maker boards could not be loaded."; });
+  GDB.chip("#chip", { next: location.pathname + location.search, compact: true });
+})();
+</script>
+</body>
+</html>

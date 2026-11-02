@@ -249,8 +249,8 @@ def go(ident: str, request: Request):
     r = store.one(conn.execute("SELECT * FROM wb_items WHERE key=?", (ident,)))
     if not r:
         raise HTTPException(404, "no such Glass Database ID")
-    it = store.load_item(r)
-    return RedirectResponse(it.url or f"/wikibase.html?key={ident}", status_code=302)
+    # every key has a record page of its own (deploy/record.html over GET /api/records/{key})
+    return RedirectResponse(f"/record/{ident}", status_code=302)
 
 
 # --------------------------------------------------------------------------- reconciliation

@@ -26,6 +26,30 @@ proof-of-concept features from production-ready ones in its docs.
   than one item, with the merge link for a person (the loader still never merges or deletes).
 
 ### Added
+- **A page for every Glass Database ID, and the wiki now cites it.** `/record/<gid>`
+  (`deploy/record.html` over `GET /api/records/{gid}`, `central/records.py`) shows a key's
+  source row, the staged statements with their item values linked, the wiki and Wikidata
+  links, and what else is tied to it (a maker's pieces, entries and lineage, a studio's makers,
+  a piece's maker). The staging step sets every item's page to its record page, so the
+  reference on every statement resolves instead of landing on a Directory search, the Glass
+  Database ID property's formatter URL is `/record/$1`, and `/api/wikibase/go/{key}`
+  redirects there. `GET /api/records?q=` finds a record by name.
+- **Maker cards.** `/maker.html?m=<gid>` and the second section of *My account* show a
+  maker's trading card (`GDB.makerCard`, `central/makers.py`): studio and techniques, pieces in
+  the record and how many carry a Glass ID, collecting events, votes and collections, honours,
+  lineage, a **bio completeness** bar ("Bio 54% complete") with the empty fields and where to
+  fill each one, and a **knowledge score** out of 100 (forty for the bio, twenty for pieces,
+  ten for the Glass ID share, ten for events, ten for recognition, ten for links out). The
+  **career record** follows a maker across every collecting event: entries, votes, best rank,
+  awards led at the close, prizes and badges, season by season; prize winners are now stored
+  as data (`season_prizes.winner_json`, `seasons.prizes_won`). `GET /api/makers/{gid}`,
+  `/api/makers/name:<name>`, `/api/makers?q=`, and `GET /api/me/card` for the signed-in maker.
+- **The numbers.** `/stats.html` (`GET /api/stats`, `central/stats.py`) counts what the record
+  holds: pieces, Glass IDs and Content Credentials, makers and studios, accounts, lineage;
+  the collecting events; what the wiki migration has staged and pushed by kind, how many items
+  carry a Wikidata id, what the wiki reports about itself, and the Wikidata lookup's statuses;
+  and the makers the record knows best (`GET /api/stats/makers`: knowledge, most complete
+  bios, most pieces, most events), every named maker scored the same way.
 - **Prizes on a collecting event, and the boards to back them.** Every event now carries a
   list of prizes an administrator edits any time from `/events-admin.html` (a textarea on the
   create form, then a block per event: title, what it is awarded for, what the prize is,

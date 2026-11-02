@@ -256,8 +256,16 @@ class Stager:
                      + (f"; left out {', '.join(sorted(set(public) - used))}" if set(public) - used else ""))
 
     # ------------------------------------------------------------------ item registry
+    def record_url(self, key: str) -> str:
+        """The permanent page of a Glass Database ID on the site."""
+        return f"{self.base}/record/{key}"
+
     def put(self, it: Item, source: dict | None = None, priority_table: str = "") -> Item:
-        """Register an item; a second item with the same key merges its claims into the first."""
+        """Register an item; a second item with the same key merges its claims into the first.
+        Every item's page on the site is its record page, keyed by its Glass Database ID
+        (``/record/gdb:artists:12``, served by deploy/record.html over GET /api/records/{key}):
+        that URL is what the wiki's statements cite as their reference, so it has to resolve."""
+        it.url = self.record_url(it.key)
         self.hashes.setdefault(it.key, _sha(source) if source is not None else _sha(it.to_json()))
         old = self.items.get(it.key)
         if old is None:
@@ -820,7 +828,7 @@ class Stager:
                 except (TypeError, ValueError):
                     pass
             it.add("image URL", url(f"{self.base}/api/objects/{rid}/image"))
-            it.add("described at URL", url(f"{self.base}/explore/?view=objects#obj-{rid}"))
+            it.add("described at URL", url(self.record_url(key)))
             for ev in _events(man):
                 et = key_for("event-type", ev.get("event_type") if ev.get("event_type") in
                              {c for c, _, _ in __import__("central.wikibase.model", fromlist=["EVENT_TYPES"]).EVENT_TYPES} else "other")

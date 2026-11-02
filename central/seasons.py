@@ -248,6 +248,10 @@ def ensure(conn) -> None:
                       ("legend", "TEXT DEFAULT ''")):
         if col not in have:
             conn.execute(f"ALTER TABLE season_entries ADD COLUMN {col} {decl}")
+    # who won a prize, as data (the maker's career record reads it), beside the words
+    have = {r[1] for r in conn.execute("PRAGMA table_info(season_prizes)").fetchall()}
+    if "winner_json" not in have:
+        conn.execute("ALTER TABLE season_prizes ADD COLUMN winner_json TEXT DEFAULT ''")
     for ddl in ("CREATE INDEX IF NOT EXISTS ix_sentries_season ON season_entries(season_id, status)",
                 "CREATE INDEX IF NOT EXISTS ix_sentries_artist ON season_entries(artist_uid)",
                 "CREATE INDEX IF NOT EXISTS ix_svotes_entry ON season_votes(entry_id)",
@@ -1513,11 +1517,37 @@ def prize_standings(conn, season_id: int, lb: dict | None = None,
     return rows
 
 
+def _winner_ref(conn, season_id: int, prize: dict, lead: dict, lb: dict) -> dict:
+    """Who the leader is, as data: the maker's account and studio behind a piece or a maker
+    standing, the studio's name, the collector's account. The career record reads this."""
+    who = prize.get("who") or "piece"
+    ref: dict = {"who": who, "name": lead.get("name") or "", "value": lead.get("value"), "unit": lead.get("unit") or ""}
+    if lead.get("entry_id"):
+        e = _one(conn.execute("SELECT artist_uid, artist_name, studio FROM season_entries WHERE id=?",
+                              (int(lead["entry_id"]),)))
+        if e:
+            ref.update({"entry_id": int(lead["entry_id"]), "artist_uid": e.get("artist_uid") or "",
+                        "artist_name": e.get("artist_name") or "", "studio": e.get("studio") or ""})
+    elif who == "maker":
+        m = next((m for m in lb.get("makers", []) if m.get("artist_name") == lead.get("name")), None)
+        if m:
+            ref.update({"artist_uid": m.get("artist_uid") or "", "artist_name": m.get("artist_name") or "",
+                        "studio": m.get("studio") or ""})
+    elif who == "studio":
+        ref["studio"] = lead.get("name") or ""
+    elif who == "collector":
+        h = next((h for h in lb.get("points", []) if h.get("collector_name") == lead.get("name")), None)
+        if h:
+            ref["collector_uid"] = h.get("collector_uid") or ""
+    return ref
+
+
 def settle_prizes(conn, season_id: int) -> list[dict]:
-    """At close-out: write each prize's leader into winner_text unless an admin already
-    named a winner. Returns what was written."""
+    """At close-out: write each prize's leader into winner_text (and who they are into
+    winner_json) unless an admin already named a winner. Returns what was written."""
     out = []
-    for p in prize_standings(conn, season_id):
+    lb = leaderboard(conn, season_id)
+    for p in prize_standings(conn, season_id, lb=lb):
         if p.get("winner_text") or not p.get("leader"):
             continue
         lead = p["leader"]
@@ -1527,10 +1557,42 @@ def settle_prizes(conn, season_id: int) -> list[dict]:
             if lead["value"] == 1 and unit.endswith("s") and unit != "mm":
                 unit = unit[:-1]
             text += f" · {lead['value']} {unit}".rstrip()
-        conn.execute("UPDATE season_prizes SET winner_text=?, updated_at=? WHERE id=?",
-                     (text[:300], _now(), p["id"]))
-        out.append({"prize_id": p["id"], "title": p["title"], "winner": text})
+        ref = _winner_ref(conn, season_id, p, lead, lb)
+        conn.execute("UPDATE season_prizes SET winner_text=?, winner_json=?, updated_at=? WHERE id=?",
+                     (text[:300], json.dumps(ref, ensure_ascii=False), _now(), p["id"]))
+        out.append({"prize_id": p["id"], "title": p["title"], "winner": text, "ref": ref})
     conn.commit()
+    return out
+
+
+def prizes_won(conn, *, uid: str = "", name: str = "", studio: str = "") -> list[dict]:
+    """Prizes settled to this maker (by account, else by name) or to this studio, across
+    every collecting event: {prize_id, title, season_id, season_title, season_slug, who, value, unit}."""
+    if not _has_table(conn, "season_prizes") or not (uid or name or studio):
+        return []
+    have = {r[1] for r in conn.execute("PRAGMA table_info(season_prizes)").fetchall()}
+    if "winner_json" not in have:
+        return []
+    rows = _rows(conn.execute(
+        """SELECT p.id, p.title, p.awarded_for, p.winner_json, p.season_id, s.title AS season_title, s.slug AS season_slug
+           FROM season_prizes p JOIN seasons s ON s.id=p.season_id WHERE COALESCE(p.winner_json,'')<>''
+           ORDER BY s.starts DESC, p.sort, p.id"""))
+    want_name, want_studio = _studio_key(name), _studio_key(studio)
+    out = []
+    for r in rows:
+        try:
+            ref = json.loads(r["winner_json"] or "{}")
+        except ValueError:
+            continue
+        hit = ((uid and ref.get("artist_uid") == uid)
+               or (want_name and _studio_key(ref.get("artist_name") or "") == want_name)
+               or (want_name and ref.get("who") == "maker" and _studio_key(ref.get("name") or "") == want_name)
+               or (want_studio and ref.get("who") == "studio" and _studio_key(ref.get("name") or "") == want_studio))
+        if hit:
+            out.append({"prize_id": r["id"], "title": r["title"], "awarded_for": r["awarded_for"],
+                        "season_id": r["season_id"], "season_title": r["season_title"],
+                        "season_slug": r["season_slug"], "who": ref.get("who"), "value": ref.get("value"),
+                        "unit": ref.get("unit") or ""})
     return out
 
 

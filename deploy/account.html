@@ -103,9 +103,17 @@
 </section>
 
 <div id="signedIn" hidden>
-<section class="s alt" id="golive" aria-labelledby="h-golive">
+<section class="s alt" id="card" aria-labelledby="h-card">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 02</span> Go live</p>
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> Your maker card</p>
+   <div><h2 id="h-card">What the record <em>knows about you.</em></h2><p class="lede">Your traits as the record counts them: pieces and Glass IDs, collecting events, votes and honours, lineage, and how complete your bio is. Every field you fill in raises the knowledge score, and the card is what collectors see.</p></div></div>
+  <div class="two" id="cardGrid" style="margin-top:1.6rem"><div id="cardSlot"><div class="skel" style="height:200px"></div></div><div id="cardNext"></div></div>
+ </div>
+</section>
+
+<section class="s" id="golive" aria-labelledby="h-golive">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> Go live</p>
    <div><h2 id="h-golive">From the shelf <em>to the record.</em></h2><p class="lede">Pick a piece. Four steps, each with its button, all on this page: register it, give it a top image, publish it, enter it in the collecting event. The only thing that happens off this page is one Discord notification to the reviewers when you publish.</p>
     <div class="chips" id="goPick" aria-label="Your pieces"></div></div></div>
   <div class="gogrid" id="goGrid"><div id="goCard"></div><div><p class="goprog" id="goProg"></p><ol class="go" id="goSteps"></ol></div></div>
@@ -114,17 +122,17 @@
  </div>
 </section>
 
-<section class="s" id="waiting" aria-labelledby="h-waiting">
+<section class="s alt" id="waiting" aria-labelledby="h-waiting">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 03</span> Waiting on you</p>
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Waiting on you</p>
    <div><h2 id="h-waiting">What needs <em>a click.</em></h2><p class="lede">Each line is one thing to do and the button takes you straight there.</p>
     <ol class="todo" id="todo"><li class="none">Looking…</li></ol></div></div>
  </div>
 </section>
 
-<section class="s alt" id="pieces" aria-labelledby="h-pieces">
+<section class="s" id="pieces" aria-labelledby="h-pieces">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 04</span> My pieces</p>
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> My pieces</p>
    <div><h2 id="h-pieces">Your pieces, <em>as cards.</em></h2><p class="lede">One card per piece: its Glass ID strength up top, its top image, its story, where it stands in the registry and in the collecting event. The title opens the piece in <a href="/glowtbook/">Glowtbook</a>.</p>
     <div class="btns"><div class="act"><a class="btn btn--red" href="/fingerprint/enroll.html">Register a new piece</a><small>Walk around it with your phone; it gets its Glass ID and a top image.</small></div>
      <div class="act"><a class="btn btn--line" href="/glowtbook/?page=objects">Open Glowtbook</a><small>Add a piece by hand, write its story, add more photos.</small></div></div></div></div>
@@ -132,9 +140,9 @@
  </div>
 </section>
 
-<section class="s" id="events" aria-labelledby="h-events">
+<section class="s alt" id="events" aria-labelledby="h-events">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 05</span> Collecting Events</p>
+  <div class="s-head"><p class="label"><span class="n">№ 06</span> Collecting Events</p>
    <div><h2 id="h-events">Entered and <em>collected.</em></h2><p class="lede" id="eventsLede">The pieces you entered in a collecting event, and the pieces you have checked and added to your collection.</p></div></div>
   <p class="label">Entered</p>
   <div id="entriesBody"></div>
@@ -144,9 +152,9 @@
  </div>
 </section>
 
-<section class="s alt" id="sharing" aria-labelledby="h-sharing">
+<section class="s" id="sharing" aria-labelledby="h-sharing">
  <div class="wrap">
-  <div class="s-head"><p class="label"><span class="n">№ 06</span> Sharing &amp; sign-in</p>
+  <div class="s-head"><p class="label"><span class="n">№ 07</span> Sharing &amp; sign-in</p>
    <div><h2 id="h-sharing">Connected <em>accounts.</em></h2><p class="lede">Posting goes through the accounts you connect once; your collection can have a public link.</p>
     <dl class="kv" id="kv"></dl></div></div>
  </div>
@@ -440,13 +448,25 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       '<div class="act"><a class="btn btn--line" href="#golive">Go live</a><small>Register, top image, publish, enter: one panel.</small></div>' +
       '<div class="act"><a class="btn btn--line" href="/games.html">Collecting Events</a><small>This season\'s standings, your votes, your collection.</small></div>';
   }
-  function renderAll() { renderGoLive(); renderTodo(); renderPieces(); renderEntries(); renderCollection(); renderKv(); }
+  /* the maker card: what the record knows, and what to fill in next */
+  function renderCard() {
+    var slot = $("#cardSlot"), next = $("#cardNext"); if (!slot) return;
+    var c = D.card;
+    if (!c) { slot.innerHTML = '<div class="empty">Couldn\'t load your card just now.</div>'; next.innerHTML = ""; return; }
+    slot.innerHTML = GDB.makerCard(Object.assign({}, c, { noLink: true, url: "" }));
+    var k = c.knowledge || {}, comp = c.completeness || {}, steps = c.next_steps || [];
+    next.innerHTML = '<p class="label">Knowledge ' + (k.score || 0) + ' / 100 · bio ' + (comp.percent || 0) + '% complete</p>' +
+      '<p style="margin-top:.6rem;color:var(--ink-2);font-size:16px;max-width:52ch">' + (steps.length ? "The quickest ways to raise it:" : "Every field is filled in. The record knows you as well as it can; keep publishing.") + "</p>" +
+      (steps.length ? '<ul class="list" style="margin-top:.8rem">' + steps.map(function (s) { return "<li><span>" + esc(s.text) + "</span>" + (s.where ? ' <a href="' + esc(s.where.url) + '">' + esc(s.where.label) + "</a>" : "") + "</li>"; }).join("") + "</ul>" : "") +
+      '<div class="btns" style="margin-top:1.2rem">' + (c.gid ? '<div class="act"><a class="btn btn--line" href="' + esc(c.url) + '">See your public card</a><small>What a collector sees when they look you up.</small></div>' : '<div class="act"><a class="btn btn--line" href="/explore/?view=submit">Add yourself to the Directory</a><small>A Directory row gives you a record page and a Glass Database ID of your own.</small></div>') + "</div>";
+  }
+  function renderAll() { renderCard(); renderGoLive(); renderTodo(); renderPieces(); renderEntries(); renderCollection(); renderKv(); }
   function load() {
-    return Promise.all([soft("/me/objects"), soft("/me/collection"), soft("/me/claims"), soft("/social/status"), soft("/social/collections/mine"), soft("/seasons"), soft("/me"), soft("/seasons/studios")])
+    return Promise.all([soft("/me/objects"), soft("/me/collection"), soft("/me/claims"), soft("/social/status"), soft("/social/collections/mine"), soft("/seasons"), soft("/me"), soft("/seasons/studios"), soft("/me/card")])
       .then(function (r) {
         D.objs = (r[0] && r[0].objects) || []; D.coll = r[1]; D.claims = r[2]; D.social = r[3]; D.share = r[4];
         D.season = (r[5] && r[5].current) || null; if (r[6] && r[6].signed_in) D.me = r[6];
-        D.studios = (r[7] && r[7].studios) || [];
+        D.studios = (r[7] && r[7].studios) || []; D.card = r[8] || null;
         renderAll();
         if (!r[0]) $("#piecesBody").innerHTML = '<div class="empty">Couldn\'t load your pieces just now. <a href="' + esc(here) + '">Try again</a>.</div>';
       });

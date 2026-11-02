@@ -45,7 +45,12 @@ fingerprint vectors.
 Every item carries a **Glass Database ID**: `gdb:<table>:<row id>` for an ingested row,
 `gdb:object:<content hash>` for a piece, `gdb:technique:<slug>` for a vocabulary term,
 `gdb:place:<slug>` for a place made from a city, region and country. Its formatter URL is
-`/api/wikibase/go/$1`, which resolves to the page on the site. Our rows carry the wiki id in
+`https://glassdatabase.org/record/$1`: every key has a **record page** of its own
+(`deploy/record.html` over `GET /api/records/{key}`, `central/records.py`) showing the source
+row's public columns, the staged statements, the wiki and Wikidata links and what else on the
+site is tied to it, and that page is the URL every item carries and every statement cites as
+its reference, so the references resolve (the older `/api/wikibase/go/$1` redirects there; a
+search of the Directory is no longer used as a reference). Our rows carry the wiki id in
 `wb_items.qid`. That pair is the round trip, in either direction.
 
 ## The pipeline

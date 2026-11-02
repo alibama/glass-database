@@ -277,6 +277,44 @@
   }
   function serial(n) { return "№ " + String(n == null ? "" : n).padStart(4, "0"); }
 
+  /* The maker's card: the same trading-card frame as a piece, with the maker's traits, the bio
+     completeness bar and the knowledge score (GET /api/makers/{gid}, GET /api/me/card). */
+  function makerCard(d) {
+    d = d || {};
+    var k = d.knowledge || {}, c = d.completeness || {}, t = d.traits || {}, links = d.links || {};
+    var n = function (v) { return v == null ? 0 : +v; };
+    var pl = function (x, w) { x = n(x); return x + " " + w + (x === 1 ? "" : "s"); };
+    var initials = String(d.name || "?").split(/\s+/).filter(Boolean).map(function (w) { return w.charAt(0); }).join("").slice(0, 2).toUpperCase();
+    var pct = Math.max(0, Math.min(100, n(c.percent)));
+    var title = d.url && !d.noLink ? '<a href="' + esc(d.url) + '">' + esc(d.name || "A maker") + "</a>" : esc(d.name || "A maker");
+    var hp = '<span class="pc-hp' + (n(k.score) ? "" : " off") + '"><b>' + esc(k.score == null ? "—" : k.score) + "</b><small>knowledge" + (k.level ? " · " + esc(k.level) : "") + "</small></span>";
+    var type = [d.studio, d.based && d.based !== d.studio ? d.based : "", d.since ? "since " + d.since : "", d.techniques].filter(Boolean).map(esc).join(" · ");
+    var missing = (c.missing || []).map(function (m) { return typeof m === "string" ? m : (m && m.label) || ""; }).filter(Boolean);
+    var stats = [
+      { k: "Pieces", v: pl(t.pieces, "piece") + " in the record", sub: n(t.registered) + " with a Glass ID" + (n(t.credentialed) ? " · " + n(t.credentialed) + " with Content Credentials" : ""), off: !n(t.pieces) },
+      { k: "Events", v: pl(t.events, "collecting event"), sub: n(t.events) ? pl(t.entries, "entry").replace("entrys", "entries") + " · " + pl(t.votes, "vote") + " · collected " + pl(t.collected, "time") : "none entered yet", off: !n(t.events) },
+      { k: "Honours", v: (n(t.awards) + n(t.prizes)) + " won" + (t.best_rank ? " · best rank #" + t.best_rank : ""), sub: pl(t.badges, "badge") + (n(t.crowd_favourites) ? " · crowd favourite ×" + n(t.crowd_favourites) : ""), off: !(n(t.awards) + n(t.prizes) + n(t.badges)) },
+      { k: "Lineage", v: n(t.mentors) || n(t.students) ? (n(t.mentors) ? pl(t.mentors, "teacher") : "") + (n(t.mentors) && n(t.students) ? " · " : "") + (n(t.students) ? pl(t.students, "student") : "") : "not recorded", sub: n(t.mentors) || n(t.students) ? "" : "who taught you is the one thing nobody else can add", off: !(n(t.mentors) || n(t.students)) }
+    ].map(function (s) { return "<div" + (s.off ? ' class="off"' : "") + "><dt>" + esc(s.k) + "</dt><dd>" + esc(s.v) + (s.sub ? "<small>" + esc(s.sub) + "</small>" : "") + "</dd></div>"; }).join("");
+    var bar = '<div class="pc-bar" role="meter" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="Bio completeness"><div class="pc-bar-t"><i style="width:' + pct + '%"></i></div><span>Bio <b>' + pct + "% complete</b>" + (missing.length ? " · missing " + esc(missing.slice(0, 2).join(", ").toLowerCase()) + (missing.length > 2 ? " +" + (missing.length - 2) : "") : " · every field filled") + "</span></div>";
+    var acts = [];
+    if (links.website) acts.push('<a href="' + esc(links.website) + '" rel="noopener">Website</a>');
+    if (links.instagram) acts.push('<a href="' + esc(links.instagram) + '" rel="noopener">Instagram</a>');
+    if (links.wikidata) acts.push('<a href="' + esc(links.wikidata) + '" rel="noopener">Wikidata</a>');
+    if (links.wikibase) acts.push('<a href="' + esc(links.wikibase) + '" rel="noopener">Wiki item</a>');
+    if (links.record) acts.push('<a href="' + esc(links.record) + '">The record</a>');
+    if (d.actionsHtml) acts.push(d.actionsHtml);
+    var bio = String(d.bio || "");
+    return '<article class="pc mk' + (d.classes ? " " + esc(d.classes) : "") + '"' + (d.htmlId ? ' id="' + esc(d.htmlId) + '"' : "") + '><div class="pc-in">' +
+      '<header class="pc-top"><h3 class="pc-title">' + title + "</h3>" + hp + "</header>" +
+      '<div class="pc-art pc-mono" aria-hidden="true"><span>' + esc(initials) + "</span></div>" +
+      (type ? '<p class="pc-type">' + type + "</p>" : "") + bar +
+      (bio ? '<p class="pc-quote">' + esc(bio.slice(0, 180)) + (bio.length > 180 ? "…" : "") + "</p>" : "") +
+      '<dl class="pc-stats">' + stats + "</dl>" +
+      '<footer class="pc-foot"><span class="pc-serial">' + esc(d.gid || "no record id yet") + " · " + esc(d.set || "maker") + '</span><span class="pc-marks">' + (k.level ? '<span class="pill' + (n(k.score) >= 60 ? " red" : "") + '">' + esc(k.level) + "</span>" : "") + "</span></footer>" +
+      (acts.length ? '<div class="pc-acts">' + acts.join("") + "</div>" : "") + "</div></article>";
+  }
+
   window.GDB = { API: API, api: api, json: json, me: me, token: token, headers: headers, NAV: NAV, menu: menu, share: share,
-    pieceCard: pieceCard, serial: serial, thumb: thumb, loginUrl: loginUrl, logout: logout, chip: chip, param: param, frag: frag, esc: esc };
+    pieceCard: pieceCard, makerCard: makerCard, serial: serial, thumb: thumb, loginUrl: loginUrl, logout: logout, chip: chip, param: param, frag: frag, esc: esc };
 })();

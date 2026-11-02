@@ -203,3 +203,11 @@ footer p{color:#D9CFC1}
 .pc-marks{display:flex;gap:.35rem;flex-wrap:wrap;justify-content:flex-end}
 .pc-acts .share-slot{flex-basis:100%;border-top:1px solid var(--rule);margin-top:.4rem;padding-top:.2rem}
 .pc-acts .share-slot .sh{display:block;margin-top:.6rem;font:400 13px/1.45 var(--sans);color:var(--muted)}
+/* the maker's card: a monogram where a piece has its picture, and the bio completeness bar */
+.pc-art.pc-mono{aspect-ratio:auto;height:88px;display:grid;place-items:center;background:var(--ink);color:var(--paper)}
+.pc-art.pc-mono span{font:400 2.4rem/1 var(--serif);letter-spacing:.06em}
+.pc-bar{margin:.8rem 0 0}
+.pc-bar .pc-bar-t{height:8px;border:1px solid var(--ink);background:var(--paper-2);overflow:hidden}
+.pc-bar .pc-bar-t i{display:block;height:100%;background:var(--red)}
+.pc-bar span{display:block;margin-top:.35rem;font:500 10px/1.5 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.pc-bar span b{color:var(--ink);font-weight:600}

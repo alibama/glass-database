@@ -463,7 +463,7 @@ def test_api_stage_job_items_review_and_refine(client, conn):
     assert "identifierSpace" in man and man["defaultTypes"]
     assert client.get("/wikibase/openrefine-manifest.json").status_code == 409
     go = client.get(f"/wikibase/go/{key}", follow_redirects=False)
-    assert go.status_code == 302 and "explore" in go.headers["location"]
+    assert go.status_code == 302 and go.headers["location"] == f"/record/{key}"
     assert client.get("/wikibase/go/Q5", follow_redirects=False).headers["location"].endswith("/wiki/Item:Q5")
     assert client.get(f"/wikibase/preview/{key}").status_code == 200
     assert client.get("/wikibase/clusters").status_code == 200
