@@ -635,6 +635,44 @@ def fake_wikidata(monkeypatch):
     return asked
 
 
+def test_wikidata_query_service_throttling_is_retried(monkeypatch):
+    """The query service answers 429 to a burst (the index is three big queries): wait what it says, then retry."""
+    import httpx
+    waits = []
+    monkeypatch.setattr(wikidata.time, "sleep", lambda s: waits.append(s))
+    monkeypatch.setattr(wikidata, "_last_sparql", 0.0)
+
+    class R:
+        def __init__(self, code, body=None, retry=None):
+            self.status_code, self._body = code, body or {}
+            self.headers = {"Retry-After": retry} if retry else {}
+            self.request = httpx.Request("GET", "https://query.wikidata.org/sparql")
+
+        def json(self):
+            return self._body
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise httpx.HTTPStatusError(str(self.status_code), request=self.request, response=None)
+
+    class C:
+        def __init__(self, answers):
+            self.answers, self.calls = list(answers), 0
+
+        def get(self, *a, **k):
+            self.calls += 1
+            return self.answers.pop(0)
+
+    lines = []
+    c = C([R(429, retry="7"), R(503), R(200, {"results": {"bindings": [{"a": {"value": "x"}}]}})])
+    assert wikidata.sparql(c, "SELECT 1", lines.append) == [{"a": {"value": "x"}}] and c.calls == 3
+    assert 7.0 in waits and 10.0 in waits and any("answered 429" in ln for ln in lines)
+    c = C([R(429), R(429), R(429), R(429)])
+    with pytest.raises(httpx.HTTPStatusError):
+        wikidata.sparql(c, "SELECT 1")
+    assert c.calls == 4
+
+
 def test_wikidata_decisions_and_queries():
     c = lambda qid, name, desc, by=True, match=False, types=("human",): {  # noqa: E731
         "qid": qid, "label": name, "description": desc, "score": 100.0, "match": match, "types": list(types), "exact": True, "by_name": by}
