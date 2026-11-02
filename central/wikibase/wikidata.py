@@ -136,11 +136,36 @@ class Index:
         return [self.people[q] for q in seen]
 
 
-def sparql(client: httpx.Client, query: str) -> list[dict]:
-    r = client.get(SPARQL_URL, params={"query": query, "format": "json"},
-                   headers={"Accept": "application/sparql-results+json"}, timeout=180)
-    r.raise_for_status()
-    return r.json().get("results", {}).get("bindings", [])
+SPARQL_PAUSE = 2.0            # seconds between queries to the query service, which throttles bursts
+_last_sparql = 0.0
+
+
+def sparql(client: httpx.Client, query: str, log=None) -> list[dict]:
+    """One query to the Wikidata query service, paced, and tried again after a 429 or 503 (what the service says in
+    Retry-After, at least 5, 10, 20 seconds) before giving up."""
+    global _last_sparql
+    last: Exception | None = None
+    for attempt in range(4):
+        wait = _last_sparql + SPARQL_PAUSE - time.monotonic()
+        if wait > 0:
+            time.sleep(wait)
+        _last_sparql = time.monotonic()
+        r = client.get(SPARQL_URL, params={"query": query, "format": "json"},
+                       headers={"Accept": "application/sparql-results+json"}, timeout=180)
+        if r.status_code in (429, 503) and attempt < 3:
+            try:
+                retry = float(r.headers.get("Retry-After") or 0)
+            except ValueError:
+                retry = 0.0
+            pause = min(max(retry, 5.0 * (2 ** attempt)), 60.0)
+            if log:
+                log(f"  the query service answered {r.status_code}; waiting {pause:.0f} s")
+            last = httpx.HTTPStatusError(f"{r.status_code} from the query service", request=r.request, response=r)
+            time.sleep(pause)
+            continue
+        r.raise_for_status()
+        return r.json().get("results", {}).get("bindings", [])
+    raise last or RuntimeError("the query service did not answer")
 
 
 def _v(b: dict, k: str) -> str:
@@ -159,7 +184,7 @@ def fetch_index(client: httpx.Client, log=print) -> list[Person]:
     for b in sparql(client, f'SELECT ?a ?aLabel ?d (GROUP_CONCAT(DISTINCT ?alt; separator="|") AS ?alts) WHERE {{ {who} '
                             f'OPTIONAL {{ ?a schema:description ?d FILTER(lang(?d)="en") }} '
                             f'OPTIONAL {{ ?a skos:altLabel ?alt FILTER(lang(?alt)="en") }} '
-                            f'SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }} }} GROUP BY ?a ?aLabel ?d'):
+                            f'SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }} }} GROUP BY ?a ?aLabel ?d', log):
         q = _q(_v(b, "a"))
         label = _v(b, "aLabel")
         if not q or not label or label == q:
@@ -172,12 +197,12 @@ def fetch_index(client: httpx.Client, log=print) -> list[Person]:
     log(f"  Wikidata lists {len(people)} people in the glass occupations")
     props = " ".join(f"wdt:{p}" for p in LINK_PROPS)
     for b in sparql(client, f"SELECT ?a ?p ?o ?oLabel WHERE {{ {who} VALUES ?p {{ {props} }} ?a ?p ?o . "
-                            f'SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }} }}'):
+                            f'SERVICE wikibase:label {{ bd:serviceParam wikibase:language "en". }} }}', log):
         p = people.get(_q(_v(b, "a")))
         if p:
             p.links.append((LINK_PROPS.get(_q(_v(b, "p")), _q(_v(b, "p"))), _q(_v(b, "o")), _v(b, "oLabel")))
     for b in sparql(client, f"SELECT ?a ?web ?ig WHERE {{ {who} OPTIONAL {{ ?a wdt:P856 ?web }} OPTIONAL {{ ?a wdt:P2003 ?ig }} "
-                            f"FILTER(BOUND(?web) || BOUND(?ig)) }}"):
+                            f"FILTER(BOUND(?web) || BOUND(?ig)) }}", log):
         p = people.get(_q(_v(b, "a")))
         if p:
             p.website = p.website or _v(b, "web")
