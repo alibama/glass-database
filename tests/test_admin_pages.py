@@ -41,6 +41,7 @@ def _tidy(demo_db):
         ("UPDATE _datasets SET row_count=(SELECT COUNT(*) FROM studios) WHERE tbl='studios'", ()),
         ("DELETE FROM season_entries WHERE season_id IN (SELECT id FROM seasons WHERE slug LIKE 'pages-test%')", ()),
         ("DELETE FROM season_categories WHERE season_id IN (SELECT id FROM seasons WHERE slug LIKE 'pages-test%')", ()),
+        ("DELETE FROM season_prizes WHERE season_id IN (SELECT id FROM seasons WHERE slug LIKE 'pages-test%')", ()),
         ("DELETE FROM season_badges WHERE season_id IN (SELECT id FROM seasons WHERE slug LIKE 'pages-test%')", ()),
         ("DELETE FROM seasons WHERE slug LIKE 'pages-test%'", ()),
         ("DELETE FROM analytics_events WHERE surface='pages-test'", ()),
@@ -358,7 +359,7 @@ def test_admin_page_markup(page):
 
 def test_pages_use_their_routes():
     ev = (DEPLOY / "events-admin.html").read_text(encoding="utf-8")
-    assert '"/admin/events"' in ev and "/status" in ev and "/pull" in ev and "DELETE" in ev
+    assert '"/admin/events"' in ev and "/status" in ev and "/pull" in ev and "DELETE" in ev and "/prizes" in ev
     ds = (DEPLOY / "datasets.html").read_text(encoding="utf-8")
     assert '"/admin/datasets"' in ds and "/rows" in ds and "/import" in ds and "/export.csv" in ds and '"/admin/decide"' in ds
     an = (DEPLOY / "analytics.html").read_text(encoding="utf-8")

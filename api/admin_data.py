@@ -17,12 +17,21 @@ Collecting events (``central.seasons``; the code still says *season*)
                                             entries_close, voting_closes, ends, rules,
                                             prize_note, votes_per_voter, categories (text,
                                             one ``title | vote|measured | solo`` per line),
-                                            open (bool)}
+                                            prizes (text, one ``title | awarded for | detail |
+                                            sponsor | link`` per line), open (bool)}
   POST   /admin/events/{id}                 edit those fields (not the status, not the awards)
   POST   /admin/events/{id}/status          {status: open|voting|closed}; closing hands out
-                                            the end-of-event badges and names the crowd favourite
+                                            the end-of-event badges, names the crowd favourite
+                                            and writes each prize's leader in as its winner
   DELETE /admin/events/{id}                 a draft only
+  POST   /admin/events/{id}/prizes          add a prize {title, awarded_for, detail, sponsor,
+                                            sponsor_url, winner_text}, or {defaults: true} for
+                                            the theme's default prizes
+  POST   /admin/events/{id}/prizes/{pid}    edit any of those fields; winner_text names the winner
+  DELETE /admin/events/{id}/prizes/{pid}    remove a prize
   POST   /admin/events/entries/{id}/pull    take an approved entry off the event page
+  POST   /admin/events/entries/{id}         tidy an entry's studio {studio}, so one shop is one
+                                            name on the studio board
 
 The tables (``_datasets``: the registry's tables that go through the publication gate)
   GET    /admin/datasets                    every table with its counts and columns
@@ -109,6 +118,8 @@ def _event_shape(conn, s: dict, with_entries: bool = True) -> dict:
     s["categories"] = [{k: c.get(k) for k in ("id", "slug", "title", "kind", "measure", "solo_only", "sort")}
                        for c in seasons.categories(conn, s["id"])]
     s["categories_text"] = seasons.categories_text(s["categories"])
+    s["prizes"] = seasons.prize_standings(conn, s["id"])
+    s["prizes_text"] = seasons.prizes_text(s["prizes"])
     s["page"] = f"/games.html?season={s.get('slug') or ''}"
     s["pending_entries"] = int(conn.execute(
         "SELECT COUNT(*) FROM season_entries WHERE season_id=? AND status='pending'", (s["id"],)).fetchone()[0])
@@ -130,11 +141,14 @@ def events_overview(conn) -> dict:
         "review_mode": seasons.entry_review(),
         "events": [_event_shape(conn, s) for s in seasons.list_seasons(conn, include_draft=True)],
         "presets": [{"label": label, "theme": theme,
-                     "categories_text": seasons.categories_text(seasons.default_categories(theme))}
+                     "categories_text": seasons.categories_text(seasons.default_categories(theme)),
+                     "prizes_text": seasons.prizes_text(seasons.default_prizes(theme))}
                     for label, theme in PRESETS],
         "defaults": {"starts": str(today), "entries_close": str(today + timedelta(days=21)),
                      "voting_closes": str(today + timedelta(days=28)), "ends": str(today + timedelta(days=30)),
                      "rules": DEFAULT_RULES, "prize_note": DEFAULT_PRIZE, "votes_per_voter": 3},
+        "prize_kinds": [{"key": k, **meta} for k, meta in seasons.PRIZE_FOR.items()],
+        "studios": seasons.known_studios(conn),
         "statuses": list(seasons.STATUSES),
     }
 
@@ -176,6 +190,7 @@ def post_events(payload: dict, u: dict = Depends(require_admin)):
     if not f["title"]:
         raise HTTPException(400, "a title, at least")
     cats = seasons.parse_categories(_text(payload.get("categories")))
+    prz = seasons.parse_prizes(_text(payload.get("prizes")))
     conn = _conn()
     seasons.ensure(conn)
     try:
@@ -183,7 +198,8 @@ def post_events(payload: dict, u: dict = Depends(require_admin)):
             conn, title=f["title"], theme=f["theme"], description=f["description"], starts=f["starts"],
             entries_close=f["entries_close"], voting_closes=f["voting_closes"], ends=f["ends"],
             rules=f["rules"], prize_note=f["prize_note"], votes_per_voter=f["votes_per_voter"],
-            status="open" if payload.get("open") else "draft", categories=cats or None)
+            status="open" if payload.get("open") else "draft", categories=cats or None,
+            prizes=prz or None)
     except ValueError as ex:
         raise HTTPException(400, str(ex))
     return {"ok": True, "id": sid, "event": _event_shape(conn, _get_event(conn, sid))}
@@ -229,6 +245,7 @@ def delete_event(sid: int, u: dict = Depends(require_admin)):
     if s.get("status") != "draft":
         raise HTTPException(409, "only a draft can be deleted; close a live event instead")
     conn.execute("DELETE FROM season_categories WHERE season_id=?", (int(sid),))
+    conn.execute("DELETE FROM season_prizes WHERE season_id=?", (int(sid),))
     conn.execute("DELETE FROM seasons WHERE id=? AND status='draft'", (int(sid),))
     conn.commit()
     return {"ok": True, "deleted": int(sid)}
@@ -244,6 +261,78 @@ def pull_entry(eid: int, u: dict = Depends(require_admin)):
         raise HTTPException(404, str(ex))
     e = seasons.get_entry(conn, int(eid)) or {}
     return {"ok": True, "entry": int(eid), "status": e.get("status"), "season_id": e.get("season_id")}
+
+
+@router.post("/events/entries/{eid}", summary="Tidy an entry's studio")
+def post_entry(eid: int, payload: dict, u: dict = Depends(require_admin)):
+    """The studio board and the studio prizes group entries by the shop's name, so two
+    spellings of one shop should become one. Blank means Independent."""
+    from central import seasons
+    payload = payload or {}
+    if "studio" not in payload:
+        raise HTTPException(400, "studio is the one thing this edits")
+    conn = _conn()
+    try:
+        e = seasons.set_entry_studio(conn, int(eid), _text(payload.get("studio")))
+    except ValueError as ex:
+        raise HTTPException(404, str(ex))
+    return {"ok": True, "entry": {k: e.get(k) for k in ("id", "studio", "title", "artist_name", "season_id")}}
+
+
+# --- prizes: what is on the table, editable any time ------------------------------------
+PRIZE_FIELDS = ("title", "awarded_for", "detail", "sponsor", "sponsor_url", "winner_text")
+
+
+def _prize_payload(payload: dict) -> dict:
+    return {k: _text(payload.get(k)) for k in PRIZE_FIELDS if k in payload}
+
+
+def _prize_of(conn, sid: int, pid: int) -> dict:
+    from central import seasons
+    p = seasons.get_prize(conn, int(pid))
+    if not p or int(p["season_id"]) != int(sid):
+        raise HTTPException(404, "no such prize on this collecting event")
+    return p
+
+
+@router.post("/events/{sid}/prizes", summary="Add a prize, or the theme's default prizes")
+def post_prize(sid: int, payload: dict, u: dict = Depends(require_admin)):
+    from central import seasons
+    conn = _conn()
+    s = _get_event(conn, sid)
+    payload = payload or {}
+    try:
+        if payload.get("defaults"):
+            ids = seasons.add_prizes(conn, int(sid),
+                                     seasons.default_prizes(f"{s.get('theme') or ''} {s.get('title') or ''}"))
+        else:
+            ids = [seasons.add_prize(conn, int(sid), **_prize_payload(payload))]
+    except ValueError as ex:
+        raise HTTPException(400, str(ex))
+    return {"ok": True, "ids": ids, "event": _event_shape(conn, _get_event(conn, sid))}
+
+
+@router.post("/events/{sid}/prizes/{pid}", summary="Edit a prize, or name its winner")
+def post_prize_edit(sid: int, pid: int, payload: dict, u: dict = Depends(require_admin)):
+    from central import seasons
+    conn = _conn()
+    _get_event(conn, sid)
+    _prize_of(conn, sid, pid)
+    try:
+        seasons.update_prize(conn, int(pid), **_prize_payload(payload or {}))
+    except ValueError as ex:
+        raise HTTPException(400, str(ex))
+    return {"ok": True, "event": _event_shape(conn, _get_event(conn, sid))}
+
+
+@router.delete("/events/{sid}/prizes/{pid}", summary="Remove a prize")
+def delete_prize(sid: int, pid: int, u: dict = Depends(require_admin)):
+    from central import seasons
+    conn = _conn()
+    _get_event(conn, sid)
+    _prize_of(conn, sid, pid)
+    seasons.delete_prize(conn, int(pid))
+    return {"ok": True, "deleted": int(pid), "event": _event_shape(conn, _get_event(conn, sid))}
 
 
 # ===================================================================================

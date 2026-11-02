@@ -45,6 +45,9 @@
   .go li.off > div > p, .go li.off h3 { color: var(--muted); }
   .go .row { display: flex; flex-wrap: wrap; gap: .6rem 1rem; align-items: center; margin-top: .7rem; }
   .go .row small { font: 400 13px/1.45 var(--sans); color: var(--muted); flex-basis: 100%; max-width: 60ch; }
+  /* the shop a piece is entered from: the studio board and prizes count by it */
+  .go .row .studio-in { display: flex; flex-direction: column; gap: .35rem; flex-basis: 100%; max-width: 30rem; font: 500 11px/1.6 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .go .row .studio-in input { font: 400 15px/1.45 var(--sans); padding: .6rem .8rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); letter-spacing: 0; text-transform: none; }
   .go .msg { font: 400 13px/1.45 var(--sans); color: var(--ink); margin-top: .5rem; }
   .go .msg.err { color: var(--red); }
   .consent { display: grid; grid-template-columns: auto 1fr; gap: .6rem; align-items: start; font-size: 14px; color: var(--ink-2); margin-top: .7rem; max-width: 60ch; }
@@ -211,6 +214,16 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       list.filter(function (e) { return e.object_row_id === rid; })[0] || null;
   }
   function regWord(st) { return { published: "Live in the registry", pending: "In review", rejected: "Sent back" }[st] || "Private"; }
+  /* the shop to offer first: the one on this maker's latest entry */
+  function lastStudio() {
+    var list = (D.coll && D.coll.entries) || [];
+    for (var i = 0; i < list.length; i++) if (list[i].studio) return list[i].studio;
+    return "";
+  }
+  function studioOptions() {
+    return '<datalist id="goStudios">' + (D.studios || []).map(function (s) {
+      return '<option value="' + esc(s.name) + '">' + esc([s.city, s.country].filter(Boolean).join(", ")) + "</option>"; }).join("") + "</datalist>";
+  }
   function eventWord(en) {
     if (!en) return "Not entered";
     if (en.status === "approved") return "In the running · " + plural(en.vote_count || 0, "vote");
@@ -279,9 +292,9 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       evStep.cls = en.status === "approved" ? "done live" : en.status === "pending" ? "wait" : "todo";
       evStep.st = en.status === "approved" ? "in the running" : en.status === "pending" ? "waiting for approval" : "not accepted";
       evStep.text = en.status === "approved" ? "Entered in " + s.title + " with " + plural(en.vote_count || 0, "vote") + (en.rarity ? ", rarity " + en.rarity : "") + "." : en.status === "pending" ? "Entered in " + s.title + ". Review mode is on, so an admin approves it; that is on us." : "This entry was not accepted. Ask on the Discord if that is a surprise.";
-      evStep.row = '<a class="btn btn--line" href="/games.html?season=' + esc(s.slug) + '#e-' + esc(en.id) + '">See the standings</a>';
+      evStep.row = '<a class="btn btn--line" href="/games.html?season=' + esc(s.slug) + '#entry-' + esc(en.id) + '">See the standings</a>';
     } else if (st !== "published") { evStep.cls = "off"; evStep.st = "after publishing"; evStep.text = "Only live pieces can be entered. Finish step 3 and this button wakes up."; evStep.row = '<button type="button" class="btn btn--line" disabled>Enter it in ' + esc(s.title) + "</button>"; }
-    else { evStep.cls = "todo"; evStep.st = "to do"; evStep.text = s.title + " is taking entries. A published piece goes live on the season page the moment you enter it; collectors vote, the standings are public, and a piece with a Glass ID counts as uncommon or better."; evStep.row = '<button type="button" class="btn btn--red" data-act="enter">Enter it in ' + esc(s.title) + '</button><small>Enters it as an edition of one. Edition size, a price note or a legend can be set in <a href="' + esc(o.url + "&tab=seasons") + '">Glowtbook → Collecting Events</a>.</small>'; }
+    else { evStep.cls = "todo"; evStep.st = "to do"; evStep.text = s.title + " is taking entries. A published piece goes live on the season page the moment you enter it; collectors vote, the standings are public, and a piece with a Glass ID counts as uncommon or better."; evStep.row = '<label class="studio-in">Studio / shop it\'s sold from<input type="text" id="goStudio" list="goStudios" value="' + esc(lastStudio()) + '" placeholder="Spelled the way the shop spells it" autocomplete="off"></label>' + studioOptions() + '<button type="button" class="btn btn--red" data-act="enter">Enter it in ' + esc(s.title) + '</button><small>Name your shop: the studio board and the studio prizes count makers and pieces per shop. Enters it as an edition of one; edition size, a price note or a legend can be set in <a href="' + esc(o.url + "&tab=seasons") + '">Glowtbook → Collecting Events</a>.</small>'; }
     out.push(evStep);
     return out;
   }
@@ -336,7 +349,8 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   function doEnter(o, btn) {
     var rid = (o.publication || {}).row_id; if (!rid || !D.season) return;
     busy(btn, "Entering…");
-    GDB.json("/seasons/" + encodeURIComponent(D.season.slug) + "/entries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ object_row_id: rid, title: o.title || "", edition_size: 1 }) })
+    var studioEl = $("#goStudio"), studio = studioEl ? studioEl.value.trim() : "";
+    GDB.json("/seasons/" + encodeURIComponent(D.season.slug) + "/entries", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ object_row_id: rid, title: o.title || "", edition_size: 1, studio: studio }) })
       .then(function (j) { return load().then(function () { say(o, 3, j.note || "Entered."); }); })
       .catch(function (e) { load().then(function () { say(o, 3, e.message || "That didn't work.", true); }); });
   }
@@ -393,7 +407,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     if (!entries.length) { el.innerHTML = '<div class="empty" style="margin-top:.6rem">Nothing entered yet. A live piece can be entered from the <a href="#golive">Go-live panel</a> in one click.</div>'; return; }
     el.innerHTML = '<div class="tbl" style="margin-top:.6rem"><table style="min-width:0"><thead><tr><th>Piece</th><th>Event</th><th>Status</th><th>Votes</th></tr></thead><tbody>' + entries.map(function (e) {
       var st = e.status === "approved" ? '<span class="st ok">in the running</span>' : e.status === "pending" ? '<span class="st">waiting for approval</span>' : '<span class="st">' + esc(e.status || "") + "</span>";
-      return "<tr><td><a href=\"/games.html?season=" + esc(e.season_slug || "") + "#e-" + esc(e.id) + '"><b>' + esc(e.title || "Untitled") + "</b></a>" + (e.rarity ? ' <span class="pill rar ' + esc(e.rarity) + '">' + esc(e.rarity) + "</span>" : "") + "</td><td><a href=\"/games.html?season=" + esc(e.season_slug || "") + '">' + esc(e.season_title || "") + "</a></td><td>" + st + "</td><td>" + esc(e.vote_count || 0) + "</td></tr>";
+      return "<tr><td><a href=\"/games.html?season=" + esc(e.season_slug || "") + "#entry-" + esc(e.id) + '"><b>' + esc(e.title || "Untitled") + "</b></a>" + (e.rarity ? ' <span class="pill rar ' + esc(e.rarity) + '">' + esc(e.rarity) + "</span>" : "") + "</td><td><a href=\"/games.html?season=" + esc(e.season_slug || "") + '">' + esc(e.season_title || "") + "</a></td><td>" + st + "</td><td>" + esc(e.vote_count || 0) + "</td></tr>";
     }).join("") + "</tbody></table></div>";
   }
   function renderCollection() {
@@ -428,10 +442,11 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   }
   function renderAll() { renderGoLive(); renderTodo(); renderPieces(); renderEntries(); renderCollection(); renderKv(); }
   function load() {
-    return Promise.all([soft("/me/objects"), soft("/me/collection"), soft("/me/claims"), soft("/social/status"), soft("/social/collections/mine"), soft("/seasons"), soft("/me")])
+    return Promise.all([soft("/me/objects"), soft("/me/collection"), soft("/me/claims"), soft("/social/status"), soft("/social/collections/mine"), soft("/seasons"), soft("/me"), soft("/seasons/studios")])
       .then(function (r) {
         D.objs = (r[0] && r[0].objects) || []; D.coll = r[1]; D.claims = r[2]; D.social = r[3]; D.share = r[4];
         D.season = (r[5] && r[5].current) || null; if (r[6] && r[6].signed_in) D.me = r[6];
+        D.studios = (r[7] && r[7].studios) || [];
         renderAll();
         if (!r[0]) $("#piecesBody").innerHTML = '<div class="empty">Couldn\'t load your pieces just now. <a href="' + esc(here) + '">Try again</a>.</div>';
       });

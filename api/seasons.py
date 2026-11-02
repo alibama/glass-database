@@ -6,9 +6,11 @@ app's "Claim" button. Reads are open; writes need a signed-in person
 (``require_user`` — the Google sign-in cookie or a pairing Bearer token).
 
   GET  /seasons                               current season + every non-draft season
-  GET  /seasons/{slug}                        season, approved entries, my votes, leaderboard, awards
-  GET  /seasons/{slug}/leaderboard            people's choice · most collected · studios · points · collectors
+  GET  /seasons/studios                       studio names to offer a maker entering a piece
+  GET  /seasons/{slug}                        season, approved entries, my votes, leaderboard, awards, prizes
+  GET  /seasons/{slug}/leaderboard            people's choice · most collected · studios · makers · points · collectors
   GET  /seasons/{slug}/awards                 award categories with standings (+ my picks)
+  GET  /seasons/{slug}/prizes                 what is on the table, with the standings behind each prize
   GET  /seasons/{slug}/entries/{entry_id}     one entry
   POST /seasons/{slug}/entries   (sign-in)    {object_row_id, studio, edition_size, price_note, title,
                                                solo, legendary, legend} → live at once (the piece was
@@ -84,6 +86,7 @@ def _pub_board(lb: dict, uid: str | None = None) -> dict:
         out[key] = [_pub_entry(e, uid) for e in lb.get(key, [])]
     for key in ("collectors", "points"):
         out[key] = [{k: v for k, v in c.items() if k != "collector_uid"} for c in lb.get(key, [])]
+    out["makers"] = [{k: v for k, v in m.items() if k != "artist_uid"} for m in lb.get("makers", [])]
     return out
 
 
@@ -157,6 +160,15 @@ def list_all(request: Request):
             "badges": seasons.BADGES, "signed_in": current_user(request) is not None}
 
 
+@router.get("/seasons/studios", summary="Studio names to offer a maker entering a piece")
+def studio_names():
+    """The Directory's approved studios, then every other name already on an approved
+    entry — so two makers from one shop spell it the same way and the studio boards
+    and prizes add them up."""
+    conn = _conn()
+    return {"studios": seasons.known_studios(conn)}
+
+
 @router.get("/seasons/{slug}", summary="One season with its approved entries and boards")
 def one_season(slug: str, request: Request):
     conn = _conn()
@@ -165,6 +177,8 @@ def one_season(slug: str, request: Request):
     uid = u["uid"] if u else None
     mine = seasons.my_votes(conn, s["id"], uid) if uid else []
     lb = seasons.leaderboard(conn, s["id"])
+    aw = seasons.awards(conn, s["id"])
+    prizes = seasons.prize_standings(conn, s["id"], lb=lb, award_list=aw)
     lb["collectors"] = seasons.collectors(conn)
     cap = int(s.get("votes_per_voter") or 3)
     return {"season": s,
@@ -172,8 +186,16 @@ def one_season(slug: str, request: Request):
             "my_votes": mine, "remaining_votes": max(0, cap - len(mine)),
             "can_vote": s["status"] in ("open", "voting"), "signed_in": uid is not None,
             "leaderboard": _pub_board(lb, uid),
-            "awards": seasons.awards(conn, s["id"]), "my_picks": _my_picks(conn, s, uid),
+            "awards": aw, "my_picks": _my_picks(conn, s, uid), "prizes": prizes,
             "legendaries_out": int(s.get("legendaries_out") or 0)}
+
+
+@router.get("/seasons/{slug}/prizes", summary="What is on the table, with the standings behind each prize")
+def season_prizes(slug: str):
+    conn = _conn()
+    s = _season_or_404(conn, slug)
+    return {"season": {"id": s["id"], "slug": s["slug"], "title": s["title"], "status": s["status"]},
+            "prizes": seasons.prize_standings(conn, s["id"]), "kinds": seasons.PRIZE_FOR}
 
 
 @router.get("/seasons/{slug}/leaderboard", summary="People's choice · most collected · studios · collectors")

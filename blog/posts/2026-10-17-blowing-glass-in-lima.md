@@ -5,9 +5,14 @@ author: Glass Database
 series: Theoretical studies
 summary: Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.
 tags: economics, studio build, Peru
-image: /img/home/lima.jpg
-image_alt: A molten amber gather of glass on the end of a blowpipe
+image: /img/blog/costa-verde-barranco.jpg
+image_alt: Lima's Costa Verde seen from Barranco, looking north along the cliffs to the towers of Miraflores
 ---
+
+<figure class="fig">
+<img src="/img/blog/costa-verde-barranco.jpg" alt="Lima's Costa Verde seen from Barranco: the green bluff, the beach road along the Pacific and the apartment towers of Miraflores beyond" width="1600" height="1200">
+<figcaption>Barranco, looking north along the Costa Verde to Miraflores. The showroom in this study belongs on the gallery blocks above these cliffs; the furnace goes the other way down this same road, to Chorrillos. Photo: David Almeida, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC BY-SA 2.0</a>, via <a href="https://commons.wikimedia.org/wiki/File:La_Costa_Verde_y_Miraflores,_desde_Barranco_(3545043786).jpg">Wikimedia Commons</a>.</figcaption>
+</figure>
 
 ## Premise
 

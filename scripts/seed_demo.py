@@ -171,8 +171,8 @@ def _seed_objects_and_season(c) -> None:
     # --- wipe what we own ---------------------------------------------------
     old = c.execute("SELECT id FROM seasons WHERE slug=?", ("pumpkin-patch-2026",)).fetchone()
     if old:
-        for t in ("season_votes", "season_award_votes", "season_categories", "season_claims",
-                  "season_entries", "season_badges"):
+        for t in ("season_votes", "season_award_votes", "season_categories", "season_prizes",
+                  "season_claims", "season_entries", "season_badges"):
             c.execute(f"DELETE FROM {t} WHERE season_id=?", (old[0],))
         c.execute("DELETE FROM seasons WHERE id=?", (old[0],))
     c.execute("DELETE FROM season_claims WHERE object_row_id LIKE 'obj-demo-%' "

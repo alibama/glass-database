@@ -33,9 +33,18 @@ edition of ≤ 3) → legendary (20): a maker's one edition-of-one per season wi
 legend written, which only shows as legendary once a collector has claimed it.
 Collectors score the points of what they hold (the ``points`` board).
 
+**Prizes** (``season_prizes``) are what is on the table, written by an admin and edited
+any time: a title, what it is awarded for (``PRIZE_FOR``: the most-voted piece, the
+studio with the most makers entering, the maker with the most registered pieces, the
+collector with the most points, an award category, or a judges' pick named by hand), a
+line of detail, a sponsor. Standings come straight off the boards (``prize_standings``);
+closing the season writes the leader into ``winner_text`` and an admin can overwrite it.
+The boards also count **makers** (who entered the most registered pieces) and group
+**studios** by name regardless of case, with the number of distinct makers per shop.
+
 Tables (names are a contract with the API, Glowtbook and the verify app):
   seasons, season_entries, season_votes, season_claims, season_badges,
-  season_categories, season_award_votes
+  season_categories, season_award_votes, season_prizes
 """
 from __future__ import annotations
 
@@ -70,6 +79,45 @@ RARITY_POINTS = {"common": 1, "uncommon": 2, "rare": 5, "legendary": 20}
 RARE_EDITION = 3                             # fingerprinted + edition_size <= this = rare
 LEGEND_MIN = 40                              # characters a legend needs
 MAX_ENTRIES = 5                              # per maker per season
+
+# prizes: what a prize is awarded for → where its standings come from
+PRIZE_TOP = 3                                # standings shown per prize
+PRIZE_FOR = {
+    "peoples_choice": {"label": "People's choice", "who": "piece", "unit": "votes",
+                       "blurb": "the most-voted piece"},
+    "most_collected": {"label": "Most collected piece", "who": "piece", "unit": "collections",
+                       "blurb": "the piece in the most collections"},
+    "first_in": {"label": "First piece in", "who": "piece", "unit": "",
+                 "blurb": "the first piece entered"},
+    "studio_most_makers": {"label": "Studio with the most makers", "who": "studio", "unit": "makers",
+                           "blurb": "the shop with the most different makers entering a piece"},
+    "studio_most_pieces": {"label": "Studio with the most pieces", "who": "studio", "unit": "pieces",
+                           "blurb": "the shop with the most pieces entered"},
+    "studio_most_collected": {"label": "Studio collected most", "who": "studio", "unit": "collections",
+                              "blurb": "the shop whose pieces are in the most collections"},
+    "maker_most_registered": {"label": "Maker with the most registered pieces", "who": "maker",
+                              "unit": "registered pieces",
+                              "blurb": "the maker who entered the most pieces with a Glass ID"},
+    "maker_most_collected": {"label": "Maker collected most", "who": "maker", "unit": "collections",
+                             "blurb": "the maker whose pieces are in the most collections"},
+    "maker_most_votes": {"label": "Maker with the most votes", "who": "maker", "unit": "votes",
+                         "blurb": "the maker with the most votes across their pieces"},
+    "rookie": {"label": "Best first-time maker", "who": "maker", "unit": "votes",
+               "blurb": "the most-voted maker whose first collecting event this is"},
+    "collector_most_points": {"label": "Collector with the most points", "who": "collector", "unit": "points",
+                              "blurb": "the collector holding the most points from this event"},
+    "collector_most_pieces": {"label": "Collector with the most pieces", "who": "collector", "unit": "pieces",
+                              "blurb": "the collector who added the most pieces from this event"},
+    "collector_most_studios": {"label": "Collector with the most studios", "who": "collector", "unit": "studios",
+                               "blurb": "the collector holding pieces from the most studios"},
+    "judges": {"label": "Judges' pick", "who": "hand", "unit": "",
+               "blurb": "named by hand; no standings"},
+}
+PRIZE_METRIC = {"studio_most_makers": "makers", "studio_most_pieces": "entries",
+                "studio_most_collected": "claims", "maker_most_registered": "registered",
+                "maker_most_collected": "claims", "maker_most_votes": "votes", "rookie": "votes",
+                "collector_most_points": "points", "collector_most_pieces": "pieces",
+                "collector_most_studios": "studios"}
 
 BADGES = {
     "first-scan": {
@@ -121,6 +169,11 @@ def _one(cur) -> dict | None:
 def slugify(text: str) -> str:
     s = re.sub(r"[^a-z0-9]+", "-", (text or "").lower()).strip("-")
     return s or "season"
+
+
+def _studio_key(name: str) -> str:
+    """Studios are grouped by this: the name without regard to case or spacing."""
+    return re.sub(r"\s+", " ", (name or "")).strip().lower()
 
 
 def object_image_url(row_id: str) -> str:
@@ -181,6 +234,14 @@ def ensure(conn) -> None:
         id INTEGER PRIMARY KEY, season_id INTEGER NOT NULL, category_id INTEGER NOT NULL,
         entry_id INTEGER NOT NULL, voter_uid TEXT NOT NULL, created_at TEXT,
         UNIQUE(season_id, category_id, voter_uid))""")
+    conn.execute("""CREATE TABLE IF NOT EXISTS season_prizes (
+        id INTEGER PRIMARY KEY, season_id INTEGER NOT NULL, slug TEXT NOT NULL,
+        title TEXT NOT NULL,
+        awarded_for TEXT NOT NULL DEFAULT 'peoples_choice',   -- a PRIZE_FOR key or award:<slug>
+        detail TEXT DEFAULT '', sponsor TEXT DEFAULT '', sponsor_url TEXT DEFAULT '',
+        winner_text TEXT DEFAULT '',          -- written at close-out, or by an admin, by hand
+        sort INTEGER DEFAULT 0, created_at TEXT, updated_at TEXT,
+        UNIQUE(season_id, slug))""")
     # entry flags added after the first deploy: guarded, so re-running is a no-op
     have = {r[1] for r in conn.execute("PRAGMA table_info(season_entries)").fetchall()}
     for col, decl in (("solo", "INTEGER DEFAULT 0"), ("legendary", "INTEGER DEFAULT 0"),
@@ -195,7 +256,8 @@ def ensure(conn) -> None:
                 "CREATE INDEX IF NOT EXISTS ix_sclaims_uid ON season_claims(collector_uid)",
                 "CREATE INDEX IF NOT EXISTS ix_sbadges_uid ON season_badges(uid)",
                 "CREATE INDEX IF NOT EXISTS ix_scats_season ON season_categories(season_id, sort)",
-                "CREATE INDEX IF NOT EXISTS ix_sawards_cat ON season_award_votes(category_id, entry_id)"):
+                "CREATE INDEX IF NOT EXISTS ix_sawards_cat ON season_award_votes(category_id, entry_id)",
+                "CREATE INDEX IF NOT EXISTS ix_sprizes_season ON season_prizes(season_id, sort)"):
         conn.execute(ddl)
     conn.commit()
 
@@ -245,9 +307,12 @@ def create_season(conn, *, title: str, slug: str | None = None, theme: str = "",
                   description: str = "", starts: str = "", entries_close: str = "",
                   voting_closes: str = "", ends: str = "", rules: str = "", prize_note: str = "",
                   votes_per_voter: int = 3, status: str = "draft",
-                  categories: list[dict] | None = None) -> int:
+                  categories: list[dict] | None = None,
+                  prizes: list[dict] | None = None) -> int:
     """Create a season. `categories` is a list of {title, kind, measure, solo_only};
-    when none are given the theme picks the defaults (``default_categories``)."""
+    when none are given the theme picks the defaults (``default_categories``). `prizes`
+    is a list of {title, awarded_for, detail, sponsor, sponsor_url}; None means the
+    theme's defaults (``default_prizes``), an empty list means none."""
     title = (title or "").strip()
     if not title:
         raise ValueError("a season needs a title")
@@ -266,6 +331,15 @@ def create_season(conn, *, title: str, slug: str | None = None, theme: str = "",
          max(1, int(votes_per_voter or 3)), _now()))
     sid = int(cur.lastrowid)
     add_categories(conn, sid, categories or default_categories(theme))
+    try:
+        add_prizes(conn, sid, default_prizes(theme) if prizes is None else prizes)
+    except ValueError:
+        # a prize line that names no known kind: leave nothing half-made behind
+        for t in ("season_prizes", "season_categories"):
+            conn.execute(f"DELETE FROM {t} WHERE season_id=?", (sid,))
+        conn.execute("DELETE FROM seasons WHERE id=?", (sid,))
+        conn.commit()
+        raise
     conn.commit()
     return sid
 
@@ -370,6 +444,184 @@ def get_category(conn, season_id: int, slug_or_id) -> dict | None:
                              (int(season_id), str(slug_or_id or ""))))
 
 
+# --- prizes ---------------------------------------------------------------------------
+def _noun(theme: str) -> str:
+    t = (theme or "").lower()
+    return "pumpkin" if "pumpkin" in t else "ornament" if "ornament" in t else "piece"
+
+
+def default_prizes(theme: str) -> list[dict]:
+    """What is on the table when the admin doesn't say otherwise. No cash: a homepage
+    feature, an Instagram post, the name at the top of the board. Edited any time."""
+    n = _noun(theme)
+    return [
+        {"title": "Most makers from one shop", "awarded_for": "studio_most_makers",
+         "detail": f"The studio whose people entered the most: the most different makers with a {n} "
+                   "in. A feature on the homepage and the Instagram, and the shop's name at the top "
+                   "of the studio board."},
+        {"title": f"Most registered {n}s", "awarded_for": "maker_most_registered",
+         "detail": f"The maker who entered the most {n}s with a Glass ID. A homepage feature."},
+        {"title": "Crowd favourite", "awarded_for": "peoples_choice",
+         "detail": f"The most-voted {n}: the Crowd Favourite badge and a homepage feature."},
+        {"title": "Collector of the event", "awarded_for": "collector_most_points",
+         "detail": "The collector holding the most points from this event: a feature on the homepage."},
+    ]
+
+
+def _prize_for_key(raw: str, cats: list[dict] | None) -> str:
+    """Resolve what a prize is awarded for — a PRIZE_FOR key, its label, ``award:<slug>``,
+    or an award category's title or slug — to the stored key. ValueError when unknown."""
+    w = re.sub(r"\s+", " ", (raw or "")).strip().lower()
+    if not w:
+        return "peoples_choice"
+    if w in PRIZE_FOR:
+        return w
+    for k, meta in PRIZE_FOR.items():
+        if w == meta["label"].lower():
+            return k
+    if w.startswith("award:"):
+        w = w[6:].strip()
+    for c in cats or []:
+        if w in ((c.get("slug") or "").lower(), (c.get("title") or "").lower()):
+            return f"award:{c['slug']}"
+    raise ValueError(f"“{raw}” is not something a prize can be awarded for — use one of: "
+                     + ", ".join(m["label"] for m in PRIZE_FOR.values()) + ", or an award's title")
+
+
+def parse_prizes(text: str) -> list[dict]:
+    """One prize per line: ``title | awarded for | detail | sponsor | sponsor url``. The
+    second column takes a kind's label ("Studio with the most makers"), its key, or an
+    award's title; it is checked against the season when the prizes are added."""
+    out: list[dict] = []
+    for line in (text or "").splitlines():
+        parts = [p.strip() for p in line.split("|")]
+        title = parts[0] if parts else ""
+        if not title:
+            continue
+        parts += [""] * 5
+        out.append({"title": title[:120], "awarded_for": parts[1], "detail": parts[2][:500],
+                    "sponsor": parts[3][:120], "sponsor_url": parts[4][:300]})
+    return out
+
+
+def prizes_text(rows: list[dict]) -> str:
+    """The inverse of parse_prizes — what the admin textarea is prefilled with."""
+    lines = []
+    for p in rows or []:
+        k = p.get("awarded_for") or "peoples_choice"
+        word = PRIZE_FOR[k]["label"] if k in PRIZE_FOR else k
+        bits = [p.get("title") or "", word, p.get("detail") or "", p.get("sponsor") or "",
+                p.get("sponsor_url") or ""]
+        while len(bits) > 2 and not bits[-1]:
+            bits.pop()
+        lines.append(" | ".join(bits))
+    return "\n".join(lines)
+
+
+_URL_RE = re.compile(r"https?://\S+$")
+
+
+def _prize_fields(p: dict, cats: list[dict] | None, partial: bool = False) -> dict:
+    """Validated columns for a prize row: all of them, or (partial) only the ones given."""
+    out: dict = {}
+    if "title" in p or not partial:
+        title = re.sub(r"\s+", " ", (p.get("title") or "")).strip()
+        if not title:
+            raise ValueError("a prize needs a title")
+        out["title"] = title[:120]
+    if "awarded_for" in p or not partial:
+        out["awarded_for"] = _prize_for_key(p.get("awarded_for") or "", cats)
+    for k, n in (("detail", 500), ("sponsor", 120), ("winner_text", 300)):
+        if k in p or not partial:
+            out[k] = (p.get(k) or "").strip()[:n]
+    if "sponsor_url" in p or not partial:
+        u = (p.get("sponsor_url") or "").strip()
+        if u and not _URL_RE.match(u):
+            raise ValueError("the sponsor's link has to start with http:// or https://")
+        out["sponsor_url"] = u[:300]
+    return out
+
+
+def add_prizes(conn, season_id: int, rows: list[dict]) -> list[int]:
+    """Append prizes to a season (slugs made unique within it). A line whose kind is
+    not known raises ValueError before anything is written."""
+    cats = categories(conn, int(season_id), backfill=False)
+    fields = [_prize_fields(p, cats) for p in rows or [] if (p.get("title") or "").strip()]
+    ids: list[int] = []
+    taken = {r[0] for r in conn.execute("SELECT slug FROM season_prizes WHERE season_id=?",
+                                        (int(season_id),)).fetchall()}
+    n0 = conn.execute("SELECT COALESCE(MAX(sort),0) FROM season_prizes WHERE season_id=?",
+                      (int(season_id),)).fetchone()[0]
+    for i, f in enumerate(fields, 1):
+        base = slugify(f["title"])
+        slug, k = base, 2
+        while slug in taken:
+            slug = f"{base}-{k}"; k += 1
+        taken.add(slug)
+        cur = conn.execute(
+            "INSERT INTO season_prizes (season_id, slug, title, awarded_for, detail, sponsor, "
+            "sponsor_url, winner_text, sort, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+            (int(season_id), slug, f["title"], f["awarded_for"], f["detail"], f["sponsor"],
+             f["sponsor_url"], f["winner_text"], int(n0) + i, _now(), _now()))
+        ids.append(int(cur.lastrowid))
+    conn.commit()
+    return ids
+
+
+def prizes(conn, season_id: int) -> list[dict]:
+    """A season's prizes in order, each with `for_label`, `who` and `unit` for the page."""
+    rows = _rows(conn.execute("SELECT * FROM season_prizes WHERE season_id=? ORDER BY sort, id",
+                              (int(season_id),)))
+    cats = ({c["slug"]: c for c in categories(conn, int(season_id), backfill=False)}
+            if any((p.get("awarded_for") or "").startswith("award:") for p in rows) else {})
+    for p in rows:
+        k = p.get("awarded_for") or ""
+        meta = PRIZE_FOR.get(k)
+        if meta:
+            p["who"], p["unit"], p["for_label"] = meta["who"], meta["unit"], meta["label"]
+        else:
+            c = cats.get(k[6:]) if k.startswith("award:") else None
+            p["who"] = "piece"
+            p["unit"] = "mm" if c and c.get("kind") == "measured" else "picks"
+            p["for_label"] = c["title"] if c else "an award that was removed"
+    return rows
+
+
+def get_prize(conn, prize_id: int) -> dict | None:
+    row = _one(conn.execute("SELECT season_id FROM season_prizes WHERE id=?", (int(prize_id),)))
+    if not row:
+        return None
+    return next((p for p in prizes(conn, int(row["season_id"])) if int(p["id"]) == int(prize_id)), None)
+
+
+def add_prize(conn, season_id: int, **fields) -> int:
+    ids = add_prizes(conn, season_id, [fields])
+    if not ids:
+        raise ValueError("a prize needs a title")
+    return ids[0]
+
+
+def update_prize(conn, prize_id: int, **fields) -> dict:
+    """Change any of title, awarded_for, detail, sponsor, sponsor_url, winner_text."""
+    p = get_prize(conn, prize_id)
+    if not p:
+        raise ValueError("No such prize")
+    f = _prize_fields(fields, categories(conn, int(p["season_id"]), backfill=False), partial=True)
+    if f:
+        sets = ", ".join(f"{k}=?" for k in f)
+        conn.execute(f"UPDATE season_prizes SET {sets}, updated_at=? WHERE id=?",
+                     [*f.values(), _now(), int(prize_id)])
+        conn.commit()
+    return get_prize(conn, prize_id) or p
+
+
+def delete_prize(conn, prize_id: int) -> None:
+    if not get_prize(conn, prize_id):
+        raise ValueError("No such prize")
+    conn.execute("DELETE FROM season_prizes WHERE id=?", (int(prize_id),))
+    conn.commit()
+
+
 def set_status(conn, season_id: int, status: str) -> None:
     """Move a season along draft → open → voting → closed (any transition is
     allowed). Opening or starting voting posts a Discord nudge, once per change."""
@@ -396,7 +648,8 @@ def set_status(conn, season_id: int, status: str) -> None:
 def close_season(conn, season_id: int) -> dict:
     """Close the season and hand out the end-of-season badges: Crowd Favourite to
     the maker of the top-voted entry, and Set Complete to any collector who holds
-    a piece from every studio that entered."""
+    a piece from every studio that entered. Each prize's leader is written in as its
+    winner (``settle_prizes``) unless an admin named one already."""
     set_status(conn, season_id, "closed")
     board = leaderboard(conn, season_id)["peoples_choice"]
     out = {"crowd_favourite": None, "badges": {}}
@@ -413,6 +666,7 @@ def close_season(conn, season_id: int) -> dict:
         new = award_badges(conn, uid)
         if new:
             out["badges"].setdefault(uid, []).extend(new)
+    out["prizes"] = settle_prizes(conn, season_id)
     conn.commit()
     return out
 
@@ -709,6 +963,49 @@ def approve_entry(conn, entry_id: int, ok: bool = True) -> None:
         if e.get("artist_uid"):
             award_badges(conn, e["artist_uid"])
     conn.commit()
+
+
+def set_entry_studio(conn, entry_id: int, studio: str) -> dict:
+    """An admin tidies the shop an entry names: the studio board and the studio prizes
+    group by it, so two spellings of one shop should not be two shops."""
+    e = get_entry(conn, entry_id)
+    if not e:
+        raise ValueError("No such entry")
+    conn.execute("UPDATE season_entries SET studio=? WHERE id=?",
+                 (re.sub(r"\s+", " ", (studio or "")).strip()[:200], int(entry_id)))
+    conn.commit()
+    return get_entry(conn, entry_id) or e
+
+
+def known_studios(conn) -> list[dict]:
+    """Studio names worth offering when a maker enters a piece: the Directory's approved
+    studios (name, city, country), then any other name already on an approved entry."""
+    out: list[dict] = []
+    seen: set[str] = set()
+
+    def take(name, city="", country="", listed=False):
+        key = _studio_key(name)
+        if not key or key in seen:
+            return
+        seen.add(key)
+        out.append({"name": re.sub(r"\s+", " ", name).strip(), "city": city or "",
+                    "country": country or "", "listed": listed})
+
+    if _has_table(conn, "studios"):
+        try:
+            cols = {r[1] for r in conn.execute("PRAGMA table_info(studios)").fetchall()}
+            pick = ["name"] + [c for c in ("city", "country") if c in cols]
+            for r in conn.execute(f"SELECT {', '.join(pick)} FROM studios WHERE "
+                                  f"{approvals.approved_subquery()} ORDER BY name", ("studios",)).fetchall():
+                row = dict(zip(pick, r))
+                if row.get("name"):
+                    take(str(row["name"]), row.get("city"), row.get("country"), True)
+        except Exception:  # noqa: BLE001  (an older studios table)
+            pass
+    for (name,) in conn.execute("SELECT DISTINCT studio FROM season_entries WHERE status='approved' "
+                                "AND COALESCE(studio,'')<>'' ORDER BY studio").fetchall():
+        take(name)
+    return out
 
 
 # --- votes ------------------------------------------------------------------------
@@ -1036,18 +1333,53 @@ def leaderboard(conn, season_id: int) -> dict:
                                                            e["created_at"] or "", e["id"]))]
     collected = [dict(e) for e in sorted(rows, key=lambda e: (-e["claim_count"], -e["vote_count"],
                                                              e["created_at"] or "", e["id"]))]
+    # studios: grouped by name regardless of case and spacing (the most-used spelling is
+    # shown), with the distinct makers behind each; Independent (no shop given) is listed
+    # last and never wins a studio prize
     studios: dict[str, dict] = {}
+    spellings: dict[str, dict[str, int]] = {}
     for e in rows:
-        name = (e.get("studio") or "").strip() or "Independent"
-        s = studios.setdefault(name, {"studio": name, "entries": 0, "claims": 0, "votes": 0})
+        raw = re.sub(r"\s+", " ", (e.get("studio") or "")).strip()
+        key = _studio_key(raw) or "independent"
+        s = studios.setdefault(key, {"studio": raw or "Independent", "entries": 0, "claims": 0, "votes": 0,
+                                     "registered": 0, "makers": 0, "independent": not raw, "_makers": set()})
+        if raw:
+            sp = spellings.setdefault(key, {})
+            sp[raw] = sp.get(raw, 0) + 1
         s["entries"] += 1; s["claims"] += e["claim_count"]; s["votes"] += e["vote_count"]
+        s["registered"] += int(bool(e.get("fingerprinted")))
+        s["_makers"].add(e.get("artist_uid") or f"name:{e.get('artist_name') or e['id']}")
+    for key, s in studios.items():
+        s["makers"] = len(s.pop("_makers"))
+        if key in spellings:
+            s["studio"] = max(spellings[key].items(), key=lambda kv: kv[1])[0]
     board_studios = sorted(studios.values(),
-                           key=lambda s: (-s["votes"], -s["claims"], -s["entries"], s["studio"]))
+                           key=lambda s: (s["independent"], -s["makers"], -s["entries"], -s["claims"],
+                                          -s["votes"], s["studio"].lower()))
+    # makers: who entered the most registered pieces (then pieces, then what came of them)
+    makers: dict[str, dict] = {}
+    for e in rows:
+        mk = e.get("artist_uid") or f"name:{e.get('artist_name') or e['id']}"
+        m = makers.setdefault(mk, {"artist_uid": e.get("artist_uid") or "",
+                                   "artist_name": e.get("artist_name") or "A maker", "studio": "",
+                                   "entries": 0, "registered": 0, "claims": 0, "votes": 0, "_studios": {}})
+        m["entries"] += 1; m["registered"] += int(bool(e.get("fingerprinted")))
+        m["claims"] += e["claim_count"]; m["votes"] += e["vote_count"]
+        st = re.sub(r"\s+", " ", (e.get("studio") or "")).strip()
+        if st:
+            m["_studios"][st] = m["_studios"].get(st, 0) + 1
+    for m in makers.values():
+        sts = m.pop("_studios")
+        m["studio"] = max(sts.items(), key=lambda kv: kv[1])[0] if sts else ""
+    board_makers = sorted(makers.values(),
+                          key=lambda m: (-m["registered"], -m["entries"], -m["claims"], -m["votes"],
+                                         m["artist_name"].lower()))
     for board in (peoples, collected):
         for i, e in enumerate(board, 1):
             e["rank"] = i
-    for i, s in enumerate(board_studios, 1):
-        s["rank"] = i
+    for board in (board_studios, board_makers):
+        for i, s in enumerate(board, 1):
+            s["rank"] = i
     # points: what each collector holds from this season, scored by rarity
     by_id = {e["id"]: e for e in rows}
     holders: dict[str, dict] = {}
@@ -1060,15 +1392,20 @@ def leaderboard(conn, season_id: int) -> dict:
             continue
         h = holders.setdefault(c["collector_uid"], {"collector_uid": c["collector_uid"],
                                                     "collector_name": c.get("collector_name") or "A collector",
-                                                    "points": 0, "pieces": 0, "legendaries": 0})
+                                                    "points": 0, "pieces": 0, "legendaries": 0,
+                                                    "_studios": set()})
         h["points"] += e["points"]; h["pieces"] += 1
         h["legendaries"] += int(e["rarity"] == "legendary")
+        if _studio_key(e.get("studio") or ""):
+            h["_studios"].add(_studio_key(e["studio"]))
+    for h in holders.values():
+        h["studios"] = len(h.pop("_studios"))
     board_points = sorted(holders.values(),
                           key=lambda h: (-h["points"], -h["pieces"], h["collector_name"]))
     for i, h in enumerate(board_points, 1):
         h["rank"] = i
     return {"peoples_choice": peoples, "most_collected": collected, "studios": board_studios,
-            "points": board_points}
+            "makers": board_makers, "points": board_points}
 
 
 def collectors(conn) -> list[dict]:
@@ -1088,6 +1425,113 @@ def collectors(conn) -> list[dict]:
         r["rank"] = i
         r["collector_name"] = r.get("collector_name") or "A collector"
     return rows
+
+
+# --- prizes: standings off the boards ------------------------------------------------------
+def _piece_standing(e: dict, value, unit: str) -> dict:
+    return {"name": e.get("title") or "Untitled",
+            "sub": " · ".join(x for x in (e.get("artist_name"), e.get("studio")) if x),
+            "value": value, "unit": unit, "entry_id": e["id"]}
+
+
+def prize_board(conn, season_id: int, awarded_for: str, lb: dict | None = None,
+                award_list: list[dict] | None = None) -> list[dict]:
+    """Who is in line for a prize awarded for `awarded_for`, best first: a list of
+    {name, sub, value, unit, entry_id?} with no account ids in it. Empty for a judges'
+    pick, and until the board behind it has anything to say."""
+    k = awarded_for or ""
+    lb = lb if lb is not None else leaderboard(conn, season_id)
+    if k.startswith("award:"):
+        slug = k[6:]
+        for c in (award_list if award_list is not None else awards(conn, season_id)):
+            if c["slug"] != slug:
+                continue
+            measured = c["kind"] == "measured"
+            return [{"name": s["title"],
+                     "sub": " · ".join(x for x in (s.get("artist_name"), s.get("studio")) if x),
+                     "value": s.get("height_mm") if measured else s.get("votes"),
+                     "unit": "mm" if measured else "picks", "entry_id": s["entry_id"]}
+                    for s in c["standings"]]
+        return []
+    if k == "peoples_choice":
+        return [_piece_standing(e, e["vote_count"], "votes") for e in lb["peoples_choice"]
+                if e["vote_count"] > 0]
+    if k == "most_collected":
+        return [_piece_standing(e, e["claim_count"], "collections") for e in lb["most_collected"]
+                if e["claim_count"] > 0]
+    if k == "first_in":
+        first = sorted(lb["peoples_choice"], key=lambda e: (e.get("created_at") or "", e["id"]))
+        return [_piece_standing(e, (e.get("created_at") or "")[:10], "") for e in first[:PRIZE_TOP]]
+    metric = PRIZE_METRIC.get(k)
+    if not metric:
+        return []                                    # a judges' pick, or a kind we don't know
+    unit = PRIZE_FOR[k]["unit"]
+    if k.startswith("studio_"):
+        pool = [s for s in lb["studios"] if not s.get("independent") and s[metric] > 0]
+        pool.sort(key=lambda s: (-s[metric], -s["entries"], -s["claims"], -s["votes"], s["studio"].lower()))
+        return [{"name": s["studio"],
+                 "sub": f"{s['makers']} maker{'s' if s['makers'] != 1 else ''} · "
+                        f"{s['entries']} piece{'s' if s['entries'] != 1 else ''}",
+                 "value": s[metric], "unit": unit} for s in pool]
+    if k.startswith("maker_") or k == "rookie":
+        pool = list(lb["makers"])
+        if k == "rookie":
+            veterans = {r[0] for r in conn.execute(
+                "SELECT DISTINCT artist_uid FROM season_entries WHERE season_id<>? AND status='approved' "
+                "AND COALESCE(artist_uid,'')<>''", (int(season_id),)).fetchall()}
+            pool = [m for m in pool if m.get("artist_uid") and m["artist_uid"] not in veterans]
+        pool = [m for m in pool if m[metric] > 0]
+        pool.sort(key=lambda m: (-m[metric], -m["registered"], -m["entries"], -m["votes"],
+                                 m["artist_name"].lower()))
+        return [{"name": m["artist_name"], "sub": m.get("studio") or "Independent",
+                 "value": m[metric], "unit": unit} for m in pool]
+    pool = [h for h in lb["points"] if h[metric] > 0]
+    pool.sort(key=lambda h: (-h[metric], -h["points"], -h["pieces"], h["collector_name"].lower()))
+    return [{"name": h["collector_name"],
+             "sub": f"{h['pieces']} piece{'s' if h['pieces'] != 1 else ''}",
+             "value": h[metric], "unit": unit} for h in pool]
+
+
+def prize_standings(conn, season_id: int, lb: dict | None = None,
+                    award_list: list[dict] | None = None, top: int = PRIZE_TOP) -> list[dict]:
+    """Every prize of the season with its top standings, its leader, and — once an
+    admin has named one or the season has closed — its winner."""
+    rows = prizes(conn, season_id)
+    if not rows:
+        return []
+    season = get_season(conn, int(season_id)) or {}
+    closed = season.get("status") == "closed"
+    lb = lb if lb is not None else leaderboard(conn, season_id)
+    if award_list is None and any(p["awarded_for"].startswith("award:") for p in rows):
+        award_list = awards(conn, season_id)
+    for p in rows:
+        st = prize_board(conn, season_id, p["awarded_for"], lb, award_list)
+        p["standings"] = st[:top]
+        p["leader"] = st[0] if st else None
+        p["winner"] = p.get("winner_text") or (st[0]["name"] if closed and st else "")
+        p["settled"] = bool(p["winner"])
+    return rows
+
+
+def settle_prizes(conn, season_id: int) -> list[dict]:
+    """At close-out: write each prize's leader into winner_text unless an admin already
+    named a winner. Returns what was written."""
+    out = []
+    for p in prize_standings(conn, season_id):
+        if p.get("winner_text") or not p.get("leader"):
+            continue
+        lead = p["leader"]
+        text = lead["name"]
+        if lead.get("value") not in (None, ""):
+            unit = lead.get("unit") or ""
+            if lead["value"] == 1 and unit.endswith("s") and unit != "mm":
+                unit = unit[:-1]
+            text += f" · {lead['value']} {unit}".rstrip()
+        conn.execute("UPDATE season_prizes SET winner_text=?, updated_at=? WHERE id=?",
+                     (text[:300], _now(), p["id"]))
+        out.append({"prize_id": p["id"], "title": p["title"], "winner": text})
+    conn.commit()
+    return out
 
 
 # --- badges ------------------------------------------------------------------------------
@@ -1164,6 +1608,7 @@ def summary(conn) -> dict:
             "pending_claims": n("SELECT COUNT(*) FROM season_claims WHERE status='pending'"),
             "badges": n("SELECT COUNT(*) FROM season_badges"),
             "award_votes": n("SELECT COUNT(*) FROM season_award_votes"),
+            "prizes": n("SELECT COUNT(*) FROM season_prizes"),
             "legendaries_out": n(
                 "SELECT COUNT(*) FROM season_entries e WHERE e.status='approved' AND e.legendary=1 "
                 "AND NOT EXISTS (SELECT 1 FROM season_claims c WHERE c.object_row_id=e.object_row_id "
