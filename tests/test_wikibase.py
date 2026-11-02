@@ -333,6 +333,42 @@ def test_bootstrap_and_two_pass_push_against_a_fake_wiki(conn):
     assert p["fetched"] >= 120 and conn.execute("SELECT COUNT(*) FROM wb_cache").fetchone()[0] >= 120
 
 
+def test_push_values_the_wiki_takes_and_blacklisted_links(conn):
+    """What the second real push tripped on: a coordinate's value type, a URL with brackets, a blacklisted link."""
+    from central.wikibase.push import snak, snak_sig
+    qid_of = lambda k: "Q7"  # noqa: E731
+    s = snak("P9", model.coordinate(38.069, -78.701), qid_of, "https://w/entity/")
+    assert s["datavalue"]["type"] == "globecoordinate" and snak_sig(s)[1:] == ("coord", 38.069, -78.701)
+    assert snak_sig({"property": "P9", "datavalue": {"type": "globe-coordinate", "value": {"latitude": 1, "longitude": 2}}})[1] == "coord"
+    u = model.url(" https://www.facebook.com/events/1/?a=%7B%22x%22%3A[1] and more ")
+    assert u.value == "https://www.facebook.com/events/1/?a=%7B%22x%22%3A%5B1%5D%20and%20more"
+    assert snak("P8", u, qid_of, "e/")["datavalue"]["value"] == u.value
+    assert snak("P8", model.Value("url", "https://example.org/a b"), qid_of, "e/")["datavalue"]["value"] == "https://example.org/a%20b"
+    with pytest.raises(ValueError):
+        snak("P8", model.Value("url", "not a url"), qid_of, "e/")
+    # a staged website the wiki's spam blacklist refuses: the item goes up without it, and its row says so
+    stage.run(conn, lambda *_: None)
+    key = "gdb:artists:artists-0000"
+    r = store.one(conn.execute("SELECT * FROM wb_items WHERE key=?", (key,)))
+    review = {"add": [model.Claim("official website", model.url("https://linktr.ee/rae")).to_json()]}
+    eff = store.effective_item(dict(r, review_json=json.dumps(review)))
+    store.set_item(conn, key, review_json=json.dumps(review), content_hash=eff.content_hash())
+
+    class Blacklisting(FakeWiki):
+        def edit(self, data, *, qid=None, new=None, clear=False, summary=""):
+            if any("linktr.ee" in json.dumps(st) for st in data.get("claims") or []):
+                raise WikibaseError("wbeditentity: failed-save: The save has failed. [spam-blacklisted-link]")
+            return super().edit(data, qid=qid, new=new, clear=clear, summary=summary)
+
+    api = Blacklisting()
+    s = _push(conn, api, {"really": True, "what": "all", "keys": [key]})
+    assert s["failures_by_code"] == {} and s["dropped_snaks"] >= 1
+    r = store.one(conn.execute("SELECT * FROM wb_items WHERE key=?", (key,)))
+    assert r["status"] == "pushed" and "spam blacklist" in r["notes"] and "linktr.ee" in r["notes"]
+    assert "linktr.ee" not in json.dumps(api.entities[r["qid"]])
+    assert any(e["qid"] == r["qid"] for e in api.edits)                   # the retry went through
+
+
 def test_label_clash_is_suffixed_not_fatal(conn):
     a = model.Item("gdb:t:1", "person", "Sam Glass", "glass artist", cls="gdb:class:person")
     b = model.Item("gdb:t:2", "person", "Sam Glass", "glass artist", cls="gdb:class:person")
