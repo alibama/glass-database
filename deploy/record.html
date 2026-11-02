@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A record — Glass Database</title>
+<meta name="description" content="One record of the Glass Database: a person, studio, piece, place or term, with what the record holds, what the wiki says, and where it sits on Wikidata.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav ul a.on { color: var(--red); }
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+
+  .hero h1 { font-size: clamp(2.6rem, 6.5vw, 5.6rem); max-width: 20ch; overflow-wrap: anywhere; }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; }
+  .hero .gid { margin-top: 1rem; font: 400 13px/1.6 var(--mono); color: var(--muted); word-break: break-all; }
+  .hero .gid b { color: var(--ink); font-weight: 500; }
+  .hero .links { margin-top: 1.4rem; display: flex; flex-wrap: wrap; gap: .6rem; }
+  .hero .links a { font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); border: 1px solid var(--ink); padding: .55rem .8rem; text-decoration: none; }
+  .hero .links a:hover { background: var(--ink); color: var(--paper); }
+  .hero .links a.hot { border-color: var(--red); color: var(--red); }
+  .hero .links a.hot:hover { background: var(--red); color: #fff; }
+  .hero .art { margin-top: 1.6rem; max-width: 36rem; border: 1px solid var(--ink); background: var(--paper-2); }
+  .hero .art img { display: block; width: 100%; height: auto; }
+
+  /* facts: a definition list that reads as a table */
+  .facts { margin: 1.5rem 0 0; padding: 0; border-top: 1px solid var(--ink); max-width: 72ch; }
+  .facts div { display: grid; grid-template-columns: minmax(10rem, 14rem) 1fr; gap: .6rem 1.5rem; padding: .7rem 0; border-bottom: 1px solid var(--rule); align-items: baseline; }
+  .facts dt { font: 500 11px/1.7 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .facts dd { margin: 0; font-size: 16px; line-height: 1.5; color: var(--ink); overflow-wrap: anywhere; }
+  .facts dd small { display: block; color: var(--muted); font-size: 13px; }
+  .facts dd a { color: var(--ink); }
+  .facts dd a:hover { color: var(--red); }
+  .aliases { margin-top: 1rem; font-size: 15px; color: var(--ink-2); }
+  .empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .empty a { color: var(--ink); } .empty a:hover { color: var(--red); }
+  .board { margin-top: 1.5rem; border-top: 1px solid var(--rule); max-width: 72ch; }
+  .board .row { display: grid; grid-template-columns: 1fr auto; gap: .5rem 1rem; align-items: center; padding: .9rem 0; border-bottom: 1px solid var(--rule); text-decoration: none; color: inherit; }
+  .board a.row:hover p { color: var(--red); }
+  .board p { margin: 0; max-width: none; font-size: 17px; }
+  .board p small { display: block; color: var(--muted); font-size: 14px; margin-top: .15rem; }
+  .board .val { font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+  .board .val b { color: var(--ink); font-weight: 500; }
+  .cite { margin-top: 1.5rem; max-width: 72ch; font: 400 13px/1.7 var(--mono); color: var(--muted); word-break: break-all; }
+  .cite b { color: var(--ink); font-weight: 500; }
+  .skel { height: 120px; background: linear-gradient(90deg, var(--paper-2), var(--paper-3), var(--paper-2)); background-size: 200% 100%; animation: sh 1.4s infinite; }
+  @keyframes sh { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+  @media (max-width: 680px) { .facts div { grid-template-columns: 1fr; gap: .2rem; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active="explore"></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">The record</span><a href="/explore/">The Directory</a><a href="/graph.html">Who Worked With Whom</a><a href="/stats.html">The numbers</a><a href="/wikibase.html">The wiki migration</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label" id="heroLabel"><span class="n">№ 01</span> A record</p>
+  <h1 id="heroTitle">Loading the record…</h1>
+  <p class="lede" id="heroLede"></p>
+  <p class="gid" id="heroGid"></p>
+  <div class="links" id="heroLinks"></div>
+  <div class="art" id="heroArt" hidden></div>
+ </div>
+</section>
+
+<section class="s alt" id="record" aria-labelledby="h-record">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> On the record</p>
+   <div><h2 id="h-record">What the record <em>holds.</em></h2><p class="lede" id="recordLede">The public columns of the source row, as the Directory shows them.</p></div></div>
+  <div id="recordBody"><div class="skel"></div></div>
+ </div>
+</section>
+
+<section class="s" id="wiki" aria-labelledby="h-wiki">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> On the wiki</p>
+   <div><h2 id="h-wiki">What the wiki <em>says.</em></h2><p class="lede" id="wikiLede">The statements the migration stages for this item; each cites this page as its reference.</p></div></div>
+  <div id="wikiBody"></div>
+ </div>
+</section>
+
+<section class="s alt" id="related" aria-labelledby="h-related" hidden>
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Tied to it</p>
+   <div><h2 id="h-related">What else <em>is here.</em></h2><p class="lede" id="relatedLede"></p></div></div>
+  <div id="relatedBody"></div>
+ </div>
+</section>
+
+<section class="s" id="cite" aria-labelledby="h-cite">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Cite it</p>
+   <div><h2 id="h-cite">A permanent <em>address.</em></h2><p class="lede">This page is the reference the wiki's statements point at. The Glass Database ID never changes; the data is CC BY 4.0, so cite it and reuse it.</p></div></div>
+  <p class="cite" id="citeBody"></p>
+  <div class="btns" style="margin-top:1.4rem"><div class="act"><a class="btn btn--line" href="/explore/?view=submit">Add to this record</a><small>Corrections and additions go through the Directory's form and a reviewer.</small></div></div>
+ </div>
+</section>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/stats.html">The numbers</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  function plural(n, w) { n = n || 0; return n + " " + w + (n === 1 ? "" : "s"); }
+  /* /record/gdb:artists:12 (the proxy and the dev site redirect here) or ?gid= */
+  var gid = GDB.param("gid") || (function () { var m = /^\/record\/(gdb:.+)$/.exec(decodeURIComponent(location.pathname)); return m ? m[1] : ""; })();
+
+  function notFound() {
+    document.title = "No such record — Glass Database";
+    $("#heroTitle").innerHTML = "No record <em>here.</em>";
+    $("#heroLede").textContent = gid ? "Nothing public carries the Glass Database ID " + gid + ". Records that were folded into another, or never approved, have no page." : "This page shows one record of the Glass Database. It needs a Glass Database ID, like /record/gdb:artists:12.";
+    $("#heroGid").textContent = "";
+    $("#recordBody").innerHTML = '<div class="empty" style="margin-top:0">Look for it in <a href="/explore/">the Directory</a>, or search the record by name: <form style="margin-top:.8rem" onsubmit="return false"><input id="q" type="search" placeholder="A name" style="font:400 15px var(--sans);padding:.5rem .7rem;border:1px solid var(--ink);background:var(--paper);min-width:16rem"> <span id="qOut"></span></form></div>';
+    $("#wikiBody").innerHTML = ""; $("#citeBody").textContent = "";
+    var q = $("#q"), t;
+    if (q) q.addEventListener("input", function () { clearTimeout(t); t = setTimeout(function () {
+      if (q.value.trim().length < 2) { $("#qOut").innerHTML = ""; return; }
+      GDB.json("/records?q=" + encodeURIComponent(q.value.trim())).then(function (d) {
+        $("#qOut").innerHTML = (d.records || []).length ? '<ul style="margin:.6rem 0 0;padding-left:1.2rem">' + d.records.map(function (r) { return '<li><a href="/record.html?gid=' + encodeURIComponent(r.gid) + '">' + esc(r.label) + "</a> <small>" + esc(r.description || r.kind) + "</small></li>"; }).join("") + "</ul>" : "<small>Nothing by that name.</small>";
+      }).catch(function () {}); }, 250); });
+  }
+
+  function link(href, label, hot) { return '<a href="' + esc(href) + '"' + (/^https?:/.test(href) ? ' rel="noopener"' : "") + (hot ? ' class="hot"' : "") + ">" + esc(label) + "</a>"; }
+  function dl(pairs) {
+    return '<dl class="facts">' + pairs.map(function (p) { return "<div><dt>" + esc(p[0]) + "</dt><dd>" + p[1] + "</dd></div>"; }).join("") + "</dl>";
+  }
+  function row(main, sub, val, href) {
+    var inner = "<p>" + main + (sub ? "<small>" + sub + "</small>" : "") + '</p><span class="val">' + val + "</span>";
+    return href ? '<a class="row" href="' + esc(href) + '">' + inner + "</a>" : '<div class="row">' + inner + "</div>";
+  }
+  function host(u) { try { return new URL(u).host.replace(/^www\./, ""); } catch (_) { return u; } }
+
+  function render(r) {
+    var kind = r.kind_word || r.kind || "record";
+    document.title = r.label + " — " + kind + " — Glass Database";
+    $("#heroLabel").innerHTML = '<span class="n">№ 01</span> ' + esc(kind);
+    $("#heroTitle").textContent = r.label;
+    $("#heroLede").textContent = r.description || "";
+    $("#heroGid").innerHTML = "Glass Database ID <b>" + esc(r.gid) + "</b>" + (r.source && r.source.table ? " · from the <b>" + esc(r.source.table) + "</b> table" : "") + (r.wiki && r.wiki.qid ? " · wiki item <b>" + esc(r.wiki.qid) + "</b>" : "") + (r.wiki && r.wiki.wikidata_qid ? " · Wikidata <b>" + esc(r.wiki.wikidata_qid) + "</b>" : "");
+    var L = r.links || {}, links = [];
+    if (L.maker) links.push(link(L.maker, "The maker's card", true));
+    if (L.piece) links.push(link(L.piece, "See the piece", true));
+    if (L.verify) links.push(link(L.verify, "Check it with a phone"));
+    if (L.event) links.push(link(L.event, "The collecting event", true));
+    if (L.map) links.push(link(L.map, "On the map"));
+    if (L.directory) links.push(link(L.directory, "Find in the Directory"));
+    if (L.events) links.push(link(L.events, "Shows & sales"));
+    if (L.website) links.push(link(L.website, host(L.website)));
+    if (L.instagram) links.push(link(L.instagram, "Instagram"));
+    if (r.wiki && r.wiki.item_url) links.push(link(r.wiki.item_url, "Wiki item " + r.wiki.qid));
+    if (r.wiki && r.wiki.wikidata_url) links.push(link(r.wiki.wikidata_url, "Wikidata " + r.wiki.wikidata_qid));
+    $("#heroLinks").innerHTML = links.join("");
+    if (L.image) { $("#heroArt").hidden = false; $("#heroArt").innerHTML = '<img src="' + esc(L.image) + '" alt="' + esc(r.label) + '" loading="lazy" onerror="this.parentNode.hidden=true">'; }
+
+    // the source row
+    var f = (r.source && r.source.fields) || [];
+    if (f.length) $("#recordBody").innerHTML = dl(f.map(function (x) {
+      var v = String(x.value);
+      return [x.label, /^https?:\/\//.test(v) ? '<a href="' + esc(v) + '" rel="noopener">' + esc(v) + "</a>" : esc(v)];
+    }));
+    else $("#recordBody").innerHTML = '<div class="empty" style="margin-top:0">' + (r.source && r.source.table ? "The source row has no public columns filled in." : "This record exists only as a wiki item: a vocabulary term, a place or a name that appeared on a piece, with no Directory row behind it.") + "</div>";
+
+    // the wiki item
+    var w = r.wiki, facts = r.facts || [];
+    if (!w) {
+      $("#wikiBody").innerHTML = '<div class="empty" style="margin-top:0">Not staged for the wiki yet. The next migration run stages every approved record; the item then lands here with its statements.</div>';
+    } else {
+      var head = "<p class=\"aliases\">" + (w.qid ? "On the wiki as <b>" + esc(w.qid) + "</b>" + (w.pushed_at ? ", last pushed " + esc(String(w.pushed_at).slice(0, 10)) : "") : "Staged, not yet pushed") + (w.status ? " · status <b>" + esc(w.status) + "</b>" : "") + (w.canonical ? " · folded into <a href=\"/record.html?gid=" + encodeURIComponent(w.canonical) + "\">" + esc(w.canonical) + "</a>" : "") + "." + ((r.aliases || []).length ? " Also known as " + esc(r.aliases.join(", ")) + "." : "") + "</p>";
+      $("#wikiBody").innerHTML = head + (facts.length ? dl(facts.map(function (x) {
+        var v = x.key ? '<a href="/record.html?gid=' + encodeURIComponent(x.key) + '">' + esc(x.value) + "</a>" : x.url ? '<a href="' + esc(x.url) + '" rel="noopener">' + esc(x.value) + "</a>" : esc(x.value);
+        return [x.prop, v + (x.qualifiers ? "<small>" + esc(x.qualifiers.join(" · ")) + "</small>" : "")];
+      })) : '<div class="empty">No statements beyond the label and description yet.</div>');
+    }
+
+    // what else is here
+    var R = r.related || {}, parts = [], lede = "";
+    if (R.objects && R.objects.length) {
+      lede = plural(R.objects.length, "piece") + " by this maker in the public record" + (R.entries && R.entries.length ? ", " + plural(R.entries.length, "collecting-event entry").replace("entrys", "entries") : "") + ".";
+      parts.push('<p class="label">Pieces</p><div class="pcs" style="margin-top:.8rem">' + R.objects.map(function (o) {
+        return GDB.pieceCard({ id: o.row_id, title: o.title, url: o.url, image: o.image_url, maker: o.maker, year: o.year, techniques: o.techniques ? String(o.techniques).split(/[;,/]/).slice(0, 2) : [],
+          serial: "ref " + String(o.row_id).slice(0, 8), set: o.fingerprinted ? "Glass ID" : "",
+          stats: [{ k: "Glass ID", v: o.fingerprinted ? "Registered" : "Not registered", off: !o.fingerprinted }, { k: "Record", v: o.gid }],
+          actions: [{ label: "This piece's record", url: "/record.html?gid=" + encodeURIComponent(o.gid) }] });
+      }).join("") + "</div>");
+    } else if (r.kind === "person" || r.kind === "maker") {
+      lede = "No published pieces carry this name yet.";
+    }
+    if (R.entries && R.entries.length) {
+      parts.push('<p class="label" style="margin-top:2rem">Collecting events</p><div class="board">' + R.entries.map(function (e) {
+        return row(esc(e.title || "Untitled"), esc(e.season_title || "") + (e.studio ? " · " + esc(e.studio) : "") + " · " + esc(e.status || ""), "<b>" + (e.votes || 0) + "</b> votes · <b>" + (e.collected || 0) + "</b> collected", "/games.html?season=" + encodeURIComponent(e.season_slug || "") + "#entry-" + e.id);
+      }).join("") + "</div>");
+    }
+    if (R.lineage && (R.lineage.mentors.length || R.lineage.students.length)) {
+      parts.push('<p class="label" style="margin-top:2rem">Lineage</p>' + dl([["Taught by", R.lineage.mentors.length ? R.lineage.mentors.map(function (n) { return '<a href="/maker.html?name=' + encodeURIComponent(n) + '">' + esc(n) + "</a>"; }).join(", ") : "—"], ["Taught", R.lineage.students.length ? R.lineage.students.map(function (n) { return '<a href="/maker.html?name=' + encodeURIComponent(n) + '">' + esc(n) + "</a>"; }).join(", ") : "—"]]));
+    }
+    if (R.makers && R.makers.length) {
+      lede = plural(R.makers.length, "maker") + " entered a collecting event from this studio.";
+      parts.push('<div class="board">' + R.makers.map(function (m) { return row(esc(m.name), plural(m.events, "collecting event"), "<b>" + m.entries + "</b> " + (m.entries === 1 ? "entry" : "entries"), "/maker.html?name=" + encodeURIComponent(m.name)); }).join("") + "</div>");
+    }
+    if (R.object) {
+      var o = R.object, mk = R.maker || {};
+      lede = "A piece" + (mk.name ? " by " + mk.name : "") + (R.collected ? ", in " + plural(R.collected, "collection") : "") + ".";
+      parts.push(dl([["Maker", mk.name ? (mk.gid ? '<a href="/record.html?gid=' + encodeURIComponent(mk.gid) + '">' + esc(mk.name) + "</a>" : esc(mk.name)) : "—"], ["Glass ID", o.fingerprinted ? "Registered: any phone can check this piece" : "Not registered"], ["Content Credentials", o.credentialed ? "Signed" : "None"], ["Collected", plural(R.collected || 0, "time")]]));
+    }
+    var sec = $("#related");
+    if (parts.length) { sec.hidden = false; $("#relatedLede").textContent = lede; $("#relatedBody").innerHTML = parts.join(""); }
+
+    // cite
+    var abs = r.url || (location.origin + "/record/" + r.gid);
+    $("#citeBody").innerHTML = "<b>" + esc(r.label) + "</b>. Glass Database, " + esc(kind) + " record " + esc(r.gid) + ". " + esc(abs) + " · CC BY 4.0" + (r.wiki && r.wiki.item_url ? " · wiki: " + esc(r.wiki.item_url) : "") + (r.wiki && r.wiki.wikidata_url ? " · Wikidata: " + esc(r.wiki.wikidata_url) : "");
+    var ld = { "@context": "https://schema.org", "@type": r.kind === "person" || r.kind === "maker" ? "Person" : r.kind === "object" ? "CreativeWork" : r.kind === "studio" || r.kind === "museum" || r.kind === "school" ? "Organization" : "Thing",
+      name: r.label, description: r.description || "", url: abs, identifier: r.gid, license: "https://creativecommons.org/licenses/by/4.0/",
+      sameAs: [r.wiki && r.wiki.wikidata_url, r.wiki && r.wiki.item_url, L.website].filter(Boolean) };
+    var s = document.createElement("script"); s.type = "application/ld+json"; s.textContent = JSON.stringify(ld); document.head.appendChild(s);
+  }
+
+  if (!gid) { notFound(); }
+  else {
+    GDB.json("/records/" + gid.split("/").map(encodeURIComponent).join("/")).then(render).catch(function (err) {
+      if (err.status === 404) { notFound(); return; }
+      $("#heroTitle").innerHTML = "The record is <em>offline.</em>";
+      $("#heroLede").textContent = "Couldn't reach the API (" + (err.message || "network") + "). Try again in a moment.";
+      $("#recordBody").innerHTML = "";
+    });
+  }
+  GDB.chip("#chip", { next: location.pathname + location.search, compact: true });
+})();
+</script>
+</body>
+</html>

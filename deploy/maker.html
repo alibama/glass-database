@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A maker — Glass Database</title>
+<meta name="description" content="A maker's card on the Glass Database: their pieces in the record, their collecting events, how complete their bio is and how much the record knows.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav ul a.on { color: var(--red); }
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+
+  .hero h1 { font-size: clamp(2.6rem, 6.5vw, 5.6rem); max-width: 20ch; overflow-wrap: anywhere; }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; }
+  .hero-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, 380px); gap: 2rem 3rem; align-items: start; }
+  .hero-grid .pc { max-width: 380px; }
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
+
+  /* the score, taken apart */
+  .parts { margin: 1.5rem 0 0; padding: 0; list-style: none; border-top: 1px solid var(--ink); max-width: 60ch; }
+  .parts li { display: grid; grid-template-columns: 11rem 1fr 4.5rem; gap: .6rem 1rem; align-items: center; padding: .6rem 0; border-bottom: 1px solid var(--rule); }
+  .parts .k { font: 500 11px/1.6 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .parts .bar { height: 8px; border: 1px solid var(--ink); background: var(--paper-2); overflow: hidden; }
+  .parts .bar i { display: block; height: 100%; background: var(--red); }
+  .parts .v { font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); text-align: right; white-space: nowrap; }
+  .parts .v b { color: var(--ink); font-weight: 500; }
+  .fill { margin: 1.5rem 0 0; padding: 0; list-style: none; max-width: 60ch; }
+  .fill li { display: grid; grid-template-columns: 1.4rem 1fr; gap: .5rem; padding: .45rem 0; border-bottom: 1px solid var(--rule); font-size: 15px; color: var(--ink-2); }
+  .fill li::before { content: "○"; color: var(--muted); font-family: var(--mono); }
+  .fill li.on::before { content: "●"; color: var(--red); }
+  .fill li.on { color: var(--muted); }
+  .fill a { color: var(--ink); }
+
+  .tbl table { min-width: 0; }
+  .tbl td .mono, .tbl th .mono { font: 400 12px var(--mono); color: var(--muted); }
+  .board { margin-top: 1.5rem; border-top: 1px solid var(--rule); max-width: 72ch; }
+  .board .row { display: grid; grid-template-columns: 1fr auto; gap: .5rem 1rem; align-items: center; padding: .9rem 0; border-bottom: 1px solid var(--rule); text-decoration: none; color: inherit; }
+  .board a.row:hover p { color: var(--red); }
+  .board p { margin: 0; max-width: none; font-size: 17px; }
+  .board p small { display: block; color: var(--muted); font-size: 14px; margin-top: .15rem; }
+  .board .val { font: 400 12px var(--mono); letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+  .board .val b { color: var(--ink); font-weight: 500; }
+  .empty { margin-top: 1.6rem; padding: 1.4rem 1.5rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .empty a { color: var(--ink); } .empty a:hover { color: var(--red); }
+  .skel { height: 160px; background: linear-gradient(90deg, var(--paper-2), var(--paper-3), var(--paper-2)); background-size: 200% 100%; animation: sh 1.4s infinite; }
+  @keyframes sh { from { background-position: 200% 0 } to { background-position: -200% 0 } }
+  @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } .parts li { grid-template-columns: 8rem 1fr 4.5rem; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active="explore"></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">Makers</span><a href="/explore/">The Directory</a><a href="/games.html">Collecting Events</a><a href="/stats.html">The numbers</a><a href="/account.html">My account</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> A maker</p>
+  <div class="hero-grid">
+   <div>
+    <h1 id="heroTitle">Loading the maker…</h1>
+    <p class="lede" id="heroLede"></p>
+    <p class="live" id="heroMeta" aria-live="polite"></p>
+    <div class="btns" id="heroCta" style="margin-top:1.6rem"></div>
+   </div>
+   <div id="cardSlot"><div class="skel"></div></div>
+  </div>
+ </div>
+</section>
+
+<section class="s alt" id="score" aria-labelledby="h-score">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 02</span> What the record knows</p>
+   <div><h2 id="h-score">The knowledge <em>score.</em></h2><p class="lede">Out of 100: forty points for the bio, twenty for pieces in the record, ten for the share with a Glass ID, ten for collecting events, ten for votes, collections and honours, ten for links out to the wider web and Wikidata.</p></div></div>
+  <div class="two">
+   <div><p class="label">The parts</p><ul class="parts" id="parts"></ul></div>
+   <div><p class="label">The bio, field by field</p><ul class="fill" id="fill"></ul></div>
+  </div>
+ </div>
+</section>
+
+<section class="s" id="career" aria-labelledby="h-career">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 03</span> Collecting events</p>
+   <div><h2 id="h-career">The <em>career.</em></h2><p class="lede" id="careerLede">Every collecting event entered, newest first: pieces, votes, collections, the best People's choice rank, awards led at the close, prizes.</p></div></div>
+  <div id="careerBody"></div>
+ </div>
+</section>
+
+<section class="s alt" id="pieces" aria-labelledby="h-pieces">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 04</span> Pieces</p>
+   <div><h2 id="h-pieces">In the <em>record.</em></h2><p class="lede" id="piecesLede"></p></div></div>
+  <div id="piecesBody"></div>
+ </div>
+</section>
+
+<section class="s" id="lineage" aria-labelledby="h-lineage">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">№ 05</span> Lineage</p>
+   <div><h2 id="h-lineage">Who taught <em>whom.</em></h2><p class="lede">The one thing nobody else can add to a maker's record. Teachers and students, from the lineage submissions reviewers have approved.</p></div></div>
+  <div id="lineageBody"></div>
+ </div>
+</section>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/stats.html">The numbers</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  function plural(n, w) { n = n || 0; return n + " " + w + (n === 1 ? "" : "s"); }
+  var gid = GDB.param("m"), name = GDB.param("name");
+  var ref = gid ? gid : (name ? "name:" + name : "");
+
+  function notFound() {
+    document.title = "No such maker — Glass Database";
+    $("#heroTitle").innerHTML = "Nobody on the record <em>by that name.</em>";
+    $("#heroLede").textContent = ref ? "The record has no maker " + (gid ? "with the id " + gid : "called " + name) + ". Makers appear once a piece of theirs is published, once they enter a collecting event, or once the Directory lists them." : "This page shows a maker's card. Open it from a piece, a collecting event or the Directory.";
+    $("#cardSlot").innerHTML = "";
+    $("#heroCta").innerHTML = '<div class="act"><a class="btn btn--red" href="/account.html">Your own card</a><small>Sign in to see what the record knows about you, and what to fill in.</small></div><a class="link" href="/explore/">The Directory</a>';
+    ["parts", "fill", "careerBody", "piecesBody", "lineageBody"].forEach(function (id) { $("#" + id).innerHTML = ""; });
+  }
+  function row(main, sub, val, href) {
+    var inner = "<p>" + main + (sub ? "<small>" + sub + "</small>" : "") + '</p><span class="val">' + val + "</span>";
+    return href ? '<a class="row" href="' + esc(href) + '">' + inner + "</a>" : '<div class="row">' + inner + "</div>";
+  }
+
+  function render(m) {
+    var k = m.knowledge || {}, c = m.completeness || {}, t = m.traits || {}, car = m.career || {}, tot = car.totals || {};
+    document.title = m.name + " — a maker — Glass Database";
+    $("#heroTitle").textContent = m.name;
+    $("#heroLede").textContent = [m.studio, m.based && m.based !== m.studio ? m.based : "", m.techniques].filter(Boolean).join(" · ") || "A maker on the record.";
+    $("#heroMeta").innerHTML = "<span><b>" + plural(t.pieces, "piece") + "</b> in the record</span><span><b>" + (t.registered || 0) + "</b> with a Glass ID</span><span><b>" + plural(t.events, "collecting event") + "</b></span><span><b>" + plural(t.votes, "vote") + "</b></span>" + (tot.best_rank ? "<span>best rank <b>#" + tot.best_rank + "</b></span>" : "");
+    var cta = "";
+    if (m.links && m.links.record) cta += '<div class="act"><a class="btn btn--line" href="' + esc(m.links.record) + '">The record</a><small>The permanent page the wiki cites, with every statement.</small></div>';
+    cta += '<div class="act"><a class="btn btn--red" href="/account.html">Is this you?</a><small>Sign in and your own card shows what to fill in.</small></div>';
+    $("#heroCta").innerHTML = cta;
+    $("#cardSlot").innerHTML = GDB.makerCard(Object.assign({}, m, { noLink: true, url: "" }));
+
+    var parts = k.parts || {}, max = k.max || {}, words = { profile: "The bio", pieces: "Pieces in the record", registered: "Share with a Glass ID", events: "Collecting events", recognition: "Votes, collections, honours", external: "Links out and Wikidata" };
+    $("#parts").innerHTML = Object.keys(words).map(function (key) {
+      var v = parts[key] || 0, mx = max[key] || 1;
+      return '<li><span class="k">' + esc(words[key]) + '</span><span class="bar"><i style="width:' + Math.round(100 * v / mx) + '%"></i></span><span class="v"><b>' + v + "</b> / " + mx + "</span></li>";
+    }).join("") + '<li><span class="k">Knowledge</span><span class="bar"><i style="width:' + (k.score || 0) + '%"></i></span><span class="v"><b>' + (k.score || 0) + "</b> / 100</span></li>";
+    var filled = c.filled || [], missing = (c.missing || []).map(function (x) { return typeof x === "string" ? { label: x } : x; });
+    $("#fill").innerHTML = filled.map(function (f) { return '<li class="on">' + esc(f) + "</li>"; }).join("") + missing.map(function (f) { return "<li>" + esc(f.label) + (f.where ? ' · <a href="' + esc(f.where.url) + '">' + esc(f.where.label) + "</a>" : "") + "</li>"; }).join("") + (filled.length || missing.length ? "" : "<li>Nothing recorded yet.</li>");
+
+    var seasons = car.seasons || [];
+    if (!seasons.length) {
+      $("#careerBody").innerHTML = '<div class="empty" style="margin-top:0">No collecting events entered yet. Each one adds a line here: the pieces entered, the votes, where they ended up, and anything won.</div>';
+    } else {
+      $("#careerLede").textContent = plural(tot.events, "collecting event") + " · " + plural(tot.entries, "entry").replace("entrys", "entries") + " · " + plural(tot.votes, "vote") + " · collected " + plural(tot.collected, "time") + (tot.awards + tot.prizes ? " · " + (tot.awards + tot.prizes) + " won" : "") + (tot.badges ? " · " + plural(tot.badges, "badge") : "");
+      $("#careerBody").innerHTML = '<div class="tbl"><table><thead><tr><th>Collecting event</th><th>Pieces</th><th>Votes</th><th>Collected</th><th>Best rank</th><th>Awards and prizes</th></tr></thead><tbody>' + seasons.map(function (s) {
+        var won = (s.awards || []).concat(s.prizes || []);
+        return '<tr><td><a href="/games.html?season=' + encodeURIComponent(s.slug || "") + '">' + esc(s.title) + '</a><br><span class="mono">' + esc(s.status) + (s.starts ? " · " + esc(String(s.starts).slice(0, 7)) : "") + (s.studio ? " · " + esc(s.studio) : "") + "</span></td><td>" + s.entries + "</td><td>" + s.votes + "</td><td>" + s.collected + "</td><td>" + (s.best_rank ? "#" + s.best_rank : "—") + "</td><td>" + (won.length ? esc(won.join(" · ")) : "—") + "</td></tr>";
+      }).join("") + "</tbody></table></div>" + ((car.badges || []).length ? '<p class="live" style="margin-top:1rem">' + car.badges.map(function (b) { return '<span class="pill red">★ ' + esc(b.label || b.badge) + "</span>"; }).join(" ") + "</p>" : "");
+    }
+
+    var pcs = m.pieces || [];
+    $("#piecesLede").textContent = pcs.length ? plural(t.pieces, "piece") + " published to the record" + (t.pieces > pcs.length ? ", the latest " + pcs.length + " shown" : "") + "." : "";
+    $("#piecesBody").innerHTML = pcs.length ? '<div class="pcs" style="margin-top:0">' + pcs.map(function (o) {
+      return GDB.pieceCard({ id: o.row_id, title: o.title, url: o.url, image: o.image_url, maker: o.maker, year: o.year, techniques: o.techniques ? String(o.techniques).split(/[;,/]/).slice(0, 2) : [],
+        serial: "ref " + String(o.row_id).slice(0, 8), set: o.fingerprinted ? "Glass ID" : "",
+        stats: [{ k: "Glass ID", v: o.fingerprinted ? "Registered" : "Not registered", sub: o.credentialed ? "Content Credentials signed" : "", off: !o.fingerprinted }],
+        actions: [{ label: "The record", url: "/record.html?gid=" + encodeURIComponent(o.gid) }, { label: "Check it", url: "/fingerprint/verify.html?object=" + encodeURIComponent(o.row_id) }] });
+    }).join("") + "</div>" : '<div class="empty" style="margin-top:0">No published pieces yet. A piece published from Glowtbook with its Glass ID is the first thing the record counts.</div>';
+
+    var L = m.lineage || { mentors: [], students: [] };
+    $("#lineageBody").innerHTML = (L.mentors.length || L.students.length) ? '<div class="board">' + L.mentors.map(function (n) { return row(esc(n), "taught " + esc(m.name), "<b>teacher</b>", "/maker.html?name=" + encodeURIComponent(n)); }).join("") + L.students.map(function (n) { return row(esc(n), "studied with " + esc(m.name), "<b>student</b>", "/maker.html?name=" + encodeURIComponent(n)); }).join("") + "</div>" : '<div class="empty" style="margin-top:0">Nothing recorded. <a href="/explore/?view=submit">Add who taught whom</a>; a reviewer checks it and the connections graph picks it up.</div>';
+  }
+
+  if (!ref) { notFound(); }
+  else {
+    GDB.json("/makers/" + encodeURIComponent(ref)).then(render).catch(function (err) {
+      if (err.status === 404) { notFound(); return; }
+      $("#heroTitle").innerHTML = "The maker's card is <em>offline.</em>";
+      $("#heroLede").textContent = "Couldn't reach the API (" + (err.message || "network") + "). Try again in a moment.";
+      $("#cardSlot").innerHTML = "";
+    });
+  }
+  GDB.chip("#chip", { next: location.pathname + location.search, compact: true });
+})();
+</script>
+</body>
+</html>

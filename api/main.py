@@ -93,7 +93,9 @@ from api import admin_data as _admin_data  # noqa: E402
 from api import auth as _auth  # noqa: E402
 from api import events as _events  # noqa: E402
 from api import graph_ext as _graph_ext  # noqa: E402
+from api import makers as _makers  # noqa: E402
 from api import me as _me  # noqa: E402
+from api import records as _records  # noqa: E402
 from api import seasons as _seasons  # noqa: E402
 from api import social as _social  # noqa: E402
 from api import splats as _splats  # noqa: E402
@@ -109,6 +111,8 @@ app.include_router(_social.router)
 app.include_router(_admin.router)        # the review queue (static admin pages)
 app.include_router(_admin_data.router)   # collecting events, the tables, usage (static admin pages)
 app.include_router(_wikibase.router)     # the migration to glass.wikibase.cloud
+app.include_router(_records.router)      # a page for every Glass Database ID (/record/<gid>)
+app.include_router(_makers.router)       # maker cards, career records and the site's numbers
 
 
 @app.on_event("startup")

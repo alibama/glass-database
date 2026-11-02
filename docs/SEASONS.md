@@ -145,8 +145,10 @@ of `seasons.PRIZE_FOR`, or `award:<slug>` for one of the event's award categorie
 Standings are computed from the boards on every read (`seasons.prize_standings`: each prize
 with its top three, its `leader` and its `winner`), so they move as votes and collections
 land and carry no account ids. **Closing** the event writes each prize's leader into
-`winner_text` ("Blue Ridge Hot Glass · 3 makers"); a winner an admin typed by hand beforehand
-stays, and any winner can be rewritten afterwards.
+`winner_text` ("Blue Ridge Hot Glass · 3 makers") and who they were into `winner_json` (the
+entry and its maker's account, the maker, the studio or the collector), which is how a
+maker's career record (`docs/MAKERS.md`, `seasons.prizes_won`) counts prizes across events;
+a winner an admin typed by hand beforehand stays, and any winner can be rewritten afterwards.
 
 Defaults when the admin doesn't list any (`seasons.default_prizes`, worded for the theme):
 *Most makers from one shop* (studio_most_makers), *Most registered pumpkins* / *pieces* /

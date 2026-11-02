@@ -29,6 +29,7 @@ from api.main import app as api_app  # noqa: E402
 STREAMLIT = {"glowtbook": 8503, "explore": 8502, "admin": 8501}
 FILES = {"/": "landing-index.html", "/paper.css": "paper.css", "/splat.html": "splat.html",
          "/collection.html": "collection.html", "/account.html": "account.html",
+         "/record.html": "record.html", "/maker.html": "maker.html", "/stats.html": "stats.html",
          "/infrastructure.html": "infrastructure.html", "/tour.html": "tour.html",
          "/review.html": "review.html", "/wikibase.html": "wikibase.html",
          "/events-admin.html": "events-admin.html", "/datasets.html": "datasets.html",
@@ -61,7 +62,13 @@ def _redirect(app_name):
     return view
 
 
-routes = [Mount("/api", app=api_app)]
+async def record(request):
+    """/record/gdb:artists:12 -> the record page, which reads the id from its path (the proxy
+    redirects the same way)."""
+    return RedirectResponse(f"/record.html?gid={request.path_params['gid']}")
+
+
+routes = [Mount("/api", app=api_app), Route("/record/{gid:path}", record)]
 routes += [Route(path, _file(name)) for path, name in FILES.items()]
 for sub in ("fingerprint-web", "barcoding", "shop-diagrams", "pwa", "img", "splat"):
     if (DEPLOY / sub).exists():

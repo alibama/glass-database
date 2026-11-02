@@ -73,7 +73,7 @@ PROPERTIES: list[Prop] = [
     Prop(INSTANCE_OF, "item", "the class this item is a particular example of", "P31"),
     Prop(SUBCLASS_OF, "item", "every instance of this class is also an instance of that one", "P279"),
     Prop(KEY_PROP, "external-id", "the key of this item in the Glass Database (gdb:<kind>:<id>); the round-trip key",
-         None, PUBLIC_BASE_DEFAULT + "/api/wikibase/go/$1"),
+         None, PUBLIC_BASE_DEFAULT + "/record/$1"),
     Prop(WIKIDATA_PROP, "external-id", "the same thing on Wikidata", None, "https://www.wikidata.org/wiki/$1"),
     Prop("exact match", "url", "a concept in another vocabulary that means exactly this", "P2888"),
     Prop("equivalent property", "url", "the property in another vocabulary (Wikidata) that this property mirrors", "P1628"),
