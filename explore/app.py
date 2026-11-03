@@ -157,16 +157,27 @@ def load(tbl: str, cols: tuple[str, ...]) -> pd.DataFrame:
 
 
 from explore.cards import CSS as _CARD_CSS  # noqa: E402
-from explore.cards import PAGE, PER_ROW, TITLE_COLS, card_html, facet_columns, matches  # noqa: E402
+from explore.cards import (  # noqa: E402
+    PAGE,
+    PER_ROW,
+    TITLE_COLS,
+    card_html,
+    facet_columns,
+    grid_text,
+    group_options,
+    matches,
+    ticked,
+)
 from explore.dataclean import (  # noqa: E402,F401
     GEO_COLS,
     classify,
-    clean_label,
     clean_numeric,
     is_demographic,
     is_excluded,
     is_person_name,
+    labelled_columns,
     person_identifying,
+    unique_names,
 )
 from explore.pieces import filter_pieces, makers_of  # noqa: E402
 
@@ -519,7 +530,8 @@ m3.metric("This dataset", f"{ds['row_count']:,} rows")
 st.caption(ds["description"])
 
 cols = public_columns(tbl)
-labels = {c: clean_label(c, lbl) for c, lbl in cols}      # nouns to filter by, not the form's questions
+_lc = labelled_columns(cols)          # nouns to filter by, not the form's questions; a grid question is one group
+labels, groups = _lc.labels, _lc.groups
 try:
     df = load(tbl, ("_row_id", *(c for c, _ in cols))).copy()      # the row id links each card to its record page
     cats, nums = classify(df)
@@ -545,20 +557,30 @@ if _counted_only:
 st.html(_CARD_CSS)
 q = st.text_input("Search", value=_q0, placeholder="A name, a town, a technique…", label_visibility="collapsed",
                   key=f"q_{tbl}")
-facets = facet_columns(df, cats, labels=labels)
+# A grid question ("Techniques [Offhand Blown Glass]" …) is ONE filter whose choices are its
+# rows; the other filters are the columns worth one. Three filters at most.
+_gfacets = [(g, opts) for g, opts in ((g, group_options(df, m)) for g, m in groups.items()) if opts]
+facets = facet_columns(df, cats, labels=labels, skip=_lc.grid_cols)[:max(0, 3 - len(_gfacets))]
 chosen: dict[str, str] = {}
-if facets:
-    fcols = st.columns(len(facets))
-    for i, fc in enumerate(facets):
+gchosen: dict[str, str] = {}
+if _gfacets or facets:
+    fcols = st.columns(len(_gfacets) + len(facets))
+    for i, (g, opts) in enumerate(_gfacets):
+        pick = fcols[i].selectbox(g, ["Any"] + [lab for _, lab, _ in opts], key=f"gfacet_{tbl}_{g}")
+        if pick != "Any":
+            gchosen[g] = next(c for c, lab, _ in opts if lab == pick)
+    for i, fc in enumerate(facets, start=len(_gfacets)):
         vals = sorted({str(v) for v in df[fc].replace("", pd.NA).dropna().unique()})
         chosen[fc] = fcols[i].selectbox(labels.get(fc, fc), ["Any"] + vals, key=f"facet_{tbl}_{fc}")
 view = df
+for _col in gchosen.values():
+    view = view[ticked(view[_col])]
 for fc, val in chosen.items():
     if val and val != "Any":
         view = view[view[fc].astype(str) == val]
 if q.strip():
-    view = view[matches(view, q)]
-filtered = bool(q.strip()) or any(v != "Any" for v in chosen.values())
+    view = view[matches(view, q, extra=grid_text(view, groups))]
+filtered = bool(q.strip()) or bool(gchosen) or any(v != "Any" for v in chosen.values())
 st.caption(f"{len(view):,} of {len(df):,} " + ("match" if filtered else "in this table") + ".")
 
 _shown_key = f"shown_{tbl}"
@@ -572,7 +594,7 @@ for _start in range(0, len(_rows), PER_ROW):
     _cs = st.columns(PER_ROW)
     for _j, _r in enumerate(_rows[_start:_start + PER_ROW]):
         with _cs[_j]:
-            st.html(card_html(_r, tbl, labels, hidden=_counted_only, base=""))
+            st.html(card_html(_r, tbl, labels, hidden=_counted_only, base="", groups=groups))
 if len(view) > _shown:
     if st.button(f"Show {min(PAGE, len(view) - _shown)} more", key=f"more_{tbl}"):
         st.session_state[_shown_key] = _shown + PAGE
@@ -647,6 +669,7 @@ if {"lat", "lng"}.issubset(df.columns):
 # --- the table and the download, for the spreadsheet-minded ----------------------------
 with st.expander("The table, and a download"):
     pretty = view.drop(columns=[c for c in (*_hidden_per_row, "_row_id") if c in view.columns]).rename(columns=labels)
+    pretty.columns = unique_names(str(c) for c in pretty.columns)      # Arrow refuses two columns with one name
     st.dataframe(pretty, width="stretch", hide_index=True)
     st.download_button("⬇ Download this view (CSV)", pretty.to_csv(index=False),
                        file_name=f"{tbl}.csv", mime="text/csv")

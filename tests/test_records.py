@@ -118,3 +118,21 @@ def test_record_fields_are_nouns_without_dates_of_birth_and_links_name_the_row(d
     assert rec["links"]["directory"] == "/explore/?view=datasets&q=Rae%20Sutter&table=artists"
     orec = records.resolve(c, "gdb:object:obj-demo-0001")
     assert orec and orec["links"]["piece"] == "/explore/?view=objects&piece=obj-demo-0001"
+
+
+def test_record_fields_fold_a_grid_question_into_one_line(demo_db):
+    c = _conn()
+    rows = [("gridtest", "artist_name", "Artist Name", 0, 1),
+            ("gridtest", "hot_offhand", "Hot Glass & Flameworking Techniques [Offhand Blown Glass]", 1, 1),
+            ("gridtest", "hot_cane", "Hot Glass & Flameworking Techniques [Cane & Murrine]", 2, 1),
+            ("gridtest", "kiln_fusing", "Kiln, Cold Work & Architectural Techniques [Fusing & Slumping]", 3, 1)]
+    c.executemany("INSERT OR REPLACE INTO _columns (tbl, column, label, ordinal, is_public) VALUES (?,?,?,?,?)", rows)
+    try:
+        fields = records._fields(c, "gridtest", {"artist_name": "Rae", "hot_offhand": "Primary Focus",  # noqa: SLF001
+                                                 "hot_cane": "", "kiln_fusing": "Occasional Use"})
+    finally:
+        c.execute("DELETE FROM _columns WHERE tbl='gridtest'")
+        c.commit()
+    assert fields == [{"column": "artist_name", "label": "Artist Name", "value": "Rae"},
+                      {"column": "group:Techniques", "label": "Techniques",
+                       "value": "Offhand Blown Glass (primary), Fusing & Slumping (occasional)"}]

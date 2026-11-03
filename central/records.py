@@ -24,7 +24,7 @@ from urllib.parse import quote
 
 from central import approvals
 from central import links as site_links
-from central.fieldnames import clean_label, is_demographic, is_dob, is_excluded
+from central.fieldnames import grid_summary, is_demographic, is_dob, is_excluded, labelled_columns
 
 GID_RE = re.compile(r"^gdb:([A-Za-z0-9_\-]+):(.+)$")
 NAME_COLS = ("artist_name", "name", "title", "display_name", "studio_name", "organization", "label")
@@ -88,17 +88,24 @@ def _approved_row(conn, table: str, row_id: str) -> dict | None:
 
 def _fields(conn, table: str, row: dict) -> list[dict]:
     """The public columns of a row that have a value, labelled as nouns; never a date of
-    birth, a demographic, an identifier or a coordinate (the Directory keeps the same rule)."""
+    birth, a demographic, an identifier or a coordinate (the Directory keeps the same rule).
+    A form's grid question (sixteen "Techniques [row]" columns) is one field."""
+    cols = public_columns(conn, table)
+    lc = labelled_columns((c["column"], c.get("label") or "") for c in cols)
     out = []
-    for c in public_columns(conn, table):
+    for c in cols:
         col, label = c["column"], c.get("label") or ""
-        if is_excluded(col) or is_dob(col) or is_demographic(col, label):
+        if col in lc.grid_cols or is_excluded(col) or is_dob(col) or is_demographic(col, label):
             continue
         v = row.get(col)
         if v in (None, "") or str(v).strip() == "":
             continue
-        out.append({"column": col, "label": clean_label(col, label),
+        out.append({"column": col, "label": lc.labels[col],
                     "value": v if isinstance(v, (int, float)) else str(v).strip()})
+    for g, members in lc.groups.items():
+        summary = grid_summary(row, members)
+        if summary:
+            out.append({"column": f"group:{g}", "label": g, "value": summary})
     return out
 
 

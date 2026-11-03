@@ -17,9 +17,16 @@ from urllib.parse import quote
 
 import pandas as pd
 
-from explore.dataclean import is_demographic, is_dob, is_excluded, is_person_name
+from explore.dataclean import (
+    grid_summary,
+    is_demographic,
+    is_dob,
+    is_excluded,
+    is_person_name,
+)
 
-TITLE_COLS = ("artist_name", "name", "title", "display_name", "studio_name", "organization", "label")
+TITLE_COLS = ("artist_name", "artist", "name", "title", "display_name", "full_name", "maker", "person",
+              "studio_name", "organization", "label")
 PLACE_COLS = ("based_in", "city", "location", "region", "country", "hometown")
 # the columns a card shows first when it has them, in this order
 PREFERRED = ("based_in", "city", "region", "country", "primary_technique", "techniques", "technique", "type",
@@ -30,7 +37,8 @@ LINK_COLS = ("website", "url", "web", "link")      # shown as the Website button
 FACET_PREFERRED = ("country", "region", "state", "type", "opp_type", "primary_technique", "technique", "focus",
                    "discipline", "medium", "city", "based_in", "domain", "category", "status")
 KIND_WORDS = {"artists": "artist", "studios": "studio", "opportunities": "opportunity", "objects": "piece",
-              "events": "event", "people": "person", "makers": "maker"}
+              "events": "event", "people": "person", "makers": "maker", "museum_artists": "museum artist",
+              "artists_legacy": "artist", "glass_artists": "artist"}
 URL_RE = re.compile(r"^(https?://|www\.)", re.I)
 LONG = 150
 PAGE = 12
@@ -84,7 +92,10 @@ def title_of(row: dict) -> str:
 
 def kind_word(table: str) -> str:
     t = (table or "").lower()
-    return KIND_WORDS.get(t, t[:-1] if t.endswith("s") else t or "record")
+    if t in KIND_WORDS:
+        return KIND_WORDS[t]
+    t = t.replace("_", " ")
+    return (t[:-1] if t.endswith("s") else t) or "record"
 
 
 def place_of(row: dict) -> str:
@@ -96,29 +107,39 @@ def place_of(row: dict) -> str:
     return ", ".join(parts[:2])
 
 
-def pick_fields(row: dict, labels: dict, hidden=(), limit: int = 4) -> list[tuple[str, str, str]]:
+def pick_fields(row: dict, labels: dict, hidden=(), limit: int = 4,
+                groups: dict | None = None) -> list[tuple[str, str, str]]:
     """Up to `limit` (column, label, value) pairs worth showing: preferred columns first, then
-    the rest in table order; never the title, the hidden columns, ids or coordinates."""
+    a grid question as one composed field ("Techniques: Offhand Blown Glass (primary), …"),
+    then the rest in table order; never the title, the hidden columns, ids or coordinates."""
     title_col = next((c for c in TITLE_COLS if _s(row.get(c))), None)
     hidden = set(hidden)
-    order = [c for c in PREFERRED if c in row] + [c for c in row if c not in PREFERRED]
+    groups = groups or {}
+    grid = {c for members in groups.values() for c, _ in members}
     out, seen = [], set()
-    for c in order:
-        c = str(c)
-        if c in seen or c == title_col or c in hidden or c.startswith("_") or is_excluded(c) or is_dob(c):
-            continue
+
+    def take(c: str) -> None:
+        if c in seen or c == title_col or c in hidden or c in grid or c.startswith("_") or is_excluded(c) or is_dob(c):
+            return
         if is_demographic(c, labels.get(c, "")) or (c in LINK_COLS and URL_RE.match(_s(row.get(c)))):
-            continue
+            return
         v = _s(row.get(c))
         if not v:
-            continue
+            return
         seen.add(c)
         if len(v) > LONG:
             v = v[:LONG].rsplit(" ", 1)[0] + "…"
         out.append((c, labels.get(c, c.replace("_", " ")), v))
-        if len(out) >= limit:
-            break
-    return out
+
+    for c in (c for c in PREFERRED if c in row):
+        take(str(c))
+    for g, members in groups.items():
+        summary = grid_summary(row, members)
+        if summary:
+            out.append((f"group:{g}", g, summary))
+    for c in (c for c in row if c not in PREFERRED):
+        take(str(c))
+    return out[:limit]
 
 
 def links_of(row: dict, table: str, base: str = "") -> list[tuple[str, str, bool]]:
@@ -141,14 +162,14 @@ def links_of(row: dict, table: str, base: str = "") -> list[tuple[str, str, bool
     return out
 
 
-def card_html(row: dict, table: str, labels: dict, hidden=(), base: str = "") -> str:
+def card_html(row: dict, table: str, labels: dict, hidden=(), base: str = "", groups: dict | None = None) -> str:
     """One row as a card. Values are escaped; URL-looking values become links."""
     name = title_of(row)
     kind = kind_word(table)
     place = place_of(row)
     head = html.escape(kind) + (f" · {html.escape(place)}" if place else "")
     fields = []
-    for c, label, v in pick_fields(row, labels, hidden):
+    for c, label, v in pick_fields(row, labels, hidden, groups=groups):
         shown = (f'<a href="{html.escape(v if v.lower().startswith("http") else "https://" + v, quote=True)}" '
                  f'rel="noopener" target="_blank">{html.escape(v)}</a>' if URL_RE.match(v) else html.escape(v))
         fields.append(f"<div><dt>{html.escape(label)}</dt><dd>{shown}</dd></div>")
@@ -159,13 +180,15 @@ def card_html(row: dict, table: str, labels: dict, hidden=(), base: str = "") ->
 
 
 def facet_columns(df: pd.DataFrame, cats, max_facets: int = 3, max_values: int = 40,
-                  labels: dict | None = None) -> list[str]:
+                  labels: dict | None = None, skip=()) -> list[str]:
     """The categorical columns worth a dropdown: preferred names first; never a person's
-    name, a date of birth or a demographic; only columns with two to `max_values` values."""
+    name, a date of birth, a demographic or a grid column (`skip`: those make one filter
+    through `group_options`); only columns with two to `max_values` values."""
     ok = []
     labels = labels or {}
+    skip = set(skip)
     for c in cats:
-        if is_person_name(c) or is_dob(c) or is_excluded(c) or is_demographic(c, labels.get(c, "")):
+        if c in skip or is_person_name(c) or is_dob(c) or is_excluded(c) or is_demographic(c, labels.get(c, "")):
             continue
         try:
             n = df[c].replace("", pd.NA).dropna().nunique()
@@ -182,8 +205,38 @@ def facet_columns(df: pd.DataFrame, cats, max_facets: int = 3, max_values: int =
     return sorted(ok, key=lambda c: (rank(c), ok.index(c)))[:max_facets]
 
 
-def matches(df: pd.DataFrame, q: str) -> pd.Series:
-    """A row matches when any text column contains the query, case-insensitively."""
+def ticked(s: pd.Series) -> pd.Series:
+    """True where a grid column holds anything (a level or a tick), not blank."""
+    return ~s.astype(str).str.strip().str.lower().isin(["", "nan", "none", "null"])
+
+
+def group_options(df: pd.DataFrame, members: list[tuple[str, str]], max_values: int = 60) -> list[tuple[str, str, int]]:
+    """The rows of a grid question worth offering as a filter: (column, row label, how many
+    ticked it), most ticked first, only rows someone ticked."""
+    opts = []
+    for col, label in members:
+        if col not in df.columns:
+            continue
+        n = int(ticked(df[col]).sum())
+        if n:
+            opts.append((col, label, n))
+    return sorted(opts, key=lambda o: (-o[2], o[1].lower()))[:max_values]
+
+
+def grid_text(df: pd.DataFrame, groups: dict | None) -> pd.Series:
+    """Per row, the row labels of every ticked grid column, so a search for "murrine" finds
+    the people who ticked Cane & Murrine (their cell says "Primary Focus", not the word)."""
+    text = pd.Series("", index=df.index, dtype="object")
+    for members in (groups or {}).values():
+        for col, label in members:
+            if col in df.columns:
+                text = text.where(~ticked(df[col]), text + " " + label)
+    return text
+
+
+def matches(df: pd.DataFrame, q: str, extra: pd.Series | None = None) -> pd.Series:
+    """A row matches when any text column (or `extra`, a text per row) contains the query,
+    case-insensitively."""
     q = (q or "").strip().lower()
     if not q:
         return pd.Series(True, index=df.index)
@@ -195,4 +248,6 @@ def matches(df: pd.DataFrame, q: str) -> pd.Series:
             mask |= df[c].astype(str).str.lower().str.contains(q, regex=False, na=False)
         except Exception:  # noqa: BLE001
             continue
+    if extra is not None:
+        mask |= extra.astype(str).str.lower().str.contains(q, regex=False, na=False)
     return mask
