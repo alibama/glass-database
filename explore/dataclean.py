@@ -17,11 +17,16 @@ import pandas as pd
 from central.fieldnames import (  # noqa: F401  (re-exported for the explorer and its tests)
     GEO_COLS,
     ID_HINTS,
+    Labelled,
     clean_label,
+    grid_summary,
+    is_blank,
     is_demographic,
     is_dob,
     is_excluded,
     is_person_name,
+    labelled_columns,
+    unique_names,
 )
 
 

@@ -20,6 +20,9 @@ def test_title_kind_place_and_fields():
     row = _artists().iloc[0].to_dict()
     assert cards.title_of(row) == "Rae Sutter" and cards.kind_word("artists") == "artist"
     assert cards.kind_word("studios") == "studio" and cards.kind_word("opportunities") == "opportunity"
+    assert cards.kind_word("museum_artists") == "museum artist" and cards.kind_word("open_calls") == "open call"
+    # a museum's artist list names the artist, not the museum, even when the museum column comes first
+    assert cards.title_of({"museum": "Corning Museum of Glass", "artist": "Nicole Chesney"}) == "Nicole Chesney"
     assert cards.place_of(row) == "Crozet, VA"
     labels = {"based_in": "Based in", "primary_technique": "Technique", "birth_year": "Born", "website": "Website"}
     fields = cards.pick_fields(row, labels, hidden=["birth_year"])
@@ -76,6 +79,36 @@ def test_facets_skip_demographics_and_rank_by_meaning():
     assert facets == [focus, "status_did_you"]                                  # a discipline leads a status
     fields = cards.pick_fields(df.iloc[0].to_dict(), labels)
     assert [c for c, _, _ in fields] == ["status_did_you", focus]                # ethnicity is not on the card
+
+
+def test_a_technique_grid_is_one_field_one_filter_and_searchable():
+    from explore.dataclean import labelled_columns
+    cols = [("artist_name", "Artist Name"), ("based_in", "Based In"),
+            ("hot_offhand", "Hot Glass & Flameworking Techniques [Offhand Blown Glass]"),
+            ("hot_cane", "Hot Glass & Flameworking Techniques [Cane & Murrine]"),
+            ("kiln_fusing", "Kiln, Cold Work & Architectural Techniques [Fusing & Slumping]")]
+    lc = labelled_columns(cols)
+    df = pd.DataFrame([
+        {"_row_id": "1", "artist_name": "A", "based_in": "Crozet", "hot_offhand": "Primary Focus", "hot_cane": "Occasional Use",
+         "kiln_fusing": ""},
+        {"_row_id": "2", "artist_name": "B", "based_in": "Norfolk", "hot_offhand": "Secondary", "hot_cane": "", "kiln_fusing": ""},
+        {"_row_id": "3", "artist_name": "C", "based_in": "Bristol", "hot_offhand": "", "hot_cane": "", "kiln_fusing": ""},
+    ])
+    fields = cards.pick_fields(df.iloc[0].to_dict(), lc.labels, groups=lc.groups)
+    assert fields == [("based_in", "Based In", "Crozet"),
+                      ("group:Techniques", "Techniques", "Offhand Blown Glass (primary), Cane & Murrine (occasional)")]
+    html = cards.card_html(df.iloc[1].to_dict(), "artists", lc.labels, groups=lc.groups)
+    assert "Offhand Blown Glass (secondary)" in html and "hot_offhand" not in html
+    assert "Techniques" not in cards.card_html(df.iloc[2].to_dict(), "artists", lc.labels, groups=lc.groups)
+    # the grid's columns never become filters of their own; the group offers its ticked rows, most ticked first
+    assert cards.facet_columns(df, ["based_in", "hot_offhand", "hot_cane"], labels=lc.labels, skip=lc.grid_cols) == ["based_in"]
+    assert cards.group_options(df, lc.groups["Techniques"]) == [("hot_offhand", "Offhand Blown Glass", 2),
+                                                                ("hot_cane", "Cane & Murrine", 1)]
+    assert list(df[cards.ticked(df["hot_offhand"])]["artist_name"]) == ["A", "B"]
+    # "murrine" finds the person who ticked Cane & Murrine although the cell says "Occasional Use"
+    text = cards.grid_text(df, lc.groups)
+    assert list(df[cards.matches(df, "murrine", extra=text)]["artist_name"]) == ["A"]
+    assert not cards.matches(df, "murrine").any()
 
 
 def test_the_explorer_uses_the_cards():

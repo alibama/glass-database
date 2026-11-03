@@ -93,3 +93,34 @@ def test_labels_read_as_nouns_not_questions():
     }
     for (col, label), want in cases.items():
         assert clean_label(col, label) == want, (col, label, clean_label(col, label))
+
+
+def test_a_grid_question_is_one_group_with_unique_row_labels():
+    from explore.dataclean import grid_summary, labelled_columns, unique_names
+    cols = [
+        ("artist_name", "Artist Name"),
+        ("hot_offhand", "Hot Glass & Flameworking Techniques [Offhand Blown Glass]"),
+        ("hot_massiccio", "Hot Glass & Flameworking Techniques [Hot-Sculpted Solid Glass (Massiccio)]"),
+        ("hot_cane", "Hot Glass & Flameworking Techniques [Cane & Murrine]"),
+        ("kiln_fusing", "Kiln, Cold Work & Architectural Techniques [Fusing & Slumping]"),
+        ("kiln_cold", "Kiln, Cold Work & Architectural Techniques [Cold Working (Grinding/Polishing)]"),
+        ("special", "Specialized, Surface & Digital Techniques"),
+        ("q1", "Where are you based?"), ("q2", "Where is your studio based?"),
+    ]
+    lc = labelled_columns(cols)
+    assert list(lc.groups) == ["Techniques"] and [c for c, _ in lc.groups["Techniques"]] == \
+        ["hot_offhand", "hot_massiccio", "hot_cane", "kiln_fusing", "kiln_cold"]
+    assert lc.labels["hot_offhand"] == "Offhand Blown Glass"                        # the row names the column
+    assert lc.labels["hot_massiccio"] == "Hot-Sculpted Solid Glass (Massiccio)"     # its parentheses stay
+    assert lc.labels["kiln_cold"] == "Cold Working (Grinding/Polishing)"
+    assert lc.labels["special"] == "Specialized, Surface & Digital Techniques"      # not a grid, kept whole
+    assert len(set(lc.labels.values())) == len(lc.labels)                           # never two columns, one name
+    assert lc.labels["q1"] == "Based in" and lc.labels["q2"] in ("Q2", "Based in (2)")
+    assert lc.grid_cols == {"hot_offhand", "hot_massiccio", "hot_cane", "kiln_fusing", "kiln_cold"}
+    row = {"hot_offhand": "Occasional Use", "hot_cane": "Primary Focus", "kiln_fusing": "", "kiln_cold": "Secondary",
+           "hot_massiccio": None}
+    assert grid_summary(row, lc.groups["Techniques"]) == \
+        "Cane & Murrine (primary), Cold Working (Grinding/Polishing) (secondary), Offhand Blown Glass (occasional)"
+    assert grid_summary({"hot_cane": "x"}, lc.groups["Techniques"]) == "Cane & Murrine"   # a bare tick
+    assert unique_names(["Techniques", "Techniques", "Status", "Techniques"]) == \
+        ["Techniques", "Techniques (2)", "Status", "Techniques (3)"]

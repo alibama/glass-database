@@ -21,7 +21,13 @@ proof-of-concept features from production-ready ones in its docs.
   the thing a bare question asks about), ethnicity, gender, age and the like never appear
   per row or as a filter (`is_demographic`; the aggregate charts may still count them), the
   record pages apply the same rule to a row's fields, and "where were you born and where do
-  you reside" reads as a place, not a date of birth.
+  you reside" reads as a place, not a date of birth. A form's grid question, which lands as
+  one column per row ("Hot Glass & Flameworking Techniques [Offhand Blown Glass]" … sixteen
+  of them, each holding "Primary Focus", "Secondary" or "Occasional Use"), is one
+  **Techniques** filter whose choices are the rows, one composed field on the card and the
+  record page ("Offhand Blown Glass (primary), Cane & Murrine (occasional)"), and searchable
+  by the row's name; each such column is labelled by its row, and no table ever has two
+  columns with one name again (the table view had crashed on sixteen "Techniques").
 - **Links into the Pieces view found page one only.** `#obj-<id>` anchors became
   `?view=objects&piece=<id>` (`central/links.py`), which opens the view on that piece; a
   search by name from a wiki item, a record page or the graph opens the Directory on the
