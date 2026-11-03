@@ -456,105 +456,138 @@ st.caption(ds["description"])
 cols = public_columns(tbl)
 labels = {c: lbl for c, lbl in cols}
 try:
-    df = load(tbl, tuple(c for c, _ in cols)).copy()
+    df = load(tbl, ("_row_id", *(c for c, _ in cols))).copy()      # the row id links each card to its record page
     cats, nums = classify(df)
 except Exception as ex:  # noqa: BLE001
     st.error(f"Couldn't load this dataset: {ex}")
     st.stop()
 
-# Per-person privacy: names and birth dates never appear per row (table, filters,
-# download). Birth years may still feed the aggregate charts; names never do.
+# Per-row privacy: dates of birth never appear per row (cards, table, filters, download);
+# birth years may still feed the aggregate charts. Names appear on the cards, because every
+# row now has a public record page and a wiki item of its own under the same name; the table
+# and the download keep the older rule and leave names out.
 _name_cols, _dob_cols = person_identifying(c for c, _ in cols)
 _hidden_per_row = set(_name_cols) | set(_dob_cols)
 cats = [c for c in cats if c not in _name_cols]
-if _hidden_per_row:
-    st.caption("🔒 " + ", ".join(labels.get(c, c) for c in sorted(_hidden_per_row))
-               + (" are" if len(_hidden_per_row) > 1 else " is")
-               + " not shown per row. Birth years only appear aggregated in the charts; "
-                 "websites stay so you can reach a maker directly.")
+if _dob_cols:
+    st.caption("🔒 " + ", ".join(labels.get(c, c) for c in sorted(_dob_cols))
+               + (" are" if len(_dob_cols) > 1 else " is")
+               + " not shown per row; birth years only appear aggregated in the charts.")
 
-# --- filters ---------------------------------------------------------------
-with st.expander("Filters", expanded=False):
-    fcols = st.multiselect("Filter by", cats, format_func=lambda c: labels.get(c, c),
-                           max_selections=3)
-    for fc in fcols:
-        vals = sorted(v for v in df[fc].replace("", pd.NA).dropna().unique())
-        chosen = st.multiselect(labels.get(fc, fc), vals, key=f"flt_{fc}")
-        if chosen:
-            df = df[df[fc].isin(chosen)]
-st.caption(f"Showing {len(df):,} rows after filters.")
+# --- the Directory as cards: a search box, a few filters, a few rows at a time ---------
+from explore.cards import CSS as _CARD_CSS  # noqa: E402
+from explore.cards import PAGE, PER_ROW, card_html, facet_columns, matches  # noqa: E402
 
-# --- break-down (categorical) ---------------------------------------------
-left, right = st.columns(2)
-with left:
-    st.subheader("Break it down")
-    try:
-        if cats:
-            gb = st.selectbox("Count by", cats, format_func=lambda c: labels.get(c, c), key="gb")
-            counts = (df[gb].replace("", pd.NA).dropna().value_counts()
-                      .head(25).rename_axis(gb).reset_index(name="count"))
-            chart = (alt.Chart(counts)
-                     .mark_bar(color="#B3261E")
-                     .encode(x=alt.X("count:Q", title="count"),
-                             y=alt.Y(f"{gb}:N", sort="-x", title=labels.get(gb, gb)),
-                             tooltip=[alt.Tooltip(f"{gb}:N", title=labels.get(gb, gb)), "count:Q"])
-                     .properties(width="container", height=430))
-            st.altair_chart(chart)
-        else:
-            st.info("No good categorical column to group by in this dataset.")
-    except Exception as ex:  # noqa: BLE001
-        st.warning(f"Couldn't draw the breakdown: {ex}")
+st.html(_CARD_CSS)
+q = st.text_input("Search", placeholder="A name, a town, a technique…", label_visibility="collapsed",
+                  key=f"q_{tbl}")
+facets = facet_columns(df, cats)
+chosen: dict[str, str] = {}
+if facets:
+    fcols = st.columns(len(facets))
+    for i, fc in enumerate(facets):
+        vals = sorted({str(v) for v in df[fc].replace("", pd.NA).dropna().unique()})
+        chosen[fc] = fcols[i].selectbox(labels.get(fc, fc), ["Any"] + vals, key=f"facet_{tbl}_{fc}")
+view = df
+for fc, val in chosen.items():
+    if val and val != "Any":
+        view = view[view[fc].astype(str) == val]
+if q.strip():
+    view = view[matches(view, q)]
+filtered = bool(q.strip()) or any(v != "Any" for v in chosen.values())
+st.caption(f"{len(view):,} of {len(df):,} " + ("match" if filtered else "in this table") + ".")
 
-# --- distribution (numeric) -----------------------------------------------
-with right:
-    st.subheader("Distribution")
-    try:
-        if nums:
-            nb = st.selectbox("Of", nums, format_func=lambda c: labels.get(c, c), key="nb")
-            series, is_year = clean_numeric(df[nb])
-            if len(series):
-                if is_year:
-                    binspec = alt.Bin(step=10)          # decade bins, no giant gaps
-                    xfield = alt.X(f"{nb}:Q", bin=binspec, title=labels.get(nb, nb),
-                                   axis=alt.Axis(format="d"))
-                else:
-                    xfield = alt.X(f"{nb}:Q", bin=alt.Bin(maxbins=30), title=labels.get(nb, nb))
-                hist = (alt.Chart(pd.DataFrame({nb: series}))
-                        .mark_bar(color="#4A423A")
-                        .encode(x=xfield, y=alt.Y("count():Q", title="count"),
-                                tooltip=[alt.Tooltip(f"{nb}:Q", bin=True, title=labels.get(nb, nb)),
-                                         "count():Q"])
-                        .properties(width="container", height=430))
-                st.altair_chart(hist)
-                if is_year:
-                    st.caption("Decade bins; implausible years trimmed.")
+_shown_key = f"shown_{tbl}"
+st.session_state.setdefault(_shown_key, PAGE)
+_shown = int(st.session_state[_shown_key])
+_rows = view.head(_shown).to_dict("records")
+if not _rows:
+    st.info("Nothing matches. Clear the search or a filter, or add the listing yourself from "
+            "“Add yourself or your studio” in the sidebar.")
+for _start in range(0, len(_rows), PER_ROW):
+    _cs = st.columns(PER_ROW)
+    for _j, _r in enumerate(_rows[_start:_start + PER_ROW]):
+        with _cs[_j]:
+            st.html(card_html(_r, tbl, labels, hidden=_dob_cols, base=""))
+if len(view) > _shown:
+    if st.button(f"Show {min(PAGE, len(view) - _shown)} more", key=f"more_{tbl}"):
+        st.session_state[_shown_key] = _shown + PAGE
+        st.rerun()
+elif len(view) > PAGE:
+    st.caption("That is all of them.")
+
+# --- the charts and the map, out of the way -------------------------------------------
+with st.expander("Charts: count by a column, the spread of a number"):
+    left, right = st.columns(2)
+    with left:
+        st.subheader("Break it down")
+        try:
+            if cats:
+                gb = st.selectbox("Count by", cats, format_func=lambda c: labels.get(c, c), key="gb")
+                counts = (df[gb].replace("", pd.NA).dropna().value_counts()
+                          .head(25).rename_axis(gb).reset_index(name="count"))
+                chart = (alt.Chart(counts)
+                         .mark_bar(color="#B3261E")
+                         .encode(x=alt.X("count:Q", title="count"),
+                                 y=alt.Y(f"{gb}:N", sort="-x", title=labels.get(gb, gb)),
+                                 tooltip=[alt.Tooltip(f"{gb}:N", title=labels.get(gb, gb)), "count:Q"])
+                         .properties(width="container", height=430))
+                st.altair_chart(chart)
             else:
-                st.info("No usable numeric values after cleaning.")
-        else:
-            st.info("No numeric column to chart in this dataset.")
-    except Exception as ex:  # noqa: BLE001
-        st.warning(f"Couldn't draw the distribution: {ex}")
+                st.info("No good categorical column to group by in this dataset.")
+        except Exception as ex:  # noqa: BLE001
+            st.warning(f"Couldn't draw the breakdown: {ex}")
+    with right:
+        st.subheader("Distribution")
+        try:
+            if nums:
+                nb = st.selectbox("Of", nums, format_func=lambda c: labels.get(c, c), key="nb")
+                series, is_year = clean_numeric(df[nb])
+                if len(series):
+                    if is_year:
+                        binspec = alt.Bin(step=10)          # decade bins, no giant gaps
+                        xfield = alt.X(f"{nb}:Q", bin=binspec, title=labels.get(nb, nb),
+                                       axis=alt.Axis(format="d"))
+                    else:
+                        xfield = alt.X(f"{nb}:Q", bin=alt.Bin(maxbins=30), title=labels.get(nb, nb))
+                    hist = (alt.Chart(pd.DataFrame({nb: series}))
+                            .mark_bar(color="#4A423A")
+                            .encode(x=xfield, y=alt.Y("count():Q", title="count"),
+                                    tooltip=[alt.Tooltip(f"{nb}:Q", bin=True, title=labels.get(nb, nb)),
+                                             "count():Q"])
+                            .properties(width="container", height=430))
+                    st.altair_chart(hist)
+                    if is_year:
+                        st.caption("Decade bins; implausible years trimmed.")
+                else:
+                    st.info("No usable numeric values after cleaning.")
+            else:
+                st.info("No numeric column to chart in this dataset.")
+        except Exception as ex:  # noqa: BLE001
+            st.warning(f"Couldn't draw the distribution: {ex}")
 
-# --- map (if geocoded) -----------------------------------------------------
 if {"lat", "lng"}.issubset(df.columns):
-    st.subheader("Map")
-    try:
-        geo = df.copy()
-        geo["lat"] = pd.to_numeric(geo["lat"], errors="coerce")
-        geo["lng"] = pd.to_numeric(geo["lng"], errors="coerce")
-        geo = geo.dropna(subset=["lat", "lng"]).rename(columns={"lat": "latitude", "lng": "longitude"})
-        if len(geo):
-            st.map(geo[["latitude", "longitude"]], size=30)
-    except Exception as ex:  # noqa: BLE001
-        st.warning(f"Couldn't draw the map: {ex}")
+    with st.expander("Map"):
+        try:
+            geo = view.copy()
+            geo["lat"] = pd.to_numeric(geo["lat"], errors="coerce")
+            geo["lng"] = pd.to_numeric(geo["lng"], errors="coerce")
+            geo = geo.dropna(subset=["lat", "lng"]).rename(columns={"lat": "latitude", "lng": "longitude"})
+            if len(geo):
+                st.map(geo[["latitude", "longitude"]], size=30)
+            else:
+                st.info("No coordinates among the rows shown.")
+        except Exception as ex:  # noqa: BLE001
+            st.warning(f"Couldn't draw the map: {ex}")
 
-# --- table + download ------------------------------------------------------
-st.subheader("Rows")
-pretty = df.drop(columns=[c for c in _hidden_per_row if c in df.columns]).rename(columns=labels)
-st.dataframe(pretty, width="stretch", hide_index=True)
-st.download_button("⬇ Download this view (CSV)", pretty.to_csv(index=False),
-                   file_name=f"{tbl}.csv", mime="text/csv")
-st.caption("Saves the rows shown here, with your filters applied, as a spreadsheet file.")
+# --- the table and the download, for the spreadsheet-minded ----------------------------
+with st.expander("The table, and a download"):
+    pretty = view.drop(columns=[c for c in (*_hidden_per_row, "_row_id") if c in view.columns]).rename(columns=labels)
+    st.dataframe(pretty, width="stretch", hide_index=True)
+    st.download_button("⬇ Download this view (CSV)", pretty.to_csv(index=False),
+                       file_name=f"{tbl}.csv", mime="text/csv")
+    st.caption("Saves the rows shown here, with your search and filters applied, as a spreadsheet file; "
+               "names and dates of birth are left out of the file.")
 st.caption("For researchers: the same tables are available through the read API (/api/docs). "
            "Data is published under CC BY 4.0. "
            "To correct or remove a listing, see the Removal & Correction Policy.")
