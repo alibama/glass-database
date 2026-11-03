@@ -25,6 +25,15 @@ proof-of-concept features from production-ready ones in its docs.
   real reason behind a generic save error; *Pull* reports Glass Database IDs that sit on more
   than one item, with the merge link for a person (the loader still never merges or deletes).
 
+### Changed
+- **The Directory shows cards, not a table.** `/explore/` now lists a table's rows as cards,
+  three to a row and twelve at a time with a *Show more* button, each with the name, what it
+  is and where, up to four public columns, and buttons to its record page, its maker card, the
+  map or its website; a search box and up to three filters sit above them. The charts, the
+  map and the table with its CSV download moved into expanders below. Names now appear on the
+  cards (every row has a public record page under the same name); dates of birth stay out of
+  every per-row view, and the table and the download keep names out as before.
+
 ### Added
 - **A page for every Glass Database ID, and the wiki now cites it.** `/record/<gid>`
   (`deploy/record.html` over `GET /api/records/{gid}`, `central/records.py`) shows a key's
