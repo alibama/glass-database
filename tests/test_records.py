@@ -107,3 +107,14 @@ def test_the_record_page_is_wired_everywhere():
     install = (DEPLOY / "install.sh").read_text(encoding="utf-8")
     for p in ("record.html", "maker.html", "stats.html"):
         assert f'cp "$SRC/deploy/{p}"' in install, p
+
+
+def test_record_fields_are_nouns_without_dates_of_birth_and_links_name_the_row(demo_db):
+    c = _conn()
+    rid = c.execute("SELECT _row_id FROM artists WHERE artist_name='Rae Sutter'").fetchone()[0]
+    rec = records.resolve(c, f"gdb:artists:{rid}")
+    cols = {f["column"]: f["label"] for f in rec["source"]["fields"]}
+    assert "birth_year" not in cols and cols["based_in"] == "Based In"       # per-person, never a date of birth
+    assert rec["links"]["directory"] == "/explore/?view=datasets&q=Rae%20Sutter&table=artists"
+    orec = records.resolve(c, "gdb:object:obj-demo-0001")
+    assert orec and orec["links"]["piece"] == "/explore/?view=objects&piece=obj-demo-0001"

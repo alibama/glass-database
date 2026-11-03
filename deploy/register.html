@@ -259,7 +259,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
     var maker = r.host_name || r.studio || "";
     return { kind: "object", ref: r.object_row_id, title: r.title,
       text: r.title + (maker ? " by " + maker : "") + (r.event_title ? " · found at " + r.event_title : "") + " · on the Glass Database",
-      url: r.object_url || ("/explore/?view=objects#obj-" + encodeURIComponent(r.object_row_id)),
+      url: r.object_url || ("/explore/?view=objects&piece=" + encodeURIComponent(r.object_row_id)),
       image: "/api/social/objects/" + encodeURIComponent(r.object_row_id) + "/card.png" };
   }
   function shareBtn(o) { return '<button type="button" class="link" data-share="' + esc(JSON.stringify(o)) + '" aria-expanded="false">Share</button>'; }

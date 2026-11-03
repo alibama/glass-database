@@ -136,12 +136,14 @@ def test_unconfigured_login_explains_why(client, tmp_path, monkeypatch):
 
 def _png(w=64, h=48):
     import io
+
     from PIL import Image
     buf = io.BytesIO(); Image.new("RGB", (w, h), (179, 38, 30)).save(buf, "PNG"); return buf.getvalue()
 
 
 def _size(data):
     import io
+
     from PIL import Image
     im = Image.open(io.BytesIO(data)); return im.format, im.size
 

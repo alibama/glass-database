@@ -120,7 +120,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
 
   function plural(n, w) { return n + " " + w + (n === 1 ? "" : "s"); }
   function rarityPill(r) { r = r || "common"; return '<span class="pill rar ' + esc(r) + '">' + esc(r) + "</span>"; }
-  function pieceUrl(p) { return "/explore/?view=objects#obj-" + encodeURIComponent(p.object_row_id || ""); }
+  function pieceUrl(p) { return "/explore/?view=objects&piece=" + encodeURIComponent(p.object_row_id || ""); }
 
   /* one collected piece as a trading card (the same renderer My account uses) */
   function card(p) {

@@ -17,7 +17,7 @@ from urllib.parse import quote
 
 import pandas as pd
 
-from explore.dataclean import is_dob, is_excluded, is_person_name
+from explore.dataclean import is_demographic, is_dob, is_excluded, is_person_name
 
 TITLE_COLS = ("artist_name", "name", "title", "display_name", "studio_name", "organization", "label")
 PLACE_COLS = ("based_in", "city", "location", "region", "country", "hometown")
@@ -27,8 +27,8 @@ PREFERRED = ("based_in", "city", "region", "country", "primary_technique", "tech
              "email_address", "phone")
 LINK_COLS = ("website", "url", "web", "link")      # shown as the Website button, not as a field
 # the columns worth a filter, in order of preference
-FACET_PREFERRED = ("country", "region", "state", "type", "opp_type", "primary_technique", "technique", "city",
-                   "based_in", "domain", "category", "status")
+FACET_PREFERRED = ("country", "region", "state", "type", "opp_type", "primary_technique", "technique", "focus",
+                   "discipline", "medium", "city", "based_in", "domain", "category", "status")
 KIND_WORDS = {"artists": "artist", "studios": "studio", "opportunities": "opportunity", "objects": "piece",
               "events": "event", "people": "person", "makers": "maker"}
 URL_RE = re.compile(r"^(https?://|www\.)", re.I)
@@ -107,7 +107,7 @@ def pick_fields(row: dict, labels: dict, hidden=(), limit: int = 4) -> list[tupl
         c = str(c)
         if c in seen or c == title_col or c in hidden or c.startswith("_") or is_excluded(c) or is_dob(c):
             continue
-        if c in LINK_COLS and URL_RE.match(_s(row.get(c))):
+        if is_demographic(c, labels.get(c, "")) or (c in LINK_COLS and URL_RE.match(_s(row.get(c)))):
             continue
         v = _s(row.get(c))
         if not v:
@@ -158,12 +158,14 @@ def card_html(row: dict, table: str, labels: dict, hidden=(), base: str = "") ->
             f"<dl>{''.join(fields)}</dl>" + (f'<div class="acts">{acts}</div>' if acts else "") + "</div></article>")
 
 
-def facet_columns(df: pd.DataFrame, cats, max_facets: int = 3, max_values: int = 40) -> list[str]:
-    """The categorical columns worth a dropdown: preferred names first, never a person's
-    name, and only columns with two to `max_values` distinct values."""
+def facet_columns(df: pd.DataFrame, cats, max_facets: int = 3, max_values: int = 40,
+                  labels: dict | None = None) -> list[str]:
+    """The categorical columns worth a dropdown: preferred names first; never a person's
+    name, a date of birth or a demographic; only columns with two to `max_values` values."""
     ok = []
+    labels = labels or {}
     for c in cats:
-        if is_person_name(c) or is_dob(c) or is_excluded(c):
+        if is_person_name(c) or is_dob(c) or is_excluded(c) or is_demographic(c, labels.get(c, "")):
             continue
         try:
             n = df[c].replace("", pd.NA).dropna().nunique()
@@ -171,9 +173,13 @@ def facet_columns(df: pd.DataFrame, cats, max_facets: int = 3, max_values: int =
             continue
         if 2 <= n <= max_values:
             ok.append(c)
-    pref = [c for c in FACET_PREFERRED if c in ok]
-    rest = [c for c in ok if c not in pref]
-    return (pref + rest)[:max_facets]
+    def rank(c: str) -> int:
+        low = (c + " " + labels.get(c, "")).lower()
+        for i, word in enumerate(FACET_PREFERRED):
+            if word in low:
+                return i
+        return len(FACET_PREFERRED)
+    return sorted(ok, key=lambda c: (rank(c), ok.index(c)))[:max_facets]
 
 
 def matches(df: pd.DataFrame, q: str) -> pd.Series:

@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import base64
 import html
+from urllib.parse import quote
 
 
 def _esc(v) -> str:
@@ -81,7 +82,15 @@ _CSS = """
 .gdb-a11y .gdb-body{padding:.7rem 0 .9rem;display:flex;flex-direction:column;gap:.4rem}
 .gdb-a11y .gdb-card h3{margin:.1rem 0 0;font-size:1.25rem;line-height:1.15;font-family:var(--serif);color:var(--ink);font-weight:350;font-variation-settings:"opsz" 44,"wght" 350}
 .gdb-a11y .gdb-sub{color:var(--muted);font-size:.78rem;font-family:var(--mono);letter-spacing:.04em}
+.gdb-a11y .gdb-sub a{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+.gdb-a11y .gdb-sub a:hover{color:var(--red);border-color:currentColor}
 .gdb-a11y .gdb-tech{font-size:.88rem;color:var(--ink-2)}
+.gdb-a11y .gdb-acts{display:flex;gap:.45rem;flex-wrap:wrap;margin:.2rem 0 0}
+.gdb-a11y .gdb-acts a{font:500 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);
+  border:1px solid var(--ink);padding:.45rem .6rem;text-decoration:none}
+.gdb-a11y .gdb-acts a:hover{background:var(--ink);color:var(--paper)}
+.gdb-a11y .gdb-acts a.hot{border-color:var(--red);color:var(--red)}
+.gdb-a11y .gdb-acts a.hot:hover{background:var(--red);color:#fff}
 .gdb-a11y .gdb-fp{background:var(--paper-2);border:1px solid var(--rule);border-radius:0;padding:.45rem .6rem;font-size:.86rem;color:var(--ink-2)}
 .gdb-a11y .gdb-fp strong{color:var(--ink)}
 .gdb-a11y .gdb-fp a{font-weight:500;color:var(--red);font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;text-decoration:none;border-bottom:1px solid currentColor}
@@ -106,10 +115,19 @@ _CSS = """
 """
 
 
-def build_objects_html(objects: list[dict], verify_base: str = "https://glassdatabase.org") -> str:
-    """Return an accessible HTML grid for the list of contributed objects."""
+def build_objects_html(objects: list[dict], verify_base: str = "https://glassdatabase.org", *,
+                       total: int | None = None, offset: int = 0, filtered: bool = False) -> str:
+    """Return an accessible HTML grid of cards for the pieces. ``objects`` is the page shown;
+    ``total`` is how many match in all (positions and the count line say "of N"), ``offset``
+    where this page starts, ``filtered`` whether a search, a maker or a piece's link narrowed
+    the list (the words change, and an empty result offers the way back)."""
     n = len(objects)
+    total = n if total is None else int(total)
     if n == 0:
+        if filtered:
+            return (_CSS + '<section class="gdb-a11y">'
+                    '<p role="status" aria-live="polite" data-mdlaug-ok="RED1">No piece matches. '
+                    '<a href="/explore/?view=objects">See every piece</a>.</p></section>')
         return (_CSS + '<section class="gdb-a11y">'
                 '<p role="status" aria-live="polite" data-mdlaug-ok="RED1">'
                 'No pieces have been published yet. '
@@ -119,8 +137,11 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
     out = [_CSS, '<section class="gdb-a11y" aria-labelledby="gdb-obj-h">']
     out.append('<a class="gdb-skip" href="#gdb-objects" data-mdlaug-ok="COM1">Skip to the pieces</a>')
     out.append('<h2 id="gdb-obj-h">Published pieces</h2>')
-    out.append(f'<p role="status" aria-live="polite" data-mdlaug-ok="RED1">'
-               f'{n} piece{"s" if n != 1 else ""} found.</p>')
+    verb = ("match" if total != 1 else "matches") if filtered else "found"
+    count = f'{total} piece{"s" if total != 1 else ""} {verb}.'
+    if n < total:
+        count += f" Showing {offset + 1}–{offset + n}."
+    out.append(f'<p role="status" aria-live="polite" data-mdlaug-ok="RED1">{count}</p>')
 
     # Check a piece surfaced UP TOP (was buried at the bottom before).
     if any_fp:
@@ -139,8 +160,11 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
     for i, o in enumerate(objects, 1):
         oid = _esc(o["id"])
         title = o.get("title") or "Untitled"
-        subtitle = " · ".join(x for x in [o.get("maker") or "maker unknown",
-                                          str(o.get("year") or "").strip() or "—"] if x)
+        maker = str(o.get("maker") or "").strip()
+        # the maker's name filters the view to everything by them; the year follows
+        maker_html = (f'<a href="/explore/?view=objects&amp;maker={quote(maker)}" target="_self" '
+                      f'title="Every piece by {_esc(maker)}">{_esc(maker)}</a>' if maker else "maker unknown")
+        subtitle = " · ".join([maker_html, _esc(str(o.get("year") or "").strip() or "—")])
         out.append(f'<li><article class="gdb-card" id="obj-{oid}" aria-labelledby="obj-{oid}-h" '
                    'data-mdlaug-ok="EVA1">')
 
@@ -165,9 +189,16 @@ def build_objects_html(objects: list[dict], verify_base: str = "https://glassdat
         out.append('<div class="gdb-body">')
         out.append(f'<h3 id="obj-{oid}-h">{_esc(title)}</h3>')
         out.append(f'<p class="gdb-sub" data-mdlaug-ok="NAV3"><span class="visually-hidden">'
-                   f'Item {i} of {n}. </span>{_esc(subtitle)}</p>')
+                   f'Item {offset + i} of {total}. </span>{subtitle}</p>')
         if o.get("techniques"):
             out.append(f'<p class="gdb-tech">{_esc(o["techniques"])}</p>')
+        # the ways on: the piece's record page (its permanent address) and the maker's other pieces
+        gid = f"gdb:object:{o.get('content_hash') or o['id']}"
+        acts = [f'<a class="hot" href="/record/{_esc(gid)}" target="_self">Record</a>']
+        if maker:
+            acts.append(f'<a href="/explore/?view=objects&amp;maker={quote(maker)}" target="_self">'
+                        f'More by {_esc(maker)}</a>')
+        out.append(f'<p class="gdb-acts">{"".join(acts)}</p>')
 
         # Glass ID + Check a piece — prominent, on the card
         fp = o.get("fingerprint")

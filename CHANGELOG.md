@@ -7,6 +7,29 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Fixed
+- **Over https, `/record/<gid>` and every pretty URL were 404s on production.** certbot's
+  :443 vhost was copied from the :80 one before the shared Apache snippet existed, so it
+  carried its own stale rules and never saw a route added since; http redirected to https
+  first, so nothing noticed. The installer now adds `IncludeOptional
+  /etc/apache2/glassdatabase-proxy.conf` to every enabled vhost for the domain that lacks it
+  (backup, `configtest`, revert on failure). The wiki's references and the Glass Database ID
+  property's formatter already point at `/record/<gid>`; they resolve once this is deployed.
+- **The Directory spoke to the reader.** Tables ingested from a form carried the form's
+  questions as labels ("What's your Ethnicity?", "Birth Year (What year were you born?)")
+  into the cards, the filters and the lock line. Labels are now nouns
+  (`central.fieldnames.clean_label`: the words before the question, no parenthetical, and
+  the thing a bare question asks about), ethnicity, gender, age and the like never appear
+  per row or as a filter (`is_demographic`; the aggregate charts may still count them), the
+  record pages apply the same rule to a row's fields, and "where were you born and where do
+  you reside" reads as a place, not a date of birth.
+- **Links into the Pieces view found page one only.** `#obj-<id>` anchors became
+  `?view=objects&piece=<id>` (`central/links.py`), which opens the view on that piece; a
+  search by name from a wiki item, a record page or the graph opens the Directory on the
+  table that has the row (`?q=` picks the table, `?table=` names it).
+- **A changed formatter URL stood beside the old one.** Pushing the properties added a second
+  *formatter URL* statement when the value changed; it now edits the existing statement in
+  place (one twin, one formatter per property). P3 on the live wiki carries both; the older
+  `/api/wikibase/go/$1` redirects to the same page.
 - **"See the standings" on My account led nowhere.** The links went to `#e-<id>`; the
   Collecting Events page scrolls to `#entry-<id>`.
 - **The second real push failed on every item with coordinates.** The pusher wrote a coordinate's
@@ -26,6 +49,10 @@ proof-of-concept features from production-ready ones in its docs.
   than one item, with the merge link for a person (the loader still never merges or deletes).
 
 ### Changed
+- **Pieces are cards you can filter by maker.** A search box and a maker dropdown sit above
+  the grid, twelve pieces show at a time with *Show more*, the maker's name on each card
+  filters to everything by them, a *Record* button goes to the piece's permanent address,
+  and the card data (images, credentials) is built for the page shown only.
 - **The Directory shows cards, not a table.** `/explore/` now lists a table's rows as cards,
   three to a row and twelve at a time with a *Show more* button, each with the name, what it
   is and where, up to four public columns, and buttons to its record page, its maker card, the

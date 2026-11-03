@@ -122,7 +122,7 @@ def test_suggest_for_fingerprint_votes_from_look_alikes(clusters):
     for n in r["neighbours"]:
         assert n["object_row_id"].startswith("vidxA")
         assert n["image"] == f"/api/objects/{n['object_row_id']}/image"
-        assert n["href"] == f"/explore/?view=objects#obj-{n['object_row_id']}"
+        assert n["href"] == f"/explore/?view=objects&piece={n['object_row_id']}"
         assert 0.9 < n["score"] <= 1.0 and n["title"].startswith("Reticello")
         assert n["dominant_colour"]["name"] == "amber" and "Cane & Murrine" in n["techniques"]
     assert r["neighbours"] == sorted(r["neighbours"], key=lambda n: -n["score"])

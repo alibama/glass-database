@@ -249,7 +249,11 @@ class FakeWiki(Wikibase):
             e["aliases"].setdefault(lang, [])
             e["aliases"][lang] += [{"language": lang, "value": a["value"]} for a in als]
         for st in data.get("claims") or []:
-            e["claims"].setdefault(st["mainsnak"]["property"], []).append(st)
+            lst = e["claims"].setdefault(st["mainsnak"]["property"], [])
+            if st.get("id") and any(c.get("id") == st["id"] for c in lst):      # edited in place, as the wiki does
+                lst[:] = [st if c.get("id") == st["id"] else c for c in lst]
+            else:
+                lst.append(st)
         self.writes += 1
         return {"entity": {"id": qid}}
 
@@ -863,3 +867,22 @@ def test_api_wikidata_rows_decisions_and_job(client, conn, fake_wikidata):
     sg = client.get("/wikibase/wikidata/suggested").json()
     assert sg["run"] == rid and sg["people"][0]["label"] == "Pike Example" and sg["in_collections"] == {"Museum of Glass": ["Nadia Okonkwo"]}
     assert client.get("/wikibase/wikidata", params={"status": "confirmed"}).json()["total"] == 1
+
+
+def test_a_changed_formatter_replaces_the_old_statement(conn):
+    stage.run(conn, lambda *_: None)
+    dedupe.run(conn, lambda *_: None)
+    store.set_settings(conn, user="Bot@x", password="pw", pause=0)
+    api = FakeWiki()
+    assert not _push(conn, api, {"really": True, "what": "properties"})["failures_by_code"]
+    props = store.props(conn)
+    key_pid, fmt_pid = props[model.KEY_PROP]["pid"], props["formatter URL"]["pid"]
+    sts = api.entities[key_pid]["claims"][fmt_pid]
+    assert len(sts) == 1 and sts[0]["mainsnak"]["datavalue"]["value"].endswith("/record/$1")
+    # the wiki holds an older formatter (the /api/wikibase/go/ redirect) under a statement id
+    sts[0]["id"] = f"{key_pid}$old"
+    sts[0]["mainsnak"]["datavalue"]["value"] = "https://glassdatabase.org/api/wikibase/go/$1"
+    assert not _push(conn, api, {"really": True, "what": "properties"})["failures_by_code"]
+    sts = api.entities[key_pid]["claims"][fmt_pid]
+    assert len(sts) == 1 and sts[0]["id"] == f"{key_pid}$old"              # edited in place, not a second one
+    assert sts[0]["mainsnak"]["datavalue"]["value"].endswith("/record/$1")

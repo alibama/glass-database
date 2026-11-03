@@ -23,6 +23,8 @@ import re
 from urllib.parse import quote
 
 from central import approvals
+from central import links as site_links
+from central.fieldnames import clean_label, is_demographic, is_dob, is_excluded
 
 GID_RE = re.compile(r"^gdb:([A-Za-z0-9_\-]+):(.+)$")
 NAME_COLS = ("artist_name", "name", "title", "display_name", "studio_name", "organization", "label")
@@ -85,12 +87,17 @@ def _approved_row(conn, table: str, row_id: str) -> dict | None:
 
 
 def _fields(conn, table: str, row: dict) -> list[dict]:
+    """The public columns of a row that have a value, labelled as nouns; never a date of
+    birth, a demographic, an identifier or a coordinate (the Directory keeps the same rule)."""
     out = []
     for c in public_columns(conn, table):
-        v = row.get(c["column"])
+        col, label = c["column"], c.get("label") or ""
+        if is_excluded(col) or is_dob(col) or is_demographic(col, label):
+            continue
+        v = row.get(col)
         if v in (None, "") or str(v).strip() == "":
             continue
-        out.append({"column": c["column"], "label": c.get("label") or c["column"].replace("_", " "),
+        out.append({"column": col, "label": clean_label(col, label),
                     "value": v if isinstance(v, (int, float)) else str(v).strip()})
     return out
 
@@ -218,7 +225,7 @@ def _object_card(r: dict) -> dict:
             "techniques": r.get("techniques") or "", "fingerprinted": fp,
             "credentialed": bool(r.get("has_credentials")),
             "image_url": f"/api/objects/{r['_row_id']}/image",
-            "url": f"/explore/?view=objects#obj-{quote(str(r['_row_id']))}"}
+            "url": site_links.piece_url(r["_row_id"])}
 
 
 def _entries_by_maker(conn, name: str, limit: int = 30) -> list[dict]:
@@ -336,13 +343,13 @@ def resolve(conn, gid: str, base: str = "") -> dict | None:
     # links onward: the Directory search, the map, the verify app, the maker card
     links = out["links"]
     if kind in ("person", "maker"):
-        links["directory"] = f"/explore/?view=datasets&q={quote(label)}"
+        links["directory"] = site_links.directory_url(label, source_table)
         links["maker"] = f"/maker.html?m={quote(gid)}"
     elif kind == "studio":
         links["map"] = f"/studios.html?q={quote(label)}"
-        links["directory"] = f"/explore/?view=datasets&q={quote(label)}"
+        links["directory"] = site_links.directory_url(label, source_table)
     elif kind == "object" and row is not None:
-        links["piece"] = f"/explore/?view=objects#obj-{quote(str(row['_row_id']))}"
+        links["piece"] = site_links.piece_url(row["_row_id"])
         links["verify"] = f"/fingerprint/verify.html?object={quote(str(row['_row_id']))}"
         links["image"] = f"/api/objects/{row['_row_id']}/image"
     elif kind == "season":

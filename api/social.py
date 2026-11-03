@@ -228,7 +228,7 @@ def share_target(conn, kind: str, ref: str, base: str) -> dict | None:
             return None
         return {"title": o.get("title") or "A piece", "description": f"Made by {o.get('maker') or 'a maker'} · on the Glass Database",
                 "image": f"{base}/api/social/objects/{ref}/card.png",
-                "url": f"{base}/explore/?view=objects#obj-{ref}"}
+                "url": f"{base}/explore/?view=objects&piece={ref}"}
     if kind == "collection":
         c = social.public_collection(conn, ref)
         if not c:

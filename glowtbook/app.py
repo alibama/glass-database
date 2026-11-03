@@ -964,7 +964,7 @@ elif page == "objects":
                         st.code(_share_link, language=None)
                         st.caption("Copy the link; wherever you paste it, the preview shows the card. "
                                    f"[The share card]({PUBLIC_BASE}/api/social/objects/{_rid}/card.png) · "
-                                   f"[The piece]({PUBLIC_BASE}/explore/?view=objects#obj-{_rid})")
+                                   f"[The piece]({PUBLIC_BASE}/explore/?view=objects&piece={_rid})")
                     if bsky_on and _social is not None:
                         from glowtbook import bluesky
                         _creds = _social.credentials(_sc, uid, "bluesky")

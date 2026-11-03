@@ -129,8 +129,9 @@ def test_api_flow(client):
     assert client.get(f"/objects/{done[0]['object_row_id']}/image").status_code == 200
     small = client.get(f"/objects/{done[0]['object_row_id']}/image?w=160")       # the card-sized derivative
     assert small.status_code == 200 and small.headers["content-type"] == "image/jpeg"
-    from PIL import Image
     import io as _io
+
+    from PIL import Image
     assert max(Image.open(_io.BytesIO(small.content)).size) <= 160
 
     # host closes the event -> no more registrations

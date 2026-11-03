@@ -30,7 +30,11 @@ weights download from a CDN, the photos never leave the phone. **No server code 
 commercial AI service.** Keep it that way; the public page promises it.
 
 Update path: `cd /root/glass-database && git pull --ff-only && bash deploy/update.sh` (and
-`sudo systemctl reload apache2` when the Apache files changed).
+`sudo systemctl reload apache2` when the Apache files changed). A route added to
+`deploy/apache-glassdatabase-proxy.conf` reaches https only through the :443 vhost's
+`IncludeOptional` of that snippet; the installer adds the line when certbot's copy of the vhost
+predates it (the symptom: a pretty URL or `/record/<gid>` is a 404 over https and a redirect
+over http).
 
 ## 2. The private network (being built)
 

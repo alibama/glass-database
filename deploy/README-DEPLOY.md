@@ -90,7 +90,10 @@ sudo certbot --nginx  -d glassdatabase.org -d www.glassdatabase.org   # Nginx
 ```
 
 Certbot edits the vhost to add the TLS block and sets up auto-renewal. The
-websocket and proxy directives carry over into the HTTPS vhost.
+websocket and proxy directives carry over into the HTTPS vhost. Routes added
+later do not carry over by themselves: they live in
+`/etc/apache2/glassdatabase-proxy.conf`, which the :443 vhost must
+`IncludeOptional`; the installer adds that line when certbot's copy lacks it.
 
 ## Adding content on the server
 

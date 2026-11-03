@@ -225,7 +225,7 @@ def object_record(row: dict) -> dict:
     rec["caption"] = caption(rec)
     rec["license"] = LICENSE
     rec["source"] = SOURCE
-    rec["object_url"] = f"/explore/?view=objects#obj-{row['_row_id']}"
+    rec["object_url"] = f"/explore/?view=objects&piece={row['_row_id']}"
     return rec
 
 

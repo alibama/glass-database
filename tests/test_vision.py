@@ -247,7 +247,7 @@ def test_export_vision_corpus_in_process(demo_db, tmp_path, capsys):
     assert r["colour_sources"].startswith("Reichenbach")
     assert r["embedding_centroid"] == pytest.approx([0.7071, 0.7071, 0.0], abs=1e-3)
     assert r["license"] == "CC-BY-4.0" and r["source"] == "glassdatabase.org"
-    assert r["object_url"] == "/explore/?view=objects#obj-visiontest0001"
+    assert r["object_url"] == "/explore/?view=objects&piece=visiontest0001"
     img = tmp_path / r["image"]
     assert r["image"].startswith("images/") and img.exists() and img.suffix == ".png"
     with Image.open(img) as im:

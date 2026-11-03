@@ -26,6 +26,7 @@ from collections import deque
 from urllib.parse import quote
 
 from central import approvals, techniques
+from central import links as site_links
 
 SIMILAR_THRESHOLD = 0.85     # cosine similarity for a similar_to edge
 SIMILAR_MAX_OBJECTS = 600    # pairwise cap (pure-python cosine; newest objects win)
@@ -86,7 +87,7 @@ def split_techniques(s: str) -> list[str]:
 
 def _href(ntype: str, label: str, rid: str = "") -> str:
     if ntype == "object":
-        return f"/explore/?view=objects#obj-{quote(rid)}"
+        return site_links.piece_url(rid)
     if ntype == "studio":
         return "/studios.html?q=" + quote(label)
     if ntype in ("artist", "technique"):

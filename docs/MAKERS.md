@@ -19,10 +19,19 @@ a Directory row, `gdb:object:<content hash>` for a piece, `gdb:technique:murrine
 * a citation line and schema.org JSON-LD with `sameAs` to Wikidata and the wiki.
 
 The proxy redirects `/record/<gid>` to `record.html?gid=` (`deploy/apache-glassdatabase-proxy.conf`);
-the dev site does the same. The staging step sets every item's `url` to its record page
-(`Stager.record_url`), so the wiki's statements cite a page that resolves, and the Glass
+the dev site does the same. Over https that rule only applies when the :443 vhost reads the
+snippet: a certbot vhost copied before the snippet existed carries its own stale rules, and
+`/record/<gid>` is a 404 there while `/api/records/<gid>` answers; `deploy/install.sh` adds the
+`IncludeOptional` line to such a vhost. The staging step sets every item's `url` to its record
+page (`Stager.record_url`), so the wiki's statements cite a page that resolves, and the Glass
 Database ID property's formatter URL is `/record/$1`. `GET /api/records?q=` finds a record by
 name; `GET /api/wikibase/go/{key}` still works and redirects to the record page.
+
+A record's other links are deep links the explorer reads (`central/links.py`):
+`/explore/?view=datasets&q=<name>&table=<table>` opens the Directory on that row's card (with
+no `table`, on the first table that has a row by that name, which is where the wiki's older
+item pages land), `/explore/?view=objects&piece=<row id>` opens the Pieces view on one piece,
+and `?view=objects&maker=<name>` on everything by one maker.
 
 ## The maker's card — `/maker.html?m=<gid>` and *My account*
 
