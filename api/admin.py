@@ -273,7 +273,7 @@ def decide(conn, queue_name: str, item_id, approve: bool, reviewer: str, note: s
             rid = promote_object_submission(conn, sid)
             if not rid:
                 raise HTTPException(404, "no such submission")
-            return {"published": rid, "url": f"/explore/?view=objects#obj-{rid}"}
+            return {"published": rid, "url": f"/explore/?view=objects&piece={rid}"}
         conn.execute("UPDATE object_submissions SET status='rejected', review_note=? WHERE id=?",
                      ((note or "")[:500], sid))
         conn.commit()

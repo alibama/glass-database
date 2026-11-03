@@ -53,7 +53,7 @@ CACHE_TTL = 300.0        # seconds a built index is reused before it is rebuilt
 MAX_OBJECTS = 20000      # newest approved objects considered (keeps a build bounded)
 DEFAULT_K = 5            # neighbours voted when the caller does not say
 IMAGE_URL = "/api/objects/{id}/image"
-OBJECT_URL = "/explore/?view=objects#obj-{id}"
+OBJECT_URL = "/explore/?view=objects&piece={id}"
 
 
 # --------------------------------------------------------------------------- records

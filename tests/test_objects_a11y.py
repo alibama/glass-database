@@ -104,3 +104,14 @@ def test_fingerprint_line_present():
     assert "Glass ID:" in html and "84/100 (Strong)" in html      # people read "Glass ID"
     assert "/fingerprint/verify.html" in html                     # the URL keeps the old word
     assert "Point your phone at it to see who made it." in html   # the button's sentence
+
+
+def test_cards_link_to_the_record_and_the_maker_and_count_the_whole_list():
+    html = build_objects_html(_sample(2), total=5, offset=2, filtered=True)
+    assert "5 pieces match. Showing 3–4." in html and "Item 3 of 5" in html and "Item 4 of 5" in html
+    assert 'href="/record/gdb:object:hash0"' in html                        # the piece's permanent address
+    assert 'href="/explore/?view=objects&amp;maker=A.%20Parker"' in html     # everything by this maker
+    assert "More by A. Parker" in html
+    empty = build_objects_html([], filtered=True)
+    assert "No piece matches" in empty and 'href="/explore/?view=objects"' in empty
+    assert "No pieces have been published yet" in build_objects_html([])

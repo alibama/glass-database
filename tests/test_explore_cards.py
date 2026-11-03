@@ -63,6 +63,21 @@ def test_facets_and_search():
     assert cards.PAGE == 12 and cards.PER_ROW == 3 and "<style>" in cards.CSS
 
 
+def test_facets_skip_demographics_and_rank_by_meaning():
+    focus = "primary_focus_what_is_your_primary_glass_discipline"
+    df = pd.DataFrame([
+        {"_row_id": "1", "artist_name": "A", "what_s_your_ethnicity": "x", "status_did_you": "Active", focus: "Blown"},
+        {"_row_id": "2", "artist_name": "B", "what_s_your_ethnicity": "y", "status_did_you": "Retired", focus: "Kiln"},
+    ])
+    labels = {"what_s_your_ethnicity": "What's your Ethnicity?", "status_did_you": "Status (Did you…?)",
+              focus: "Primary Focus What is your primary glass discipline?"}
+    facets = cards.facet_columns(df, ["artist_name", "what_s_your_ethnicity", "status_did_you", focus], labels=labels)
+    assert "what_s_your_ethnicity" not in facets and "artist_name" not in facets
+    assert facets == [focus, "status_did_you"]                                  # a discipline leads a status
+    fields = cards.pick_fields(df.iloc[0].to_dict(), labels)
+    assert [c for c, _, _ in fields] == ["status_did_you", focus]                # ethnicity is not on the card
+
+
 def test_the_explorer_uses_the_cards():
     from pathlib import Path
     src = (Path(__file__).resolve().parent.parent / "explore" / "app.py").read_text(encoding="utf-8")

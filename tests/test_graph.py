@@ -78,7 +78,7 @@ def test_objects_join_the_graph(demo_db):
     g = graph.build(c)
     ids = {n["id"]: n for n in g["nodes"]}
     ob = ids["object:objA1"]
-    assert ob["type"] == "object" and ob["href"] == "/explore/?view=objects#obj-objA1"
+    assert ob["type"] == "object" and ob["href"] == "/explore/?view=objects&piece=objA1"
     assert ob["meta"]["image"] == "/api/objects/objA1/image" and ob["meta"]["maker"] == "mara vessel"
     assert ob["meta"]["techniques"] == ["Offhand Blown Glass", "Cane & Murrine"]
     # made_by matches the existing artist case-insensitively (no duplicate artist node)

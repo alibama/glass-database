@@ -4,24 +4,25 @@ explore.dataclean
 Pure, UI-free helpers for the explorer: deciding which columns are worth
 charting/filtering, and trimming numeric series so histograms don't render giant
 empty gaps. Kept separate from app.py so it imports without Streamlit and can be
-unit-tested directly.
+unit-tested directly. What a column *is* (a name, a date of birth, a demographic, an
+identifier) and what to call it live in ``central.fieldnames``, shared with the record
+pages; they are re-exported here.
 """
 from __future__ import annotations
 
-import re
 from datetime import date
 
 import pandas as pd
 
-# Columns that are coordinates or identifiers: useful for the map, never for
-# grouping/filtering/distribution.
-GEO_COLS = {"lat", "lng", "latitude", "longitude"}
-ID_HINTS = ("_id", "timestamp", "geo_precision")
-
-
-def is_excluded(col: str) -> bool:
-    c = col.lower()
-    return c in GEO_COLS or c == "id" or any(h in c for h in ID_HINTS)
+from central.fieldnames import (  # noqa: F401  (re-exported for the explorer and its tests)
+    GEO_COLS,
+    ID_HINTS,
+    clean_label,
+    is_demographic,
+    is_dob,
+    is_excluded,
+    is_person_name,
+)
 
 
 def classify(df: pd.DataFrame) -> tuple[list[str], list[str]]:
@@ -67,21 +68,6 @@ def clean_numeric(raw: pd.Series):
 # Explore; they may still feed the aggregate charts (a decade histogram of birth
 # years says something about the field without pointing at anyone). Website
 # links stay, so a reader can still reach a maker on their own terms.
-_NAME_EXACT = {"artist_name", "artist", "display_name", "full_name", "first_name", "last_name",
-               "led_by", "student_name", "mentor_name", "contact_name", "person", "founder"}
-_NAME_PREFIX = ("artist", "person", "maker", "student", "mentor", "contact", "instructor", "teacher")
-_DOB = re.compile(r"(^|_)(birth|dob|born|death)(_|$)|birth_year|death_year|date_of_birth|year_of_birth")
-
-
-def is_person_name(col: str) -> bool:
-    c = (col or "").lower()
-    return c in _NAME_EXACT or (c.endswith("_name") and c.startswith(_NAME_PREFIX))
-
-
-def is_dob(col: str) -> bool:
-    return bool(_DOB.search((col or "").lower()))
-
-
 def person_identifying(cols) -> tuple[list[str], list[str]]:
     """(name columns, date-of-birth columns) among `cols` — both withheld per row;
     only the DOB ones are allowed into aggregate charts."""

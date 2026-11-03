@@ -303,7 +303,7 @@ def _shape(r: dict, *, private: bool) -> dict:
         out["host_note"] = r.get("host_note")
         out["admin_note"] = r.get("admin_note")
     if r.get("object_row_id"):
-        out["object_url"] = f"/explore/?view=objects#obj-{r['object_row_id']}"
+        out["object_url"] = f"/explore/?view=objects&piece={r['object_row_id']}"
     return out
 
 

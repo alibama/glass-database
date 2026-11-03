@@ -785,7 +785,7 @@ class Stager:
             it = Item(key, "object", clip(title), clip(f"glass piece by {maker}" + (f", {year}" if year else "")
                                                        if maker else (f"glass piece, {year}" if year else "glass piece")),
                       [], key_for("class", "object"), source_table=table, source_row=rid,
-                      url=f"{self.base}/explore/?view=objects#obj-{rid}")
+                      url=f"{self.base}/explore/?view=objects&piece={rid}")
             it.add("title", mono(title))
             if maker:
                 mk = self.person_key(maker)

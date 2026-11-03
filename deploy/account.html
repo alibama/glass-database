@@ -214,7 +214,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
   }
 
   /* ---- the data behind a card --------------------------------------------- */
-  function publicUrl(o) { var rid = (o.publication || {}).row_id; return rid ? "/explore/?view=objects#obj-" + encodeURIComponent(rid) : null; }
+  function publicUrl(o) { var rid = (o.publication || {}).row_id; return rid ? "/explore/?view=objects&piece=" + encodeURIComponent(rid) : null; }
   function entryFor(o) {
     var rid = (o.publication || {}).row_id, list = (D.coll && D.coll.entries) || [];
     if (!rid) return null;
@@ -255,7 +255,7 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       actions: opts.actions || [{ label: nx.kind === "done" || nx.kind === "entered" ? "Open the panel" : "Go live", id: "golive", hot: !!HOT[nx.kind] }, { label: "Glowtbook", url: o.url }] };
   }
   function collCard(p) {
-    var url = "/explore/?view=objects#obj-" + encodeURIComponent(p.object_row_id || "");
+    var url = "/explore/?view=objects&piece=" + encodeURIComponent(p.object_row_id || "");
     return { id: p.object_row_id, title: p.title, url: url, image: p.image_url, maker: p.artist_name || p.maker, studio: p.studio,
       hp: { n: p.points || 0, label: plural(p.points || 0, "point").replace(/^\d+ /, "") }, rarity: p.rarity || "common",
       serial: "ref " + String(p.object_row_id || "").slice(0, 8), set: p.season_title || "",

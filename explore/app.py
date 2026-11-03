@@ -156,13 +156,50 @@ def load(tbl: str, cols: tuple[str, ...]) -> pd.DataFrame:
 
 
 
+from explore.cards import CSS as _CARD_CSS  # noqa: E402
+from explore.cards import PAGE, PER_ROW, TITLE_COLS, card_html, facet_columns, matches  # noqa: E402
 from explore.dataclean import (  # noqa: E402,F401
     GEO_COLS,
     classify,
+    clean_label,
     clean_numeric,
+    is_demographic,
     is_excluded,
+    is_person_name,
     person_identifying,
 )
+from explore.pieces import filter_pieces, makers_of  # noqa: E402
+
+
+def _param(name: str) -> str:
+    """A query-string value (deep links from the wiki, the record pages and the graph)."""
+    try:
+        return (st.query_params.get(name) or "").strip()
+    except Exception:  # noqa: BLE001
+        return ""
+
+
+@st.cache_data(ttl=300)
+def table_with(q: str, tables: tuple[str, ...]) -> str:
+    """The first public table with an approved row whose name contains `q`: where a
+    ``?q=`` link with no table named should open."""
+    like = f"%{(q or '').strip().lower()}%"
+    if like == "%%":
+        return ""
+    for t in tables:
+        cols = [c for c, _ in public_columns(t) if c in TITLE_COLS or is_person_name(c)]
+        if not cols:
+            continue
+        where = " OR ".join(f'lower("{c}") LIKE ?' for c in cols)
+        try:
+            hit = _conn().execute(
+                f'SELECT 1 FROM "{t}" WHERE ({where}) AND {approvals.approved_subquery()} LIMIT 1',
+                [*([like] * len(cols)), t]).fetchone()
+        except Exception:  # noqa: BLE001
+            continue
+        if hit:
+            return t
+    return ""
 
 # --- sidebar: dataset picker ----------------------------------------------
 reg = registry()
@@ -189,10 +226,7 @@ _VIEW_CAPTIONS = {
     "community": "Buy, sell and trade · jobs · suppliers and services.",
     "submit": "Everything is reviewed before it appears.",
 }
-try:
-    _qp = (st.query_params.get("view") or "").lower()
-except Exception:
-    _qp = ""
+_qp = _param("view").lower()
 _vdefault = _VIEW_KEYS.index(_qp) if _qp in _VIEW_KEYS else 0
 mode = st.sidebar.radio("View", _VIEW_KEYS, index=_vdefault, label_visibility="collapsed",
                         format_func=lambda k: _VIEW_LABELS[k],
@@ -371,12 +405,30 @@ if mode == "objects":
     st.title("Pieces")
     st.caption("Registered pieces with their stories: who made each one and where it has been.")
     try:
-        rows = _conn().execute("SELECT * FROM objects ORDER BY published_at DESC").fetchall()
-    except Exception:
+        rows = [dict(r) for r in _conn().execute("SELECT * FROM objects ORDER BY published_at DESC").fetchall()]
+    except Exception:  # noqa: BLE001
         rows = []
 
+    # Find a piece: a search box and a maker filter. ?maker=, ?q= and ?piece= deep-link here
+    # (the record pages, the graph and the wiki); the cards are built for the page shown only.
+    _makers = makers_of(rows)
+    _m0, _p0 = _param("maker"), _param("piece")
+    _c1, _c2 = st.columns([2, 1])
+    pq = _c1.text_input("Search pieces", value=_param("q"), placeholder="A title, a maker, a technique…",
+                        label_visibility="collapsed", key="pieces_q")
+    _mi = next((i + 1 for i, m in enumerate(_makers) if m.lower() == _m0.lower()), 0) if _m0 else 0
+    pm = _c2.selectbox("Maker", ["Any maker", *_makers], index=_mi, label_visibility="collapsed", key="pieces_maker")
+    pm = "" if pm == "Any maker" else pm
+    hits = filter_pieces(rows, q=pq, maker=pm, piece=_p0)
+    _narrowed = bool(pq.strip() or pm or _p0)
+    if _p0:
+        st.caption("One piece, by its link. [See every piece](/explore/?view=objects)")
+    st.session_state.setdefault("pieces_shown", PAGE)
+    _pshown = int(st.session_state["pieces_shown"])
+    page_rows = hits[:_pshown]
+
     objects = []
-    for o in rows:
+    for o in page_rows:
         imgs = _conn().execute(
             "SELECT role, caption, image_b64 FROM object_images WHERE object_row_id=? ORDER BY "
             "CASE role WHEN 'primary' THEN 0 ELSE 1 END, id", (o["_row_id"],)).fetchall()
@@ -389,7 +441,7 @@ if mode == "objects":
         except Exception:
             man, events = {}, []
         creds = None
-        if ("has_credentials" in o.keys()) and o["has_credentials"] and images:
+        if o.get("has_credentials") and images:
             try:
                 creds = _read_creds_cached(images[0][2])
             except Exception:
@@ -400,14 +452,18 @@ if mode == "objects":
             "techniques": o["techniques"], "materials": o["materials"], "dimensions": o["dimensions"],
             "description": o["description"], "contributor": o["contributor"], "sourcing": o["sourcing"],
             "value_display": o["value_display"], "content_hash": o["content_hash"],
-            "has_credentials": bool(o["has_credentials"]) if "has_credentials" in o.keys() else False,
+            "has_credentials": bool(o.get("has_credentials")),
             "manifest_json": _json.dumps(man, ensure_ascii=False) if man else "",
             "images": images, "events": events, "creds": creds,
             "video_url": f"{PUBLIC_BASE}/api/objects/{o['_row_id']}/video" if has_video else None,
             "fingerprint": man.get("fingerprint"),
         })
 
-    st.html(build_objects_html(objects, verify_base=PUBLIC_BASE))
+    st.html(build_objects_html(objects, verify_base=PUBLIC_BASE, total=len(hits), filtered=_narrowed))
+    if len(hits) > _pshown:
+        if st.button(f"Show {min(PAGE, len(hits) - _pshown)} more", key="pieces_more"):
+            st.session_state["pieces_shown"] = _pshown + PAGE
+            st.rerun()
     st.stop()
 
 
@@ -435,9 +491,18 @@ if not reg:
 by_domain: dict[str, list[dict]] = {}
 for d in reg:
     by_domain.setdefault(d["domain"], []).append(d)
-domain = st.sidebar.selectbox("Category", sorted(by_domain))
+# Deep links: ?table= picks the table; ?q= fills the search and, with no table named, opens
+# the first table that has a row by that name (the wiki's older item pages, the record pages
+# and the graph all link here with a name).
+_q0, _t0 = _param("q"), _param("table").lower()
+if _q0 and _t0 not in {d["tbl"] for d in reg}:
+    _t0 = table_with(_q0, tuple(d["tbl"] for d in reg))
+_domains = sorted(by_domain)
+_d0 = next((d["domain"] for d in reg if d["tbl"] == _t0), None)
+domain = st.sidebar.selectbox("Category", _domains, index=_domains.index(_d0) if _d0 in _domains else 0)
+_dsets = by_domain[domain]
 ds = st.sidebar.selectbox(
-    "Dataset", by_domain[domain],
+    "Dataset", _dsets, index=next((i for i, d in enumerate(_dsets) if d["tbl"] == _t0), 0),
     format_func=lambda d: f"{d['tbl']} ({d['row_count']})",
 )
 tbl = ds["tbl"]
@@ -454,7 +519,7 @@ m3.metric("This dataset", f"{ds['row_count']:,} rows")
 st.caption(ds["description"])
 
 cols = public_columns(tbl)
-labels = {c: lbl for c, lbl in cols}
+labels = {c: clean_label(c, lbl) for c, lbl in cols}      # nouns to filter by, not the form's questions
 try:
     df = load(tbl, ("_row_id", *(c for c, _ in cols))).copy()      # the row id links each card to its record page
     cats, nums = classify(df)
@@ -462,26 +527,25 @@ except Exception as ex:  # noqa: BLE001
     st.error(f"Couldn't load this dataset: {ex}")
     st.stop()
 
-# Per-row privacy: dates of birth never appear per row (cards, table, filters, download);
-# birth years may still feed the aggregate charts. Names appear on the cards, because every
-# row now has a public record page and a wiki item of its own under the same name; the table
-# and the download keep the older rule and leave names out.
+# Per-row privacy: dates of birth and demographics (ethnicity, gender, age) never appear per
+# row (cards, table, filters, download); they may still be counted in the aggregate charts.
+# Names appear on the cards, because every row now has a public record page and a wiki item
+# of its own under the same name; the table and the download keep the older rule and leave
+# names out.
 _name_cols, _dob_cols = person_identifying(c for c, _ in cols)
-_hidden_per_row = set(_name_cols) | set(_dob_cols)
+_demo_cols = [c for c, lbl in cols if is_demographic(c, lbl) and c not in _dob_cols]
+_counted_only = [c for c, _ in cols if c in _dob_cols or c in _demo_cols]
+_hidden_per_row = set(_name_cols) | set(_counted_only)
 cats = [c for c in cats if c not in _name_cols]
-if _dob_cols:
-    st.caption("🔒 " + ", ".join(labels.get(c, c) for c in sorted(_dob_cols))
-               + (" are" if len(_dob_cols) > 1 else " is")
-               + " not shown per row; birth years only appear aggregated in the charts.")
+if _counted_only:
+    st.caption("🔒 " + ", ".join(labels.get(c, c) for c in _counted_only)
+               + ": only ever counted in the charts, never shown for a person.")
 
 # --- the Directory as cards: a search box, a few filters, a few rows at a time ---------
-from explore.cards import CSS as _CARD_CSS  # noqa: E402
-from explore.cards import PAGE, PER_ROW, card_html, facet_columns, matches  # noqa: E402
-
 st.html(_CARD_CSS)
-q = st.text_input("Search", placeholder="A name, a town, a technique…", label_visibility="collapsed",
+q = st.text_input("Search", value=_q0, placeholder="A name, a town, a technique…", label_visibility="collapsed",
                   key=f"q_{tbl}")
-facets = facet_columns(df, cats)
+facets = facet_columns(df, cats, labels=labels)
 chosen: dict[str, str] = {}
 if facets:
     fcols = st.columns(len(facets))
@@ -508,7 +572,7 @@ for _start in range(0, len(_rows), PER_ROW):
     _cs = st.columns(PER_ROW)
     for _j, _r in enumerate(_rows[_start:_start + PER_ROW]):
         with _cs[_j]:
-            st.html(card_html(_r, tbl, labels, hidden=_dob_cols, base=""))
+            st.html(card_html(_r, tbl, labels, hidden=_counted_only, base=""))
 if len(view) > _shown:
     if st.button(f"Show {min(PAGE, len(view) - _shown)} more", key=f"more_{tbl}"):
         st.session_state[_shown_key] = _shown + PAGE

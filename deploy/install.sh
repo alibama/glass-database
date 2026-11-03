@@ -264,6 +264,28 @@ setup_apache() {
     apt-get install -y -qq python3-certbot-apache >/dev/null 2>&1 || true
     a2enmod proxy proxy_http proxy_wstunnel headers ssl deflate expires rewrite >/dev/null
     cp "$APP_DIR/deploy/apache-glassdatabase-proxy.conf" /etc/apache2/glassdatabase-proxy.conf
+    # certbot's :443 vhost is a copy of the :80 one. A copy made before the shared snippet
+    # existed carries its own stale rules and never sees a route added since (over https no
+    # pretty URL and no /record/<gid> resolved, while http only redirected). Every enabled
+    # vhost for the domain reads the snippet; the file is backed up first and put back if
+    # Apache objects to the result.
+    local f bak
+    for f in /etc/apache2/sites-enabled/*.conf; do
+        [ -f "$f" ] || continue
+        grep -Eq "^[[:space:]]*ServerName[[:space:]]+$DOMAIN([[:space:]]|$)" "$f" || continue
+        grep -q "glassdatabase-proxy.conf" "$f" && continue
+        bak="$(readlink -f "$f").bak-$(date +%Y%m%d%H%M%S)"
+        cp -p "$f" "$bak"
+        sed -i --follow-symlinks -E \
+            "0,/^([[:space:]]*)ServerName[[:space:]]+$DOMAIN([[:space:]]|$).*/s//&\n\1IncludeOptional \/etc\/apache2\/glassdatabase-proxy.conf/" "$f"
+        if apache2ctl configtest >/dev/null 2>&1; then
+            say "Added the shared proxy snippet to $(basename "$f") — it carried its own copy of the rules (backup: $bak)"
+        else
+            cp -p "$bak" "$f"
+            warn "Apache rejected $(basename "$f") with the snippet added; the previous file is back. Add" \
+                 "'IncludeOptional /etc/apache2/glassdatabase-proxy.conf' inside its <VirtualHost *:443> by hand."
+        fi
+    done
     local site="/etc/apache2/sites-available/glassdatabase.conf"
     sed "s/glassdatabase\.org/$DOMAIN/g" \
         "$APP_DIR/deploy/apache-glassdatabase.conf" > "$site"

@@ -420,8 +420,16 @@ class Pusher:
             if not claims:
                 continue
             live = self.live.get(pid) or {}
-            have = {snak_sig(s.get("mainsnak") or {}) for ss in (live.get("claims") or {}).values() for s in ss}
-            missing = [s for s in claims if snak_sig(s["mainsnak"]) not in have] if live else claims
+            lclaims = live.get("claims") or {}
+            have = {snak_sig(s.get("mainsnak") or {}) for ss in lclaims.values() for s in ss}
+            missing = []
+            for s in claims:
+                if live and snak_sig(s["mainsnak"]) in have:
+                    continue
+                # a property has one twin and one formatter: a changed value replaces the old
+                # statement (same statement id) instead of standing beside it
+                old = [c for c in lclaims.get(s["mainsnak"]["property"], []) if c.get("id")]
+                missing.append(dict(s, id=old[0]["id"]) if old else s)
             if not missing:
                 self.record(Write(0, "property", p.label, "skip-current", qid=pid))
                 continue
