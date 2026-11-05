@@ -86,16 +86,53 @@ goblet», 14 min ago → Resume / Discard**. Resume restores the frames and open
 the review drawer so you can save. The draft is cleared on save, on *Clear all*,
 or on *Discard*. The Review button turns amber while there's unsaved work.
 
+### Is it already registered? — and *Send for analysis*
+
+Before a piece gets a **new** Glass ID, the review drawer checks the shots against
+every piece on file: the server runs Check a Piece's own rules against all of them at
+once (`POST /api/glassid/candidates`, `central/glassid.py`) and the drawer shows the
+closest with their scores. **Compare** opens the registered photos beside these shots,
+what carried the score (which shots, which reference views, which descriptor), the
+size check from the mat, and the reasons in words; **Same piece** / **Different
+piece** record the person's call, and *Same piece* on one of your own offers to save
+onto it instead. Giving a new Glass ID to a piece that already scores 70 or more
+against a registered one asks first.
+
+At the bottom of the drawer, **Send for analysis** packs the session — the shot
+thumbnails and the best shot, the descriptors, the candidates and their scores, the
+decision (new piece / registered again / same piece / different piece / not sure) with
+a note, the device and app version — and posts it to `POST /api/me/captures`. The server
+keeps it (`central/captures.py`, `data/capture_manifests/`), runs the Photo Mat
+detection on the pictures, and lists it for administrators on `/captures.html`; a
+laptop pulls it down with `python -m scripts.pull_capture` and
+`python -m scripts.glassid_bench` scores every session against every other. That is how
+the thresholds get set from real pieces instead of guesses — see
+[GLASS-ID-MATCHING-ASSESSMENT.md](GLASS-ID-MATCHING-ASSESSMENT.md) for where that stands.
+
 ## Verify: the other half
 
-`verify.html` has the same account chip and three ways to load a reference:
+`verify.html` has the same account chip. The first thing on the page is **Find the
+piece**: by Glass ID number, title or maker (`GET /api/glassid/lookup?q=`), from the
+*Recent* chips (your latest sessions and registered pieces, the newest public pieces),
+or **by photo** — the camera opens with no piece loaded, you take a few shots, *Find it*
+sends their descriptors to the server and the registered pieces that look most like
+them come back with their scores; **Check against this** loads one as the reference and
+the shots already taken count towards it. Then the three older ways to load a
+reference:
 
-- **From the registry** — `?object=<row_id>` (the *Verify this piece* button in
+- **From the registry** — `?object=<row_id>` (the *Check a piece* button in
   Explore). It also shows whether the served fingerprint is **bound** to the
   signed credential (`/fingerprint/verify`).
 - **One of my pieces** — signed in, pick any fingerprinted piece from your
   Glowtbook; loads `/api/me/objects/{id}/fingerprint` (works before publishing).
 - **From a file** — the `.zip` / `fingerprint.json`, as before.
+
+With a reference loaded, the **Pairs** drawer opens on the compare panel: the piece's
+registered photos (and, for one of your own pieces that was sent for analysis, its
+registration frames) beside the shots that carried the score, the confidence broken
+down by descriptor (AI texture, colour, shape) and by views matched, the size check,
+the reasons in words, and *Same piece* / *Different piece*. *Send for analysis* is at the
+bottom of the drawer here too, with the reference, the match report and the decision.
 
 After the verdict, the Pairs drawer offers what makes sense:
 
@@ -130,6 +167,15 @@ GET  /api/me/objects/{id}/fingerprint     raw fingerprint (owner only)
 POST /api/me/objects/{id}/fingerprint     body = enroll .zip or fingerprint.json; ?set_dimensions=1
 POST /api/me/objects/{id}/events          {event_type: verified|acquired|…, note…}
 GET  /api/auth/providers · /auth/login · /auth/callback · /auth/logout
+
+GET  /api/glassid/lookup?q=               registered pieces by Glass ID, title or maker (+ mine when signed in)
+GET  /api/glassid/recent                  my latest sessions and pieces, the newest public pieces
+GET  /api/glassid/pieces/{ref}            the compare panel's reference bundle (public:<row_id> | mine:<id>)
+POST /api/glassid/candidates              {fingerprint} → the registered pieces most like it, scored and explained
+POST /api/glassid/compare                 {fingerprint, ref} → the same for one piece
+POST /api/me/captures                     body = the session zip (manifest.json + images/) — Send for analysis
+GET  /api/me/captures · /me/captures/{mid} · /me/captures/{mid}/files/{name} · POST …/{mid}/decision
+GET  /api/admin/captures · …/{mid} · …/{mid}/download · …/{mid}/manifest.json   (administrators)
 ```
 
 The public read endpoints (`/api/objects/{row_id}/fingerprint`, `…/fingerprint/verify`,

@@ -82,7 +82,7 @@ a2enmod substitute filter headers alias >/dev/null 2>&1 || true
 say "Creating service user '$APP_USER' and $APP_DIR"
 id -u "$APP_USER" >/dev/null 2>&1 || useradd --system --home "$APP_DIR" --shell /usr/sbin/nologin "$APP_USER"
 mkdir -p "$APP_DIR/data" "$APP_DIR/public"
-mkdir -p "$APP_DIR/data/dip_media" "$APP_DIR/data/aip_bags" "$APP_DIR/data/c2pa" "$APP_DIR/data/wikibase"
+mkdir -p "$APP_DIR/data/dip_media" "$APP_DIR/data/aip_bags" "$APP_DIR/data/c2pa" "$APP_DIR/data/wikibase" "$APP_DIR/data/capture_manifests"
 
 # --- copy app (preserve an existing DB + generated media/certs) -------------
 say "Copying application to $APP_DIR (preserving any existing database)"
@@ -133,6 +133,7 @@ mkdir -p "$APP_DIR/public/fingerprint"
 if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     cp "$SRC/deploy/fingerprint-web/enroll.html" "$APP_DIR/public/fingerprint/enroll.html"
     cp "$SRC/deploy/fingerprint-web/verify.html" "$APP_DIR/public/fingerprint/verify.html"
+    [ -f "$SRC/deploy/fingerprint-web/glassid-kit.js" ] && cp "$SRC/deploy/fingerprint-web/glassid-kit.js" "$APP_DIR/public/fingerprint/glassid-kit.js"
     [ -f "$SRC/deploy/graph.html" ] && cp "$SRC/deploy/graph.html" "$APP_DIR/public/graph.html"
     [ -f "$SRC/deploy/games.html" ] && cp "$SRC/deploy/games.html" "$APP_DIR/public/games.html"
     [ -f "$SRC/deploy/collection.html" ] && cp "$SRC/deploy/collection.html" "$APP_DIR/public/collection.html"
@@ -147,6 +148,7 @@ if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     [ -f "$SRC/deploy/events-admin.html" ] && cp "$SRC/deploy/events-admin.html" "$APP_DIR/public/events-admin.html"
     [ -f "$SRC/deploy/datasets.html" ] && cp "$SRC/deploy/datasets.html" "$APP_DIR/public/datasets.html"
     [ -f "$SRC/deploy/analytics.html" ] && cp "$SRC/deploy/analytics.html" "$APP_DIR/public/analytics.html"
+    [ -f "$SRC/deploy/captures.html" ] && cp "$SRC/deploy/captures.html" "$APP_DIR/public/captures.html"
     [ -f "$SRC/deploy/events.html" ] && cp "$SRC/deploy/events.html" "$APP_DIR/public/events.html"
     [ -f "$SRC/deploy/register.html" ] && cp "$SRC/deploy/register.html" "$APP_DIR/public/register.html"
     [ -f "$SRC/deploy/studios.html" ] && cp "$SRC/deploy/studios.html" "$APP_DIR/public/studios.html"

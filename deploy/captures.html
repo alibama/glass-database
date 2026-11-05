@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Captures — Glass Database</title>
+<meta name="description" content="Every Glass ID capture session sent for analysis: the photos, the numbers behind them, the candidates with their scores, the decision taken, the mat, the phone. Open one, download it, pull it down for analysis. For administrators.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  [hidden] { display: none !important; }
+  .nav .gdb-chip { font: 500 12px/1 var(--mono); letter-spacing: .08em; color: var(--muted); }
+  .nav .gdb-chip .gdb-dot { background: var(--rule); box-shadow: none; }
+  .nav .gdb-chip.on .gdb-dot { background: var(--red); box-shadow: none; }
+  .nav .gdb-chip a, .nav .gdb-chip button { color: var(--ink); border: 1px solid var(--ink); border-radius: 0; padding: .45rem .8rem; }
+  .nav .gdb-chip a:hover, .nav .gdb-chip button:hover { background: var(--ink); color: var(--paper); }
+  .nav .gdb-chip b { color: var(--ink); }
+
+  .hero h1 { font-size: clamp(2.8rem, 7vw, 6rem); max-width: 18ch; overflow-wrap: anywhere; }
+  .hero .live { margin-top: 1rem; display: flex; gap: .4rem 1.6rem; flex-wrap: wrap; }
+  .act { display: flex; flex-direction: column; align-items: flex-start; gap: .45rem; }
+  .act small { font: 400 13px/1.45 var(--sans); color: var(--muted); max-width: 30ch; }
+  button.btn { background: var(--paper); cursor: pointer; font-family: var(--sans); }
+  button.btn.btn--red { background: var(--red); }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+  .btn.sm { padding: .6rem 1rem; font-size: 14px; }
+  .msg { font: 400 14px/1.5 var(--sans); color: var(--ink); margin-top: 1rem; min-height: 1.5em; }
+  .msg.err { color: var(--red); }
+  .empty { margin-top: 1.4rem; padding: 1.2rem 1.4rem; border: 1px dashed var(--rule); color: var(--ink-2); font-size: 16px; max-width: 62ch; }
+  .block { margin-top: 2rem; }
+  .block .head { display: flex; flex-wrap: wrap; gap: .6rem 1.2rem; align-items: baseline; justify-content: space-between; }
+  .block .head h3 { font-size: 1.35rem; margin: 0; }
+  .how { font: 400 13px/1.55 var(--sans); color: var(--muted); margin: .8rem 0 0; max-width: 72ch; }
+  .ok { color: var(--ink); } .warn { color: var(--red); }
+
+  .bar { display: flex; flex-wrap: wrap; gap: .8rem 1.2rem; align-items: center; margin-top: 1.4rem; }
+  .bar input, .bar select { font: 400 15px var(--sans); padding: .65rem .85rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
+  .bar input[type=search] { min-width: min(18rem, 100%); }
+  .pager { display: flex; gap: .8rem; align-items: center; font: 500 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-left: auto; }
+  .pager button { font: inherit; letter-spacing: inherit; text-transform: inherit; color: var(--ink); background: none; border: 1px solid var(--ink); padding: .5rem .7rem; cursor: pointer; }
+  .pager button:hover { background: var(--ink); color: var(--paper); } .pager button:disabled { opacity: .35; cursor: not-allowed; }
+
+  .tbl { margin-top: 1.2rem; overflow-x: auto; }
+  .tbl table { min-width: 100%; border-collapse: collapse; font-size: 14px; }
+  .tbl th, .tbl td { text-align: left; padding: .6rem .7rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .tbl th { font: 500 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .tbl tr[data-id] { cursor: pointer; } .tbl tr[data-id]:hover td { background: var(--paper-2); } .tbl tr.sel td { background: var(--paper-2); }
+  .tbl td .mono { font: 400 12px var(--mono); color: var(--muted); display: block; }
+  .score { font-weight: 600; } .score.match { color: #1E7F75; } .score.nomatch { color: var(--red); }
+  .pill.red { border-color: var(--red); color: var(--red); } .pill.teal { border-color: #1E7F75; color: #1E7F75; }
+
+  .one { margin-top: 1.2rem; display: grid; grid-template-columns: 1fr; gap: 1.4rem; }
+  .facts { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: .3rem 1rem; font-size: 15px; max-width: 100%; }
+  .facts dt { font: 500 11px/1.9 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .facts dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+  .facts dd .mono { display: block; font: 400 12px/1.5 var(--mono); color: var(--muted); }
+  .strip { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .4rem; }
+  .strip a { flex: none; width: 128px; height: 128px; border: 1px solid var(--rule); background: var(--paper-2); display: grid; place-items: center; font: 400 11px var(--mono); color: var(--muted); text-decoration: none; position: relative; }
+  .strip a img { width: 100%; height: 100%; object-fit: cover; }
+  .strip a span { position: absolute; left: 4px; bottom: 3px; font: 500 10px var(--mono); background: #1F1A16cc; color: #F4EEE4; padding: 2px 5px; }
+  .reasons { margin: .4rem 0 0; padding-left: 1.2em; font-size: 14px; color: var(--ink-2); }
+  .reasons li { margin: .2rem 0; }
+  form.ann { display: flex; flex-wrap: wrap; gap: .8rem; align-items: flex-start; margin-top: .6rem; }
+  form.ann select, form.ann input { font: 400 15px var(--sans); padding: .65rem .85rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); }
+  form.ann input { flex: 1 1 16rem; }
+  pre.json { font: 400 12px/1.5 var(--mono); background: var(--paper-2); border: 1px solid var(--rule); padding: 1rem; overflow: auto; max-height: 60vh; white-space: pre; }
+  details summary { cursor: pointer; font: 500 13px var(--sans); color: var(--ink); margin-top: 1rem; }
+  code { font: 400 13px var(--mono); background: var(--paper-2); padding: .1rem .35rem; }
+  pre.cmd { font: 400 13px/1.6 var(--mono); background: var(--paper-2); border: 1px solid var(--rule); padding: .9rem 1rem; overflow-x: auto; margin: .6rem 0 0; max-width: 72ch; }
+  @media (max-width: 680px) { .hero .btns .act, .hero .btns .btn { width: 100%; justify-content: center; } .pager { margin-left: 0; } .facts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active=""></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="subnav wrap"><span class="crumb">Admin</span><a href="/review.html">Review queue</a><a href="/events-admin.html">Collecting Events</a><a href="/datasets.html">Tables</a><a href="/analytics.html">Usage</a><a href="/wikibase.html">Wikibase</a><a href="/captures.html" class="on">Captures</a></div>
+
+<main id="main">
+<section class="hero" id="hero">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 01</span> Captures</p>
+  <h1 id="heroTitle">Every capture session, <em>kept.</em></h1>
+  <p class="lede" id="heroLede">When someone taps <b>Send for analysis</b> in Register Your Piece or Check a Piece, the session lands here: the photos the app kept, the numbers behind them, the registered pieces it was compared with and their scores, the decision the person took, what the Photo Mat gave, and the phone and app version. This is the calibration set for the matching: open a session, download it, or pull it down with the command below.</p>
+  <p class="live" id="heroMeta" aria-live="polite"></p>
+  <div class="btns" id="heroCta"></div>
+  <p class="msg" id="msg" aria-live="polite"></p>
+ </div>
+</section>
+
+<div id="body"></div>
+</main>
+
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/infrastructure.html">How it runs</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+
+<script>
+const nav=document.querySelector('.nav'),mb=document.querySelector('.menu-btn');
+mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttribute('aria-expanded',o)});
+</script>
+<script>
+(function () {
+  "use strict";
+  var $ = function (s) { return document.querySelector(s); };
+  var esc = GDB.esc;
+  var here = location.pathname + location.search;
+  var PAGE = 50;
+  var D = { me: null, list: null, one: null, mid: GDB.param("m") || "", offset: 0, kind: "", decision: "", q: "", since: "" };
+
+  function plural(n, w) { n = n || 0; return n + " " + w + (n === 1 ? "" : "s"); }
+  function say(text, err) { var m = $("#msg"); m.textContent = text || ""; m.className = "msg" + (err ? " err" : ""); }
+  function post(path, body) { return GDB.json(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) }); }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function when(s) { return s ? String(s).replace("T", " ").slice(0, 16) : ""; }
+  function kb(n) { n = n || 0; return n > 1048576 ? (n / 1048576).toFixed(1) + " MB" : Math.round(n / 1024) + " KB"; }
+  function section(n, id, label, title, lede, inner) {
+    return '<section class="s' + (n % 2 ? "" : " alt") + '" id="' + id + '" aria-labelledby="h-' + id + '"><div class="wrap">' +
+      '<div class="s-head"><p class="label"><span class="n">№ ' + pad(n) + "</span> " + esc(label) + '</p><div><h2 id="h-' + id + '">' + title + '</h2><p class="lede">' + lede + "</p></div></div>" +
+      inner + "</div></section>";
+  }
+  function download(path, name) {
+    say("Preparing " + name + "…");
+    return GDB.api(path).then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.blob(); }).then(function (b) {
+      var a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = name; document.body.appendChild(a); a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000); say("Downloaded " + name + ".");
+    }).catch(function (e) { say("That did not go through: " + (e.message || e), true); });
+  }
+  function scoreHtml(conf, verdict) {
+    if (conf == null) return "—";
+    var cls = verdict === "match" || /match likely/i.test(verdict || "") ? "match" : verdict === "nomatch" || /no match/i.test(verdict || "") ? "nomatch" : "";
+    return '<span class="score ' + cls + '">' + conf + "</span>";
+  }
+
+  /* ---- the gate ------------------------------------------------------------ */
+  function signedOut() {
+    document.title = "Sign in — Glass Database";
+    $("#heroMeta").textContent = "";
+    $("#heroCta").innerHTML = '<div class="act"><a class="btn btn--red" href="' + esc(GDB.loginUrl(here)) + '">Sign in with Google</a><small>Administrators sign in with the same Google account as everyone else; the sessions open for them.</small></div>';
+    $("#body").innerHTML = "";
+  }
+  function notAdmin(me) {
+    $("#heroMeta").innerHTML = "<span>Signed in as <b>" + esc(me.email || me.name || "you") + "</b></span>";
+    $("#heroCta").innerHTML = "";
+    $("#body").innerHTML = '<section class="s"><div class="wrap"><p class="empty">You are signed in, but you are not an administrator. Ask an administrator to promote you (on the Review queue page, under Users), then reload.</p></div></section>';
+  }
+
+  /* ---- the list -------------------------------------------------------------- */
+  function listSection() {
+    var L = D.list;
+    if (!L) return section(2, "sessions", "The sessions", "Loading…", "", "");
+    var decs = (L.decisions || []).map(function (d) { return '<option value="' + esc(d.id) + '"' + (D.decision === d.id ? " selected" : "") + ">" + esc(d.label) + "</option>"; }).join("");
+    var kinds = (L.kinds || []).map(function (k) { return '<option value="' + esc(k) + '"' + (D.kind === k ? " selected" : "") + ">" + (k === "enroll" ? "Register Your Piece" : "Check a Piece") + "</option>"; }).join("");
+    var bar = '<form class="bar" id="filters">' +
+      '<select name="kind" aria-label="Kind"><option value="">Both apps</option>' + kinds + "</select>" +
+      '<select name="decision" aria-label="Decision"><option value="">Any decision</option>' + decs + "</select>" +
+      '<input type="date" name="since" value="' + esc(D.since) + '" aria-label="Since">' +
+      '<input type="search" name="q" value="' + esc(D.q) + '" placeholder="Search: piece, person, device, note" aria-label="Search">' +
+      '<button class="btn sm btn--line" type="submit">Filter</button>' +
+      '<div class="pager"><span>' + (L.total ? (L.offset + 1) + "–" + Math.min(L.offset + L.items.length, L.total) + " of " + L.total : "0") + '</span><button type="button" data-page="-1"' + (L.offset <= 0 ? " disabled" : "") + ">Previous</button><button type=\"button\" data-page=\"1\"" + (L.offset + L.items.length >= L.total ? " disabled" : "") + ">Next</button></div></form>";
+    var rows = (L.items || []).map(function (r) {
+      var piece = r.object_title ? esc(r.object_title) : (r.object_row_id ? "№ " + esc(r.object_row_id) : (r.object_id ? "piece " + r.object_id : "—"));
+      var sub = (r.object_row_id ? "№ " + r.object_row_id : r.object_id ? "glowtbook " + r.object_id : "");
+      var cand = r.top_candidate ? esc(r.top_candidate) + " " + scoreHtml(r.top_score, "") : "—";
+      return '<tr data-id="' + esc(r.manifest_id) + '"' + (r.manifest_id === D.mid ? ' class="sel"' : "") + "><td>" + esc(when(r.created_at)) + '<span class="mono">' + esc(r.manifest_id) + "</span></td>" +
+        "<td>" + (r.kind === "enroll" ? "Register" : "Check") + '<span class="mono">' + esc(r.app_version || "") + "</span></td>" +
+        "<td>" + piece + (sub ? '<span class="mono">' + esc(sub) + "</span>" : "") + "</td>" +
+        '<td><span class="pill' + (r.decision === "match_rejected" ? " red" : r.decision === "match_confirmed" ? " teal" : "") + '">' + esc(r.decision_label || r.decision) + "</span></td>" +
+        "<td>" + (r.kind === "verify" ? scoreHtml(r.confidence, r.verdict) + (r.verdict ? '<span class="mono">' + esc(r.verdict) + "</span>" : "") : (r.rating != null ? r.rating + '<span class="mono">rating</span>' : "—")) + "</td>" +
+        "<td>" + cand + "</td>" +
+        "<td>" + (r.n_frames || 0) + " / " + (r.n_images || 0) + (r.has_embeddings ? '<span class="mono">AI</span>' : "") + "</td>" +
+        "<td>" + (r.mat_detected ? "seen" : "—") + "</td>" +
+        "<td>" + esc(r.user_name || r.user_email || "") + '<span class="mono">' + esc(r.device || "") + "</span></td></tr>";
+    }).join("");
+    var table = rows ? '<div class="tbl"><table><thead><tr><th>When · id</th><th>App</th><th>Piece</th><th>Decision</th><th>Score</th><th>Top candidate</th><th>Shots / photos</th><th>Mat</th><th>Who · device</th></tr></thead><tbody>' + rows + "</tbody></table></div>" +
+      '<p class="how">Click a session to open it below. Score is the check\'s confidence (Check a Piece) or the Glass ID rating (Register Your Piece); Top candidate is the registered piece the server found closest, with its confidence.</p>' :
+      '<p class="empty">No session matches. Sessions arrive when someone taps <b>Send for analysis</b> in the capture app.</p>';
+    return section(2, "sessions", "The sessions", "What came <em>in.</em>", "Newest first. Filter by app, decision, date or words.", bar + table);
+  }
+
+  /* ---- one session -------------------------------------------------------- */
+  function oneSection() {
+    if (!D.mid) return section(3, "one", "One session", "Open a session <em>above.</em>", "Its photos, candidates, decision, mat and device appear here.", "");
+    var o = D.one;
+    if (!o) return section(3, "one", "One session", esc(D.mid), "Loading…", "");
+    var m = o.manifest || {}, srv = m.server || {}, mat = srv.mat || {}, dev = m.device || {}, sess = m.session || {}, cands = (m.candidates && m.candidates.items) || [], dec = m.decision || {};
+    var base = "/api/admin/captures/" + encodeURIComponent(o.manifest_id);
+    var imgs = (o.files || []).filter(function (f) { return /^images\//.test(f.file); });
+    imgs.sort(function (a, b) { return (/hero/.test(a.file) ? 0 : 1) - (/hero/.test(b.file) ? 0 : 1) || (a.file < b.file ? -1 : 1); });
+    var strip = imgs.length ? '<div class="strip">' + imgs.map(function (f) { return '<a href="' + base + "/files/" + esc(f.file) + '" target="_blank" rel="noopener"><img src="' + base + "/files/" + esc(f.file) + '" alt="" loading="lazy"><span>' + esc(f.file.replace("images/", "")) + "</span></a>"; }).join("") + "</div>" : '<p class="how">No pictures in this session.</p>';
+    var pieceLink = o.object_row_id ? '<a href="/explore/?view=objects&piece=' + encodeURIComponent(o.object_row_id) + '">№ ' + esc(o.object_row_id) + "</a>" : (o.object_id ? '<span>Glowtbook piece ' + o.object_id + " (private to its owner)</span>" : "—");
+    var facts = '<dl class="facts">' +
+      "<dt>Sent</dt><dd>" + esc(when(o.created_at)) + " by " + esc(o.user_name || o.user_email || o.user_uid || "?") + (o.user_email && o.user_name ? " · " + esc(o.user_email) : "") + "</dd>" +
+      "<dt>App</dt><dd>" + (o.kind === "enroll" ? "Register Your Piece" : "Check a Piece") + " · " + esc(o.app_version || "?") + "</dd>" +
+      "<dt>Piece</dt><dd>" + (o.object_title ? esc(o.object_title) + " · " : "") + pieceLink + "</dd>" +
+      "<dt>Decision</dt><dd><b>" + esc(o.decision_label || o.decision) + "</b>" + (dec.note ? " — " + esc(dec.note) : "") + (dec.at ? '<span class="mono">' + esc(when(dec.at)) + (dec.by ? " · " + esc(dec.by) : "") + "</span>" : "") + (dec.object && dec.object.title ? '<span class="mono">about ' + esc(dec.object.title) + (dec.object.ref ? " (" + esc(dec.object.ref) + ")" : "") + "</span>" : "") + "</dd>" +
+      (o.kind === "verify" ? "<dt>Check</dt><dd>" + (o.verdict ? esc(o.verdict) + " · " : "") + (o.confidence != null ? o.confidence + "/100" : "—") + (o.descriptor ? " · by " + esc(o.descriptor) : "") + (m.match && m.match.referenceViewsMatched != null ? " · " + m.match.referenceViewsMatched + " reference views matched" : "") + "</dd>" : "<dt>Glass ID</dt><dd>" + (o.rating != null ? o.rating + "/100" : "—") + (sess.tier ? " · " + esc(sess.tier) : "") + (sess.saved ? " · saved onto the piece" : " · not saved") + "</dd>") +
+      "<dt>Shots</dt><dd>" + (o.n_frames || 0) + " shot(s), " + (o.n_images || 0) + " photo(s) kept (" + kb(o.bytes) + ")" + (o.has_embeddings ? " · AI samples present" : " · no AI samples") + (sess.auto != null ? " · auto " + (sess.auto ? "on" : "off") : "") + (sess.compass != null ? " · compass " + (sess.compass ? "yes" : "no") : "") + "</dd>" +
+      "<dt>Mat</dt><dd>" + (mat.checked ? mat.with_mat + " of " + mat.checked + " picture(s) show ArUco markers" + (mat.dimensions && mat.dimensions.dimensions ? " · measured " + esc(mat.dimensions.dimensions) : "") + (mat.note ? " · " + esc(mat.note) : "") : (mat.note ? esc(mat.note) : "not checked")) + (m.mat && m.mat.dimensions ? " · the app's save measured " + esc(m.mat.dimensions) : "") + "</dd>" +
+      "<dt>Device</dt><dd>" + esc(o.device || "") + (dev.camera && dev.camera.label ? " · " + esc(dev.camera.label) : "") + (dev.screen ? " · screen " + dev.screen.w + "×" + dev.screen.h + " @" + dev.screen.dpr : "") + '<span class="mono">' + esc((dev.ua || "").slice(0, 160)) + "</span></dd>" +
+      "</dl>";
+    var candRows = cands.map(function (c, i) {
+      var sz = c.size && c.size.text ? c.size.text : "";
+      return "<tr><td>" + (i + 1) + "</td><td>" + esc(c.title || c.ref) + '<span class="mono">' + esc(c.kind === "mine" ? "the sender's own piece" : "public") + (c.row_id ? " · № " + esc(c.row_id) : "") + "</span></td><td>" + scoreHtml(c.confidence, c.verdict) + '<span class="mono">' + esc(c.label || "") + "</span></td><td>" + esc(c.descriptor || "") + "</td><td>" + (c.views_matched != null ? c.views_matched : "—") + "</td>" +
+        "<td>" + (c.breakdown ? ["dino", "color", "dhash"].map(function (d) { var b = c.breakdown[d]; return b && b.available ? d + " " + b.confidence : ""; }).filter(Boolean).join(" · ") : "") + "</td><td>" + esc(sz) + "</td></tr>";
+    }).join("");
+    var candTable = cands.length ? '<div class="tbl"><table><thead><tr><th>#</th><th>Registered piece</th><th>Confidence</th><th>By</th><th>Views</th><th>Per descriptor</th><th>Size</th></tr></thead><tbody>' + candRows + "</tbody></table></div>" +
+      (m.candidates && m.candidates.ambiguous ? '<p class="how warn">The top two were within ' + m.candidates.margin + " points: ambiguous.</p>" : "") +
+      (cands[0] && cands[0].reasons ? '<p class="how">Why the top candidate scored what it did:</p><ul class="reasons">' + cands[0].reasons.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul>" : "") :
+      '<p class="how">The app did not ask the server for candidates in this session' + (o.kind === "verify" && m.reference ? "; it checked against " + esc(m.reference.title || m.reference.id || "one reference") + " directly" : "") + ".</p>";
+    var matchBlock = "";
+    if (o.kind === "verify" && m.match) {
+      var mm = m.match, lc = mm.local_compare || {};
+      matchBlock = '<div class="block"><div class="head"><h3>The check</h3></div><dl class="facts">' +
+        "<dt>Reference</dt><dd>" + esc((m.reference && (m.reference.title || m.reference.id)) || "?") + (m.reference ? " · " + esc(m.reference.kind || "") + (m.reference.rating != null ? " · Glass ID " + m.reference.rating + "/100" : "") + (m.reference.frames ? " · " + m.reference.frames + " views on file" : "") + (m.reference.hasEmbeddings ? " · AI" : "") : "") + "</dd>" +
+        "<dt>Verdict</dt><dd>" + esc(mm.verdict || "") + " · " + (mm.confidence != null ? mm.confidence : "—") + "/100 · quality " + (mm.matchQuality != null ? mm.matchQuality : "—") + " · spread " + (mm.spread != null ? mm.spread : "—") + " · " + (mm.referenceViewsMatched != null ? mm.referenceViewsMatched : "—") + " views matched · by " + esc(mm.descriptor || "") + "</dd>" +
+        (lc.breakdown ? "<dt>Per descriptor</dt><dd>" + ["dino", "color", "dhash"].map(function (d) { var b = lc.breakdown[d]; return b && b.available ? d + " " + b.confidence + " (" + b.views_matched + " views)" : d + " —"; }).join(" · ") + "</dd>" : "") +
+        "</dl>" + (lc.reasons ? '<ul class="reasons">' + lc.reasons.map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul>" : "") + "</div>";
+    }
+    var decs = (D.list && D.list.decisions || []).map(function (d) { return '<option value="' + esc(d.id) + '"' + (o.decision === d.id ? " selected" : "") + ">" + esc(d.label) + "</option>"; }).join("");
+    var ann = '<form class="ann" id="annForm"><select name="decision" aria-label="Decision">' + decs + '</select><input type="text" name="note" placeholder="A note from the review (what the piece is, what went wrong, what to look at)" maxlength="1000"><div class="act"><button class="btn sm btn--red" type="submit">Save the annotation</button><small>Kept in the session with who wrote it and when; the earlier decision stays as history.</small></div></form>';
+    var manifestJson = JSON.stringify(m, null, 1);
+    var trimmed = manifestJson.length > 300000 ? manifestJson.slice(0, 300000) + "\n… (" + kb(manifestJson.length) + " in all — download it for the rest)" : manifestJson;
+    var inner = '<div class="btns" style="margin-top:0"><div class="act"><button class="btn btn--red sm" type="button" id="dlZip">Download the session (.zip)</button><small>manifest.json and every picture, as the app sent them plus the server\'s mat report.</small></div>' +
+      '<div class="act"><button class="btn btn--line sm" type="button" id="dlJson">manifest.json</button><small>The manifest alone.</small></div></div>' +
+      '<div class="one"><div><div class="block" style="margin-top:0"><div class="head"><h3>Pictures</h3></div>' + strip + "</div>" +
+      '<div class="block"><div class="head"><h3>The session</h3></div>' + facts + "</div>" + matchBlock +
+      '<div class="block"><div class="head"><h3>Candidates the server offered</h3></div>' + candTable + "</div>" +
+      '<div class="block"><div class="head"><h3>Annotate</h3></div>' + ann + "</div>" +
+      '<details><summary>The manifest, as stored (' + kb(manifestJson.length) + ')</summary><pre class="json">' + esc(trimmed) + "</pre></details></div></div>";
+    return section(3, "one", "One session", esc(o.object_title || o.manifest_id), esc(o.manifest_id) + " · " + esc(when(o.created_at)), inner);
+  }
+  function pullSection() {
+    var dir = D.list && D.list.dir ? D.list.dir : "data/capture_manifests";
+    var mid = D.mid || "<manifest-id>";
+    return section(4, "pull", "Pull it down", "For the <em>analysis.</em>", "A later session on a laptop (yours, or a Claude session) pulls sessions straight from the API with the admin key from <code>.env</code>; nothing is typed by hand and the key is never printed.",
+      '<pre class="cmd">python -m scripts.pull_capture --list\npython -m scripts.pull_capture ' + esc(mid) + "\npython -m scripts.pull_capture --latest --kind enroll\npython -m scripts.pull_capture --all --since 2026-11-01 --out data/pulled_captures\npython -m scripts.glassid_bench --manifests data/pulled_captures</pre>" +
+      '<p class="how">On the server itself the sessions live under <code>' + esc(dir) + '</code> (one folder per session, <code>manifest.json</code> and <code>images/</code>), and <code>--local</code> reads them without the network. The bench scores every session against every other and reports how the thresholds hold up; the method and what the evidence is worth are in <code>docs/GLASS-ID-MATCHING-ASSESSMENT.md</code>.</p>');
+  }
+  function render() {
+    $("#body").innerHTML = listSection() + oneSection() + pullSection();
+    var s = D.list && D.list.summary;
+    if (s) {
+      var bk = s.by_kind || {}, bd = s.by_decision || {};
+      $("#heroMeta").innerHTML = "<span><b>" + plural(s.total, "session") + "</b></span><span>" + (bk.enroll || 0) + " registering · " + (bk.verify || 0) + " checking</span><span>" + (bd.match_confirmed || 0) + " confirmed · " + (bd.match_rejected || 0) + " rejected · " + (bd.new_piece || 0) + " new</span><span>" + plural(s.people, "person") + " · " + kb(s.bytes) + (s.with_mat ? " · " + s.with_mat + " with the mat" : "") + "</span>" + (s.last ? "<span>last " + esc(when(s.last)) + "</span>" : "");
+    }
+    document.title = (D.mid ? D.mid + " · " : "") + "Captures — Glass Database";
+  }
+  function loadList() {
+    var qs = "?limit=" + PAGE + "&offset=" + D.offset + "&kind=" + encodeURIComponent(D.kind) + "&decision=" + encodeURIComponent(D.decision) + "&q=" + encodeURIComponent(D.q) + "&since=" + encodeURIComponent(D.since);
+    return GDB.json("/admin/captures" + qs).then(function (j) { D.list = j; render(); }).catch(function (e) { say("Could not load the sessions: " + (e.message || e), true); });
+  }
+  function loadOne(scroll) {
+    if (!D.mid) return Promise.resolve();
+    return GDB.json("/admin/captures/" + encodeURIComponent(D.mid)).then(function (j) {
+      D.one = j; render();
+      var el = document.getElementById("one"); if (scroll && el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }).catch(function (e) { say("Could not open " + D.mid + ": " + (e.message || e), true); D.mid = ""; D.one = null; render(); });
+  }
+  function pick(mid) {
+    D.mid = mid; D.one = null;
+    try { history.replaceState(null, "", location.pathname + "?m=" + encodeURIComponent(mid)); } catch (_) {}
+    render(); loadOne(true);
+  }
+  document.addEventListener("click", function (ev) {
+    var tr = ev.target.closest("tr[data-id]");
+    if (tr) { pick(tr.getAttribute("data-id")); return; }
+    var b = ev.target.closest("button"); if (!b) return;
+    if (b.dataset.page) { D.offset = Math.max(0, D.offset + (+b.dataset.page) * PAGE); loadList(); }
+    else if (b.id === "dlZip") download("/admin/captures/" + encodeURIComponent(D.mid) + "/download", D.mid + ".zip");
+    else if (b.id === "dlJson") download("/admin/captures/" + encodeURIComponent(D.mid) + "/manifest.json", D.mid + ".manifest.json");
+  });
+  document.addEventListener("submit", function (ev) {
+    var f = ev.target;
+    if (f.id === "filters") { ev.preventDefault(); D.kind = f.kind.value; D.decision = f.decision.value; D.q = (f.q.value || "").trim(); D.since = f.since.value || ""; D.offset = 0; loadList(); }
+    else if (f.id === "annForm") {
+      ev.preventDefault(); say("Saving…");
+      post("/admin/captures/" + encodeURIComponent(D.mid) + "/decision", { decision: f.decision.value, note: f.note.value }).then(function () {
+        say("Saved the annotation on " + D.mid + "."); return Promise.all([loadOne(false), loadList()]);
+      }).catch(function (e) { say("That did not go through: " + (e.message || e), true); });
+    }
+  });
+
+  GDB.chip("#chip", { next: here, onchange: function (m) { if (D.loaded && !!(m && m.signed_in) !== !!(D.me && D.me.signed_in)) location.reload(); } });
+  GDB.me().then(function (me) {
+    D.me = me; D.loaded = true;
+    if (!me || !me.signed_in) return signedOut();
+    if (!me.is_admin) return notAdmin(me);
+    $("#heroMeta").textContent = "Loading…";
+    return loadList().then(function () { return loadOne(!!D.mid); });
+  });
+})();
+</script>
+</body>
+</html>

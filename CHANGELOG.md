@@ -68,6 +68,29 @@ proof-of-concept features from production-ready ones in its docs.
   every per-row view, and the table and the download keep names out as before.
 
 ### Added
+- **Glass ID: look a piece up, compare it side by side, send the session for analysis.**
+  Check a Piece opens on *Find the piece*: by Glass ID number, title or maker, from the
+  recent chips, or *by photo* — the camera runs with no piece loaded and *Find it* asks the
+  server which registered pieces look most like the shots (`POST /api/glassid/candidates`:
+  `central/glassid.py` runs the page's own matching rules against every public piece and
+  the caller's own, and returns each candidate's confidence, verdict, per-descriptor
+  breakdown, the shots and reference views that carried the score, the mat size check and
+  the reasons in words). The Pairs drawer opens on a compare panel: the registered photos
+  beside the new shots, the score broken down by AI texture / colour / shape and views
+  matched, *Same piece* / *Different piece*. Register Your Piece runs the same check before
+  a piece gets a new Glass ID and asks before registering a look-alike. *Send for
+  analysis* at the bottom of either drawer packs the session (photos, descriptors,
+  candidates, decision with a note, mat, device and app version) and posts it to
+  `POST /api/me/captures`; the server keeps it under `data/capture_manifests/`, runs the
+  Photo Mat detection on the pictures, and lists it for administrators on `/captures.html`
+  (open, annotate, download); `python -m scripts.pull_capture` pulls sessions down with the
+  admin key from `.env`, and `python -m scripts.glassid_bench` scores every session against
+  every other. `docs/GLASS-ID-MATCHING-ASSESSMENT.md` says what the matching can and cannot
+  tell today — four clearly different cubes never reach *Match likely* on colour, but a
+  white and an amber cube score 49–60 against each other because the colour histogram
+  describes a pale piece by its background, and siblings and the AI descriptor have no real
+  measurements yet — and what captures are needed. The Python descriptor port is checked
+  bit for bit against the page's JavaScript in the tests.
 - **A page for every Glass Database ID, and the wiki now cites it.** `/record/<gid>`
   (`deploy/record.html` over `GET /api/records/{gid}`, `central/records.py`) shows a key's
   source row, the staged statements with their item values linked, the wiki and Wikidata

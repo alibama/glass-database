@@ -37,6 +37,10 @@ under it, small:
 | **Collecting Events admin** | Admin → Seasons, the console | Create and run a collecting event: the call, the dates, the awards; open, start voting, close | `/events-admin.html` (admins) |
 | **Tables** | Datasets (admin), the console | Every table in the registry, row by row: read it, fix a cell, add a row, import a sheet | `/datasets.html` (admins) |
 | **Usage** | Analytics | Views and visitors by day, surface, view and country; the newsletter list | `/analytics.html` (admins) |
+| **Captures** | Capture-session manifests, calibration set | Every capture session someone sent for analysis: the photos, the numbers, the candidates, the decision, the mat, the phone | `/captures.html` (admins) |
+| **Send for analysis** | Manifest upload, capture manifest | Hands the shots, the numbers behind them, the candidates and your decision to the Glass Database so the matching can be checked against real pieces | the capture apps' drawer |
+| **Find the piece** / **Find it by photo** | Lookup, candidates, kNN | Which registered piece is this? By Glass ID number, title or maker, from recent, or from a few shots | `/fingerprint/verify.html` |
+| **Compare** · **Same piece** · **Different piece** | Compare panel, decision | The registered photos beside your shots, what carried the score, and your call | both capture apps' drawer |
 | **Wikibase** | The migration, the loader, the pusher | The public record moving to glass.wikibase.cloud, step by step | `/wikibase.html` |
 
 Fine print keeps the technical words, once, where a curious person can find them: "Glass ID
@@ -90,7 +94,8 @@ Calculator) · **Elsewhere** (Discord, Instagram, Field notes, GitHub, How it ru
   the private network being built, how to lend a machine) · Field notes · Code · Discord.
 - Admin (administrators only, no primary item; the crumb is *Admin*) › Review queue
   (`/review.html`) · Collecting Events (`/events-admin.html`) · Tables (`/datasets.html`) · Usage
-  (`/analytics.html`) · Wikibase (`/wikibase.html`). My account links to them once an admin is signed in.
+  (`/analytics.html`) · Wikibase (`/wikibase.html`) · Captures (`/captures.html`). My account links to
+  them once an admin is signed in.
 
 **Go live** is the panel on My account (`/account.html?piece=N#golive`) with the four steps a piece
 takes, each a button: *Glass ID* → *Top image* → *Publish* → *Collecting event*. Status words on it:
