@@ -40,3 +40,4 @@ data/c2pa/            # self-signed test cert + PRIVATE signing key
 
 # Local editor/agent launch configs
 .claude/
+data/capture_manifests/

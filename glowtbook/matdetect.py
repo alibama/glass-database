@@ -82,6 +82,45 @@ def _measure_one(img_bytes: bytes):
     return (float(w), float(h))
 
 
+def mat_details(img_bytes: bytes) -> dict:
+    """What the mat contributes in one picture, spelled out: which markers were seen,
+    the scale they give, and the object measurement when enough of the mat is
+    visible. For capture-session manifests and the bench; ``_measure_one`` stays the
+    terse path the enrolment import uses."""
+    import cv2
+    import numpy as np
+    out = {"markers": 0, "ids": [], "mm_per_px": None, "marker_px": None, "image_px": None, "object_mm": None}
+    arr = np.frombuffer(img_bytes, np.uint8)
+    img = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    if img is None:
+        out["error"] = "not an image"
+        return out
+    out["image_px"] = {"w": int(img.shape[1]), "h": int(img.shape[0])}
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    ad = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    det = cv2.aruco.ArucoDetector(ad, cv2.aruco.DetectorParameters())
+    corners, ids, _ = det.detectMarkers(gray)
+    if ids is None or not len(ids):
+        return out
+    out["markers"] = int(len(ids))
+    out["ids"] = sorted(int(i) for i in ids.flatten())
+    edges = []
+    for c in corners:
+        p = c[0]
+        edges += [float(np.linalg.norm(p[i] - p[(i + 1) % 4])) for i in range(4)]
+    px = sum(edges) / len(edges)
+    out["marker_px"] = round(px, 1)
+    out["mm_per_px"] = round(MARKER_MM / px, 4) if px else None
+    if len(ids) >= 3:
+        try:
+            m = _measure_one(img_bytes)
+        except Exception:  # noqa: BLE001
+            m = None
+        if m:
+            out["object_mm"] = {"w": round(m[0], 1), "h": round(m[1], 1)}
+    return out
+
+
 def measure_frames(frames: list[bytes]) -> dict:
     """Aggregate per-frame measurements into a dimension estimate (mm)."""
     if not available():

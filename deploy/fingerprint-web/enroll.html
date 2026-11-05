@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="/site.js"></script>
+<script src="/fingerprint/glassid-kit.js"></script>
 <style>
   :root{
     /* Camera HUD stays dark (it sits over the video feed); the accent is the paper red.
@@ -298,6 +299,7 @@
     <div id="filmReview">
       <h2>What next?</h2>
       <p id="filmMeta">No shots yet.</p>
+      <div id="dupe" class="gk-block" hidden></div>
       <div class="filmbtns" style="margin-top:4px">
         <button class="primary" id="saveBtn" hidden>Give it its Glass ID</button>
         <button class="ghost" id="exportBtn">Export .zip</button>
@@ -313,6 +315,7 @@
       </details>
     </div>
     <div id="filmReceipt" class="receipt" hidden></div>
+    <div id="sendBlock" hidden></div>
   </div>
 </div>
 
@@ -372,6 +375,7 @@
   const $=s=>document.querySelector(s);
   const video=$("#cam"), cap=$("#cap"), capx=cap.getContext("2d");
   const G = window.GDB || null;                       // site helper (sign-in, API); null → export-only mode
+  const KIT = window.GlassID || null;                 // lookup by photo, compare, send for analysis
 
   /* ---- tunables (may need field adjustment per device/lighting) ---- */
   const AW=160, AR=0.75;                 // analysis width, height ratio
@@ -394,7 +398,10 @@
     orient:null, here:-1, pseudo:0, auto:false, lastAuto:0,
     live:{sharp:0,detail:0,dhash:null,novelty:64,worthy:false},
     rating:0, prevRating:0, prevTierIdx:4, seq:0, ready:false,
-    user:null, pieces:[], target:null, saved:null, dirty:false };
+    user:null, pieces:[], target:null, saved:null, dirty:false,
+    // lookup by photo + send for analysis
+    candidates:null, decision:null, sent:null, sending:false, sendStatus:"", sendKind:"", sendDecision:null, sendNote:"",
+    targetHadFp:false, started:new Date().toISOString() };
 
   /* ---------- coverage ring ---------- */
   const sectorsG=$("#sectors");
@@ -534,7 +541,7 @@
       pl.classList.toggle("ok",r.total>=READY); }
     const g=$("#gauge");
     const nowReady=r.total>=READY;
-    if(nowReady&&!S.ready){S.ready=true; toast(S.target?"Glass ID ready — give it to the piece, or keep going to strengthen it":"Glass ID ready — keep going to strengthen it","ok"); buzz([30,40,30]);}
+    if(nowReady&&!S.ready){S.ready=true; toast(S.target?"Glass ID ready — give it to the piece, or keep going to strengthen it":"Glass ID ready — keep going to strengthen it","ok"); buzz([30,40,30]); checkCandidates();}
     if(!nowReady&&S.ready){S.ready=false;}
     g.classList.toggle("ready",nowReady);
 
@@ -722,12 +729,17 @@
       : "The camera needs a secure page — open this over <code>https://</code> or <code>http://localhost</code>."; }
 
   /* ---------- fingerprint document + zip (shared by Save and Export) ---------- */
+  function deviceInfo(){
+    const base={ua:navigator.userAgent,resolution:{w:video.videoWidth,h:video.videoHeight}};
+    return KIT ? KIT.deviceInfo(video,S.stream,{compass:S.frames.some(f=>f.sector>=0)}) : base;
+  }
   function fingerprintDoc(){
     const r=computeRating();
     return { tool:"glass-fingerprint", version:1, created:new Date().toISOString(),
       rating:r.total, tier:TIERS[tierIdx(r.total)][1], ready:r.total>=READY,
       subscores:{coverage:+r.cov.toFixed(3),detail:+r.det.toFixed(3),robustness:+r.rob.toFixed(3)},
-      device:{ua:navigator.userAgent,resolution:{w:video.videoWidth,h:video.videoHeight}},
+      app:{page:"enroll.html",version:KIT?KIT.VERSION:"?"},
+      device:deviceInfo(),
       params:{SHARP_MIN,NOVELTY_MIN,COV_TARGET,PSEUDO_MIN,NO_COMPASS_COV,dhash:"9x8 dHash, [hi,lo] 32-bit ints",
         scoring:"v2: cov*40 + (det*35 + rob*25)*sqrt(cov); without a compass cov is capped at NO_COMPASS_COV"},
       note:"Enrollment fingerprint. dhash + detail + coverage per frame let a later capture be matched to this reference.",
@@ -796,7 +808,8 @@
   /* ---------- account + pieces (the gate) ---------- */
   function esc(s){ return G?G.esc(s):String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
   function setTarget(p){
-    S.target=p||null;
+    S.target=p||null; S.targetHadFp=!!(p&&p.fingerprint);
+    if(S.candidates) renderCandidates();
     [...document.querySelectorAll(".piece")].forEach(el=>el.classList.toggle("sel",!!p&&+el.dataset.id===p.id));
     const chip=$("#targetChip");
     if(p){ chip.classList.remove("none"); chip.innerHTML=`Saving to <b>${esc(p.title)}</b>`; $("#pieceSt").textContent="chosen"; $("#pieceSt").classList.add("ok");
@@ -916,20 +929,98 @@
         <button class="ghost" id="anotherBtn">Register another piece</button>
       </div>
       <p class="fine">The Go-live panel on My account has the next steps as buttons: top image, publish, enter the collecting event. Check it now opens Check a Piece with this piece loaded.</p>
-      <p class="fine" id="nextStep">Everything you've added is on <a href="/account.html">My account</a>.</p>`;
+      <p class="fine" id="nextStep">Everything you've added is on <a href="/account.html">My account</a>.</p>
+      <p class="fine">Below: <b>send this session for analysis</b>, so the matching can be checked against real pieces like this one.</p>`;
     $("#anotherBtn").onclick=()=>{ resetSession(); $("#film").classList.remove("open"); $("#gate").hidden=false; $("#gate").style.display=""; $("#hud").hidden=true; stopCamera(); loadPieces(); };
     if(G){ G.json("/seasons").then(s=>{ const cur=s&&s.current; if(cur){ $("#nextStep").insertAdjacentHTML("afterbegin",
       `<b>${esc(cur.title)}</b> is taking entries: publish the piece, then enter it, both from <a href="${panel}">the Go-live panel</a>. `); } }).catch(()=>{}); }
   }
   function resetSession(){
     S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.pseudo=0; S.here=-1; S.ready=false; S.prevTierIdx=4; S.embCount=0; S.dirty=false; S.saved=null; S.hero=null;
+    S.candidates=null; S.decision=null; S.sent=null; S.sendStatus=""; S.sendDecision=null; S.sendNote=""; S.started=new Date().toISOString();
+    const dp=$("#dupe"); if(dp){ dp.hidden=true; dp.innerHTML=""; }
     $("#review").classList.remove("unsaved"); $("#filmReceipt").hidden=true; $("#filmReview").hidden=false;
-    paintRing(); updateRating(); refresh(); draftClear();
+    paintRing(); updateRating(); refresh(); renderSend(); draftClear();
   }
+
+  /* ---------- already registered? (lookup by photo), compare, send for analysis ----------
+     Before a piece gets a NEW Glass ID, its shots are checked against every piece on file
+     (the server runs Check a Piece's own rules against all of them at once). A strong
+     candidate is shown with its score and a Compare button: the registered photos beside
+     these shots, what carried the score, and Same piece / Different piece. Whatever is
+     decided travels with the session when it is sent for analysis. */
+  let _candT=null;
+  function fpForMatch(){
+    const fp=fingerprintDoc();
+    fp.frames=S.frames.map(f=>({file:`frames/${String(f.seq).padStart(3,"0")}.jpg`,seq:f.seq,t:f.t,sector:f.sector,band:f.band,cell:f.cell,
+      sharp:+f.sharp.toFixed(1),detail:+f.detail.toFixed(4),dhash:[f.dhash[0],f.dhash[1]],noveltyAtCapture:f.noveltyAtCapture,chist:f.chist,emb:f.emb||undefined}));
+    return fp;
+  }
+  function checkCandidates(force){
+    const box=$("#dupe"); if(!box||!KIT||!G){ return; }
+    if(!S.frames.length){ box.hidden=true; return; }
+    if(!force && S.candidates && S.candidates.at_frames===S.frames.length) return;
+    clearTimeout(_candT);
+    _candT=setTimeout(async()=>{
+      box.hidden=false; box.classList.add("gk");
+      if(!S.candidates) box.innerHTML='<h3>Already registered?</h3><p class="fine">Checking these shots against the pieces on file…</p>';
+      try{ const r=await KIT.candidates(fpForMatch(),{k:4}); r.at_frames=S.frames.length; r.checked_at=new Date().toISOString(); S.candidates=r; renderCandidates(); }
+      catch(e){ box.innerHTML='<h3>Already registered?</h3><p class="fine">Could not check the pieces on file: '+esc(e.message)+'</p>'; }
+    }, force?0:400);
+  }
+  function renderCandidates(){
+    const box=$("#dupe"); if(!box||!KIT||!S.candidates) return; box.hidden=false;
+    KIT.candidateRows(box,S.candidates,{chosen:S.target?"mine:"+S.target.id:null,onAgain:()=>checkCandidates(true),onCompare:openCompare});
+  }
+  async function openCompare(item,slot){
+    const shots=S.frames.map(f=>({seq:f.seq,url:f.url}));
+    let piece=null; try{ piece=await KIT.piece(item.ref); }catch(_){}
+    const draw=()=>KIT.comparePanel(slot,{item,result:item,piece,shots,decision:S.decision,
+      onClose:()=>{ slot.innerHTML=""; slot.classList.remove("gk-block"); },
+      onDecide:(decision,it)=>{
+        S.decision={decision,note:"",object:{ref:it.ref,id:it.id,row_id:it.row_id,title:it.title},at:new Date().toISOString()};
+        if(decision==="match_confirmed"){
+          if(it.kind==="mine"){ const p=S.pieces.find(x=>x.id===it.id);
+            if(p&&(!S.target||S.target.id!==p.id)&&confirm(`Save these shots onto “${p.title}” instead? Its Glass ID gets replaced by this capture.`)) setTarget(p); }
+          toast("Noted: same piece as “"+it.title+"”","ok");
+        } else toast("Noted: a different piece from “"+it.title+"”");
+        draw(); renderSend(); } });
+    draw(); slot.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }
+  function defaultDecision(){ if(S.decision) return S.decision.decision; if(S.saved) return S.targetHadFp?"re_registered":"new_piece"; return "undecided"; }
+  function renderSend(){
+    const el=$("#sendBlock"); if(!el||!KIT) return;
+    if(!S.frames.length){ el.hidden=true; return; } el.hidden=false;
+    KIT.sendBlock(el,{signedIn:!!S.user, loginUrl:G?G.loginUrl():"#", decision:S.sendDecision||defaultDecision(), note:S.sendNote, sent:S.sent,
+      busy:S.sending, status:S.sendStatus, statusKind:S.sendKind, onChange:(d,n)=>{ S.sendDecision=d; S.sendNote=n; }, onSend:sendSession});
+  }
+  async function sendSession(decision,note){
+    if(S.sending||!KIT) return;
+    S.sending=true; S.sendStatus="Packing the shots…"; S.sendKind=""; S.sendDecision=decision; S.sendNote=note; renderSend();
+    try{
+      const dec={decision,note,at:new Date().toISOString(),
+        object:(S.decision&&S.decision.object)||(S.target?{ref:"mine:"+S.target.id,id:S.target.id,title:S.target.title}:undefined)};
+      const j=await KIT.send({kind:"enroll",page:"enroll.html",fingerprint:fpForMatch(),frames:S.frames,hero:S.hero&&S.hero.blob,candidates:S.candidates,decision:dec,
+        device:deviceInfo(),
+        session:{started:S.started,ended:new Date().toISOString(),shots:S.frames.length,auto:S.auto,ai:!!S.aiEmbed,embeddings:S.embCount||0,
+          rating:S.rating,tier:TIERS[tierIdx(S.rating)][1],ready:S.rating>=READY,saved:!!S.saved,
+          save_result:S.saved?{rating:S.saved.rating,tier:S.saved.tier,views:S.saved.views,dimensions:S.saved.dimensions}:null,
+          target:S.target?{id:S.target.id,title:S.target.title,had_fingerprint:S.targetHadFp}:null,compass:S.frames.some(f=>f.sector>=0)},
+        params:{SHARP_MIN,NOVELTY_MIN,COV_TARGET,PSEUDO_MIN,NO_COMPASS_COV,EMB_CAP,READY,AW,AH},
+        mat:S.saved&&S.saved.dimensions?{client:"measured by the server when the Glass ID was saved",dimensions:S.saved.dimensions}:undefined});
+      S.sent=j; S.sendStatus=""; toast("Sent for analysis — "+j.manifest_id,"ok"); buzz(20);
+    }catch(e){ S.sendStatus="Could not send: "+e.message; S.sendKind="err"; if(e.status===401){ S.user=null; renderWho(); } }
+    finally{ S.sending=false; renderSend(); }
+  }
+
   $("#saveBtn").onclick=async()=>{
     if(!S.frames.length){ toast("Nothing to save","warn"); return; }
     if(!S.target||!G){ toast("Choose a piece first","warn"); return; }
     if(S.rating<READY && !confirm(`The Glass ID is only ${S.rating}/100 (${TIERS[tierIdx(S.rating)][1]}). Save anyway? You can keep going to strengthen it.`)) return;
+    const top=S.candidates&&S.candidates.candidates&&S.candidates.candidates[0];
+    const rejected=S.decision&&S.decision.decision==="match_rejected"&&S.decision.object&&top&&S.decision.object.ref===top.ref;
+    if(top&&top.confidence>=70&&top.ref!=="mine:"+S.target.id&&!rejected&&
+       !confirm(`“${top.title}” on file already scores ${top.confidence}/100 against these shots. Give “${S.target.title}” a new Glass ID anyway? Compare them in the drawer first if you are not sure.`)) return;
     const b=$("#saveBtn"); b.disabled=true; const label=b.textContent; b.textContent="Packing…";
     try{
       const {blob}=await buildZip(); b.textContent="Saving…";
@@ -943,7 +1034,7 @@
           if(p&&img&&img.object) Object.assign(p,img.object); }
         catch(e){ img={error:e.message}; } }
       await draftClear();
-      toast("Saved — "+j.rating+"/100 "+j.tier,"ok"); buzz([30,40,30]); showReceipt(j,img);
+      toast("Saved — "+j.rating+"/100 "+j.tier,"ok"); buzz([30,40,30]); showReceipt(j,img); renderSend();
     }catch(e){
       if(e.status===401){ toast("Your sign-in expired — sign in again, your shots are kept on this phone","warn"); S.user=null; renderWho(); }
       else toast("Save failed: "+e.message,"warn");
@@ -974,7 +1065,7 @@
     if(S.aiEmbed){ toast("Loading AI model (first run downloads it)…"); const ok=await getEmbedder();
       if(ok){ toast("AI on — it takes a closer read of the next "+EMB_CAP+" views, then stops"); } else { toast("AI model failed to load","warn"); S.aiEmbed=false; $("#aiBtn").classList.remove("on"); $("#aiBtn").textContent="AI: off"; } } };
   $("#camSel").onchange=async(e)=>{ S.deviceId=e.target.value; try{await startCamera();}catch(_){toast("Couldn't switch camera","warn");} };
-  $("#review").onclick=()=>$("#film").classList.add("open");
+  $("#review").onclick=()=>{ $("#film").classList.add("open"); checkCandidates(); renderSend(); };
   $("#closeFilm").onclick=()=>$("#film").classList.remove("open");
   $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Delete all your shots?"))return; resetSession(); };
 

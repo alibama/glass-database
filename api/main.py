@@ -91,6 +91,7 @@ async def _force_https(request, call_next):
 from api import admin as _admin  # noqa: E402
 from api import admin_data as _admin_data  # noqa: E402
 from api import auth as _auth  # noqa: E402
+from api import captures as _captures  # noqa: E402
 from api import events as _events  # noqa: E402
 from api import graph_ext as _graph_ext  # noqa: E402
 from api import makers as _makers  # noqa: E402
@@ -103,6 +104,7 @@ from api import wikibase as _wikibase  # noqa: E402
 
 app.include_router(_auth.router)
 app.include_router(_me.router)
+app.include_router(_captures.router)     # Glass ID lookup, candidates, capture-session manifests
 app.include_router(_seasons.router)
 app.include_router(_events.router)
 app.include_router(_graph_ext.router)

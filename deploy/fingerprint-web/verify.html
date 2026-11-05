@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="/site.js"></script>
+<script src="/fingerprint/glassid-kit.js"></script>
 <style>
   :root{
     /* Camera HUD stays dark (it sits over the video feed); the accent is the paper red,
@@ -179,6 +180,12 @@
   #gate .btn:hover{background:var(--ink); color:var(--bg)}
   #gate .btn.primary{background:var(--hot); color:#fff; border-color:var(--hot)}
   #gate .btn.primary:hover{background:var(--hot-deep)}
+  #gate .btn.teal{color:var(--cool);border-color:var(--cool)}
+  .findrow{display:flex;gap:8px}
+  .findrow input{flex:1;min-width:0;padding:10px 12px;border-radius:0;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:14px}
+  .findrow input::placeholder{color:var(--ink-faint)}
+  .findrow input:focus-visible{outline:2px solid var(--hot);outline-offset:1px}
+  .piece img{width:44px;height:44px;object-fit:cover;flex:none;border:1px solid var(--line);background:var(--bg-lift)}
   #refCard{margin-top:14px; border:1px solid var(--ink); border-top-width:1px; border-radius:0; padding:14px; display:none; background:var(--bg-lift)}
   #refCard.show{display:block}
   #refCard .rt{font-family:var(--serif); font-size:18px; font-weight:400; margin-bottom:8px; color:var(--ink)}
@@ -250,8 +257,10 @@
   <p class="toolhint">Auto takes shots for you as you circle; Flip swaps cameras; Lens shows what the camera has picked out; Match switches how shots are compared.</p>
 
   <div id="film">
-    <h2>Matched pairs</h2>
+    <h2 id="filmTitle">Matched pairs</h2>
     <p id="filmMeta">No shots yet.</p>
+    <div id="cands" hidden></div>
+    <div id="compare" hidden></div>
     <div id="actions" hidden></div>
     <div id="pairs"></div>
     <div class="filmbtns">
@@ -260,6 +269,7 @@
       <button class="ghost warn" id="clearBtn">Start over</button>
     </div>
     <p class="btnhint">Export result downloads this check as a small file; Keep going returns to the camera; Start over throws the shots away.</p>
+    <div id="sendBlock" hidden></div>
   </div>
 </div>
 
@@ -278,8 +288,18 @@
     <p class="lede">Point your phone at it to see who made it. Load the piece's registered Glass ID, then take shots of the piece in front of you; the confidence rises as your angles line up with the ones on file. Nothing you shoot leaves this device. A likely match means this is the registered piece. It is strong evidence, not proof. <span style="color:var(--violet)">Alpha:</span> the thresholds are still being tuned with testers' help.</p>
     <p class="fine" style="font-size:12.5px;color:var(--ink-faint);margin:-10px 0 18px">A Glass ID is a fingerprint of the glass itself, stored as numbers, not photos.</p>
 
+    <section class="src" id="srcFind">
+      <div class="src-h"><span class="n">1</span><b>Find the piece</b></div>
+      <p>Which registered piece is this? Look it up by its Glass ID number, its title or its maker, pick one you worked with recently, or let the camera find it.</p>
+      <form class="findrow" id="findForm"><input id="findQ" type="search" placeholder="Glass ID №, title or maker" maxlength="120" autocomplete="off" aria-label="Find a registered piece"><button class="btn" type="submit" id="findBtn">Find</button></form>
+      <div class="pieces" id="findOut"></div>
+      <div id="recentOut"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button type="button" class="btn teal" id="findByPhoto">Find it by photo</button></div>
+      <p class="fine" style="margin-top:.6rem">Find it by photo opens the camera with no piece loaded: take a few shots and the registered pieces that look most like it come up, each with its score, a Compare button and <b>Check against this</b>.</p>
+    </section>
+
     <section class="src" id="srcRegistry" hidden>
-      <div class="src-h"><span class="n">1</span><b>From The Directory</b></div>
+      <div class="src-h"><span class="n">2</span><b>From The Directory</b></div>
       <div id="refCard">
         <div class="rt" id="refTitle">Reference loaded</div>
         <div class="row"><span>Registered</span><b id="refDate">—</b></div>
@@ -291,13 +311,13 @@
     </section>
 
     <section class="src" id="srcMine" hidden>
-      <div class="src-h"><span class="n">2</span><b>One of my pieces</b></div>
+      <div class="src-h"><span class="n">3</span><b>One of my pieces</b></div>
       <p>Pieces with a Glass ID in Glowtbook, your studio notebook. Tap one to check the piece against its own record and note the check on it.</p>
       <div class="pieces" id="pieces"></div>
     </section>
 
     <section class="src" id="srcFile">
-      <div class="src-h"><span class="n">3</span><b>From a file</b></div>
+      <div class="src-h"><span class="n">4</span><b>From a file</b></div>
       <label class="drop" id="drop">
         <b>Load a Glass ID export</b>
         <span>The <code>glass-fingerprint-….zip</code> saved from Register Your Piece (or its fingerprint.json)</span>
@@ -321,6 +341,7 @@
   const $=s=>document.querySelector(s);
   const video=$("#cam"), cap=$("#cap"), capx=cap.getContext("2d");
   const G = window.GDB || null;
+  const KIT = window.GlassID || null;   // lookup, compare panel, send for analysis
 
   /* ---- tunables ---- */
   const AW=160, AH=Math.round(AW*0.75);
@@ -338,7 +359,10 @@
   const S={ ref:null, refByFile:{}, frames:[], stream:null, imageCapture:null, facing:"environment", deviceId:null,
     auto:false, lastAuto:0, live:{sharp:0,dhash:null,cnov:64,worthy:false,hit:false},
     conf:0, prevConf:0, seq:0,
-    user:null, pieces:[], refKind:null, refId:null, refTitle:"", refMaker:"", recorded:false, claimed:null, bound:null };
+    user:null, pieces:[], refKind:null, refId:null, refTitle:"", refMaker:"", recorded:false, claimed:null, bound:null,
+    // find by photo, the compare panel, send for analysis
+    findMode:false, piece:null, candidates:null, decision:null, lastCompare:null,
+    sent:null, sending:false, sendStatus:"", sendKind:"", sendDecision:null, sendNote:"", started:new Date().toISOString() };
 
   /* ring */
   const sectorsG=$("#sectors");
@@ -431,7 +455,7 @@
     if(desc==="dino") return (a.emb&&r.emb)?cosine(a.emb,r.emb):0;
     if(desc==="dhash") return simOf(ham(a.dhash,r.dhash));
     return histCorr(a.chist,r.chist); }
-  function matchFrame(a,desc){ desc=desc||S.descriptor; if(!a) return {ref:null,dist:100,sim:0};
+  function matchFrame(a,desc){ desc=desc||S.descriptor; if(!a||!S.ref) return {ref:null,dist:100,sim:0};
     let best=null,bs=-1;
     for(const r of S.ref.frames){ const s=frameSim(a,r,desc); if(s>bs){bs=s; best=r;} }
     return {ref:best, dist:Math.round((1-Math.max(0,bs))*100), sim:Math.max(0,bs)}; }
@@ -447,6 +471,7 @@
     return {conf, quality, spread, cells, strongCount:strong.length};
   }
   function verdictFor(r){
+    if(!S.ref) return ["inconc","Finding"];
     const effort=S.frames.filter(f=>f.sharp>=SHARP_MIN).length;
     if(r.conf>=MATCH_READY && r.cells.size>=3) return ["match","Match likely"];
     if(effort>=MIN_EFFORT && r.conf<NO_MATCH && r.cells.size<2) return ["nomatch","No match here"];
@@ -457,7 +482,7 @@
     $("#fQual").style.width=(r.quality*100)+"%";
     $("#fSpread").style.width=(r.spread*100)+"%";
     $("#arc").style.strokeDashoffset=C*(1-r.conf/100);
-    $("#score").textContent=r.conf;
+    $("#score").textContent=S.ref?r.conf:S.frames.length;
     const [cls,label]=verdictFor(r);
     const g=$("#gauge"); g.classList.remove("match","nomatch","inconc"); g.classList.add(cls);
     $("#verdict").textContent=label;
@@ -595,13 +620,25 @@
 
   /* ---------- actions after a verdict: record on my piece / claim a public piece ---------- */
   function esc(s){ return G?G.esc(s):String(s==null?"":s); }
+  function deviceInfo(){
+    const base={ua:navigator.userAgent,resolution:{w:video.videoWidth,h:video.videoHeight}};
+    return KIT ? KIT.deviceInfo(video,S.stream,{compass:false}) : base;
+  }
+  function currentRefObject(){
+    return {ref:(S.refKind==="mine"?"mine:":S.refKind==="public"?"public:":"file:")+(S.refId!=null?S.refId:(S.refTitle||"")),
+      id:S.refId, row_id:S.refKind==="public"?S.refId:null, title:S.refTitle||"the reference"};
+  }
   function report(){
     const r=recompute(); const [,label]=verdictFor(r);
     return { tool:"glass-verify", version:1, created:new Date().toISOString(),
-      reference:{kind:S.refKind, id:S.refId, title:S.refTitle, created:S.ref.created, rating:S.ref.rating, tier:S.ref.tier, frames:S.ref.frames.length, bound:S.bound},
+      app:{page:"verify.html",version:KIT?KIT.VERSION:"?"}, device:deviceInfo(),
+      reference:S.ref?{kind:S.refKind, id:S.refId, title:S.refTitle, maker:S.refMaker, created:S.ref.created, rating:S.ref.rating, tier:S.ref.tier, frames:S.ref.frames.length, hasEmbeddings:!!S.hasEmb, bound:S.bound,
+        dimensions_mm:S.ref.metadata&&S.ref.metadata.dimensions_mm||null}:null,
       verdict:label, confidence:r.conf, matchQuality:+r.quality.toFixed(3), spread:+r.spread.toFixed(3),
       referenceViewsMatched:r.cells.size, shots:S.frames.length, descriptor:S.descriptor,
-      params:{SIM_LO,SIM_HI,STRONG_T,SPREAD_TARGET,MATCH_READY,NO_MATCH},
+      breakdown:S.lastCompare?S.lastCompare.breakdown:undefined, reasons:S.lastCompare?S.lastCompare.reasons:undefined,
+      decision:S.decision||undefined,
+      params:{SIM_LO,SIM_HI,STRONG_T,SPREAD_TARGET,MATCH_READY,NO_MATCH,MIN_EFFORT},
       note:"Decision-support match report. Confidence is a perceptual-structure match score, not proof of authenticity.",
       pairs:S.frames.map(f=>({shot:f.seq,sharp:+f.sharp.toFixed(1),
         refFile:f.match&&f.match.ref?f.match.ref.file:null,dist:f.match?f.match.dist:null,similarity:f.match?+f.match.sim.toFixed(3):null})) };
@@ -627,21 +664,109 @@
       try{ const rep=report(); await G.json(`/me/objects/${S.refId}/events`,{method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({event_type:"verified", event_date:new Date().toISOString().slice(0,10), actor:S.user.name||"",
             note:`Check a Piece: ${rep.verdict}, confidence ${rep.confidence}/100, ${rep.referenceViewsMatched} reference views matched (${rep.descriptor}).`})});
-        S.recorded=true; toast("Noted on the piece","ok"); renderActions();
+        S.recorded=true; if(!S.decision) S.decision={decision:"match_confirmed",object:currentRefObject(),at:new Date().toISOString()};
+        toast("Noted on the piece","ok"); renderActions(); renderSend();
       }catch(e){ toast("Couldn't note it: "+e.message,"warn"); rb.disabled=false; } };
     const cb=$("#claimBtn"); if(cb) cb.onclick=async()=>{ cb.disabled=true;
       try{ const rep=report(); const j=await G.json("/claims",{method:"POST",headers:{"Content-Type":"application/json"},
           body:JSON.stringify({object_row_id:S.refId, confidence:rep.confidence, report:rep, location:""})});
-        S.claimed=j.claim||j; toast(S.claimed.status==="verified"?"Added — it's in your collection":"Added — pending review","ok"); buzz([30,40,30]); renderActions();
+        S.claimed=j.claim||j; if(!S.decision) S.decision={decision:"match_confirmed",object:currentRefObject(),at:new Date().toISOString()};
+        toast(S.claimed.status==="verified"?"Added — it's in your collection":"Added — pending review","ok"); buzz([30,40,30]); renderActions(); renderSend();
       }catch(e){ toast(e.status===404?"Collections aren't enabled on this server yet":"Couldn't add it: "+e.message,"warn"); cb.disabled=false; } };
+  }
+
+  /* ---------- find by photo, the compare panel, send for analysis ----------
+     With no piece loaded the camera runs in "find" mode: the shots' descriptors go to the
+     server, which runs this page's own rules against every registered piece and returns
+     the closest with their scores; Check against this loads one as the reference and the
+     shots already taken count towards it. With a piece loaded, the compare panel shows
+     the registered photos beside these shots, what carried the score and the reasons,
+     and Same piece / Different piece record the person's call. */
+  function fpOfShots(){
+    return {tool:"glass-verify-shots",version:1,created:new Date().toISOString(),metadata:{hasEmbeddings:S.frames.some(f=>!!f.emb)},
+      frames:S.frames.map(f=>({file:`frames/${String(f.seq).padStart(3,"0")}.jpg`,seq:f.seq,t:f.t,cell:"s"+f.seq,sector:-1,
+        sharp:+f.sharp.toFixed(1),dhash:[f.dhash[0],f.dhash[1]],chist:f.chist,emb:f.emb||undefined}))};
+  }
+  function renderCands(){
+    const el=$("#cands"); if(!el||!KIT||!G) return;
+    if(S.ref||!S.frames.length){ el.hidden=true; return; }
+    el.hidden=false; el.classList.add("gk","gk-block");
+    if(!S.candidates){
+      el.innerHTML='<h3>Find it by photo</h3><div class="gk-btns" style="margin-top:0"><button type="button" class="gk-btn hot" id="findItBtn">Find it among the registered pieces</button></div>'+
+        '<p class="fine">The '+S.frames.length+' shot(s) so far are compared with every piece on file'+(S.user?' and your own':'')+'; the closest come back with their scores. Three or more sides give a fairer search.</p>';
+      const b=$("#findItBtn"); if(b) b.onclick=findIt; return; }
+    KIT.candidateRows(el,S.candidates,{title:"Pieces on file that look like it",onAgain:findIt,pickLabel:"Check against this",onPick:pickCandidate,onCompare:openCompare});
+  }
+  async function findIt(){
+    if(!S.frames.length){ toast("Take a few shots first","warn"); return; }
+    const el=$("#cands"); el.innerHTML='<h3>Finding…</h3><p class="fine">Comparing '+S.frames.length+' shot(s) with the pieces on file.</p>';
+    try{ const r=await KIT.candidates(fpOfShots(),{k:5}); r.checked_at=new Date().toISOString(); r.at_frames=S.frames.length; S.candidates=r; renderCands();
+      if(!r.candidates.length) toast("No registered piece to compare with yet","warn"); }
+    catch(e){ el.innerHTML='<h3>Could not search</h3><p class="fine">'+esc(e.message)+'</p><div class="gk-btns"><button type="button" class="gk-btn" id="findItBtn">Try again</button></div>'; const b=$("#findItBtn"); if(b) b.onclick=findIt; }
+  }
+  async function pickCandidate(it){
+    try{ if(it.kind==="mine") await loadMine(it.id); else await loadPublic(it.row_id||it.id); }catch(_){}
+    if(!S.ref){ toast("Could not load that piece","warn"); return; }
+    S.findMode=false; $("#review").textContent="Pairs"; rematchAll(); update();
+    toast("Checking against “"+it.title+"” — keep circling to decide it","ok");
+  }
+  async function openCompare(it,slot){
+    let piece=null; try{ piece=await KIT.piece(it.ref); }catch(_){}
+    KIT.comparePanel(slot,{item:it,result:it,piece,shots:S.frames.map(f=>({seq:f.seq,url:f.url})),
+      onClose:()=>{ slot.innerHTML=""; slot.classList.remove("gk-block"); }});
+    slot.scrollIntoView({behavior:"smooth",block:"nearest"});
+  }
+  function renderCompare(){
+    const el=$("#compare"); if(!el||!KIT) return;
+    if(!S.ref||!S.frames.length){ el.hidden=true; S.lastCompare=null; return; }
+    el.hidden=false;
+    const res=KIT.localCompare(S.frames,S.ref,{descriptor:S.descriptor});
+    S.lastCompare=res;
+    const item=Object.assign(currentRefObject(),{kind:S.refKind,maker:S.refMaker,
+      fingerprint:{rating:S.ref.rating,views:S.ref.frames.length,has_embeddings:!!S.hasEmb,dimensions_mm:S.ref.metadata&&S.ref.metadata.dimensions_mm||null}});
+    KIT.comparePanel(el,{item,result:res,piece:S.piece,shots:S.frames.map(f=>({seq:f.seq,url:f.url})),refImages:S.refByFile,decision:S.decision,
+      onDecide:(decision,it)=>{ S.decision={decision,note:"",object:{ref:it.ref,id:it.id,row_id:it.row_id,title:it.title},at:new Date().toISOString()};
+        toast(decision==="match_confirmed"?"Noted: the same piece":"Noted: a different piece",decision==="match_confirmed"?"ok":""); refresh(); }});
+  }
+  function loadRefFrames(mid){
+    if(!G) return;
+    G.json("/me/captures/"+encodeURIComponent(mid)).then(j=>{
+      (j.files||[]).forEach(f=>{ const m=/^images\/(\d{3})\.jpg$/.exec(f.file||""); if(m) S.refByFile["frames/"+m[1]+".jpg"]=G.API+"/me/captures/"+encodeURIComponent(mid)+"/files/"+f.file; });
+      refresh();
+    }).catch(()=>{});
+  }
+  function defaultDecision(){ if(S.decision) return S.decision.decision; if(S.recorded||S.claimed) return "match_confirmed"; return "undecided"; }
+  function renderSend(){
+    const el=$("#sendBlock"); if(!el||!KIT) return;
+    if(!S.frames.length){ el.hidden=true; return; } el.hidden=false;
+    KIT.sendBlock(el,{signedIn:!!S.user, loginUrl:G?G.loginUrl():"#", decision:S.sendDecision||defaultDecision(), note:S.sendNote, sent:S.sent, hide:["new_piece","re_registered"],
+      busy:S.sending, status:S.sendStatus, statusKind:S.sendKind, onChange:(d,n)=>{ S.sendDecision=d; S.sendNote=n; }, onSend:sendSession});
+  }
+  async function sendSession(decision,note){
+    if(S.sending||!KIT) return;
+    S.sending=true; S.sendStatus="Packing the shots…"; S.sendKind=""; S.sendDecision=decision; S.sendNote=note; renderSend();
+    try{
+      const dec={decision,note,at:new Date().toISOString(),object:(S.decision&&S.decision.object)||(S.ref?currentRefObject():undefined)};
+      const rep=S.ref?report():null;
+      const j=await KIT.send({kind:"verify",page:"verify.html",fingerprint:fpOfShots(),frames:S.frames,candidates:S.candidates,decision:dec,
+        reference:rep?rep.reference:null, match:rep?Object.assign(rep,{local_compare:S.lastCompare||undefined}):null,
+        device:deviceInfo(),
+        session:{started:S.started,ended:new Date().toISOString(),shots:S.frames.length,auto:S.auto,descriptor:S.descriptor,ai:S.frames.some(f=>!!f.emb),
+          find_mode_used:!!S.candidates,recorded:S.recorded,claimed:!!S.claimed,ref_kind:S.refKind},
+        params:{SIM_LO,SIM_HI,STRONG_T,SPREAD_TARGET,MATCH_READY,NO_MATCH,MIN_EFFORT,AW,AH}});
+      S.sent=j; S.sendStatus=""; toast("Sent for analysis — "+j.manifest_id,"ok"); buzz(20);
+    }catch(e){ S.sendStatus="Could not send: "+e.message; S.sendKind="err"; }
+    finally{ S.sending=false; renderSend(); }
   }
 
   /* ui */
   function refresh(){ $("#total").textContent=S.frames.length; $("#review").disabled=!S.frames.length;
     const r=recompute(); const [,label]=verdictFor(r);
-    $("#filmMeta").textContent=S.frames.length? `${label} — confidence ${r.conf}/100, ${r.cells.size} reference views matched`:"No shots yet.";
-    renderActions();
+    $("#filmTitle").textContent=S.ref?"Matched pairs":"Find it by photo";
+    $("#filmMeta").textContent=S.frames.length? (S.ref?`${label} — confidence ${r.conf}/100, ${r.cells.size} reference views matched`:`${S.frames.length} shot(s) — tap Find it to see which registered pieces look like them`):"No shots yet.";
+    renderActions(); renderCands(); renderCompare(); renderSend();
     const box=$("#pairs"); box.innerHTML="";
+    if(!S.ref) return;
     S.frames.slice().map(f=>f).sort((a,b)=>(b.match?b.match.sim:0)-(a.match?a.match.sim:0)).forEach(f=>{
       const m=f.match; const sim=m?Math.round(m.sim*100):0;
       const col=m&&m.sim>=STRONG_T?"var(--ok)":m&&m.sim>=0.35?"var(--hot)":"var(--danger)";
@@ -680,7 +805,9 @@
   $("#review").onclick=()=>$("#film").classList.add("open");
   $("#closeFilm").onclick=()=>$("#film").classList.remove("open");
   $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Discard your shots?"))return;
-    S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.recorded=false; update(); };
+    S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.recorded=false;
+    S.candidates=null; S.decision=null; S.sent=null; S.lastCompare=null; S.sendStatus=""; S.sendDecision=null; S.sendNote=""; S.started=new Date().toISOString();
+    const c=$("#cands"); if(c) c.innerHTML=""; update(); };
 
   $("#exportBtn").onclick=()=>{
     if(!S.frames.length){toast("Nothing to export","warn"); return;}
@@ -727,6 +854,13 @@
     else { S.descriptor="color"; const el=$("#descBtn"); if(el) el.textContent="Match: Colour"; }
     $("#refCard").classList.add("show"); $("#start").classList.add("show"); const sh=$("#startHint"); if(sh) sh.style.display="";
     [...document.querySelectorAll(".piece")].forEach(el=>el.classList.toggle("sel", S.refKind==="mine" && String(el.dataset.id)===String(S.refId)));
+    // the compare panel's side of the drawer: the piece's photos, and for one of mine the
+    // registration frames kept in a sent session
+    S.piece=null;
+    if(KIT&&G&&(S.refKind==="public"||S.refKind==="mine")){
+      const pref=(S.refKind==="mine"?"mine:":"public:")+S.refId;
+      KIT.piece(pref).then(p=>{ S.piece=p; if(S.refKind==="mine"&&p.captures&&p.captures.length) loadRefFrames(p.captures[0].manifest_id); refresh(); }).catch(()=>{});
+    }
     toast("Reference loaded","ok");
   }
 
@@ -771,20 +905,61 @@
       box.appendChild(b);
     }
   }
+  /* ---------- find the piece: by words, by recent, by photo (the gate) ---------- */
+  function refRow(it){
+    const fpw=it.fingerprint?[it.fingerprint.rating!=null?"Glass ID "+it.fingerprint.rating:"",it.fingerprint.views?it.fingerprint.views+" views":"",it.fingerprint.has_embeddings?"AI":""].filter(Boolean).join(" · "):"";
+    const sub=[it.maker,it.kind==="public"&&it.row_id?"№ "+it.row_id:"",fpw].filter(Boolean).join(" · ");
+    const img=it.image?`<img src="${esc(G.thumb(it.image,160))}" alt="" loading="lazy" onerror="this.remove()">`:"";
+    return `<button type="button" class="piece" data-ref="${esc(it.ref)}">${img}<span class="t">${esc(it.title||"Untitled")}<small>${esc(sub||"—")}</small></span><span class="tag ${it.kind==="mine"?"fp":"pub"}">${it.kind==="mine"?"mine":"public"}</span></button>`;
+  }
+  function pickRef(ref){ const i=ref.indexOf(":"); const kind=ref.slice(0,i), id=ref.slice(i+1); if(kind==="mine") loadMine(id); else loadPublic(id); }
+  async function loadRecent(){
+    if(!KIT||!G) return;
+    try{
+      const j=await KIT.recent(); const chips=[];
+      (j.captures||[]).forEach(c=>{ const when=(c.created_at||"").slice(5,10); const what=c.kind==="enroll"?"registered":"checked";
+        if(c.object_id) chips.push({ref:"mine:"+c.object_id,label:(c.object_title||("piece "+c.object_id))+" · "+what+" "+when});
+        else if(c.object_row_id) chips.push({ref:"public:"+c.object_row_id,label:(c.object_title||c.object_row_id)+" · "+what+" "+when}); });
+      (j.mine||[]).forEach(m=>chips.push({ref:m.ref,label:m.title+" · mine"}));
+      (j.public||[]).slice(0,4).forEach(p=>chips.push({ref:p.ref,label:p.title+(p.maker?" · "+p.maker:"")}));
+      const seen={}; const uniq=chips.filter(c=>!seen[c.ref]&&(seen[c.ref]=1)).slice(0,10);
+      const out=$("#recentOut"); if(!out) return;
+      out.innerHTML=uniq.length?'<p class="fine" style="margin:.6rem 0 0">Recent</p><div class="gk-chips">'+uniq.map(c=>`<button type="button" data-ref="${esc(c.ref)}">${esc(c.label)}</button>`).join("")+'</div>':"";
+      out.onclick=e=>{ const b=e.target.closest("[data-ref]"); if(b) pickRef(b.dataset.ref); };
+    }catch(_){}
+  }
+  (function(){
+    const form=$("#findForm"), out=$("#findOut"); if(!form||!out) return;
+    if(!KIT||!G){ $("#srcFind").hidden=true; return; }
+    form.onsubmit=async e=>{ e.preventDefault(); const q=$("#findQ").value.trim(); if(!q) return;
+      out.innerHTML='<p class="fine">Looking…</p>';
+      try{ const j=await KIT.lookup(q); const items=[...(j.mine||[]),...(j.public||[])];
+        out.innerHTML=items.length?items.map(refRow).join(""):'<p class="fine">Nothing registered matches “'+esc(q)+'”.'+(j.signed_in?"":" Sign in to search your own pieces too.")+'</p>'; }
+      catch(err){ out.innerHTML='<p class="fine">Could not search: '+esc(err.message)+'</p>'; } };
+    out.onclick=e=>{ const b=e.target.closest("[data-ref]"); if(b){ pickRef(b.dataset.ref); } };
+    $("#findByPhoto").onclick=async()=>{
+      S.findMode=true; S.ref=null; S.refKind=null; S.refId=null; S.refTitle=""; S.refMaker=""; S.candidates=null;
+      const ok=await openCamera(); if(!ok){ S.findMode=false; return; }
+      $("#targetChip").innerHTML="Finding <b>take 3+ shots, then Find it</b>"; $("#review").textContent="Find it";
+      toast("Take a few shots of the piece from different sides, then tap Find it");
+    };
+  })();
+
   async function initAccount(){
     const objId=G?G.param("object"):new URLSearchParams(location.search).get("object");
     const mineId=G?G.param("mine"):null;
+    if(KIT) KIT.ensureCss();
     if(G){
-      G.chip("#chip",{compact:true,onchange:async(m)=>{ S.user=m; if(m){ try{ S.pieces=(await G.json("/me/objects")).objects||[]; }catch(_){ S.pieces=[]; } } else S.pieces=[]; renderPieces(); }})
+      G.chip("#chip",{compact:true,onchange:async(m)=>{ S.user=m; if(m){ try{ S.pieces=(await G.json("/me/objects")).objects||[]; }catch(_){ S.pieces=[]; } } else S.pieces=[]; renderPieces(); loadRecent(); }})
         .then(async m=>{ S.user=m&&m.signed_in?m:null; if(S.user){ try{ S.pieces=(await G.json("/me/objects")).objects||[]; }catch(_){ S.pieces=[]; } } renderPieces();
-          if(mineId && S.user) loadMine(mineId); });
+          if(mineId && S.user) loadMine(mineId); loadRecent(); });
     }
     if(objId) loadPublic(objId);
   }
 
-  $("#start").onclick=async()=>{ if(!S.ref){$("#err").textContent="Load a piece's record first."; return;} $("#err").textContent="";
-    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("#err").textContent="No camera API here. Use Chrome or Safari over https (or localhost)."; return;}
-    if(!window.isSecureContext){showInsecureHelp(); return;}
+  async function openCamera(){ $("#err").textContent="";
+    if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){$("#err").textContent="No camera API here. Use Chrome or Safari over https (or localhost)."; return false;}
+    if(!window.isSecureContext){showInsecureHelp(); return false;}
     const btn=$("#start"), label=btn.textContent; btn.disabled=true; btn.textContent="Starting camera…"; $("#err").textContent="Requesting camera — allow access when prompted.";
     try{await startCamera();}
     catch(err){
@@ -796,10 +971,13 @@
       else if(n==="OverconstrainedError") msg="This camera can't meet the requested settings.";
       else if(n==="TimeoutError") msg="The camera didn't respond — it may be blocked or already in use by another app or tab. Close other camera apps, check the camera icon in the address bar, and tap Enable camera again.";
       else msg="Couldn't open the camera ("+n+").";
-      $("#err").textContent=msg; btn.disabled=false; btn.textContent=label; return;}
+      $("#err").textContent=msg; btn.disabled=false; btn.textContent=label; return false;}
     btn.disabled=false; btn.textContent=label;
     $("#gate").hidden=true; $("#gate").style.display="none"; $("#hud").hidden=false; update(); requestAnimationFrame(loop);
-  };
+    return true;
+  }
+  $("#start").onclick=async()=>{ if(!S.ref){$("#err").textContent="Load a piece's record first, or use Find it by photo."; return;}
+    S.findMode=false; $("#review").textContent="Pairs"; await openCamera(); };
 
   window.addEventListener("beforeunload",e=>{if(S.frames.length){e.preventDefault(); e.returnValue="";}});
   initAccount();

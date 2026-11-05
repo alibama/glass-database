@@ -34,7 +34,7 @@ Five small pieces share one database:
 | **`central/`** | Self-describing SQLite store + a re-runnable spreadsheet importer | — |
 | **`api/`** | Read-only, self-documenting HTTP API (FastAPI, `/docs`) | `:8000` |
 | **`explore/`** | Public data explorer — break any dataset down, chart, map, download | `:8502` |
-| **`admin/`** | The old Streamlit console (basic-auth), being switched off: everything it did is a page — `/review.html`, `/events-admin.html`, `/datasets.html`, `/analytics.html`, `/wikibase.html` | `:8501` |
+| **`admin/`** | The old Streamlit console (basic-auth), being switched off: everything it did is a page — `/review.html`, `/events-admin.html`, `/datasets.html`, `/analytics.html`, `/wikibase.html`, `/captures.html` | `:8501` |
 | **`central/wikibase/`** | The public record's pipeline to glass.wikibase.cloud (stage, dedupe, OpenRefine, push, pull); run from `/wikibase.html` | via the API |
 | **`glowtbook/`** | Journal + object registry: AIP/DIP, C2PA signing, BagIt, Bluesky | `:8503` |
 
@@ -115,6 +115,8 @@ and [`deploy/AUTH.md`](deploy/AUTH.md).
 Objects can carry a **re-identification fingerprint** (perceptual hashes over many angles, via [object-fingerprint](https://github.com/alibama/object-fingerprint)): enroll a piece in Glowtbook, and anyone can later confirm *this is the same physical object* by matching a fresh camera capture in Explore. The fingerprint is embedded in the object's C2PA credential. Full protocol (descriptors, calibration, thresholds, best practices) + flowchart: [`docs/FINGERPRINT-PROTOCOL.md`](docs/FINGERPRINT-PROTOCOL.md).
 
 The capture app is **signed in and piece-aware**: sign in with Google or pair your phone from Glowtbook with a QR code, pick the piece, capture, and *Save* writes the fingerprint straight onto it (unsaved sessions are kept on the device). Verify can then record the check in the piece's provenance, or let a collector **claim** a public piece. The process end to end: [`docs/FINGERPRINT-WORKFLOW.md`](docs/FINGERPRINT-WORKFLOW.md).
+
+Looking a piece up and comparing it is part of both apps: find it by Glass ID, title, maker, recent sessions or **by photo** (the server scores a capture against every registered piece with the same rules and says why), compare the registered photos with the new shots side by side, and **send the session for analysis** so the matching is calibrated on real pieces (`/captures.html` for administrators, `python -m scripts.pull_capture`, `python -m scripts.glassid_bench`). What the matching can and cannot tell today: [`docs/GLASS-ID-MATCHING-ASSESSMENT.md`](docs/GLASS-ID-MATCHING-ASSESSMENT.md).
 
 ## Seasons, the graph, and a glass-aware model
 
