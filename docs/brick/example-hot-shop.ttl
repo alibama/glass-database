@@ -1,0 +1,522 @@
+@prefix ex:      <https://glassdatabase.org/ns/hotshop/example#> .
+@prefix hotshop: <https://glassdatabase.org/ns/hotshop#> .
+@prefix brick:   <https://brickschema.org/schema/Brick#> .
+@prefix rec:     <https://w3id.org/rec#> .
+@prefix unit:    <http://qudt.org/vocab/unit/> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+
+# ---------------------------------------------------------------------------
+# The three builds of https://glassdatabase.org/shop-build.html, described in
+# Brick 1.5 plus the hot shop vocabulary (docs/brick/hotshop.ttl).
+#
+# One configuration is written out: 208 V three-phase service, an electric
+# furnace, a natural-gas glory hole. The other options change a handful of
+# triples; the alternatives are shown in comments where they apply. Sizes and
+# ratings are the build page's; nothing here is a particular studio.
+#
+# How to read it: Equipment has parts (brick:hasPart) and points
+# (brick:hasPoint); controllers host points (brick:hosts) and control equipment
+# (brick:controls); gas and power move along brick:feeds; hotshop:interlocks
+# draws the safety chain; systems collect their members with rec:includes.
+# ---------------------------------------------------------------------------
+
+# ---- Places -------------------------------------------------------------------
+
+# Brick's own Site/Building/Room classes are deprecated since 1.4 in favour of the
+# RealEstateCore classes bundled with it.
+ex:site a rec:Site ;
+    rdfs:label "Example hot shop" ;
+    brick:hasPart ex:building, ex:yard .
+
+ex:building a rec:Building ;
+    rdfs:label "Studio building" ;
+    brick:hasPart ex:hot_shop .
+
+ex:hot_shop a rec:Room ;
+    rdfs:label "Hot shop" ;
+    brick:area [ brick:value 600 ; brick:hasUnit unit:FT2 ] .
+
+ex:yard a rec:OutdoorSpace ;
+    rdfs:label "Yard: gas meter (or the propane tank on the LP option)" .
+
+# ---- Electrical service ------------------------------------------------------
+
+ex:utility_meter a brick:Building_Electrical_Meter ;
+    rdfs:label "Utility electrical meter" ;
+    brick:meters ex:building ;
+    brick:hasSubMeter ex:furnace_meter ;
+    brick:feeds ex:subpanel .
+
+ex:subpanel a brick:Breaker_Panel ;
+    rdfs:label "Hot shop subpanel, 100 A, 208 V three-phase, 24 spaces" ;
+    brick:hasLocation ex:hot_shop ;
+    brick:electricalPhaseCount [ brick:value 3 ] ;
+    brick:ratedVoltageInput [ brick:value 208 ; brick:hasUnit unit:V ] ;
+    brick:ratedCurrentInput [ brick:value 100 ; brick:hasUnit unit:A ] ;
+    brick:currentFlowType [ brick:value "AC" ] ;
+    brick:hasPart ex:furnace_breaker, ex:annealer_breaker, ex:fan_breaker, ex:gh_breaker ;
+    brick:feeds ex:furnace_breaker, ex:annealer_breaker, ex:fan_breaker, ex:gh_breaker .
+    # single-phase option: 125 A, 240 V, electricalPhaseCount 1
+
+ex:furnace_breaker a brick:Circuit_Breaker ;
+    rdfs:label "Furnace branch breaker, 3-pole 90 A; 3 AWG copper THHN to the disconnect" ;
+    brick:ratedCurrentInput [ brick:value 90 ; brick:hasUnit unit:A ] ;
+    brick:feeds ex:furnace_disconnect .
+    # single-phase option: 2-pole 125 A, 1 AWG (93 A line current with new elements)
+
+ex:annealer_breaker a brick:Circuit_Breaker ;
+    rdfs:label "Annealer branch breaker, 3-pole 25 A; 10 AWG copper THHN" ;
+    brick:ratedCurrentInput [ brick:value 25 ; brick:hasUnit unit:A ] ;
+    brick:feeds ex:annealer_disconnect .
+    # single-phase option: 2-pole 40 A, 8 AWG (30 A at 7.2 kW)
+
+ex:fan_breaker a brick:Circuit_Breaker ;
+    rdfs:label "Exhaust fan breaker" ;
+    brick:feeds ex:exhaust_fan .
+
+ex:gh_breaker a brick:Circuit_Breaker ;
+    rdfs:label "Glory hole control circuit breaker, 15 A, 120 V: blower, flame safeguard, igniter" ;
+    brick:feeds ex:gh_blower, ex:gh_flame_safeguard, ex:gh_igniter .
+
+ex:furnace_disconnect a brick:Disconnect_Switch ;
+    rdfs:label "Furnace fused disconnect, 100 A 3-pole with 80 A class J fuses, within sight of the furnace" ;
+    brick:hasLocation ex:hot_shop ;
+    brick:feeds ex:furnace_contactor .
+
+ex:annealer_disconnect a brick:Disconnect_Switch ;
+    rdfs:label "Annealer disconnect, 3-pole 30 A, within sight" ;
+    brick:hasLocation ex:hot_shop ;
+    brick:feeds ex:annealer_contactor .
+
+ex:furnace_meter a brick:Electrical_Meter ;
+    rdfs:label "Furnace submeter (the SCR ammeter and an energy meter on the feeder)" ;
+    brick:meters ex:furnace ;
+    brick:hasPoint ex:furnace_power, ex:furnace_energy .
+
+# ---- The furnace: electric, 100 lb pot, 12 kW, six SiC elements -----------------
+
+ex:furnace a hotshop:Electric_Glass_Furnace ;
+    rdfs:label "Pot furnace, 100 lb invested crucible, 12 kW, silicon-carbide elements" ;
+    rdfs:seeAlso <https://glassdatabase.org/shop-build.html> ;
+    brick:hasLocation ex:hot_shop ;
+    brick:ratedPowerInput [ brick:value 12 ; brick:hasUnit unit:KiloW ] ;
+    brick:ratedVoltageInput [ brick:value 208 ; brick:hasUnit unit:V ] ;
+    brick:electricalPhaseCount [ brick:value 3 ] ;
+    brick:currentFlowType [ brick:value "AC" ] ;
+    brick:volume [ brick:value 8.4 ; brick:hasUnit unit:FT3 ] ;
+    hotshop:interiorWidth  [ brick:value 22 ; brick:hasUnit unit:IN ] ;
+    hotshop:interiorDepth  [ brick:value 22 ; brick:hasUnit unit:IN ] ;
+    hotshop:interiorHeight [ brick:value 30 ; brick:hasUnit unit:IN ] ;
+    hotshop:ratedMaximumTemperature [ brick:value 2300 ; brick:hasUnit unit:DEG_F ] ;
+    hotshop:ratedGlassCapacity [ brick:value 100 ; brick:hasUnit unit:LB ] ;
+    brick:hasOutputSubstance hotshop:Molten_Glass ;
+    brick:hasPart ex:crucible, ex:furnace_door,
+        ex:furnace_element_a1, ex:furnace_element_a2, ex:furnace_element_b1,
+        ex:furnace_element_b2, ex:furnace_element_c1, ex:furnace_element_c2,
+        ex:furnace_scr, ex:furnace_contactor, ex:furnace_controller,
+        ex:furnace_high_limit, ex:furnace_tc_control, ex:furnace_tc_limit ;
+    brick:hasPoint ex:furnace_crown_temp, ex:furnace_limit_temp, ex:furnace_setpoint,
+        ex:furnace_output, ex:furnace_mode, ex:furnace_limit_setpoint,
+        ex:furnace_high_temp_alarm, ex:furnace_door_status, ex:furnace_estop_status,
+        ex:furnace_element_current, ex:furnace_power, ex:furnace_energy .
+    # gas option: a hotshop:Gas_Glass_Furnace with ratedPowerInput 180000 BTU_IT-PER-HR,
+    # brick:hasInputSubstance brick:Natural_Gas (or hotshop:Propane), a Forced_Air_Burner,
+    # a 150 CFM Combustion_Air_Blower, a Gas_Train and a Flame_Safeguard as parts, and a
+    # 3 in flue with a damper; the electric parts below go away.
+
+ex:crucible a hotshop:Crucible ;
+    rdfs:label "Invested fused-silica crucible, 100 lb, 12 in inside diameter, 14 in tall, on a cast plinth" ;
+    hotshop:ratedGlassCapacity [ brick:value 100 ; brick:hasUnit unit:LB ] .
+
+ex:furnace_door a hotshop:Chamber_Door ;
+    rdfs:label "Gathering door, 3 in cast block, counterweighted, with an interlock limit switch" ;
+    brick:hasPoint ex:furnace_door_status ;
+    hotshop:interlocks ex:furnace_contactor .
+
+# six elements, three series pairs in delta (one pair per phase)
+ex:furnace_element_a1 a hotshop:Silicon_Carbide_Element ; rdfs:label "SiC element, 1 in x 22 in hot zone, phase A, first of the pair" .
+ex:furnace_element_a2 a hotshop:Silicon_Carbide_Element ; rdfs:label "SiC element, phase A, second of the pair" .
+ex:furnace_element_b1 a hotshop:Silicon_Carbide_Element ; rdfs:label "SiC element, phase B, first of the pair" .
+ex:furnace_element_b2 a hotshop:Silicon_Carbide_Element ; rdfs:label "SiC element, phase B, second of the pair" .
+ex:furnace_element_c1 a hotshop:Silicon_Carbide_Element ; rdfs:label "SiC element, phase C, first of the pair" .
+ex:furnace_element_c2 a hotshop:Silicon_Carbide_Element ; rdfs:label "SiC element, phase C, second of the pair" .
+    # single-phase option: four elements as two series pairs in parallel (2S2P)
+
+ex:furnace_scr a hotshop:Power_Controller ;
+    rdfs:label "Three-phase phase-angle SCR, 80 A, with current limit and soft start" ;
+    brick:ratedCurrentInput [ brick:value 80 ; brick:hasUnit unit:A ] ;
+    brick:feeds ex:furnace_element_a1, ex:furnace_element_a2, ex:furnace_element_b1,
+        ex:furnace_element_b2, ex:furnace_element_c1, ex:furnace_element_c2 ;
+    brick:hasPoint ex:furnace_element_current .
+    # single-phase option: 100 A single-phase SCR, current limit set to 100 A
+
+ex:furnace_contactor a hotshop:Contactor ;
+    rdfs:label "Safety contactor, 3-pole 80 A, 240 V coil, ahead of the SCR" ;
+    brick:feeds ex:furnace_scr .
+
+ex:furnace_controller a hotshop:Temperature_Controller ;
+    rdfs:label "PID temperature controller, 1/16 DIN, type S input, 4 to 20 mA to the SCR, autotune" ;
+    brick:controls ex:furnace_scr ;
+    brick:hosts ex:furnace_crown_temp, ex:furnace_setpoint, ex:furnace_output, ex:furnace_mode, ex:furnace_pid .
+
+ex:furnace_high_limit a hotshop:High_Limit_Controller ;
+    rdfs:label "High-limit controller, latching, independent type S thermocouple, set at 2,300 F" ;
+    brick:controls ex:furnace_contactor ;
+    hotshop:interlocks ex:furnace_contactor ;
+    brick:hosts ex:furnace_limit_temp, ex:furnace_limit_setpoint, ex:furnace_high_temp_alarm .
+
+ex:furnace_tc_control a hotshop:Thermocouple ;
+    rdfs:label "Control thermocouple, type S, 24 in, closed-end alumina protection tube, through the back wall above the pot rim" ;
+    hotshop:thermocoupleType [ brick:value "S" ] ;
+    brick:hasPoint ex:furnace_crown_temp .
+
+ex:furnace_tc_limit a hotshop:Thermocouple ;
+    rdfs:label "Limit thermocouple, type S, beside the control thermocouple" ;
+    hotshop:thermocoupleType [ brick:value "S" ] ;
+    brick:hasPoint ex:furnace_limit_temp .
+
+ex:furnace_crown_temp a hotshop:Crown_Temperature_Sensor ;
+    rdfs:label "Furnace crown temperature (control)" ;
+    brick:hasUnit unit:DEG_F .
+
+ex:furnace_limit_temp a hotshop:Crown_Temperature_Sensor ;
+    rdfs:label "Furnace crown temperature (limit)" ;
+    brick:hasUnit unit:DEG_F .
+
+ex:furnace_setpoint a brick:Temperature_Setpoint ;
+    rdfs:label "Furnace setpoint (about 2,100 F melting, 1,950 F working, 1,850 F idle)" ;
+    brick:hasUnit unit:DEG_F .
+
+ex:furnace_output a brick:Heating_Command ;
+    rdfs:label "Furnace heat output, percent of full SCR output" ;
+    brick:hasUnit unit:PERCENT .
+
+ex:furnace_mode a brick:Operating_Mode_Status ;
+    rdfs:label "Furnace mode: melt, work, idle" .
+
+ex:furnace_pid a brick:PID_Parameter ;
+    rdfs:label "Furnace PID tuning (proportional band, integral, derivative)" .
+
+ex:furnace_limit_setpoint a brick:Max_Temperature_Setpoint_Limit ;
+    rdfs:label "Furnace high-limit trip, 2,300 F" ;
+    brick:hasUnit unit:DEG_F .
+
+ex:furnace_high_temp_alarm a brick:High_Temperature_Alarm ;
+    rdfs:label "Furnace high-limit tripped" .
+
+ex:furnace_door_status a brick:Open_Close_Status ;
+    rdfs:label "Gathering door open (elements off while open)" .
+
+ex:furnace_estop_status a brick:Emergency_Push_Button_Status ;
+    rdfs:label "Furnace emergency stop pressed" .
+
+ex:furnace_element_current a brick:Current_Sensor ;
+    rdfs:label "Element current at the SCR output (aging shows here first)" ;
+    brick:hasUnit unit:A .
+
+ex:furnace_power a brick:Electric_Power_Sensor ;
+    rdfs:label "Furnace power draw" ;
+    brick:hasUnit unit:KiloW .
+
+ex:furnace_energy a brick:Electrical_Energy_Usage_Sensor ;
+    rdfs:label "Furnace energy" ;
+    brick:hasUnit unit:KiloW-HR .
+
+# ---- The annealer: 30 x 24 x 24 in, 7.2 kW, three coils in wye ------------------
+
+ex:annealer a hotshop:Annealer ;
+    rdfs:label "Front-loading annealer, 30 x 24 x 24 in, 7.2 kW, three 6 ohm coils in wye" ;
+    rdfs:seeAlso <https://glassdatabase.org/shop-build.html> ;
+    brick:hasLocation ex:hot_shop ;
+    brick:ratedPowerInput [ brick:value 7.2 ; brick:hasUnit unit:KiloW ] ;
+    brick:ratedVoltageInput [ brick:value 208 ; brick:hasUnit unit:V ] ;
+    brick:electricalPhaseCount [ brick:value 3 ] ;
+    brick:currentFlowType [ brick:value "AC" ] ;
+    brick:volume [ brick:value 10 ; brick:hasUnit unit:FT3 ] ;
+    hotshop:interiorWidth  [ brick:value 30 ; brick:hasUnit unit:IN ] ;
+    hotshop:interiorDepth  [ brick:value 24 ; brick:hasUnit unit:IN ] ;
+    hotshop:interiorHeight [ brick:value 24 ; brick:hasUnit unit:IN ] ;
+    brick:hasPart ex:annealer_coil_a, ex:annealer_coil_b, ex:annealer_coil_c,
+        ex:annealer_ssr_a, ex:annealer_ssr_b, ex:annealer_ssr_c,
+        ex:annealer_contactor, ex:annealer_controller, ex:annealer_high_limit,
+        ex:annealer_tc_control, ex:annealer_tc_limit, ex:annealer_door ;
+    brick:hasPoint ex:annealer_temp, ex:annealer_limit_temp, ex:annealer_setpoint,
+        ex:annealer_output, ex:annealer_mode, ex:annealer_limit_setpoint,
+        ex:annealer_high_temp_alarm, ex:annealer_door_status, ex:annealer_estop_status ;
+    rec:includes ex:annealer_schedule .
+    # single-phase option: four 8 ohm coils of 14 AWG as two series pairs in parallel,
+    # two 40 A solid-state relays (one per hot leg), a 2-pole 40 A contactor.
+
+ex:annealer_coil_a a hotshop:Wire_Element ; rdfs:label "Coil A, 6 ohm, 12 AWG Kanthal A-1 class, about 45 ft, in a side-wall groove on pins" .
+ex:annealer_coil_b a hotshop:Wire_Element ; rdfs:label "Coil B, 6 ohm, 12 AWG, other side wall" .
+ex:annealer_coil_c a hotshop:Wire_Element ; rdfs:label "Coil C, 6 ohm, 12 AWG, back wall" .
+
+ex:annealer_ssr_a a hotshop:Solid_State_Relay ; rdfs:label "Solid-state relay, 25 A, zero-cross, phase A" ; brick:feeds ex:annealer_coil_a .
+ex:annealer_ssr_b a hotshop:Solid_State_Relay ; rdfs:label "Solid-state relay, 25 A, zero-cross, phase B" ; brick:feeds ex:annealer_coil_b .
+ex:annealer_ssr_c a hotshop:Solid_State_Relay ; rdfs:label "Solid-state relay, 25 A, zero-cross, phase C" ; brick:feeds ex:annealer_coil_c .
+
+ex:annealer_contactor a hotshop:Contactor ;
+    rdfs:label "Safety contactor, 3-pole 40 A, 120 V coil, in series with the relays" ;
+    brick:feeds ex:annealer_ssr_a, ex:annealer_ssr_b, ex:annealer_ssr_c .
+
+ex:annealer_controller a hotshop:Temperature_Controller ;
+    rdfs:label "Ramp-soak controller, 1/16 DIN, type K input, eight or more segments (the example shop uses a Novus N20K48 and reads it over Bluetooth)" ;
+    brick:controls ex:annealer_ssr_a, ex:annealer_ssr_b, ex:annealer_ssr_c ;
+    brick:hosts ex:annealer_temp, ex:annealer_setpoint, ex:annealer_output, ex:annealer_mode,
+        ex:seg1_setpoint, ex:seg1_rate, ex:seg1_hold,
+        ex:seg2_setpoint, ex:seg2_rate, ex:seg2_hold,
+        ex:seg3_setpoint, ex:seg3_rate, ex:seg3_hold .
+
+ex:annealer_high_limit a hotshop:High_Limit_Controller ;
+    rdfs:label "High-limit controller, latching, manual reset, own type K thermocouple, set at 1,250 F" ;
+    brick:controls ex:annealer_contactor ;
+    hotshop:interlocks ex:annealer_contactor ;
+    brick:hosts ex:annealer_limit_temp, ex:annealer_limit_setpoint, ex:annealer_high_temp_alarm .
+
+ex:annealer_tc_control a hotshop:Thermocouple ;
+    rdfs:label "Control thermocouple, type K, 8 AWG, mullite protection tube, back wall at mid-height, 4 in into the chamber" ;
+    hotshop:thermocoupleType [ brick:value "K" ] ;
+    brick:hasPoint ex:annealer_temp .
+
+ex:annealer_tc_limit a hotshop:Thermocouple ;
+    rdfs:label "Limit thermocouple, type K" ;
+    hotshop:thermocoupleType [ brick:value "K" ] ;
+    brick:hasPoint ex:annealer_limit_temp .
+
+ex:annealer_door a hotshop:Chamber_Door ;
+    rdfs:label "Annealer door, 2.5 in brick and 1 in board in an angle frame, rope seal, limit switch" ;
+    brick:hasPoint ex:annealer_door_status ;
+    hotshop:interlocks ex:annealer_contactor .
+
+ex:annealer_temp a hotshop:Chamber_Temperature_Sensor ; rdfs:label "Annealer chamber temperature (control)" ; brick:hasUnit unit:DEG_F .
+ex:annealer_limit_temp a hotshop:Chamber_Temperature_Sensor ; rdfs:label "Annealer chamber temperature (limit)" ; brick:hasUnit unit:DEG_F .
+ex:annealer_setpoint a brick:Temperature_Setpoint ; rdfs:label "Annealer working setpoint" ; brick:hasUnit unit:DEG_F .
+ex:annealer_output a brick:Heating_Command ; rdfs:label "Annealer heat output, percent duty" ; brick:hasUnit unit:PERCENT .
+ex:annealer_mode a brick:Operating_Mode_Status ; rdfs:label "Annealer mode: idle, holding, running a schedule, complete" .
+ex:annealer_limit_setpoint a brick:Max_Temperature_Setpoint_Limit ; rdfs:label "Annealer high-limit trip, 1,250 F" ; brick:hasUnit unit:DEG_F .
+ex:annealer_high_temp_alarm a brick:High_Temperature_Alarm ; rdfs:label "Annealer high-limit tripped" .
+ex:annealer_door_status a brick:Open_Close_Status ; rdfs:label "Annealer door open (elements off while open)" .
+ex:annealer_estop_status a brick:Emergency_Push_Button_Status ; rdfs:label "Annealer emergency stop pressed" .
+
+# An example schedule (soft glass, about 1/2 in thick): figures to show the shape,
+# not a recommendation; schedules depend on the glass and the thickest section.
+ex:annealer_schedule a hotshop:Firing_Schedule ;
+    rdfs:label "Example anneal: hold 950 F for 1 h, cool 100 F/h to 750 F, cool 200 F/h to 150 F" ;
+    rec:includes ex:seg1, ex:seg2, ex:seg3 .
+
+ex:seg1 a hotshop:Schedule_Segment ; rdfs:label "Segment 1: soak" ; hotshop:segmentNumber 1 ;
+    rec:includes ex:seg1_setpoint, ex:seg1_rate, ex:seg1_hold .
+ex:seg1_setpoint a hotshop:Segment_Temperature_Setpoint ; rdfs:label "950 F" ; brick:hasUnit unit:DEG_F .
+ex:seg1_rate a hotshop:Ramp_Rate_Parameter ; rdfs:label "as fast as possible" ; brick:hasUnit unit:DEG_F-PER-HR .
+ex:seg1_hold a hotshop:Hold_Time_Parameter ; rdfs:label "60 min" ; brick:hasUnit unit:MIN .
+
+ex:seg2 a hotshop:Schedule_Segment ; rdfs:label "Segment 2: slow cool through the strain point" ; hotshop:segmentNumber 2 ;
+    rec:includes ex:seg2_setpoint, ex:seg2_rate, ex:seg2_hold .
+ex:seg2_setpoint a hotshop:Segment_Temperature_Setpoint ; rdfs:label "750 F" ; brick:hasUnit unit:DEG_F .
+ex:seg2_rate a hotshop:Ramp_Rate_Parameter ; rdfs:label "100 F per hour" ; brick:hasUnit unit:DEG_F-PER-HR .
+ex:seg2_hold a hotshop:Hold_Time_Parameter ; rdfs:label "0 min" ; brick:hasUnit unit:MIN .
+
+ex:seg3 a hotshop:Schedule_Segment ; rdfs:label "Segment 3: cool to room" ; hotshop:segmentNumber 3 ;
+    rec:includes ex:seg3_setpoint, ex:seg3_rate, ex:seg3_hold .
+ex:seg3_setpoint a hotshop:Segment_Temperature_Setpoint ; rdfs:label "150 F" ; brick:hasUnit unit:DEG_F .
+ex:seg3_rate a hotshop:Ramp_Rate_Parameter ; rdfs:label "200 F per hour" ; brick:hasUnit unit:DEG_F-PER-HR .
+ex:seg3_hold a hotshop:Hold_Time_Parameter ; rdfs:label "0 min" ; brick:hasUnit unit:MIN .
+
+# ---- The glory hole: 16 in bore, 250,000 BTU/h forced-air burner, natural gas ----
+
+ex:glory_hole a hotshop:Glory_Hole ;
+    rdfs:label "Glory hole, 16 in bore, 26 in deep, 250,000 BTU/h forced-air burner, natural gas" ;
+    rdfs:seeAlso <https://glassdatabase.org/shop-build.html> ;
+    brick:hasLocation ex:hot_shop ;
+    brick:ratedPowerInput [ brick:value 250000 ; brick:hasUnit unit:BTU_IT-PER-HR ] ;
+    hotshop:boreDiameter   [ brick:value 16 ; brick:hasUnit unit:IN ] ;
+    hotshop:interiorDepth  [ brick:value 26 ; brick:hasUnit unit:IN ] ;
+    brick:hasInputSubstance brick:Natural_Gas, hotshop:Combustion_Air ;
+    brick:hasOutputSubstance hotshop:Flue_Gas ;
+    brick:hasPart ex:gh_burner, ex:gh_pilot, ex:gh_igniter, ex:gh_blower, ex:gh_air_valve,
+        ex:gh_air_switch, ex:gh_gas_train, ex:gh_flame_safeguard, ex:gh_uv_scanner,
+        ex:gh_doors, ex:gh_tc ;
+    brick:hasPoint ex:gh_temp, ex:gh_flame_status, ex:gh_lockout_status, ex:gh_low_gas_alarm,
+        ex:gh_air_flow_alarm, ex:gh_manifold_pressure, ex:gh_doors_status, ex:gh_blower_status,
+        ex:gh_burner_command .
+    # propane option: brick:hasInputSubstance hotshop:Propane; the regulator's outlet is
+    # 11 in WC and the orifice is smaller (see the orifice table on the build page).
+
+ex:gh_burner a hotshop:Forced_Air_Burner ;
+    rdfs:label "Burner: 2 in pipe body with a 2 in tee, orifice spud, flame-retention nozzle into a tangential cast burner block" ;
+    brick:ratedPowerInput [ brick:value 250000 ; brick:hasUnit unit:BTU_IT-PER-HR ] ;
+    brick:hasInputSubstance brick:Natural_Gas, hotshop:Combustion_Air .
+
+ex:gh_pilot a hotshop:Pilot_Burner ;
+    rdfs:label "Pilot burner, 1/4 in natural draft, with a target, on a 3/16 in pilot line" .
+
+ex:gh_igniter a hotshop:Igniter ;
+    rdfs:label "Spark igniter transformer and electrode" .
+
+ex:gh_blower a hotshop:Combustion_Air_Blower ;
+    rdfs:label "Combustion air blower, forward-curved, 250 CFM at 1 in static, 1/3 hp, 115 V" ;
+    brick:ratedPowerInput [ brick:value 0.33 ; brick:hasUnit unit:HP ] ;
+    brick:ratedVoltageInput [ brick:value 115 ; brick:hasUnit unit:V ] ;
+    brick:electricalPhaseCount [ brick:value 1 ] ;
+    brick:hasOutputSubstance hotshop:Combustion_Air ;
+    brick:feeds ex:gh_air_valve ;
+    brick:hasPoint ex:gh_blower_status .
+
+ex:gh_air_valve a hotshop:Air_Valve ;
+    rdfs:label "Butterfly air valve, 2 in, locking quadrant" ;
+    brick:feeds ex:gh_burner .
+
+ex:gh_air_switch a hotshop:Air_Proving_Switch ;
+    rdfs:label "Combustion air proving switch on the blower outlet: no air, no gas" ;
+    brick:hasPoint ex:gh_air_flow_alarm ;
+    hotshop:interlocks ex:gh_ssov .
+
+# the gas train, in order from the wall
+ex:gh_gas_train a hotshop:Gas_Train ;
+    rdfs:label "Glory hole gas train, 3/4 in black pipe" ;
+    brick:hasPart ex:gh_valve_wall, ex:gh_regulator, ex:gh_ssov, ex:gh_low_gas_switch,
+        ex:gh_gauge, ex:gh_trim_valve, ex:gh_valve_burner .
+
+ex:gh_valve_wall a hotshop:Manual_Gas_Shutoff_Valve ;
+    rdfs:label "Manual shutoff at the wall, 3/4 in gas ball valve, lockable (sediment trap after it)" ;
+    brick:feeds ex:gh_regulator .
+
+ex:gh_regulator a brick:Gas_Pressure_Regulator_Valve ;
+    rdfs:label "Appliance regulator, 3/4 in, natural gas, 7 in WC outlet, vent-limited, 250,000 BTU/h" ;
+    brick:feeds ex:gh_ssov .
+    # propane option: two-stage regulation at the tank, then an 11 in WC appliance regulator
+
+ex:gh_ssov a hotshop:Safety_Shutoff_Valve ;
+    rdfs:label "Safety shutoff valve, electric, 3/4 in, normally closed, 120 V" ;
+    brick:feeds ex:gh_trim_valve, ex:gh_pilot .
+
+ex:gh_low_gas_switch a hotshop:Gas_Pressure_Switch ;
+    rdfs:label "Low gas pressure switch on the manifold" ;
+    brick:hasPoint ex:gh_low_gas_alarm ;
+    hotshop:interlocks ex:gh_ssov .
+
+ex:gh_gauge a brick:Sensor_Equipment ;
+    rdfs:label "Pressure gauge, 0 to 15 in WC, on a test tee" ;
+    brick:hasPoint ex:gh_manifold_pressure .
+
+ex:gh_trim_valve a hotshop:Gas_Trim_Valve ;
+    rdfs:label "Gas needle valve, 1/2 in, main burner trim" ;
+    brick:feeds ex:gh_valve_burner .
+
+ex:gh_valve_burner a hotshop:Manual_Gas_Shutoff_Valve ;
+    rdfs:label "Manual shutoff at the burner, 3/4 in, with a flexible stainless connector" ;
+    brick:feeds ex:gh_burner .
+
+ex:gh_flame_safeguard a hotshop:Flame_Safeguard ;
+    rdfs:label "Flame safeguard relay with UV scanner: proves pilot and main flame, trial for ignition, lockout" ;
+    brick:controls ex:gh_ssov, ex:gh_igniter ;
+    brick:hosts ex:gh_flame_status, ex:gh_lockout_status, ex:gh_burner_command .
+
+ex:gh_uv_scanner a hotshop:Flame_Detector ;
+    rdfs:label "UV scanner sighting the pilot and main flame" ;
+    brick:hasPoint ex:gh_flame_status .
+
+ex:gh_doors a hotshop:Chamber_Door ;
+    rdfs:label "Two half-moon cast doors on 3/4 in pivots, foot pedal through a linkage (or two air cylinders)" ;
+    brick:hasPoint ex:gh_doors_status .
+    # air-cylinder option: ex:air_compressor brick:feeds ex:gh_doors, and an Open_Close_Command point
+
+ex:gh_tc a hotshop:Thermocouple ;
+    rdfs:label "Type K thermocouple in a protection tube with a readout; the glory hole is run by eye, the reading is for the log" ;
+    hotshop:thermocoupleType [ brick:value "K" ] ;
+    brick:hasPoint ex:gh_temp .
+
+ex:gh_temp a hotshop:Chamber_Temperature_Sensor ; rdfs:label "Glory hole chamber temperature" ; brick:hasUnit unit:DEG_F .
+ex:gh_flame_status a hotshop:Flame_Status ; rdfs:label "Glory hole flame proved" .
+ex:gh_lockout_status a brick:Lockout_Status ; rdfs:label "Glory hole flame safeguard locked out" .
+ex:gh_low_gas_alarm a brick:Low_Pressure_Alarm ; rdfs:label "Glory hole low gas pressure" .
+ex:gh_air_flow_alarm a brick:Air_Flow_Loss_Alarm ; rdfs:label "Glory hole combustion air not proved" .
+ex:gh_manifold_pressure a brick:Pressure_Sensor ; rdfs:label "Glory hole manifold gas pressure" ; brick:hasUnit unit:IN_H2O .
+ex:gh_doors_status a brick:Open_Close_Status ; rdfs:label "Glory hole doors open" .
+ex:gh_blower_status a brick:Fan_On_Off_Status ; rdfs:label "Glory hole blower running" .
+ex:gh_burner_command a brick:On_Off_Command ; rdfs:label "Glory hole main burner call" .
+
+# ---- Gas service ----------------------------------------------------------------
+
+ex:gas_meter a brick:Building_Gas_Meter ;
+    rdfs:label "Natural gas meter, sized by the utility for the whole shop (250,000 BTU/h for the glory hole alone)" ;
+    brick:hasLocation ex:yard ;
+    brick:meters ex:building ;
+    brick:hasOutputSubstance brick:Natural_Gas ;
+    brick:feeds ex:gas_emergency_valve ;
+    brick:hasPoint ex:gas_usage .
+    # propane option: ex:propane_tank a brick:Storage_Tank ; rdfs:label "Propane tank, 500 gal or more" ;
+    #   brick:hasLocation ex:yard ; brick:hasOutputSubstance hotshop:Propane ;
+    #   brick:feeds ex:lp_first_stage . ex:lp_first_stage a brick:Gas_Pressure_Regulator_Valve
+    #   (10 psi) brick:feeds ex:lp_second_stage (11 in WC) brick:feeds ex:gas_emergency_valve .
+
+ex:gas_usage a brick:Natural_Gas_Usage_Sensor ;
+    rdfs:label "Gas used" ;
+    brick:hasUnit unit:FT3 .
+
+ex:gas_emergency_valve a hotshop:Manual_Gas_Shutoff_Valve ;
+    rdfs:label "Emergency gas shutoff by the door, lockable" ;
+    brick:hasLocation ex:hot_shop ;
+    brick:feeds ex:gas_manifold .
+
+ex:gas_manifold a brick:Gas_Distribution ;
+    rdfs:label "House line in the hot shop, black pipe sized from the pipe table, drops for the glory hole, a pipe warmer and a torch station" ;
+    brick:hasLocation ex:hot_shop ;
+    brick:feeds ex:gh_valve_wall .
+
+# ---- Ventilation and safety ----------------------------------------------------
+
+ex:hood a hotshop:Canopy_Hood ;
+    rdfs:label "Canopy hood over the furnace and glory hole" ;
+    brick:hasLocation ex:hot_shop ;
+    brick:hasInputSubstance hotshop:Flue_Gas ;
+    brick:hasOutputSubstance brick:Exhaust_Air ;
+    brick:hasPart ex:exhaust_fan ;
+    brick:hasPoint ex:hood_flow ;
+    hotshop:interlocks ex:gh_ssov .
+
+ex:exhaust_fan a brick:Exhaust_Fan ;
+    rdfs:label "Exhaust fan, 1 hp, 2,000 CFM; the gas equipment cannot run without it" ;
+    brick:ratedPowerInput [ brick:value 1 ; brick:hasUnit unit:HP ] ;
+    brick:hasPoint ex:exhaust_fan_command, ex:exhaust_fan_status .
+
+ex:makeup_air a brick:Makeup_Air_Unit ;
+    rdfs:label "Make-up air: louvered intake with a damper, sized to the exhaust" ;
+    brick:feeds ex:hot_shop ;
+    brick:hasOutputSubstance brick:Outside_Air .
+
+ex:hood_flow a brick:Fume_Hood_Air_Flow_Sensor ; rdfs:label "Hood exhaust flow" ; brick:hasUnit unit:FT3-PER-MIN .
+ex:exhaust_fan_command a brick:On_Off_Command ; rdfs:label "Exhaust fan on" .
+ex:exhaust_fan_status a brick:Fan_On_Off_Status ; rdfs:label "Exhaust fan running (proved)" .
+
+ex:co_detector a brick:IAQ_Sensor_Equipment ;
+    rdfs:label "Carbon monoxide and combustible gas detector, interlocked to the gas safety valve" ;
+    brick:hasLocation ex:hot_shop ;
+    brick:hasPoint ex:co_level, ex:gas_level ;
+    hotshop:interlocks ex:gh_ssov .
+
+ex:co_level a brick:CO_Level_Sensor ; rdfs:label "Carbon monoxide in the hot shop" ; brick:hasUnit unit:PPM .
+ex:gas_level a brick:Gas_Sensor ; rdfs:label "Combustible gas in the hot shop" ; brick:hasUnit unit:PPM .
+
+ex:heat_detector a brick:Heat_Detector ; rdfs:label "Heat detector above the hood" ; brick:hasLocation ex:hot_shop .
+ex:extinguishers a brick:Fire_Safety_Equipment ; rdfs:label "Two 10 lb ABC extinguishers and a class D kit near the furnace" ; brick:hasLocation ex:hot_shop .
+ex:eye_wash a brick:Eye_Wash_Station ; rdfs:label "Eye wash station" ; brick:hasLocation ex:hot_shop .
+ex:first_aid a brick:First_Aid_Kit ; rdfs:label "First aid kit with burn dressings" ; brick:hasLocation ex:hot_shop .
+
+ex:room_temp a brick:Room_Air_Temperature_Sensor ; rdfs:label "Hot shop air temperature" ; brick:hasUnit unit:DEG_F ; brick:isPointOf ex:hot_shop .
+
+# ---- Systems (collections) -----------------------------------------------------
+
+ex:gas_system a brick:Gas_System ;
+    rdfs:label "Gas system" ;
+    rec:includes ex:gas_meter, ex:gas_emergency_valve, ex:gas_manifold, ex:gh_gas_train .
+
+ex:electrical_system a brick:Electrical_System ;
+    rdfs:label "Electrical system" ;
+    rec:includes ex:utility_meter, ex:subpanel, ex:furnace_disconnect, ex:annealer_disconnect, ex:furnace_meter .
+
+ex:safety_system a brick:Safety_System ;
+    rdfs:label "Safety system: detection, interlocks, extinguishers, first aid" ;
+    rec:includes ex:co_detector, ex:heat_detector, ex:extinguishers, ex:eye_wash, ex:first_aid,
+        ex:gh_flame_safeguard, ex:furnace_high_limit, ex:annealer_high_limit, ex:gas_emergency_valve .

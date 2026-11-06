@@ -273,6 +273,18 @@ proof-of-concept features from production-ready ones in its docs.
   section drawings (`deploy/shop-diagrams/*-section.svg`) come from the same script;
   `tests/test_shop_build.py` checks the arithmetic against hand-worked cases and fails on a
   stale generated file.
+- **Brick Schema for hot shops: an assessment, a vocabulary and a worked model.**
+  `docs/BRICK-FOR-HOT-SHOPS.md` weighs Brick (the open building ontology, 1.5.0) as the way
+  studios, controllers and archives describe a hot shop to one another: it fits the operating
+  layer (equipment, parts, feeds, points, places, systems) and not the design or process
+  layers, which stay with the parts JSON and the controller. `docs/brick/hotshop.ttl` adds
+  forty-six glass-studio classes Brick lacks (furnace, glory hole, annealer, burner, gas
+  train, flame safeguard, elements, crucible…) and five substances (propane among them) as
+  subclasses of Brick's own, with
+  rating properties, an `interlocks` relationship for the safety chain and three profile
+  shapes; `docs/brick/example-hot-shop.ttl` describes the three builds of `/shop-build.html`
+  with it. Both validate against Brick 1.5.0 with pySHACL. Documents only, by design;
+  generating the model from `bom.json` is for later.
 ### Fixed
 - **Discord "Approve & publish" on a season entry did nothing visible.** The one-click link wrote
   to the generic approvals table while the season page reads the entry's own status column; it

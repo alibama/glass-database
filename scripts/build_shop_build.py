@@ -378,6 +378,10 @@ def render_md(bom: dict) -> str:
              "follow; `SHOP-PARTS.md` names the manufacturers to look at for the controls and elements, and "
              "`shop-prompts.md` is how to document the shop you end up with.")
     L.append("")
+    L.append("The same three builds are described in Brick Schema, the open building ontology, so studios, controllers "
+             "and archives can read one another's equipment models: see `docs/BRICK-FOR-HOT-SHOPS.md` and the Turtle files "
+             "in `docs/brick/` in the repository (https://github.com/alibama/glass-database/tree/main/docs).")
+    L.append("")
     return "\n".join(L) + "\n"
 
 
