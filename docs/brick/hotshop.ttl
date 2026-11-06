@@ -1,0 +1,409 @@
+@prefix hotshop: <https://glassdatabase.org/ns/hotshop#> .
+@prefix brick:   <https://brickschema.org/schema/Brick#> .
+@prefix bsh:     <https://brickschema.org/schema/BrickShape#> .
+@prefix rec:     <https://w3id.org/rec#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos:    <http://www.w3.org/2004/02/skos/core#> .
+@prefix sh:      <http://www.w3.org/ns/shacl#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix unit:    <http://qudt.org/vocab/unit/> .
+@prefix qudtqk:  <http://qudt.org/vocab/quantitykind/> .
+
+# ---------------------------------------------------------------------------
+# Hot shop vocabulary for Brick
+#
+# Brick (brickschema.org) names the equipment, points, locations and systems of
+# a building so that two parties can read each other's models. It has no words
+# for the equipment of a glass studio. This file adds them as subclasses of
+# Brick classes, so every Brick tool still sees a furnace as Equipment, a
+# thermocouple reading as a Temperature_Sensor, and so on. Read
+# docs/BRICK-FOR-HOT-SHOPS.md first; docs/brick/example-hot-shop.ttl shows the
+# three builds of /shop-build.html described with this vocabulary.
+#
+# Conventions: classes are Capitalised_With_Underscores like Brick's; every
+# class has a one-sentence definition; measured things are Points, things with
+# parts are Equipment, settings a controller holds are Parameters. Validated
+# against Brick 1.5.0 with pySHACL (see the assessment for how).
+# ---------------------------------------------------------------------------
+
+<https://glassdatabase.org/ns/hotshop> a owl:Ontology ;
+    rdfs:label "Hot shop vocabulary for Brick"@en ;
+    rdfs:comment "Glass-studio equipment, substances, points and properties as an extension of Brick 1.5. Draft 0.1 for discussion."@en ;
+    dcterms:created "2026-11-06"^^xsd:date ;
+    dcterms:license <https://creativecommons.org/licenses/by/4.0/> ;
+    owl:versionInfo "0.1" ;
+    rdfs:seeAlso <https://glassdatabase.org/shop-build.html> .
+
+# ---- Equipment that heats glass ---------------------------------------------
+
+hotshop:Glass_Heating_Equipment a owl:Class ;
+    rdfs:subClassOf brick:Equipment ;
+    rdfs:label "Glass heating equipment"@en ;
+    skos:definition "Equipment whose purpose is to melt, hold, reheat or cool glass under control: furnaces, glory holes, kilns and pipe warmers."@en .
+
+hotshop:Glass_Furnace a owl:Class ;
+    rdfs:subClassOf hotshop:Glass_Heating_Equipment ;
+    rdfs:label "Glass furnace"@en ;
+    skos:definition "A furnace that melts batch or cullet and holds molten glass at working temperature continuously, in a crucible (pot furnace) or a tank."@en .
+
+hotshop:Electric_Glass_Furnace a owl:Class ;
+    rdfs:subClassOf hotshop:Glass_Furnace ;
+    rdfs:label "Electric glass furnace"@en ;
+    skos:definition "A glass furnace heated by resistance elements, usually silicon carbide or molybdenum disilicide, through a power controller."@en .
+
+hotshop:Gas_Glass_Furnace a owl:Class ;
+    rdfs:subClassOf hotshop:Glass_Furnace ;
+    rdfs:label "Gas-fired glass furnace"@en ;
+    skos:definition "A glass furnace heated by one or more gas burners, with a flue."@en .
+
+hotshop:Glory_Hole a owl:Class ;
+    rdfs:subClassOf hotshop:Glass_Heating_Equipment ;
+    rdfs:label "Glory hole"@en ;
+    skos:definition "A gas-fired reheating chamber, open at the front, in which glass on a blowpipe or punty is brought back to working temperature."@en .
+
+hotshop:Kiln a owl:Class ;
+    rdfs:subClassOf hotshop:Glass_Heating_Equipment ;
+    rdfs:label "Kiln"@en ;
+    skos:definition "An insulated electric chamber whose temperature follows a controller's programme of ramps and holds."@en .
+
+hotshop:Annealer a owl:Class ;
+    rdfs:subClassOf hotshop:Kiln ;
+    rdfs:label "Annealer"@en ;
+    skos:altLabel "annealing oven"@en, "lehr"@en ;
+    skos:definition "A kiln that receives finished hot work, holds it at the annealing point and cools it on a schedule."@en .
+
+hotshop:Garage_Kiln a owl:Class ;
+    rdfs:subClassOf hotshop:Kiln ;
+    rdfs:label "Garage kiln"@en ;
+    skos:altLabel "color box"@en, "pickup kiln"@en ;
+    skos:definition "A kiln that keeps colour bar, frit, murrine or prepared parts hot for pickup during a session."@en .
+
+hotshop:Pipe_Warmer a owl:Class ;
+    rdfs:subClassOf hotshop:Glass_Heating_Equipment ;
+    rdfs:label "Pipe warmer"@en ;
+    skos:definition "A small gas burner or electric heater that keeps the ends of blowpipes and punties hot."@en .
+
+# ---- Parts: heat sources and their controls --------------------------------
+
+hotshop:Burner a owl:Class ;
+    rdfs:subClassOf brick:Equipment ;
+    rdfs:label "Burner"@en ;
+    skos:definition "A device that mixes fuel gas with air and burns it to heat a chamber."@en .
+
+hotshop:Forced_Air_Burner a owl:Class ;
+    rdfs:subClassOf hotshop:Burner ;
+    rdfs:label "Forced-air burner"@en ;
+    skos:definition "A burner whose combustion air comes from a blower; the mixture is set by a gas trim valve and an air valve."@en .
+
+hotshop:Venturi_Burner a owl:Class ;
+    rdfs:subClassOf hotshop:Burner ;
+    rdfs:label "Venturi burner"@en ;
+    skos:altLabel "atmospheric burner"@en ;
+    skos:definition "A burner that entrains its own combustion air through a venturi; no blower."@en .
+
+hotshop:Pilot_Burner a owl:Class ;
+    rdfs:subClassOf hotshop:Burner ;
+    rdfs:label "Pilot burner"@en ;
+    skos:definition "A small burner that lights the main burner and gives the flame safeguard a flame to prove."@en .
+
+hotshop:Combustion_Air_Blower a owl:Class ;
+    rdfs:subClassOf brick:Fan ;
+    rdfs:label "Combustion air blower"@en ;
+    skos:definition "A fan that supplies combustion air to a forced-air burner."@en .
+
+hotshop:Air_Valve a owl:Class ;
+    rdfs:subClassOf brick:Valve ;
+    rdfs:label "Combustion air valve"@en ;
+    skos:definition "A butterfly or gate valve that sets the combustion air to a forced-air burner; with the gas trim valve it sets the mixture. Not a Brick Damper, which belongs to air-handling systems."@en .
+
+hotshop:Igniter a owl:Class ;
+    rdfs:subClassOf brick:Electrical_Equipment ;
+    rdfs:label "Igniter"@en ;
+    skos:definition "A spark transformer and electrode, or a piezo lighter, that lights the pilot or main burner."@en .
+
+hotshop:Heating_Element a owl:Class ;
+    rdfs:subClassOf brick:Equipment ;
+    rdfs:label "Heating element"@en ;
+    skos:definition "An electric resistance heating element inside a chamber. Not a Brick Heating_Coil, which is an HVAC heat exchanger."@en .
+
+hotshop:Silicon_Carbide_Element a owl:Class ;
+    rdfs:subClassOf hotshop:Heating_Element ;
+    rdfs:label "Silicon-carbide element"@en ;
+    skos:definition "A silicon-carbide rod element whose resistance rises as it ages, which the power controller compensates by raising voltage."@en .
+
+hotshop:Wire_Element a owl:Class ;
+    rdfs:subClassOf hotshop:Heating_Element ;
+    rdfs:label "Wire element"@en ;
+    skos:definition "A coiled iron-chrome-aluminium (Kanthal class) or nickel-chrome wire element laid in a groove or hung on pins."@en .
+
+hotshop:Power_Controller a owl:Class ;
+    rdfs:subClassOf brick:Electrical_Equipment ;
+    rdfs:label "Power controller"@en ;
+    skos:altLabel "SCR"@en ;
+    skos:definition "A phase-angle or zero-cross power controller that sets the power to heating elements from a temperature controller's command, with a current limit and soft start."@en .
+
+hotshop:Solid_State_Relay a owl:Class ;
+    rdfs:subClassOf brick:Relay ;
+    rdfs:label "Solid-state relay"@en ;
+    skos:definition "A semiconductor relay that switches an element circuit at zero crossing on a controller's logic output."@en .
+
+hotshop:Contactor a owl:Class ;
+    rdfs:subClassOf brick:Relay ;
+    rdfs:label "Contactor"@en ;
+    skos:definition "A heavy-duty relay in series with the heating circuit; the safety contactor is opened by the high limit, the door switch and the emergency stop."@en .
+
+hotshop:Temperature_Controller a owl:Class ;
+    rdfs:subClassOf brick:Controller ;
+    rdfs:label "Temperature controller"@en ;
+    skos:definition "A controller that holds a chamber at a setpoint (usually PID) and may run a schedule of ramps and holds; it hosts the chamber's setpoint, output and programme points."@en .
+
+hotshop:High_Limit_Controller a owl:Class ;
+    rdfs:subClassOf brick:Controller ;
+    rdfs:label "High-limit controller"@en ;
+    skos:definition "An independent, latching over-temperature controller with its own thermocouple that opens the safety contactor; reset by hand."@en .
+
+hotshop:Flame_Safeguard a owl:Class ;
+    rdfs:subClassOf brick:Controller ;
+    rdfs:label "Flame safeguard"@en ;
+    skos:definition "A controller that proves pilot and main flame through a flame detector, times the trial for ignition, holds the safety shutoff valves open only while flame is proved, and locks out on flame failure."@en .
+
+hotshop:Thermocouple a owl:Class ;
+    rdfs:subClassOf brick:Sensor_Equipment ;
+    rdfs:label "Thermocouple"@en ;
+    skos:definition "A thermocouple probe (type K, S and so on) in a protection tube; its reading is a Temperature_Sensor point."@en .
+
+hotshop:Flame_Detector a owl:Class ;
+    rdfs:subClassOf brick:Sensor_Equipment ;
+    rdfs:label "Flame detector"@en ;
+    skos:definition "A UV scanner or flame rod that senses flame for the flame safeguard; its reading is a Flame_Status point."@en .
+
+hotshop:Gas_Pressure_Switch a owl:Class ;
+    rdfs:subClassOf brick:Sensor_Equipment ;
+    rdfs:label "Gas pressure switch"@en ;
+    skos:definition "A switch that opens the burner's safety circuit when fuel gas pressure leaves its band; its reading is a Low_Pressure_Alarm or High_Pressure_Alarm point."@en .
+
+hotshop:Air_Proving_Switch a owl:Class ;
+    rdfs:subClassOf brick:Sensor_Equipment ;
+    rdfs:label "Air proving switch"@en ;
+    skos:definition "A differential-pressure switch on the blower that proves combustion air before gas may flow; its reading is an Air_Flow_Loss_Alarm point."@en .
+
+# ---- Parts: gas -------------------------------------------------------------
+
+hotshop:Gas_Train a owl:Class ;
+    rdfs:subClassOf brick:Gas_Distribution ;
+    rdfs:label "Gas train"@en ;
+    skos:definition "The assembly that brings fuel gas to one burner: shutoff valves, sediment trap, regulator, safety shutoff valve, pressure switches, gauge and trim valve, in that order from the wall."@en .
+
+hotshop:Manual_Gas_Shutoff_Valve a owl:Class ;
+    rdfs:subClassOf brick:Gas_Valve ;
+    rdfs:label "Manual gas shutoff valve"@en ;
+    skos:definition "A hand-operated, lockable valve that isolates a gas line: at the appliance, at the wall, and the emergency shutoff by the door."@en .
+
+hotshop:Safety_Shutoff_Valve a owl:Class ;
+    rdfs:subClassOf brick:Gas_Valve ;
+    rdfs:label "Safety shutoff valve"@en ;
+    skos:altLabel "solenoid valve"@en ;
+    skos:definition "An electrically operated, normally closed gas valve that is open only while the flame safeguard holds it open."@en .
+
+hotshop:Gas_Trim_Valve a owl:Class ;
+    rdfs:subClassOf brick:Gas_Valve ;
+    rdfs:label "Gas trim valve"@en ;
+    skos:altLabel "needle valve"@en ;
+    skos:definition "A hand valve that sets the gas rate to the burner once the train is open."@en .
+
+# ---- Parts: the chamber ----------------------------------------------------
+
+hotshop:Crucible a owl:Class ;
+    rdfs:subClassOf brick:Tank ;
+    rdfs:label "Crucible"@en ;
+    skos:altLabel "pot"@en ;
+    skos:definition "The vessel that holds molten glass in a pot furnace; invested fused silica or clay, replaced on a schedule."@en .
+
+hotshop:Chamber_Door a owl:Class ;
+    rdfs:subClassOf brick:Equipment ;
+    rdfs:label "Chamber door"@en ;
+    skos:definition "A door or lid that closes a heated chamber: the furnace gathering door, a glory hole's half-moon doors, an annealer's door. It may carry an interlock switch or an actuator."@en .
+
+hotshop:Canopy_Hood a owl:Class ;
+    rdfs:subClassOf brick:Fume_Hood ;
+    rdfs:label "Canopy hood"@en ;
+    skos:definition "An open canopy hood over hot equipment that captures heat and combustion products, as distinct from an enclosed laboratory fume hood."@en .
+
+hotshop:Air_Compressor a owl:Class ;
+    rdfs:subClassOf brick:Equipment ;
+    rdfs:label "Air compressor"@en ;
+    skos:definition "A compressor and receiver that supply compressed air for door cylinders and tools. Not a Brick Compressor, which compresses refrigerant."@en .
+
+# ---- Substances (instances, like Brick's own) ------------------------------
+
+hotshop:Propane a brick:Substance ;
+    rdfs:label "Propane"@en ;
+    skos:altLabel "LP gas"@en ;
+    skos:broader brick:Gas ;
+    skos:definition "Liquefied petroleum gas, delivered from a tank through two stages of regulation; 2,500 BTU per cubic foot, specific gravity 1.52."@en .
+
+hotshop:Combustion_Air a brick:Substance ;
+    rdfs:label "Combustion air"@en ;
+    skos:broader brick:Air ;
+    skos:definition "Air a blower delivers to a burner."@en .
+
+hotshop:Flue_Gas a brick:Substance ;
+    rdfs:label "Flue gas"@en ;
+    skos:broader brick:Gas ;
+    skos:definition "The products of combustion leaving a furnace flue or a glory hole's door opening into the hood."@en .
+
+hotshop:Compressed_Air a brick:Substance ;
+    rdfs:label "Compressed air"@en ;
+    skos:broader brick:Air ;
+    skos:definition "Air under pressure for cylinders and tools."@en .
+
+hotshop:Molten_Glass a brick:Substance ;
+    rdfs:label "Molten glass"@en ;
+    skos:broader brick:Liquid ;
+    skos:definition "Glass held above its working temperature in a furnace."@en .
+
+# ---- Points ------------------------------------------------------------------
+
+hotshop:Flame_Status a owl:Class ;
+    rdfs:subClassOf brick:Status ;
+    rdfs:label "Flame status"@en ;
+    skos:definition "Whether the flame safeguard currently proves flame."@en .
+
+hotshop:Glass_Temperature_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Temperature_Sensor ;
+    rdfs:label "Glass temperature sensor"@en ;
+    skos:definition "Temperature of the glass itself, from a thermocouple in or at the melt."@en .
+
+hotshop:Crown_Temperature_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Temperature_Sensor ;
+    rdfs:label "Crown temperature sensor"@en ;
+    skos:definition "Temperature of the furnace chamber above the pot, where the control and limit thermocouples usually sit."@en .
+
+hotshop:Chamber_Temperature_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Temperature_Sensor ;
+    rdfs:label "Chamber temperature sensor"@en ;
+    skos:definition "Temperature inside a kiln or glory hole chamber."@en .
+
+hotshop:Segment_Temperature_Setpoint a owl:Class ;
+    rdfs:subClassOf brick:Temperature_Setpoint ;
+    rdfs:label "Segment temperature setpoint"@en ;
+    skos:definition "The target temperature of one segment of a firing schedule."@en .
+
+hotshop:Ramp_Rate_Parameter a owl:Class ;
+    rdfs:subClassOf brick:Temperature_Parameter ;
+    rdfs:label "Ramp rate parameter"@en ;
+    skos:definition "The rate of temperature change for one segment of a firing schedule, in degrees per hour."@en .
+
+hotshop:Hold_Time_Parameter a owl:Class ;
+    rdfs:subClassOf brick:Parameter ;
+    rdfs:label "Hold time parameter"@en ;
+    skos:definition "How long one segment of a firing schedule holds at its temperature."@en .
+
+hotshop:Firing_Schedule a owl:Class ;
+    rdfs:subClassOf brick:Point_Collection ;
+    rdfs:label "Firing schedule"@en ;
+    skos:altLabel "annealing schedule"@en, "programme"@en ;
+    skos:definition "The ordered segments of ramps and holds a kiln controller runs, as a collection of Schedule_Segments (rec:includes), each numbered with hotshop:segmentNumber."@en .
+
+hotshop:Schedule_Segment a owl:Class ;
+    rdfs:subClassOf brick:Point_Collection ;
+    rdfs:label "Schedule segment"@en ;
+    skos:definition "One segment of a firing schedule: its Segment_Temperature_Setpoint, Ramp_Rate_Parameter and Hold_Time_Parameter (rec:includes)."@en .
+
+hotshop:segmentNumber a owl:DatatypeProperty ;
+    rdfs:label "Segment number"@en ;
+    rdfs:domain hotshop:Schedule_Segment ;
+    rdfs:range xsd:integer ;
+    skos:definition "The position of a segment in its firing schedule, from 1."@en .
+
+# ---- Relationships -----------------------------------------------------------
+
+# declared the way Brick declares its own relationships: a brick:Relationship, not a sub-property of it
+hotshop:interlocks a owl:ObjectProperty, brick:Relationship ;
+    rdfs:label "Interlocks"@en ;
+    skos:definition "The subject's switch, alarm or controller opens the object's safety circuit: a door switch interlocks the contactor, an air proving switch interlocks the safety shutoff valve, an exhaust fan interlocks the gas equipment."@en ;
+    owl:inverseOf hotshop:isInterlockedBy .
+
+hotshop:isInterlockedBy a owl:ObjectProperty, brick:Relationship ;
+    rdfs:label "Is interlocked by"@en ;
+    owl:inverseOf hotshop:interlocks .
+
+# ---- Entity properties (values are nodes with brick:value and brick:hasUnit,
+#      like Brick's own ratedPowerInput) -------------------------------------
+
+hotshop:ratedMaximumTemperature a owl:ObjectProperty, brick:EntityProperty ;
+    rdfs:label "Rated maximum temperature"@en ;
+    skos:definition "The highest chamber temperature the equipment is designed to run at."@en .
+
+hotshop:ratedGlassCapacity a owl:ObjectProperty, brick:EntityProperty ;
+    rdfs:label "Rated glass capacity"@en ;
+    skos:definition "The mass of glass a furnace or crucible holds."@en .
+
+hotshop:boreDiameter a owl:ObjectProperty, brick:EntityProperty ;
+    rdfs:label "Bore diameter"@en ;
+    skos:definition "The inside diameter of a round chamber, such as a glory hole."@en .
+
+hotshop:interiorWidth a owl:ObjectProperty, brick:EntityProperty ;
+    rdfs:label "Interior width"@en ;
+    skos:definition "The inside width of a chamber, left to right as seen from the door."@en .
+
+hotshop:interiorDepth a owl:ObjectProperty, brick:EntityProperty ;
+    rdfs:label "Interior depth"@en ;
+    skos:definition "The inside depth of a chamber, door to back wall."@en .
+
+hotshop:interiorHeight a owl:ObjectProperty, brick:EntityProperty ;
+    rdfs:label "Interior height"@en ;
+    skos:definition "The inside height of a chamber, floor to crown or lid."@en .
+
+hotshop:thermocoupleType a owl:ObjectProperty, brick:EntityProperty ;
+    rdfs:label "Thermocouple type"@en ;
+    skos:definition "The letter type of a thermocouple: K, S, R, B, N, T, J or E."@en .
+
+# Value shapes for the properties above, in Brick's style.
+
+hotshop:TemperatureValueShape a sh:NodeShape ;
+    sh:targetObjectsOf hotshop:ratedMaximumTemperature ;
+    sh:property [ sh:path brick:value ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:decimal ] [ sh:datatype xsd:double ] ) ] ,
+                [ sh:path brick:hasUnit ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( unit:DEG_F unit:DEG_C unit:K ) ] .
+
+hotshop:LengthValueShape a sh:NodeShape ;
+    sh:targetObjectsOf hotshop:boreDiameter, hotshop:interiorWidth, hotshop:interiorDepth, hotshop:interiorHeight ;
+    sh:property [ sh:path brick:value ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:decimal ] [ sh:datatype xsd:double ] ) ] ,
+                [ sh:path brick:hasUnit ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( unit:IN unit:FT unit:MilliM unit:CentiM unit:M ) ] .
+
+hotshop:MassValueShape a sh:NodeShape ;
+    sh:targetObjectsOf hotshop:ratedGlassCapacity ;
+    sh:property [ sh:path brick:value ; sh:minCount 1 ; sh:maxCount 1 ;
+                  sh:or ( [ sh:datatype xsd:integer ] [ sh:datatype xsd:decimal ] [ sh:datatype xsd:double ] ) ] ,
+                [ sh:path brick:hasUnit ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( unit:LB unit:KiloGM ) ] .
+
+hotshop:ThermocoupleTypeShape a sh:NodeShape ;
+    sh:targetObjectsOf hotshop:thermocoupleType ;
+    sh:property [ sh:path brick:value ; sh:minCount 1 ; sh:maxCount 1 ; sh:in ( "K" "S" "R" "B" "N" "T" "J" "E" ) ] .
+
+# ---- A first safety profile: shapes a shared model can be checked against ---
+# These say what a described shop must contain, not how to build one. A model
+# that fails them is not wrong; it is incomplete or describes a shop without
+# the safeguard, which is worth knowing when models are compared.
+
+hotshop:BurnerHasSafetyShutoffShape a sh:NodeShape ;
+    sh:targetClass hotshop:Forced_Air_Burner, hotshop:Venturi_Burner ;
+    sh:message "Every main burner should be fed, somewhere upstream, by a Safety_Shutoff_Valve and a Manual_Gas_Shutoff_Valve."@en ;
+    sh:property [ sh:path [ sh:oneOrMorePath [ sh:inversePath brick:feeds ] ] ;
+                  sh:qualifiedValueShape [ sh:class hotshop:Safety_Shutoff_Valve ] ; sh:qualifiedMinCount 1 ] ,
+                [ sh:path [ sh:oneOrMorePath [ sh:inversePath brick:feeds ] ] ;
+                  sh:qualifiedValueShape [ sh:class hotshop:Manual_Gas_Shutoff_Valve ] ; sh:qualifiedMinCount 1 ] .
+
+hotshop:GasEquipmentHasFlameSafeguardShape a sh:NodeShape ;
+    sh:targetClass hotshop:Gas_Glass_Furnace, hotshop:Glory_Hole ;
+    sh:message "Gas-fired glass equipment should have a Flame_Safeguard among its parts."@en ;
+    sh:property [ sh:path brick:hasPart ; sh:qualifiedValueShape [ sh:class hotshop:Flame_Safeguard ] ; sh:qualifiedMinCount 1 ] .
+
+hotshop:ElectricChamberHasHighLimitShape a sh:NodeShape ;
+    sh:targetClass hotshop:Electric_Glass_Furnace, hotshop:Kiln ;
+    sh:message "An electrically heated chamber should have an independent High_Limit_Controller among its parts."@en ;
+    sh:property [ sh:path brick:hasPart ; sh:qualifiedValueShape [ sh:class hotshop:High_Limit_Controller ] ; sh:qualifiedMinCount 1 ] .
