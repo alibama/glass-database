@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build the equipment — Glass Database</title>
+<meta name="description" content="Parts lists and build notes for a do-it-yourself glass furnace, annealer and glory hole, with the electrical service (single-phase or three-phase) and the fuel (natural gas or propane) as options, and the sizing arithmetic shown.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,300..500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/paper.css">
+<script src="/site.js"></script>
+<style>
+  .intro h1{font-size:clamp(2.4rem,6vw,4.6rem);line-height:1;margin:1rem 0 1.4rem;font-weight:320}
+  .opts{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem;margin:1.4rem 0}
+  .opts fieldset{border:1px solid var(--rule);padding:1rem 1.1rem;margin:0;background:var(--paper-2)}
+  .opts legend{font:500 11px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--red);padding:0 .4rem}
+  .opts label{display:block;font-size:15px;color:var(--ink);margin:.35rem 0;cursor:pointer}
+  .opts label small{display:block;color:var(--muted);font-size:12.5px;margin-left:1.5rem}
+  .opts input{margin-right:.5rem}
+  table.bom{width:100%;border-collapse:collapse;font-size:14px;margin:0 0 1.4rem;border-top:1px solid var(--ink)}
+  table.bom th{font:500 11px/1.4 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);text-align:left;padding:.55rem .5rem;border-bottom:1px solid var(--rule);vertical-align:bottom}
+  table.bom td{padding:.5rem .5rem;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-2)}
+  table.bom td:first-child{color:var(--ink)}
+  table.bom td.num,table.bom th.num{text-align:right;font-family:var(--mono);font-size:13px;white-space:nowrap}
+  table.bom tr.sum td{font-weight:600;color:var(--ink);border-bottom:2px solid var(--ink)}
+  .eq{border-top:1px solid var(--ink);padding-top:1.6rem;margin-top:1rem}
+  .eq h3{font-family:var(--serif);font-weight:350;font-size:1.5rem;margin:1.6rem 0 .6rem}
+  figure.diagram{margin:1.2rem 0 1.6rem}
+  figure.diagram img{width:100%;height:auto;mix-blend-mode:multiply;border:1px solid var(--rule);background:#fff}
+  figure.diagram figcaption{margin-top:.6rem;color:var(--muted);font-size:13px}
+  .design dt{font:500 11px/1.5 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.7rem}
+  .design dd{margin:0;color:var(--ink-2);font-size:15px}
+  .notes li{margin:.5rem 0;color:var(--ink-2)}
+  .total{font:500 13px/1.6 var(--mono);color:var(--ink);background:var(--paper-2);border:1px solid var(--rule);padding:.8rem 1rem;margin:.4rem 0 1.4rem}
+  .csvbtn{font:500 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:var(--paper);border:1px solid var(--ink);padding:.6rem .9rem;cursor:pointer}
+  .csvbtn:hover{background:var(--ink);color:var(--paper)}
+  .refs{font-size:15px;color:var(--ink-2)}.refs a{color:var(--red)}
+  @media (max-width:980px){.opts{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site">
+ <nav class="nav wrap" aria-label="Primary">
+  <a class="brand" href="/">Glass <i>Database</i></a>
+  <ul id="menu" data-nav data-active="glassid"></ul>
+  <div class="right"><span id="chip" class="signin gdb-chip" aria-live="polite"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>
+ </nav>
+</header>
+<div class="wrap">
+ <nav class="subnav" aria-label="Glass ID">
+  <span class="crumb">Glass ID</span>
+  <a href="/fingerprint/enroll.html">Register Your Piece</a>
+  <a href="/fingerprint/verify.html">Check a Piece</a>
+  <a href="/splat.html">3D Photo</a>
+  <a href="/fingerprint/capture-mat.pdf">Photo Mat</a>
+  <a href="/shop.html">Studio docs</a>
+  <a href="/shop-costs.html">Studio Cost Calculator</a>
+  <a href="/shop-build.html" class="on" aria-current="page">Build the equipment</a>
+ </nav>
+</div>
+<main id="main">
+
+<section class="hero intro">
+ <div class="wrap">
+  <p class="label"><span class="n">№ 07</span> Studio docs · Build the equipment</p>
+  <h1>A furnace, an annealer and a glory hole, <em>part by part.</em></h1>
+  <p class="lede" id="preface">Loading the parts lists…</p>
+  <p class="note"><strong>Safety and code.</strong> Nothing on this page is an engineering drawing or a permit set.
+     Gas trains follow the National Fuel Gas Code (NFPA 54) and the furnace standard (NFPA 86); feeders and
+     controls follow the National Electrical Code; both are installed and inspected by licensed people to the
+     edition in force where you build. The amperages, orifice drills and pipe sizes here are the design figures
+     for those people to check, with the arithmetic shown beside them.</p>
+  <div class="btns"><a class="btn btn--line" href="/SHOP-BUILD.md">The whole document as one file →</a><a class="btn btn--line" href="/shop-costs.html">Estimate running costs →</a></div>
+ </div>
+</section>
+
+<section class="s" aria-labelledby="h-options">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">01</span> Your options</p>
+   <div><h2 id="h-options">Pick the service and <em>the fuel.</em></h2>
+    <p class="lede">Every list below filters to your choices; the sizing tables recompute. The parts that do not depend on a choice stay put.</p></div></div>
+  <div class="opts" id="opts"></div>
+  <p class="note">A 208 V single-phase building (two legs of a 208 V wye) uses the single-phase parts with the 208 V arithmetic: about 13% more current for the same power.</p>
+ </div>
+</section>
+
+<section class="s alt" aria-labelledby="h-sizing">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">02</span> Sizing</p>
+   <div><h2 id="h-sizing">The arithmetic the parts lists <em>rest on.</em></h2>
+    <p class="lede">Branch circuits at 125% of a continuous load; furnace element strings chosen so new elements run below line voltage and old ones still reach full power; annealer coils kept under 22 W/in²; burner orifices from Q = 1658.5 · A · 0.9 · √(h ÷ SG); gas pipe from the code's low-pressure table.</p></div></div>
+  <div id="sizing"></div>
+ </div>
+</section>
+
+<div id="equipment"></div>
+
+<section class="s alt" aria-labelledby="h-shared">
+ <div class="wrap">
+  <div class="s-head"><p class="label"><span class="n">06</span> Shared</p>
+   <div><h2 id="h-shared">What the shop <em>provides to all three.</em></h2></div></div>
+  <div id="shared"></div>
+  <p><button class="csvbtn" id="csv">Download the selected parts as CSV</button></p>
+  <p class="refs" style="margin-top:1.6rem">Reference: <a href="/SHOP-BUILD.md">the whole document</a> ·
+     <a href="/shop-build/bom.json">the parts as JSON</a> ·
+     <a href="/SHOP-PARTS.md">manufacturers to look at for controls and elements</a> ·
+     <a href="/shop.html">documenting the shop you build</a>.</p>
+ </div>
+</section>
+</main>
+<footer>
+ <div class="wrap">
+  <div class="fgrid">
+   <div><p class="label"><span class="n">№ 10</span> Come say hi</p><h2 style="margin:1rem 0">A record kept by the field, <em>for the field.</em></h2>
+    <p>Nothing is published until it’s reviewed; anything can be corrected or removed on request.</p></div>
+   <div><p class="label">Find</p><ul><li><a href="/explore/">Directory</a></li><li><a href="/graph.html">Connections</a></li><li><a href="/studios.html">Map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div>
+   <div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div>
+   <div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div>
+   <div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div>
+  </div>
+  <div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div>
+ </div>
+</footer>
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  const money = n => n.toLocaleString();
+  const WIRE_ORDER = ["14","12","10","8","6","4","3","2","1","1/0","2/0","3/0","4/0"];
+  const WIRE_DIA = {"10":0.1019,"12":0.0808,"13":0.072,"14":0.0641,"16":0.0508};
+  const SVG = {furnace:"furnace-section.svg", annealer:"annealer-section.svg", gloryhole:"gloryhole-section.svg"};
+  let BOM = null, choice = {phase:"1ph240", fuel:"ng", furnace_heat:"electric"};
+
+  // ---- the same arithmetic as scripts/build_shop_build.py ----
+  const amps = (kw, v, ph) => ph === 1 ? kw*1000/v : kw*1000/(v*Math.sqrt(3));
+  const breaker = a => { const need = a*1.25; for (const b of BOM.constants.breaker_sizes) if (b >= need) return b; return 250; };
+  const wire = b => { const amp = BOM.constants.copper_ampacity_75c, cap = BOM.constants.small_conductor_cap;
+    for (const g of WIRE_ORDER) { const c = Math.min(amp[g], cap[g] || 1e9); if (c >= b) return g; } return "4/0"; };
+  function orifice(btuh, fuel){ const c = BOM.constants; const cfh = btuh/fuel.btu_per_cuft;
+    const area = cfh/(c.orifice_coefficient*c.orifice_discharge*Math.sqrt(fuel.manifold_inwc/fuel.sg));
+    const dia = Math.sqrt(4*area/Math.PI); const dr = c.drills;
+    const above = dr.find(d => d[1] >= dia) || dr[dr.length-1]; const below = [...dr].reverse().find(d => d[1] < dia) || dr[0];
+    return {cfh, dia, above, below}; }
+  function pipeSize(cfh, len){ const t = BOM.constants.ng_pipe_cfh; let col = t.lengths_ft.findIndex(L => L >= len); if (col < 0) col = t.lengths_ft.length-1;
+    for (const s of ["3/4","1","1-1/4","1-1/2","2"]) if (t.sizes[s][col] >= cfh) return s; return "over 2"; }
+  function furnaceStrings(sz, ph){ const cfg = sz.configs[ph.id]; const rS = cfg.per_string*sz.element_r_new_ohm; const pS = sz.design_kw*1000/cfg.strings;
+    const v = Math.sqrt(pS*rS), iS = v/rS; const line = ph.phases === 1 ? iS*cfg.strings : iS*Math.sqrt(3);
+    const eol = cfg.strings*ph.volts*ph.volts/(rS*sz.aging_factor_end_of_life)/1000;
+    return {cfg, rS, v, iS, line, pct: v/ph.volts*100, eol}; }
+  function annealerCoils(sz, ph){ const cfg = sz.configs[ph.id]; const ohmft = sz.wire_ohm_per_ft[String(cfg.wire_awg)]; const ft = cfg.coil_ohm/ohmft;
+    const vCoil = ph.id === "1ph240" ? ph.volts/2 : ph.id === "3ph208" ? ph.volts/Math.sqrt(3) : ph.volts;
+    const w = vCoil*vCoil/cfg.coil_ohm; const area = ft*12*Math.PI*WIRE_DIA[String(cfg.wire_awg)];
+    return {cfg, ft, vCoil, w, wpi: w/area, kw: w*cfg.coils/1000}; }
+
+  const applies = o => !o || Object.keys(o).every(k => o[k].includes(choice[k]));
+  const label = (key, id) => (BOM.options[key].find(o => o.id === id) || {label:id}).label;
+  const tags = p => { const o = p.options; if (!o) return "all"; return Object.keys(o).map(k => o[k].map(i => label(k, i)).join(", ")).join("; "); };
+  const usd = p => (p.usd[0] === 0 && p.usd[1] === 0) ? "made or on hand" : money(p.usd[0]) + " to " + money(p.usd[1]);
+
+  function renderOptions(){
+    const titles = {phase:"Electrical service", fuel:"Fuel for the burners", furnace_heat:"How the furnace is heated"};
+    $("#opts").innerHTML = Object.keys(titles).map(k => `<fieldset><legend>${titles[k]}</legend>` +
+      BOM.options[k].map(o => `<label><input type="radio" name="${k}" value="${o.id}" ${choice[k] === o.id ? "checked" : ""}>${esc(o.label)}` +
+        (o.note ? `<small>${esc(o.note)}</small>` : "") + `</label>`).join("") + `</fieldset>`).join("");
+    document.querySelectorAll("#opts input").forEach(i => i.addEventListener("change", e => { choice[e.target.name] = e.target.value; renderAll(); }));
+  }
+
+  function renderSizing(){
+    const ph = BOM.options.phase.find(o => o.id === choice.phase), fuel = BOM.options.fuel.find(o => o.id === choice.fuel);
+    const F = BOM.equipment.find(e => e.id === "furnace"), A = BOM.equipment.find(e => e.id === "annealer"), G = BOM.equipment.find(e => e.id === "gloryhole");
+    const rows = [];
+    if (choice.furnace_heat === "electric") {
+      const s = furnaceStrings(F.sizing.electric, ph);
+      const b1 = breaker(s.line), b2 = breaker(80);
+      rows.push(["Furnace, electric, fed for new elements at " + F.sizing.electric.design_kw + " kW", s.line.toFixed(1), b1, wire(b1)]);
+      if (s.line > 80) rows.push(["Furnace, electric, SCR current limit set to 80 A (about 9 kW until the elements age)", "80.0", b2, wire(b2)]);
+    }
+    const c = annealerCoils(A.sizing, ph); const a = amps(c.kw, ph.volts, ph.phases); const b = breaker(a);
+    rows.push(["Annealer, " + c.kw.toFixed(1) + " kW", a.toFixed(1), b, wire(b)]);
+    let h = `<h3 style="font-family:var(--serif);font-weight:350;margin:.4rem 0 .8rem">Branch circuits on ${esc(ph.label)}</h3>
+      <table class="bom"><tr><th>Equipment</th><th class="num">Continuous amps</th><th class="num">Breaker</th><th class="num">Copper THHN</th></tr>` +
+      rows.map(r => `<tr><td>${esc(r[0])}</td><td class="num">${r[1]}</td><td class="num">${r[2]} A</td><td class="num">${r[3]} AWG</td></tr>`).join("") + `</table>`;
+    if (choice.furnace_heat === "electric") {
+      const sz = F.sizing.electric, s = furnaceStrings(sz, ph);
+      h += `<h3 style="font-family:var(--serif);font-weight:350;margin:1.4rem 0 .8rem">Furnace element strings</h3>
+      <table class="bom"><tr><th>Configuration</th><th class="num">Elements</th><th class="num">String Ω, new</th><th class="num">Volts for ${sz.design_kw} kW, new</th><th class="num">% of line</th><th class="num">Line amps, new</th><th class="num">kW at full voltage, end of life (${sz.aging_factor_end_of_life}×)</th><th>SCR</th></tr>
+      <tr><td>${esc(s.cfg.label)}</td><td class="num">${s.cfg.strings*s.cfg.per_string}</td><td class="num">${s.rS.toFixed(2)}</td><td class="num">${s.v.toFixed(0)} V</td><td class="num">${s.pct.toFixed(0)}%</td><td class="num">${s.line.toFixed(0)} A</td><td class="num">${s.eol.toFixed(1)} kW</td><td>${esc(s.cfg.scr)}</td></tr></table>
+      <p class="note">Example element resistance ${sz.element_r_new_ohm} Ω new: ${esc(sz.element_r_new_note)}.</p>`;
+    } else {
+      const g = F.sizing.gas;
+      for (const [what, btu] of [["Gas furnace at full fire", g.max_btuh], ["Gas furnace at idle", g.idle_btuh]]) {
+        const o = orifice(btu, fuel);
+        rows.push([what, btu, o]);
+      }
+    }
+    h += `<h3 style="font-family:var(--serif);font-weight:350;margin:1.4rem 0 .8rem">Annealer coils</h3>
+      <table class="bom"><tr><th>Configuration</th><th class="num">Coils</th><th class="num">Ω each</th><th class="num">Wire</th><th class="num">Feet per coil</th><th class="num">Feet total</th><th class="num">Volts per coil</th><th class="num">Watts per coil</th><th class="num">W/in²</th><th class="num">Total kW</th></tr>
+      <tr><td>${esc(c.cfg.label)}</td><td class="num">${c.cfg.coils}</td><td class="num">${c.cfg.coil_ohm}</td><td class="num">${c.cfg.wire_awg} AWG</td><td class="num">${c.ft.toFixed(0)}</td><td class="num">${(c.ft*c.cfg.coils).toFixed(0)}</td><td class="num">${c.vCoil.toFixed(0)}</td><td class="num">${c.w.toFixed(0)}</td><td class="num">${c.wpi.toFixed(1)}</td><td class="num">${c.kw.toFixed(1)}</td></tr></table>`;
+    const burners = [["Glory hole at full fire", G.sizing.max_btuh], ["Glory hole at idle", G.sizing.idle_btuh]];
+    if (choice.furnace_heat === "gas") burners.push(["Gas furnace at full fire", F.sizing.gas.max_btuh], ["Gas furnace at idle", F.sizing.gas.idle_btuh]);
+    h += `<h3 style="font-family:var(--serif);font-weight:350;margin:1.4rem 0 .8rem">Burner orifices on ${esc(fuel.label)} at ${fuel.manifold_inwc} in WC</h3>
+      <table class="bom"><tr><th>Burner</th><th class="num">BTU/h</th><th class="num">CFH</th><th class="num">Orifice diameter</th><th class="num">Drill</th><th class="num">One below</th></tr>` +
+      burners.map(([what, btu]) => { const o = orifice(btu, fuel); return `<tr><td>${esc(what)}</td><td class="num">${money(btu)}</td><td class="num">${o.cfh.toFixed(0)}</td><td class="num">${o.dia.toFixed(3)} in</td><td class="num">${o.above[0]} (${o.above[1].toFixed(4)} in)</td><td class="num">${o.below[0]}</td></tr>`; }).join("") + `</table>`;
+    const total = burners.reduce((s, [, b], i) => s + (i % 2 === 0 ? b : 0), 0);
+    const cfh = total/fuel.btu_per_cuft;
+    if (fuel.id === "ng") {
+      h += `<p class="note">The burners above at full fire total ${money(total)} BTU/h, ${cfh.toFixed(0)} CFH of natural gas: a ${pipeSize(cfh, 40)} in Schedule 40 line to 40 ft, ${pipeSize(cfh, 100)} in to 100 ft, at 0.5 in WC drop (National Fuel Gas Code low-pressure table; the fitter verifies against the edition in force and the meter's capacity).</p>`;
+    } else {
+      h += `<p class="note">The burners above at full fire total ${money(total)} BTU/h of propane. ${esc(BOM.constants.propane_vaporization_note)}</p>`;
+    }
+    $("#sizing").innerHTML = h;
+  }
+
+  function partsTable(section){
+    const parts = section.parts.filter(p => applies(p.options));
+    if (!parts.length) return "";
+    let lo = 0, hi = 0;
+    const body = parts.map(p => { lo += p.usd[0]; hi += p.usd[1];
+      const spec = esc(p.spec || "") + (p.note ? (p.spec ? ". " : "") + esc(p.note) : "");
+      return `<tr><td>${esc(p.item)}</td><td class="num">${esc(p.qty)} ${esc(p.unit)}</td><td>${spec}</td><td>${esc(tags(p))}</td><td>${esc(p.where || "")}</td><td class="num">${esc(usd(p))}</td></tr>`; }).join("");
+    return `<h3>${esc(section.name)}</h3><table class="bom"><tr><th>Item</th><th class="num">Qty</th><th>Spec</th><th>Applies to</th><th>Where</th><th class="num">USD, planning</th></tr>${body}
+      <tr class="sum"><td colspan="5">Section planning total</td><td class="num">${money(lo)} to ${money(hi)}</td></tr></table>`;
+  }
+
+  function totals(eq){ let lo = 0, hi = 0; for (const s of eq.sections) { if (!applies(s.options)) continue; for (const p of s.parts) if (applies(p.options)) { lo += p.usd[0]; hi += p.usd[1]; } } return [lo, hi]; }
+
+  function renderEquipment(){
+    const nums = {furnace:"03", annealer:"04", gloryhole:"05"};
+    $("#equipment").innerHTML = BOM.equipment.map((e, i) => {
+      const [lo, hi] = totals(e);
+      const design = Object.entries(e.design).map(([k, v]) => `<dt>${esc(k.replace(/_/g, " "))}</dt><dd>${esc(v)}</dd>`).join("");
+      const sections = e.sections.filter(s => applies(s.options)).map(partsTable).join("");
+      const notes = e.build_notes.map(n => `<li>${esc(n)}</li>`).join("");
+      return `<section class="s ${i % 2 ? "alt" : ""}" aria-labelledby="h-${e.id}"><div class="wrap">
+        <div class="s-head"><p class="label"><span class="n">${nums[e.id]}</span> ${esc(e.name.split(",")[0])}</p>
+         <div><h2 id="h-${e.id}">${esc(e.name)}</h2><p class="lede">${esc(e.summary)}</p></div></div>
+        <figure class="diagram"><img src="/shop-diagrams/${SVG[e.id]}" alt="Section drawing of the ${esc(e.name.split(",")[0].toLowerCase())} with its layers and dimensions labelled."><figcaption>Schematic section, not to scale; the layers and the dimensions are the ones in the design table.</figcaption></figure>
+        <div class="eq"><h3>Design, as drawn</h3><dl class="design">${design}</dl></div>
+        <div class="eq">${sections}
+        <p class="total">Planning total for the parts shown with your options: ${money(lo)} to ${money(hi)} USD. Fabrication labour is yours; prices are 2026 ranges from the kinds of suppliers named.</p></div>
+        <div class="eq"><h3>Build notes</h3><ol class="notes">${notes}</ol></div>
+       </div></section>`;
+    }).join("");
+  }
+
+  function renderShared(){ $("#shared").innerHTML = BOM.shared.sections.filter(s => applies(s.options)).map(partsTable).join(""); }
+
+  function csv(){
+    const rows = [["Equipment", "Section", "Item", "Qty", "Unit", "Spec", "Note", "Applies to", "Where", "USD low", "USD high"]];
+    for (const e of BOM.equipment.concat([BOM.shared])) for (const s of e.sections) { if (!applies(s.options)) continue;
+      for (const p of s.parts) if (applies(p.options)) rows.push([e.name, s.name, p.item, p.qty, p.unit, p.spec || "", p.note || "", tags(p), p.where || "", p.usd[0], p.usd[1]]); }
+    const text = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(",")).join("\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], {type: "text/csv"}));
+    a.download = `glass-shop-build-${choice.phase}-${choice.fuel}-${choice.furnace_heat}.csv`; a.click();
+  }
+
+  function renderAll(){ renderSizing(); renderEquipment(); renderShared(); }
+
+  fetch("/shop-build/bom.json").then(r => r.json()).then(b => { BOM = b; $("#preface").textContent = b.preface; renderOptions(); renderAll(); $("#csv").addEventListener("click", csv); })
+    .catch(() => { $("#preface").textContent = "The parts list could not be loaded; the whole document is at /SHOP-BUILD.md."; });
+
+  const nav = document.querySelector('.nav'), mb = document.querySelector('.menu-btn');
+  mb.addEventListener('click', () => { const o = nav.classList.toggle('open'); mb.setAttribute('aria-expanded', o); });
+  if (window.GDB) { GDB.chip('#chip', {compact: true}); }
+})();
+</script>
+</body>
+</html>

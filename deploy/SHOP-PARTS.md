@@ -32,3 +32,8 @@ supply house — and gas/electrical *installation* from a licensed contractor.
 
 Publish your filled-in BOM with your shop (Explore → Add → Shop) so the next person
 with the same furnace can find the part in one search.
+
+**Building rather than fixing?** `SHOP-BUILD.md` (and `/shop-build.html`, with option
+toggles) is the complete parts list for a do-it-yourself 100 lb furnace, a 30 × 24 × 24 in
+annealer and a 16 in glory hole, with single- or three-phase service and natural gas or
+propane as options and the sizing arithmetic shown.
