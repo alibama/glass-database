@@ -1,0 +1,2398 @@
+{
+  "title": "Build the equipment: a furnace, an annealer and a glory hole",
+  "version": "1, 5 November 2026",
+  "preface": "Three pieces of studio equipment drawn up for a do-it-yourself build by someone who can weld and fabricate, with every part that goes into them. Options cover the electrical service (240 V single-phase, the two-hot-leg service most buildings have, or three-phase at 208 V or 240 V) and the fuel (natural gas or propane for the glory hole and for the gas furnace). The designs follow the shop this site documents (an electric furnace on silicon-carbide elements with an SCR, a gas glory hole on forced air, electric annealers on a ramp-soak controller) and the published do-it-yourself lineage of studio glass equipment. Quantities, sizes and prices are planning figures; every gas and high-current electrical connection is designed and inspected by licensed people to the code in force where you build.",
+  "options": {
+    "phase": [
+      {
+        "id": "1ph240",
+        "label": "240 V single-phase",
+        "volts": 240,
+        "phases": 1,
+        "note": "the ordinary two-hot-leg service (often called two-phase in a shop; it is one phase split in two); 208 V single-phase buildings follow the same parts with the 208 V arithmetic"
+      },
+      {
+        "id": "3ph208",
+        "label": "208 V three-phase wye",
+        "volts": 208,
+        "phases": 3,
+        "note": "120/208 V, four-wire; coils and element strings can use 120 V line-to-neutral or 208 V line-to-line"
+      },
+      {
+        "id": "3ph240",
+        "label": "240 V three-phase delta",
+        "volts": 240,
+        "phases": 3,
+        "note": "three-wire delta, common in older industrial buildings; no neutral, so every load is line-to-line"
+      }
+    ],
+    "fuel": [
+      {
+        "id": "ng",
+        "label": "natural gas",
+        "btu_per_cuft": 1000,
+        "sg": 0.6,
+        "manifold_inwc": 7,
+        "note": "low-pressure service at 7 inches of water column at the appliance; a 2 psi service needs a pounds-to-inches regulator at each appliance"
+      },
+      {
+        "id": "lp",
+        "label": "propane",
+        "btu_per_cuft": 2500,
+        "sg": 1.52,
+        "manifold_inwc": 11,
+        "note": "11 inches of water column at the appliance from a two-stage regulator at the tank; tank size is set by vaporization, not by volume"
+      }
+    ],
+    "furnace_heat": [
+      {
+        "id": "electric",
+        "label": "electric, silicon-carbide elements"
+      },
+      {
+        "id": "gas",
+        "label": "gas, forced-air burner"
+      }
+    ]
+  },
+  "constants": {
+    "orifice_coefficient": 1658.5,
+    "orifice_discharge": 0.9,
+    "breaker_sizes": [
+      15,
+      20,
+      25,
+      30,
+      35,
+      40,
+      45,
+      50,
+      60,
+      70,
+      80,
+      90,
+      100,
+      110,
+      125,
+      150,
+      175,
+      200,
+      225,
+      250
+    ],
+    "copper_ampacity_75c": {
+      "14": 20,
+      "12": 25,
+      "10": 35,
+      "8": 50,
+      "6": 65,
+      "4": 85,
+      "3": 100,
+      "2": 115,
+      "1": 130,
+      "1/0": 150,
+      "2/0": 175,
+      "3/0": 200,
+      "4/0": 230
+    },
+    "small_conductor_cap": {
+      "14": 15,
+      "12": 20,
+      "10": 30
+    },
+    "drills": [
+      [
+        "#40",
+        0.098
+      ],
+      [
+        "#36",
+        0.1065
+      ],
+      [
+        "#32",
+        0.116
+      ],
+      [
+        "#30",
+        0.1285
+      ],
+      [
+        "#28",
+        0.1405
+      ],
+      [
+        "#25",
+        0.1495
+      ],
+      [
+        "#22",
+        0.157
+      ],
+      [
+        "#20",
+        0.161
+      ],
+      [
+        "#18",
+        0.1695
+      ],
+      [
+        "#16",
+        0.177
+      ],
+      [
+        "#13",
+        0.185
+      ],
+      [
+        "#11",
+        0.191
+      ],
+      [
+        "#9",
+        0.196
+      ],
+      [
+        "#7",
+        0.201
+      ],
+      [
+        "#5",
+        0.2055
+      ],
+      [
+        "#3",
+        0.213
+      ],
+      [
+        "#1",
+        0.228
+      ],
+      [
+        "A",
+        0.234
+      ],
+      [
+        "C",
+        0.242
+      ],
+      [
+        "E",
+        0.25
+      ],
+      [
+        "G",
+        0.261
+      ],
+      [
+        "I",
+        0.272
+      ],
+      [
+        "K",
+        0.281
+      ],
+      [
+        "M",
+        0.295
+      ],
+      [
+        "O",
+        0.316
+      ],
+      [
+        "Q",
+        0.332
+      ],
+      [
+        "S",
+        0.348
+      ],
+      [
+        "U",
+        0.368
+      ],
+      [
+        "W",
+        0.386
+      ],
+      [
+        "Y",
+        0.404
+      ],
+      [
+        "Z",
+        0.413
+      ]
+    ],
+    "ng_pipe_cfh": {
+      "note": "Schedule 40 steel, natural gas 0.6 specific gravity, 0.5 inch water column drop, from the National Fuel Gas Code sizing table; verify against the edition in force",
+      "lengths_ft": [
+        10,
+        20,
+        40,
+        60,
+        100
+      ],
+      "sizes": {
+        "3/4": [
+          278,
+          190,
+          131,
+          105,
+          80
+        ],
+        "1": [
+          520,
+          357,
+          246,
+          197,
+          150
+        ],
+        "1-1/4": [
+          1070,
+          736,
+          505,
+          406,
+          309
+        ],
+        "1-1/2": [
+          1600,
+          1100,
+          757,
+          608,
+          463
+        ],
+        "2": [
+          3090,
+          2120,
+          1460,
+          1170,
+          891
+        ]
+      }
+    },
+    "propane_vaporization_note": "A tank vaporizes propane only as fast as the air warms its wetted wall. As a planning rule (supplier charts govern): a 120 gal tank half full gives about 100,000 BTU/h at 20 F and 200,000 at 60 F; a 500 gal tank half full about 300,000 at 20 F and 600,000 at 60 F; a 1,000 gal tank roughly double. A gas furnace plus a glory hole in a cold climate is a 1,000 gal tank or a 500 gal tank with an electric vaporizer."
+  },
+  "equipment": [
+    {
+      "id": "furnace",
+      "name": "Furnace, 100 lb invested crucible",
+      "summary": "A square, top-and-front-loading pot furnace: a 100 lb invested (fused-silica) crucible on a cast plinth inside a chamber 22 by 22 inches in plan and 30 inches tall, 2,800 F insulating firebrick hot face backed by fiber board and blanket, a cast refractory floor that can hold a lost pot, a 6 by 8 inch gathering port with a counterweighted cast door, and either four silicon-carbide elements through the side walls above the pot or a single forced-air burner firing tangentially at floor level with a damped flue in the lid. It melts and holds 100 lb of soda-lime at 2,100 to 2,150 F, fines at 2,300 F, and idles on about 6 to 8 kW or 70 to 100 thousand BTU/h when well built.",
+      "design": {
+        "crucible": "invested fused-silica crucible, 100 lb, about 12 in inside diameter, 14 in tall, 14.5 in rim outside diameter; confirm the maker's drawing before casting the plinth",
+        "chamber": "22 x 22 in plan, 30 in tall; the crucible rim 18 in above the floor slab, the port sill 2 in above the rim, the elements 2 and 5 in above it; 3.5 in clearance pot to wall",
+        "walls": "2.5 in K-28 insulating firebrick (2,800 F) hot face, twelve courses, 2 in 2,300 F ceramic fiber board, 1 in 8 lb ceramic fiber blanket against the steel",
+        "floor": "3 in dense 3,000 F castable slab with a 1 in raised dam at the edges, over 2.5 in K-26 firebrick and 1 in fiber board; a 1 in drain notch at the front corner so a lost pot runs to a steel catch tray, not into the brick",
+        "plinth": "cast 3,000 F dense castable disk, 15 in diameter, 4 in tall, with three 1 in setting feet so the pot sits level and air moves under the floor skin",
+        "roof": "removable lid: 3 in cast 3,000 F castable slab in a 2 in angle pan, 2 in fiber board above it, lifting eyes; the gas option casts a 3 in flue with a sliding damper plate through it",
+        "port": "6 in wide x 8 in tall gathering port in the front wall, sill 2 in above the pot rim; a 3 in thick cast castable door block in a 1/4 in steel channel frame on a 1 in pivot pin, counterweighted to hang open or fall shut",
+        "shell": "2 x 2 x 3/16 in angle frame, 12 gauge skin, 1 in standoff air gap between skin and blanket at the sides for a cooler shell, legs 8 in, lifting eyes at the four top corners",
+        "outside": "about 36 in wide, 36 in deep, 50 in tall to the lid top on 8 in legs, about 1,300 lb lined",
+        "electric": "four silicon-carbide elements, 1 in diameter, 22 in hot zone, horizontal through the side walls 2 in above the pot rim (two per side), in two series pairs in parallel on single-phase or three series pairs in delta on three-phase, fed by a phase-angle SCR with a current limit, a safety contactor, a high-limit controller and a door interlock",
+        "gas": "one forced-air burner of 120,000 to 200,000 BTU/h entering tangentially 3 in above the floor at the back corner, a cast burner block, a 3 in flue in the lid with a damper, a flame safeguard with a UV scanner, a pilot, and a gas train to the National Fuel Gas Code"
+      },
+      "sizing": {
+        "electric": {
+          "design_kw": 12,
+          "idle_kw": 7,
+          "element_count": 4,
+          "element_r_new_ohm": 1.4,
+          "element_r_new_note": "example value for a 1 in x 22 in hot zone silicon-carbide element; read the nominal resistance and tolerance from the element maker's sheet and recompute",
+          "aging_factor_end_of_life": 3,
+          "configs": {
+            "1ph240": {
+              "label": "two series pairs in parallel (2S2P)",
+              "strings": 2,
+              "per_string": 2,
+              "scr": "single-phase phase-angle SCR, 100 A, with current limit set to 100 A"
+            },
+            "3ph208": {
+              "label": "six elements, three series pairs in delta",
+              "strings": 3,
+              "per_string": 2,
+              "scr": "three-phase phase-angle SCR, 80 A, with current limit"
+            },
+            "3ph240": {
+              "label": "six elements, three series pairs in delta",
+              "strings": 3,
+              "per_string": 2,
+              "scr": "three-phase phase-angle SCR, 80 A, with current limit"
+            }
+          }
+        },
+        "gas": {
+          "max_btuh": 180000,
+          "idle_btuh": 90000,
+          "blower_cfm": 150,
+          "flue_in": 3
+        }
+      },
+      "sections": [
+        {
+          "name": "Steel and fabrication",
+          "parts": [
+            {
+              "item": "Angle, 2 x 2 x 3/16 in, A36",
+              "qty": 56,
+              "unit": "ft",
+              "spec": "frame: four 52 in uprights, top and bottom rectangles 36 x 36, four mid rails, lid pan 36 x 36, door frame stock",
+              "usd": [
+                220,
+                300
+              ],
+              "where": "steel yard",
+              "note": "cut list in the build notes; order 10 percent over"
+            },
+            {
+              "item": "Sheet, 12 gauge (0.105 in) mild steel",
+              "qty": 2,
+              "unit": "4 x 8 ft sheets",
+              "spec": "skin for four sides and the lid top; the floor pan from the drop",
+              "usd": [
+                240,
+                320
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Plate, 1/4 in, 12 x 24 in",
+              "qty": 1,
+              "unit": "piece",
+              "spec": "door channel frame, counterweight arm plates, pivot bosses, lifting eye pads",
+              "usd": [
+                40,
+                60
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Flat bar, 1/4 x 2 in",
+              "qty": 10,
+              "unit": "ft",
+              "spec": "port surround, lid pan lip, element guard brackets",
+              "usd": [
+                25,
+                40
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Round bar, 1 in, 1045 or 4140",
+              "qty": 2,
+              "unit": "ft",
+              "spec": "door pivot pin and counterweight arm pivot",
+              "usd": [
+                20,
+                35
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Pipe, 2 in schedule 40",
+              "qty": 4,
+              "unit": "ft",
+              "spec": "counterweight arm; also the flue sleeve on the gas option",
+              "usd": [
+                25,
+                40
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Expanded metal, 3/4 in #9, or perforated sheet",
+              "qty": 1,
+              "unit": "4 x 4 ft",
+              "spec": "element terminal guards (electric) or burner guard (gas)",
+              "usd": [
+                50,
+                80
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Lifting eyes, 1/2 in forged, rated 1 ton",
+              "qty": 4,
+              "unit": "each",
+              "spec": "top corners for moving the furnace by hoist",
+              "usd": [
+                30,
+                50
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Leveling feet, 3/4 in threaded, 1,000 lb",
+              "qty": 4,
+              "unit": "each",
+              "usd": [
+                40,
+                70
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Welding consumables",
+              "qty": 1,
+              "unit": "lot",
+              "spec": "ER70S-6 MIG wire or 7018 rod, gas, grinding discs, primer-free high-temperature paint (1,200 F) for the skin",
+              "usd": [
+                80,
+                140
+              ],
+              "where": "welding supply"
+            }
+          ]
+        },
+        {
+          "name": "Refractory and insulation",
+          "parts": [
+            {
+              "item": "Insulating firebrick, K-28 (2,800 F), 9 x 4.5 x 2.5 in",
+              "qty": 160,
+              "unit": "bricks",
+              "spec": "hot-face walls: four walls x twelve courses x three bricks, plus cuts",
+              "usd": [
+                1450,
+                2000
+              ],
+              "where": "refractory distributor or kiln-parts supplier",
+              "note": "K-26 is cheaper and holds up at 2,150 F; K-28 for the element zone and the fining excursions to 2,300 F"
+            },
+            {
+              "item": "Insulating firebrick, K-26 (2,600 F), 9 x 4.5 x 2.5 in",
+              "qty": 40,
+              "unit": "bricks",
+              "spec": "floor backup course under the cast slab, and the lid's brick ring",
+              "usd": [
+                280,
+                400
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Dense castable, 3,000 F, high alumina (60 percent class)",
+              "qty": 6,
+              "unit": "55 lb bags",
+              "spec": "floor slab with dam (3 bags), plinth (1), door block and sill (1), spare and burner block (1)",
+              "usd": [
+                330,
+                480
+              ],
+              "where": "refractory distributor",
+              "note": "mix with the maker's water ratio by weight, vibrate, cure 24 h damp, dry out on the schedule in the build notes"
+            },
+            {
+              "item": "Ceramic fiber board, 2,300 F, 2 in, 24 x 36 in",
+              "qty": 9,
+              "unit": "sheets",
+              "spec": "wall backup (seven), lid (one), floor (one)",
+              "usd": [
+                540,
+                780
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Ceramic fiber blanket, 2,300 F, 8 lb/ft3, 1 in x 24 in x 25 ft",
+              "qty": 1,
+              "unit": "roll",
+              "spec": "against the skin on all sides and under the lid pan",
+              "usd": [
+                110,
+                170
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Fiber rigidizer, colloidal silica",
+              "qty": 1,
+              "unit": "gallon",
+              "spec": "paint every exposed fiber face so it does not shed",
+              "usd": [
+                40,
+                70
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "High-temperature air-set mortar, 3,000 F",
+              "qty": 2,
+              "unit": "gallons",
+              "spec": "thin joints on the insulating firebrick; do not butter thick",
+              "usd": [
+                60,
+                100
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Hard firebrick, super-duty, 9 x 4.5 x 2.5 in",
+              "qty": 8,
+              "unit": "bricks",
+              "spec": "sill and spill curb at the port, shims under the plinth",
+              "usd": [
+                40,
+                70
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Fiber gasket rope, 3/4 in, 2,300 F",
+              "qty": 15,
+              "unit": "ft",
+              "spec": "lid seat and door seat",
+              "usd": [
+                30,
+                50
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Refractory anchors, 310 stainless, 3 in V-anchors",
+              "qty": 24,
+              "unit": "each",
+              "spec": "welded to the lid pan and door frame before casting",
+              "usd": [
+                50,
+                90
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Form materials for casting",
+              "qty": 1,
+              "unit": "lot",
+              "spec": "melamine-faced board, sonotube 15 in for the plinth, wax or release, duct tape, a 3 in pipe plug for the flue (gas option)",
+              "usd": [
+                60,
+                110
+              ],
+              "where": "lumber yard"
+            }
+          ]
+        },
+        {
+          "name": "Heat source: silicon-carbide elements",
+          "options": {
+            "furnace_heat": [
+              "electric"
+            ]
+          },
+          "parts": [
+            {
+              "item": "Silicon-carbide heating element, 1 in diameter, 22 in hot zone, about 36 in overall, with cold ends",
+              "qty": 4,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "1ph240"
+                ]
+              },
+              "spec": "straight rod with cold ends through the walls; order with the maker's terminal straps and clamps; note the nominal resistance on the packing slip, it sets the SCR setpoints",
+              "usd": [
+                1000,
+                1700
+              ],
+              "where": "element maker or kiln-parts distributor",
+              "note": "two spares on the shelf are wise; elements age by resistance and are replaced as a matched set"
+            },
+            {
+              "item": "Silicon-carbide heating element, 1 in diameter, 22 in hot zone, about 36 in overall, with cold ends",
+              "qty": 6,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "3ph208",
+                  "3ph240"
+                ]
+              },
+              "spec": "three series pairs, one pair per phase, through both side walls and the back wall",
+              "usd": [
+                1500,
+                2500
+              ],
+              "where": "element maker or kiln-parts distributor"
+            },
+            {
+              "item": "Element terminal straps, aluminized braid, with clamps",
+              "qty": 12,
+              "unit": "each",
+              "spec": "two per element plus spares; the maker sells them for the element diameter",
+              "usd": [
+                120,
+                200
+              ],
+              "where": "element maker"
+            },
+            {
+              "item": "Alumina element sleeves, 1.25 in bore x 6 in",
+              "qty": 8,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "1ph240"
+                ]
+              },
+              "spec": "one per wall penetration, set in the brick with a loose fit so the element can grow",
+              "usd": [
+                80,
+                140
+              ],
+              "where": "kiln-parts supplier"
+            },
+            {
+              "item": "Alumina element sleeves, 1.25 in bore x 6 in",
+              "qty": 12,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "3ph208",
+                  "3ph240"
+                ]
+              },
+              "usd": [
+                120,
+                200
+              ],
+              "where": "kiln-parts supplier"
+            },
+            {
+              "item": "High-temperature lead wire, 8 AWG nickel, mica and fiberglass insulated",
+              "qty": 30,
+              "unit": "ft",
+              "spec": "from the SCR output terminal block to the element straps, inside the terminal guards",
+              "usd": [
+                120,
+                200
+              ],
+              "where": "kiln-parts supplier"
+            },
+            {
+              "item": "Ceramic standoff insulators and terminal blocks, 600 V, 100 A",
+              "qty": 8,
+              "unit": "each",
+              "spec": "steatite or porcelain, on the shell behind the guards",
+              "usd": [
+                60,
+                110
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Element terminal guard boxes, ventilated",
+              "qty": 2,
+              "unit": "each",
+              "spec": "fabricated from the expanded metal and angle; must stay ventilated, the cold ends run hot",
+              "usd": [
+                0,
+                0
+              ],
+              "where": "made in the shop"
+            }
+          ]
+        },
+        {
+          "name": "Controls and power (electric)",
+          "options": {
+            "furnace_heat": [
+              "electric"
+            ]
+          },
+          "parts": [
+            {
+              "item": "Phase-angle SCR power controller with current limit, single-phase, 100 A, 240 V",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "1ph240"
+                ]
+              },
+              "spec": "4 to 20 mA or 0 to 10 V command, current limit, soft start, heatsink and fan; mount in a ventilated control enclosure",
+              "usd": [
+                1500,
+                2600
+              ],
+              "where": "controls distributor",
+              "note": "the current limit is what lets new, low-resistance elements run on the same feeder as old ones"
+            },
+            {
+              "item": "Phase-angle SCR power controller with current limit, three-phase, 80 A",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "3ph208",
+                  "3ph240"
+                ]
+              },
+              "spec": "three-leg control for a delta load, current limit, soft start",
+              "usd": [
+                2600,
+                4500
+              ],
+              "where": "controls distributor"
+            },
+            {
+              "item": "PID temperature controller, 1/16 DIN, analog output",
+              "qty": 1,
+              "unit": "each",
+              "spec": "type S or K input, 4 to 20 mA output to the SCR, alarm relay, autotune",
+              "usd": [
+                220,
+                420
+              ],
+              "where": "controls distributor",
+              "note": "this site's example shop runs a Novus N480D; Watlow, Fuji and Omega equivalents exist"
+            },
+            {
+              "item": "High-limit controller with independent thermocouple",
+              "qty": 1,
+              "unit": "each",
+              "spec": "latching over-temperature limit that drops the safety contactor at 2,350 F; manual reset",
+              "usd": [
+                150,
+                300
+              ],
+              "where": "controls distributor"
+            },
+            {
+              "item": "Thermocouple, type S (platinum-rhodium), 24 in, in a closed-end alumina protection tube with a ceramic head",
+              "qty": 2,
+              "unit": "each",
+              "spec": "one control, one limit, through the back wall above the pot rim; type K in a protection tube is cheaper and lasts a season at 2,100 F",
+              "usd": [
+                300,
+                600
+              ],
+              "where": "thermocouple maker"
+            },
+            {
+              "item": "Thermocouple extension wire, type S (or K), 20 AWG, high-temperature jacket",
+              "qty": 30,
+              "unit": "ft",
+              "usd": [
+                40,
+                90
+              ],
+              "where": "controls distributor"
+            },
+            {
+              "item": "Safety contactor, 2-pole, 100 A, 240 V coil, definite purpose",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "1ph240"
+                ]
+              },
+              "spec": "ahead of the SCR; opened by the high limit, the door interlock and the emergency stop",
+              "usd": [
+                90,
+                180
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Safety contactor, 3-pole, 80 A, 240 V coil",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "3ph208",
+                  "3ph240"
+                ]
+              },
+              "usd": [
+                120,
+                240
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Door interlock limit switch, roller lever, NEMA 4",
+              "qty": 1,
+              "unit": "each",
+              "spec": "on the gathering door; cuts the element circuit while the door is open, as the example shop does",
+              "usd": [
+                40,
+                90
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Emergency stop, 22 mm, maintained, with legend",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                25,
+                50
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Control transformer, 240 V to 120 V, 250 VA, fused",
+              "qty": 1,
+              "unit": "each",
+              "spec": "powers the controllers, the contactor coil and the pilot lights",
+              "usd": [
+                60,
+                120
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Digital ammeter with current transformer",
+              "qty": 1,
+              "unit": "each",
+              "spec": "on the SCR output; element aging shows up here first",
+              "usd": [
+                40,
+                90
+              ],
+              "where": "controls distributor"
+            },
+            {
+              "item": "Control enclosure, NEMA 12, 24 x 20 x 10 in, with louvers and fan",
+              "qty": 1,
+              "unit": "each",
+              "spec": "the SCR dissipates about 1.5 percent of load as heat; mount it off the furnace, in cool air",
+              "usd": [
+                250,
+                450
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Terminal blocks, DIN rail, fuses, pilot lights, wire duct, labels",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                150,
+                300
+              ],
+              "where": "industrial electrical supply"
+            }
+          ]
+        },
+        {
+          "name": "Electrical feed (electric)",
+          "options": {
+            "furnace_heat": [
+              "electric"
+            ]
+          },
+          "parts": [
+            {
+              "item": "Fused disconnect, 100 A, 2-pole, 240 V, with 100 A class J fuses",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "1ph240"
+                ]
+              },
+              "spec": "within sight of the furnace",
+              "usd": [
+                220,
+                400
+              ],
+              "where": "electrical supply"
+            },
+            {
+              "item": "Fused disconnect, 100 A, 3-pole, 240 V, with 80 A class J fuses",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "3ph208",
+                  "3ph240"
+                ]
+              },
+              "usd": [
+                280,
+                480
+              ],
+              "where": "electrical supply"
+            },
+            {
+              "item": "Branch breaker in the panel",
+              "qty": 1,
+              "unit": "each",
+              "spec": "sized from the sizing table on this page; the furnace is a continuous load",
+              "usd": [
+                60,
+                200
+              ],
+              "where": "electrical supply"
+            },
+            {
+              "item": "Feeder conductors, copper THHN, in conduit",
+              "qty": 1,
+              "unit": "run",
+              "spec": "size from the sizing table; equipment ground to code; the run from panel to disconnect to enclosure",
+              "usd": [
+                200,
+                600
+              ],
+              "where": "electrical supply",
+              "note": "installed by a licensed electrician; the amperage on this page is the design figure the electrician checks"
+            },
+            {
+              "item": "Conduit, fittings, strain reliefs, grounding lugs",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                120,
+                250
+              ],
+              "where": "electrical supply"
+            }
+          ]
+        },
+        {
+          "name": "Heat source: forced-air burner (gas)",
+          "options": {
+            "furnace_heat": [
+              "gas"
+            ]
+          },
+          "parts": [
+            {
+              "item": "Burner body: 1.5 in schedule 40 black pipe, 14 in, with a 1.5 in tee and a centered gas spud",
+              "qty": 1,
+              "unit": "assembly",
+              "spec": "air enters the tee's run from the blower, gas through a 1/4 in pipe nipple down the centre to a drilled orifice spud 2 in behind the nozzle; a 1.5 in to 2 in reducer as the flame retention nozzle",
+              "usd": [
+                60,
+                120
+              ],
+              "where": "plumbing supply, made in the shop"
+            },
+            {
+              "item": "Orifice spud, brass, 1/4 in NPT, drilled",
+              "qty": 3,
+              "unit": "each",
+              "spec": "drill size from the orifice table on this page for the fuel; buy blanks and drill three sizes to tune",
+              "usd": [
+                15,
+                30
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Combustion air blower, forward-curved squirrel cage, 150 CFM at 1 in static, 1/4 hp, 115 V",
+              "qty": 1,
+              "unit": "each",
+              "spec": "with a 4 in inlet, mounted off the furnace on a bracket, a flexible duct and a butterfly air valve at the burner",
+              "usd": [
+                150,
+                350
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Butterfly air valve, 2 in, with locking quadrant",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                40,
+                90
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Burner block, cast 3,000 F castable, 9 in cube with a 2.5 in bore flared to 3.5 in",
+              "qty": 1,
+              "unit": "each",
+              "spec": "cast around a tapered form; sits in the back corner wall, bore tangential to the chamber",
+              "usd": [
+                0,
+                0
+              ],
+              "where": "cast from the castable above"
+            },
+            {
+              "item": "Flue: 3 in bore cast through the lid, 2 in pipe damper plate, 1/4 in",
+              "qty": 1,
+              "unit": "assembly",
+              "spec": "a sliding plate on two studs over the flue; the damper sets the chamber pressure slightly positive",
+              "usd": [
+                30,
+                60
+              ],
+              "where": "made in the shop"
+            },
+            {
+              "item": "Pilot burner, 1/4 in natural-draft, with target",
+              "qty": 1,
+              "unit": "each",
+              "spec": "standing pilot proved by the flame safeguard or by a thermocouple pilot valve",
+              "usd": [
+                60,
+                140
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Spark igniter, 6,000 V transformer, and electrode",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                80,
+                160
+              ],
+              "where": "burner parts supplier"
+            }
+          ]
+        },
+        {
+          "name": "Gas train (gas)",
+          "options": {
+            "furnace_heat": [
+              "gas"
+            ]
+          },
+          "parts": [
+            {
+              "item": "Manual shutoff valve, 3/4 in, gas-rated ball valve, lockable",
+              "qty": 2,
+              "unit": "each",
+              "spec": "one at the wall, one at the burner",
+              "usd": [
+                40,
+                80
+              ],
+              "where": "plumbing supply"
+            },
+            {
+              "item": "Sediment trap (drip leg), 3/4 in",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                15,
+                30
+              ],
+              "where": "plumbing supply"
+            },
+            {
+              "item": "Appliance pressure regulator, 3/4 in, natural gas, 7 in water column outlet",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "fuel": [
+                  "ng"
+                ]
+              },
+              "spec": "vent-limited, sized for 200,000 BTU/h; a pounds-to-inches regulator if the building runs 2 psi",
+              "usd": [
+                60,
+                140
+              ],
+              "where": "plumbing supply"
+            },
+            {
+              "item": "Two-stage propane regulation: first stage at the tank to 10 psi, second stage to 11 in water column at the appliance",
+              "qty": 1,
+              "unit": "set",
+              "options": {
+                "fuel": [
+                  "lp"
+                ]
+              },
+              "spec": "sized by the supplier for the whole shop's BTU/h; an appliance regulator at the furnace for 200,000 BTU/h",
+              "usd": [
+                120,
+                300
+              ],
+              "where": "propane supplier"
+            },
+            {
+              "item": "Safety shutoff valve, electric, 3/4 in, 120 V, normally closed",
+              "qty": 1,
+              "unit": "each",
+              "spec": "held open only while the flame safeguard proves flame",
+              "usd": [
+                120,
+                260
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Flame safeguard relay with UV scanner",
+              "qty": 1,
+              "unit": "each",
+              "spec": "proves pilot and main flame, trial-for-ignition timing, lockout on flame failure; the piece that makes an unattended furnace defensible",
+              "usd": [
+                600,
+                1100
+              ],
+              "where": "burner parts supplier",
+              "note": "a thermocouple-type pilot safety valve is the minimum alternative on a furnace someone watches"
+            },
+            {
+              "item": "Low and high gas pressure switches",
+              "qty": 2,
+              "unit": "each",
+              "usd": [
+                150,
+                300
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Pressure gauge, 0 to 15 in water column, and a test tee with a plugged tap",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                40,
+                80
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Gas needle valve, 1/2 in, for the main burner trim",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                40,
+                90
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Flexible gas connector, 3/4 in, stainless, listed for the fuel",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                30,
+                70
+              ],
+              "where": "plumbing supply"
+            },
+            {
+              "item": "Black pipe, 3/4 in, fittings, pipe dope rated for the fuel, pipe stands",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                80,
+                200
+              ],
+              "where": "plumbing supply"
+            },
+            {
+              "item": "Combustion air proving switch (differential pressure) on the blower",
+              "qty": 1,
+              "unit": "each",
+              "spec": "no air, no gas",
+              "usd": [
+                60,
+                120
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Burner control enclosure, 120 V, with the safeguard, switches, pilot lights and a timer",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                200,
+                400
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "PID temperature controller and type S or K thermocouple with protection tube",
+              "qty": 1,
+              "unit": "set",
+              "spec": "modulates a motorized gas butterfly or, simply, stages high and low fire through the safeguard",
+              "usd": [
+                500,
+                900
+              ],
+              "where": "controls distributor"
+            }
+          ]
+        },
+        {
+          "name": "Crucible and furnace furniture",
+          "parts": [
+            {
+              "item": "Invested fused-silica crucible, 100 lb",
+              "qty": 1,
+              "unit": "each",
+              "spec": "plus one spare; the maker's pre-heat schedule governs the first fire",
+              "usd": [
+                900,
+                1600
+              ],
+              "where": "crucible maker"
+            },
+            {
+              "item": "Charging scoop and ladle, stainless, long handle",
+              "qty": 1,
+              "unit": "set",
+              "usd": [
+                80,
+                160
+              ],
+              "where": "glass supplier"
+            },
+            {
+              "item": "Steel catch tray, 1/8 in, 30 x 30 x 3 in, with sand",
+              "qty": 1,
+              "unit": "each",
+              "spec": "under the drain notch; a lost pot goes here",
+              "usd": [
+                40,
+                80
+              ],
+              "where": "made in the shop"
+            },
+            {
+              "item": "Door counterweight, 25 lb steel or lead",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                30,
+                60
+              ],
+              "where": "scrap yard"
+            }
+          ]
+        }
+      ],
+      "build_notes": [
+        "Weld the base rectangle and uprights square and flat; the brick lining does not forgive a racked box. Set the leveling feet before anything goes inside.",
+        "Lay 1 in blanket against the skin, then the 2 in board, then the brick, course by course with thin mortar joints and staggered bonds; cut the element sleeve holes (electric) or the burner block pocket (gas) as the courses reach them, not afterwards.",
+        "Cast the floor slab in place over the board and backup brick with its dam and drain notch, vibrating out the air; cast the plinth, the door block and the lid slab in forms the same day. Keep every casting damp under plastic for 24 hours.",
+        "Dry the castables on the furnace's own first fire: 50 F an hour to 250 F and hold 6 hours, 50 F an hour to 500 F and hold 6 hours, then 100 F an hour to 1,000 F, then to working temperature. Steam that cannot escape spalls the slab; patience is cheaper than castable.",
+        "Electric: set the elements in their sleeves with 1/2 in of free length outside each wall, straps on the cold ends, leads in the guards; check each string's cold resistance with a meter and record it on the inside of the enclosure door with the date.",
+        "Gas: fire the burner first outside the furnace into open air, set the orifice and air for a blue flame with a short yellow tip, then into the block; the damper is set so a match flame at the port leans gently out.",
+        "First pot: follow the crucible maker's pre-heat, usually 50 F an hour to 1,000 F and 100 F an hour above it, with the pot empty; charge in 10 to 15 lb lots at 2,100 F or above, never into a cold pot, and fine at 2,300 F for six to eight hours before the first working day."
+      ]
+    },
+    {
+      "id": "annealer",
+      "name": "Annealer, 30 x 24 x 24 in front loader",
+      "summary": "A front-loading electric annealer with a 30 in wide, 24 in deep, 24 in tall chamber lined with 2.5 in insulating firebrick and 1 in fiber board, four coiled iron-chrome-aluminium elements in grooved brick on the side and back walls, a hinged brick door with a rope seal, a ramp-soak controller driving solid-state relays through a safety contactor with an independent high limit, and a door switch that cuts power. Rated 7.2 kW: it reaches 950 F in about an hour from cold with the shelf loaded and holds within 5 F. A 20 x 20 x 20 in version with the same parts at 4.8 kW is noted where the quantities differ.",
+      "design": {
+        "chamber": "30 W x 24 D x 24 H in interior; a 1/2 in kiln shelf on 1 in posts as the floor; door on the 30 in face",
+        "walls": "2.5 in K-23 insulating firebrick (2,300 F) with 1 in 2,300 F fiber board behind, on all six faces; the lid the same",
+        "elements": "four coils of 14 AWG iron-chrome-aluminium (Kanthal A-1 class) wire, each about 38 ft, 8 ohms, wound on a 1/2 in mandrel and stretched to 5 ft, laid in two grooves on each side wall and one on the back wall, held with ceramic pins",
+        "power": "7.2 kW at 240 V single-phase as two parallel strings of two series coils (30 A); on 208 V three-phase as three coils in wye, 6 ohms each in 12 AWG; on 240 V three-phase delta as three coils, 24 ohms each, in 16 AWG",
+        "door": "2.5 in brick in a welded 1.5 in angle frame, two 1/2 in pin hinges, two over-centre latches, 3/4 in fiber rope seal; a limit switch on the frame opens the control circuit when the door is open",
+        "shell": "1.5 x 1.5 x 1/8 in angle frame, 16 gauge skin, a 2 in air gap under the floor, 24 in legs so the shelf sits at waist height",
+        "controls": "ramp-soak controller with eight segments or more (the example shop uses a Novus N20K48), one solid-state relay per switched leg on a finned heatsink, a 2- or 3-pole safety contactor, an independent high-limit controller set to 1,250 F with its own thermocouple, pilot lights and a door switch",
+        "outside": "about 40 in wide, 34 in deep, 60 in tall on its legs; about 450 lb"
+      },
+      "sizing": {
+        "design_kw": 7.2,
+        "configs": {
+          "1ph240": {
+            "label": "four 8 ohm coils, two series pairs in parallel",
+            "coils": 4,
+            "coil_ohm": 8,
+            "wire_awg": 14
+          },
+          "3ph208": {
+            "label": "three 6 ohm coils in wye, 120 V each",
+            "coils": 3,
+            "coil_ohm": 6,
+            "wire_awg": 12
+          },
+          "3ph240": {
+            "label": "three 24 ohm coils in delta, 240 V each",
+            "coils": 3,
+            "coil_ohm": 24,
+            "wire_awg": 16
+          }
+        },
+        "wire_ohm_per_ft": {
+          "10": 0.084,
+          "12": 0.1335,
+          "13": 0.168,
+          "14": 0.2125,
+          "16": 0.338
+        },
+        "wire_note": "iron-chrome-aluminium (Kanthal A-1 class, resistivity 1.45 ohm mm2/m) resistance per foot at room temperature; the alloy rises about 4 percent hot, which the relays absorb",
+        "surface_load_w_per_in2_max": 22
+      },
+      "sections": [
+        {
+          "name": "Steel and fabrication",
+          "parts": [
+            {
+              "item": "Angle, 1.5 x 1.5 x 1/8 in, A36",
+              "qty": 60,
+              "unit": "ft",
+              "spec": "frame 40 x 34 x 36 in box on four 24 in legs; door frame 33 x 27 in; lid frame",
+              "usd": [
+                150,
+                220
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Sheet, 16 gauge mild steel",
+              "qty": 2,
+              "unit": "4 x 8 ft sheets",
+              "spec": "skin, lid top, door skin, element terminal box",
+              "usd": [
+                160,
+                240
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Flat bar, 3/16 x 1.5 in",
+              "qty": 12,
+              "unit": "ft",
+              "spec": "door stops, latch keepers, hinge straps",
+              "usd": [
+                20,
+                40
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Round bar, 1/2 in",
+              "qty": 2,
+              "unit": "ft",
+              "spec": "hinge pins",
+              "usd": [
+                8,
+                15
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Over-centre draw latches, heavy, zinc",
+              "qty": 2,
+              "unit": "each",
+              "usd": [
+                20,
+                40
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Caster set, 4 in, two locking, 300 lb each",
+              "qty": 4,
+              "unit": "each",
+              "spec": "optional; an annealer that rolls can be loaded from the bench side",
+              "usd": [
+                60,
+                120
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Welding consumables and 1,200 F paint",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                60,
+                100
+              ],
+              "where": "welding supply"
+            }
+          ]
+        },
+        {
+          "name": "Refractory and insulation",
+          "parts": [
+            {
+              "item": "Insulating firebrick, K-23 (2,300 F), 9 x 4.5 x 2.5 in",
+              "qty": 150,
+              "unit": "bricks",
+              "spec": "walls, floor, lid and door for the 30 x 24 x 24 chamber (about 130 laid plus cuts); the 20 in cube takes about 95",
+              "usd": [
+                600,
+                900
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Ceramic fiber board, 2,300 F, 1 in, 24 x 36 in",
+              "qty": 9,
+              "unit": "sheets",
+              "spec": "behind every brick face including the door and lid",
+              "usd": [
+                300,
+                450
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "High-temperature air-set mortar, 2,600 F",
+              "qty": 1,
+              "unit": "gallon",
+              "usd": [
+                30,
+                50
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Fiber gasket rope, 3/4 in, 2,300 F",
+              "qty": 12,
+              "unit": "ft",
+              "spec": "door seal and lid seat",
+              "usd": [
+                25,
+                40
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Kiln shelf, cordierite, 1/2 in, two at 14 x 28 in",
+              "qty": 2,
+              "unit": "each",
+              "spec": "the floor the glass sits on; plus 1 in posts",
+              "usd": [
+                120,
+                200
+              ],
+              "where": "kiln-parts supplier"
+            },
+            {
+              "item": "Kiln wash",
+              "qty": 1,
+              "unit": "pint",
+              "usd": [
+                10,
+                20
+              ],
+              "where": "kiln-parts supplier"
+            },
+            {
+              "item": "Element groove: cut with a masonry blade, 1/2 in wide x 5/8 in deep",
+              "qty": 1,
+              "unit": "note",
+              "spec": "two grooves per side wall and one across the back at 6 in and 14 in above the floor; corners rounded so the coil does not kink",
+              "usd": [
+                0,
+                0
+              ],
+              "where": "done in the shop"
+            }
+          ]
+        },
+        {
+          "name": "Elements",
+          "parts": [
+            {
+              "item": "Iron-chrome-aluminium resistance wire, 14 AWG (0.0641 in), Kanthal A-1 class",
+              "qty": 1,
+              "unit": "5 lb spool",
+              "options": {
+                "phase": [
+                  "1ph240"
+                ]
+              },
+              "spec": "about 38 ft per 8 ohm coil, 152 ft for four (about 1.8 lb); wind on a 1/2 in mandrel and stretch to the groove length; 19.8 W/in2 on the wire",
+              "usd": [
+                100,
+                190
+              ],
+              "where": "kiln-parts supplier or alloy distributor"
+            },
+            {
+              "item": "Iron-chrome-aluminium resistance wire, 12 AWG (0.0808 in), Kanthal A-1 class",
+              "qty": 1,
+              "unit": "5 lb spool",
+              "options": {
+                "phase": [
+                  "3ph208"
+                ]
+              },
+              "spec": "about 45 ft per 6 ohm coil, 135 ft for three (about 2.5 lb) on 208 V wye; 17.5 W/in2 on the wire",
+              "usd": [
+                120,
+                220
+              ],
+              "where": "kiln-parts supplier or alloy distributor"
+            },
+            {
+              "item": "Iron-chrome-aluminium resistance wire, 16 AWG (0.0508 in), Kanthal A-1 class",
+              "qty": 1,
+              "unit": "5 lb spool",
+              "options": {
+                "phase": [
+                  "3ph240"
+                ]
+              },
+              "spec": "about 71 ft per 24 ohm coil, 213 ft for three (about 1.6 lb) on 240 V delta; 17.6 W/in2 on the wire; the thinner wire is the price of a delta service without a neutral",
+              "usd": [
+                100,
+                190
+              ],
+              "where": "kiln-parts supplier or alloy distributor"
+            },
+            {
+              "item": "Element pins, Kanthal, 2 in",
+              "qty": 60,
+              "unit": "each",
+              "spec": "one every 4 in of groove",
+              "usd": [
+                25,
+                50
+              ],
+              "where": "kiln-parts supplier"
+            },
+            {
+              "item": "Porcelain element connector blocks and ceramic tube bushings for the wall penetrations",
+              "qty": 8,
+              "unit": "each",
+              "usd": [
+                40,
+                80
+              ],
+              "where": "kiln-parts supplier"
+            },
+            {
+              "item": "High-temperature lead wire, 10 AWG nickel, mica and fiberglass",
+              "qty": 25,
+              "unit": "ft",
+              "spec": "from the SSRs to the element tails inside the terminal box",
+              "usd": [
+                60,
+                120
+              ],
+              "where": "kiln-parts supplier"
+            },
+            {
+              "item": "Element tail splice: twist and clamp with stainless crimps, never solder",
+              "qty": 1,
+              "unit": "note",
+              "usd": [
+                0,
+                0
+              ],
+              "where": "done in the shop"
+            }
+          ]
+        },
+        {
+          "name": "Controls and power",
+          "parts": [
+            {
+              "item": "Ramp-soak controller, 1/16 DIN, type K input, relay or logic output, eight or more segments",
+              "qty": 1,
+              "unit": "each",
+              "spec": "the example shop standardizes on the Novus N20K48 and reads it over Bluetooth with its own dashboard; Bartlett Genesis and Orton are the kiln-trade alternatives",
+              "usd": [
+                250,
+                450
+              ],
+              "where": "controls distributor or kiln-parts supplier"
+            },
+            {
+              "item": "Solid-state relay, 40 A, 48 to 480 V AC, 3 to 32 V DC control, zero-cross, on a finned heatsink with thermal paste",
+              "qty": 2,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "1ph240"
+                ]
+              },
+              "spec": "one per hot leg so both legs open; 40 A relays at 30 A load run cool on a 1.0 C/W heatsink",
+              "usd": [
+                80,
+                160
+              ],
+              "where": "controls distributor"
+            },
+            {
+              "item": "Solid-state relay, 25 A, zero-cross, on heatsinks",
+              "qty": 3,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "3ph208",
+                  "3ph240"
+                ]
+              },
+              "spec": "one per phase leg; a three-phase SSR block is the tidy alternative",
+              "usd": [
+                90,
+                180
+              ],
+              "where": "controls distributor"
+            },
+            {
+              "item": "Safety contactor, definite purpose, 2-pole, 40 A, 120 V coil",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "1ph240"
+                ]
+              },
+              "spec": "in series with the SSRs; opened by the high limit, the door switch and the emergency stop",
+              "usd": [
+                40,
+                90
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Safety contactor, definite purpose, 3-pole, 40 A, 120 V coil",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "3ph208",
+                  "3ph240"
+                ]
+              },
+              "usd": [
+                50,
+                110
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "High-limit controller with its own type K thermocouple",
+              "qty": 1,
+              "unit": "each",
+              "spec": "latching, manual reset, set at 1,250 F",
+              "usd": [
+                120,
+                260
+              ],
+              "where": "controls distributor"
+            },
+            {
+              "item": "Thermocouple, type K, 8 AWG, ceramic insulated, in a mullite protection tube, 12 in, with a head",
+              "qty": 2,
+              "unit": "each",
+              "spec": "control and limit, through the back wall at mid-height, 4 in into the chamber",
+              "usd": [
+                60,
+                140
+              ],
+              "where": "thermocouple maker or kiln-parts supplier"
+            },
+            {
+              "item": "Type K extension wire, 20 AWG",
+              "qty": 20,
+              "unit": "ft",
+              "usd": [
+                20,
+                40
+              ],
+              "where": "controls distributor"
+            },
+            {
+              "item": "Door limit switch, roller, and an emergency stop",
+              "qty": 1,
+              "unit": "set",
+              "usd": [
+                60,
+                120
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Control transformer, 240 V to 120 V, 100 VA, fused",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "phase": [
+                  "1ph240",
+                  "3ph240"
+                ]
+              },
+              "spec": "not needed on 208 V wye, which has a neutral for 120 V",
+              "usd": [
+                40,
+                80
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Control enclosure, NEMA 1 or 12, 16 x 14 x 8 in, louvered",
+              "qty": 1,
+              "unit": "each",
+              "spec": "on the cool side of the annealer, never on top",
+              "usd": [
+                120,
+                220
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Fused disconnect or breaker within sight, 2-pole 40 A or 3-pole 30 A",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                80,
+                200
+              ],
+              "where": "electrical supply"
+            },
+            {
+              "item": "Branch circuit: breaker and copper THHN in conduit, from the sizing table",
+              "qty": 1,
+              "unit": "run",
+              "usd": [
+                150,
+                400
+              ],
+              "where": "electrical supply",
+              "note": "by a licensed electrician"
+            },
+            {
+              "item": "Pilot lights (power, heating, limit tripped), terminal blocks, DIN rail, wire duct, labels",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                80,
+                160
+              ],
+              "where": "industrial electrical supply"
+            }
+          ]
+        }
+      ],
+      "build_notes": [
+        "Build the box, then dry-fit the brick before mortar: a 30 in wall is 3.33 bricks, so plan the cuts to land at the back corners where the grooves do not run.",
+        "Cut the element grooves with a diamond or masonry blade on a track; round every corner with a rasp so the coil lies without kinks. Pins go in after the coils, angled down, one every 4 in.",
+        "Wind coils on a 1/2 in rod in a drill at low speed, counting turns; cut to the measured resistance with a meter, not to length, since wire varies. Stretch each coil evenly to the groove length before laying it in; a bunched coil runs hot and fails there.",
+        "Wire the control circuit so that the high limit, the door switch and the emergency stop are all in series with the contactor coil: any one open and the elements are dead regardless of the controller.",
+        "First fire empty to 1,000 F over four hours with the door cracked an inch until 400 F to drive moisture out of the brick and mortar; let the controller autotune at 900 F with the shelf in.",
+        "Soda-lime annealing: hold at 900 to 960 F long enough for the thickest section (about an hour per half inch), then cool 50 to 100 F an hour to 700 F and 150 to 250 F an hour to 300 F; thick casting goes far slower. The controller's segments carry the schedule; the glass never meets a draft from an opened door above 400 F."
+      ]
+    },
+    {
+      "id": "gloryhole",
+      "name": "Glory hole, 16 in bore, forced-air gas",
+      "summary": "A horizontal reheating chamber 16 in in diameter and 26 in deep: a 1 in cast 3,000 F hot face over 3 in of 2,600 F fiber blanket inside a 24 in diameter rolled steel shell, a cast back wall with a tangential burner port, a cast door ring with two half-moon doors on a foot-pedal pivot (pneumatic cylinders optional), on an adjustable stand. One forced-air burner of 150,000 to 250,000 BTU/h on natural gas at 7 inches of water column or propane at 11, a combustion air blower with a butterfly valve, a pilot, a flame safeguard and a gas train to the National Fuel Gas Code. It runs at 2,100 to 2,300 F and idles on about 100,000 BTU/h with the doors shut.",
+      "design": {
+        "chamber": "16 in bore x 26 in deep; the burner enters tangentially 4 in from the back wall, the flame wraps the bore and exits the door opening",
+        "lining": "1 in dense 3,000 F castable hot face cast against a 16 in form, over two 1.5 in layers of 2,600 F 8 lb ceramic fiber blanket, rigidized; a cast 4 in back wall with the burner block cast in",
+        "shell": "24 in diameter x 30 in long, 14 gauge rolled and seam welded, or a 24 in tank section; 1/4 in end rings; 2 in angle saddles to the stand",
+        "doors": "cast 3,000 F castable half-moon doors 2.5 in thick in 1/4 in steel frames, each on a 3/4 in pivot pin in bushings on the door ring, opened by a foot pedal through a linkage, or by two pneumatic cylinders on a foot valve as the example shop does; a 6 in half-open stop for the pipe",
+        "stand": "2 x 2 x 3/16 in angle, four legs with 6 in of height adjustment on 3/4 in threaded feet, bore centre set 40 to 44 in above the floor, a shelf for the blower",
+        "burner": "forced-air: 2 in schedule 40 mixer body 12 in long with a 2 in tee, a 1/4 in gas spud centered, a flame-retention nozzle into a cast burner block with a 2.5 in bore; air from a 250 CFM blower through a 2 in butterfly valve; gas through a needle valve for trim",
+        "outside": "about 26 in wide, 34 in deep with the door ring, 50 in tall on the stand; about 350 lb"
+      },
+      "sizing": {
+        "max_btuh": 250000,
+        "idle_btuh": 100000,
+        "blower_cfm": 250,
+        "door_opening_in": 16
+      },
+      "sections": [
+        {
+          "name": "Steel and fabrication",
+          "parts": [
+            {
+              "item": "Shell: 14 gauge mild steel, rolled to 24 in diameter x 30 in long, seam welded",
+              "qty": 1,
+              "unit": "each",
+              "spec": "have the steel yard roll it, or use a 24 in diameter pressure-tank section cut to length (de-gassed and cleaned)",
+              "usd": [
+                150,
+                350
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "End rings, 1/4 in plate, 24 in OD x 17 in ID (front) and 24 in disc (back) with a 3 in burner port cut",
+              "qty": 2,
+              "unit": "each",
+              "spec": "water-jet or plasma cut; the front ring carries the door pivots",
+              "usd": [
+                120,
+                220
+              ],
+              "where": "steel yard or fabricator"
+            },
+            {
+              "item": "Door frames, 1/4 in x 2 in flat bar bent to a half-moon of 17 in, with pivot bosses",
+              "qty": 2,
+              "unit": "each",
+              "usd": [
+                60,
+                120
+              ],
+              "where": "steel yard, made in the shop"
+            },
+            {
+              "item": "Door pivot pins, 3/4 in 4140, and bronze bushings",
+              "qty": 2,
+              "unit": "sets",
+              "usd": [
+                40,
+                80
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Angle, 2 x 2 x 3/16 in",
+              "qty": 30,
+              "unit": "ft",
+              "spec": "stand, saddles, blower shelf, burner mount",
+              "usd": [
+                120,
+                170
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Threaded leveling feet, 3/4 in, 500 lb, and 3/4 in nuts welded in the legs",
+              "qty": 4,
+              "unit": "each",
+              "usd": [
+                40,
+                70
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Foot pedal, linkage rod 3/8 in, clevises, return spring, and a half-open stop",
+              "qty": 1,
+              "unit": "set",
+              "spec": "the pedal opens both doors through a bell crank; a stop holds them 6 in apart for the pipe",
+              "usd": [
+                60,
+                120
+              ],
+              "where": "industrial supply, made in the shop"
+            },
+            {
+              "item": "Pneumatic door option: two 1.5 in bore x 4 in stroke cylinders, a 4-way foot valve, 1/4 in tubing, fittings, a filter-regulator",
+              "qty": 1,
+              "unit": "set",
+              "spec": "runs on 60 to 90 psi shop air, as the example shop's doors do",
+              "usd": [
+                250,
+                450
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Expanded metal heat shield over the door ring and a 1/8 in splash plate under the opening",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                40,
+                80
+              ],
+              "where": "steel yard"
+            },
+            {
+              "item": "Welding consumables and 1,200 F paint",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                50,
+                90
+              ],
+              "where": "welding supply"
+            }
+          ]
+        },
+        {
+          "name": "Refractory and insulation",
+          "parts": [
+            {
+              "item": "Dense castable, 3,000 F, high alumina",
+              "qty": 4,
+              "unit": "55 lb bags",
+              "spec": "hot-face tube 1 in x 16 in bore x 26 in (about 1.5 bags), back wall with burner block (1), door ring and two doors (1.5)",
+              "usd": [
+                220,
+                320
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Ceramic fiber blanket, 2,600 F, 8 lb/ft3, 1.5 in x 24 in x 25 ft",
+              "qty": 2,
+              "unit": "rolls",
+              "spec": "two layers around the hot face and behind the back wall; staggered seams",
+              "usd": [
+                280,
+                450
+              ],
+              "where": "refractory distributor",
+              "note": "2,600 F blanket, not 2,300 F: the bore runs hotter than a furnace wall"
+            },
+            {
+              "item": "Fiber rigidizer, colloidal silica",
+              "qty": 1,
+              "unit": "gallon",
+              "usd": [
+                40,
+                70
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Refractory anchors, 310 stainless, V-anchors and door frame studs",
+              "qty": 30,
+              "unit": "each",
+              "usd": [
+                60,
+                100
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Casting forms: 16 in sonotube (hot face), a tapered burner-block plug, door forms from melamine with a 2.5 in rim",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                60,
+                110
+              ],
+              "where": "lumber yard"
+            },
+            {
+              "item": "Fiber gasket rope, 1/2 in, 2,300 F, for the door seats",
+              "qty": 10,
+              "unit": "ft",
+              "usd": [
+                20,
+                35
+              ],
+              "where": "refractory distributor"
+            },
+            {
+              "item": "Spare castable for the door faces",
+              "qty": 1,
+              "unit": "55 lb bag",
+              "spec": "door faces take the most abuse and get re-cast every year or two",
+              "usd": [
+                55,
+                80
+              ],
+              "where": "refractory distributor"
+            }
+          ]
+        },
+        {
+          "name": "Burner and air",
+          "parts": [
+            {
+              "item": "Burner body: 2 in schedule 40 black pipe, 12 in, with a 2 in tee, a 2 in to 2.5 in flame-retention nozzle (reducer), and a centered 1/4 in gas tube with the orifice spud 2.5 in behind the nozzle",
+              "qty": 1,
+              "unit": "assembly",
+              "usd": [
+                80,
+                150
+              ],
+              "where": "plumbing supply, made in the shop"
+            },
+            {
+              "item": "Orifice spuds, brass, 1/4 in NPT, drilled to the table on this page",
+              "qty": 3,
+              "unit": "each",
+              "spec": "three sizes bracketing the computed drill so the flame can be tuned",
+              "usd": [
+                15,
+                30
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Combustion air blower, forward-curved squirrel cage, 250 CFM at 1 in static, 1/3 hp, 115 V, with a 4 in inlet",
+              "qty": 1,
+              "unit": "each",
+              "spec": "on the stand's shelf, a 2 in flexible duct to the butterfly valve; the example shop's blower is in a closet outside with a duct along the wall, which keeps the noise out of the room",
+              "usd": [
+                200,
+                400
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Butterfly air valve, 2 in, with a locking quadrant",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                40,
+                90
+              ],
+              "where": "industrial supply"
+            },
+            {
+              "item": "Combustion air proving switch on the blower outlet",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                60,
+                120
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Pilot burner, 1/4 in, natural draft, with a target and a 3/16 in pilot line",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                60,
+                140
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Spark igniter transformer and electrode, or a piezo pilot lighter",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                60,
+                160
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Burner block: cast into the back wall, 2.5 in bore flaring to 3.5 in, tangential",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                0,
+                0
+              ],
+              "where": "cast from the castable above"
+            }
+          ]
+        },
+        {
+          "name": "Gas train",
+          "parts": [
+            {
+              "item": "Manual shutoff valves, 3/4 in gas ball valve, lockable",
+              "qty": 2,
+              "unit": "each",
+              "usd": [
+                40,
+                80
+              ],
+              "where": "plumbing supply"
+            },
+            {
+              "item": "Sediment trap (drip leg), 3/4 in",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                15,
+                30
+              ],
+              "where": "plumbing supply"
+            },
+            {
+              "item": "Appliance regulator, 3/4 in, natural gas, 7 in water column outlet, vent-limited, 250,000 BTU/h",
+              "qty": 1,
+              "unit": "each",
+              "options": {
+                "fuel": [
+                  "ng"
+                ]
+              },
+              "usd": [
+                60,
+                140
+              ],
+              "where": "plumbing supply"
+            },
+            {
+              "item": "Propane: two-stage regulation at the tank and an 11 in water column appliance regulator sized for 250,000 BTU/h",
+              "qty": 1,
+              "unit": "set",
+              "options": {
+                "fuel": [
+                  "lp"
+                ]
+              },
+              "usd": [
+                120,
+                300
+              ],
+              "where": "propane supplier"
+            },
+            {
+              "item": "Safety shutoff valve, electric, 3/4 in, normally closed, 120 V",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                120,
+                260
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Flame safeguard relay with UV scanner (or a thermocouple pilot safety valve as the minimum on an attended glory hole)",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                600,
+                1100
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Gas needle valve, 1/2 in, for the main trim",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                40,
+                90
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Pressure gauge 0 to 15 in water column with a test tee",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                40,
+                80
+              ],
+              "where": "burner parts supplier"
+            },
+            {
+              "item": "Flexible gas connector, 3/4 in stainless, listed for the fuel",
+              "qty": 1,
+              "unit": "each",
+              "usd": [
+                30,
+                70
+              ],
+              "where": "plumbing supply"
+            },
+            {
+              "item": "Black pipe 3/4 in, fittings, dope rated for the fuel, pipe stand",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                80,
+                200
+              ],
+              "where": "plumbing supply"
+            },
+            {
+              "item": "Burner control box, 120 V: switches, the safeguard, pilot lights, a 15 A breaker",
+              "qty": 1,
+              "unit": "lot",
+              "usd": [
+                150,
+                300
+              ],
+              "where": "industrial electrical supply"
+            },
+            {
+              "item": "Thermocouple, type K in a protection tube, and a readout (the glory hole is run by eye, but a reading at the back wall is worth having)",
+              "qty": 1,
+              "unit": "set",
+              "usd": [
+                80,
+                200
+              ],
+              "where": "controls distributor"
+            }
+          ]
+        }
+      ],
+      "build_notes": [
+        "Roll or cut the shell, weld the back disc with its burner port and the front ring; weld the anchors to the inside before any blanket goes in.",
+        "Lay the blanket in two layers with staggered seams, then set the 16 in sonotube form on centre with spacers and cast the hot face in one pour, rodding out the air; cast the back wall with the burner-block plug in place at the tangent angle, and the doors in their frames face down on melamine.",
+        "Cure 24 hours under plastic, strip the forms, and dry on the first fire: 50 F an hour to 250 F with a 4 hour hold, 50 F an hour to 500 F with a 4 hour hold, then 100 F an hour to 1,500 F. Fiber shrinks and castable steams; both want the slow first day.",
+        "Fire the burner outside the chamber first and set the orifice and air; then into the block. A tangential flame should wrap the bore and leave the opening as a lazy roll, not a jet; too much air and the bore goes dull and roars, too little and the doors soot.",
+        "Set the door stop so a blowpipe passes with 2 in to spare; set the foot pedal so a full press opens the doors fully and a half press reaches the stop.",
+        "The idle setting is the one that pays the gas bill: find the lowest fire that holds a dull orange bore with the doors shut and mark the needle valve."
+      ]
+    }
+  ],
+  "shared": {
+    "name": "Shop services the three pieces share",
+    "sections": [
+      {
+        "name": "Electrical service",
+        "parts": [
+          {
+            "item": "Subpanel for the hot shop, 125 A, 240 V single-phase, 24 spaces",
+            "qty": 1,
+            "unit": "each",
+            "options": {
+              "phase": [
+                "1ph240"
+              ]
+            },
+            "spec": "the furnace, the annealer, the blower, the exhaust fan, lights and receptacles; a 150 A feed if a second annealer is planned",
+            "usd": [
+              300,
+              600
+            ],
+            "where": "electrical supply"
+          },
+          {
+            "item": "Subpanel for the hot shop, 100 A, 208 V or 240 V three-phase, 24 spaces",
+            "qty": 1,
+            "unit": "each",
+            "options": {
+              "phase": [
+                "3ph208",
+                "3ph240"
+              ]
+            },
+            "usd": [
+              400,
+              800
+            ],
+            "where": "electrical supply"
+          },
+          {
+            "item": "Exhaust fan, 1 hp, 2,000 CFM, with a canopy hood over the furnace and glory hole, make-up air",
+            "qty": 1,
+            "unit": "set",
+            "spec": "the hood is what makes the room workable; the fan is interlocked so the gas equipment does not run without it",
+            "usd": [
+              800,
+              2000
+            ],
+            "where": "HVAC supply"
+          },
+          {
+            "item": "Carbon monoxide and combustible gas detector, interlocked to the gas safety valve",
+            "qty": 1,
+            "unit": "each",
+            "usd": [
+              150,
+              400
+            ],
+            "where": "HVAC supply"
+          },
+          {
+            "item": "Fire extinguishers, 10 lb ABC, two, and a class D kit near the furnace",
+            "qty": 1,
+            "unit": "set",
+            "usd": [
+              150,
+              300
+            ],
+            "where": "safety supply"
+          }
+        ]
+      },
+      {
+        "name": "Gas service",
+        "parts": [
+          {
+            "item": "Natural gas service and meter sized for the whole shop: glory hole 250,000 plus a gas furnace 180,000 plus a pipe warmer and torches, about 500,000 BTU/h",
+            "qty": 1,
+            "unit": "service",
+            "options": {
+              "fuel": [
+                "ng"
+              ]
+            },
+            "spec": "the utility sizes the meter; the house line from the meter follows the pipe table on this page (a 1-1/4 in line carries about 500 CFH at 40 ft, a 1-1/2 in line about 760)",
+            "usd": [
+              1500,
+              6000
+            ],
+            "where": "gas utility and a licensed gas fitter"
+          },
+          {
+            "item": "Propane tank, 500 gal minimum for a glory hole alone, 1,000 gal or 500 gal with a vaporizer for a glory hole and a gas furnace",
+            "qty": 1,
+            "unit": "each",
+            "options": {
+              "fuel": [
+                "lp"
+              ]
+            },
+            "spec": "leased from the supplier; set to code distances from the building and ignition sources; vaporization governs, see the note on this page",
+            "usd": [
+              0,
+              3000
+            ],
+            "where": "propane supplier"
+          },
+          {
+            "item": "Seismic or excess-flow gas shutoff valve where the code requires one",
+            "qty": 1,
+            "unit": "each",
+            "usd": [
+              150,
+              400
+            ],
+            "where": "licensed gas fitter"
+          },
+          {
+            "item": "Pipe warmer and torch station gas drops (optional)",
+            "qty": 1,
+            "unit": "lot",
+            "usd": [
+              200,
+              600
+            ],
+            "where": "licensed gas fitter"
+          }
+        ]
+      },
+      {
+        "name": "Tools the build assumes",
+        "parts": [
+          {
+            "item": "MIG or stick welder, 200 A class",
+            "qty": 1,
+            "unit": "each",
+            "usd": [
+              0,
+              0
+            ],
+            "where": "assumed on hand"
+          },
+          {
+            "item": "Angle grinder, chop saw or band saw, drill press, masonry blade saw for brick grooves",
+            "qty": 1,
+            "unit": "set",
+            "usd": [
+              0,
+              0
+            ],
+            "where": "assumed on hand"
+          },
+          {
+            "item": "Concrete vibrator or a hammer drill with a vibrating bit, mixing tub, scale for castable water",
+            "qty": 1,
+            "unit": "set",
+            "usd": [
+              100,
+              250
+            ],
+            "where": "tool rental or hardware"
+          },
+          {
+            "item": "Multimeter with a clamp ammeter, manometer (0 to 30 in water column), combustion analyzer rental for the gas commissioning",
+            "qty": 1,
+            "unit": "set",
+            "usd": [
+              150,
+              400
+            ],
+            "where": "tool supply"
+          },
+          {
+            "item": "Respirator with P100 cartridges, gloves and sleeves for fiber work, safety glasses, didymium glasses for the glory hole",
+            "qty": 1,
+            "unit": "set",
+            "usd": [
+              120,
+              250
+            ],
+            "where": "safety supply"
+          }
+        ]
+      }
+    ]
+  }
+}

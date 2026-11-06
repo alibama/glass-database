@@ -36,6 +36,7 @@ FILES = {"/": "landing-index.html", "/paper.css": "paper.css", "/splat.html": "s
          "/analytics.html": "analytics.html", "/captures.html": "captures.html",
          "/site.js": "site.js",
          "/logo.svg": "landing-logo.svg", "/shop-prompts.md": "shop-prompts.md",
+         "/shop-build.html": "shop-build.html", "/SHOP-BUILD.md": "SHOP-BUILD.md",
          "/SHOP-PARTS.md": "SHOP-PARTS.md"}
 
 
@@ -70,7 +71,7 @@ async def record(request):
 
 routes = [Mount("/api", app=api_app), Route("/record/{gid:path}", record)]
 routes += [Route(path, _file(name)) for path, name in FILES.items()]
-for sub in ("fingerprint-web", "barcoding", "shop-diagrams", "pwa", "img", "splat"):
+for sub in ("fingerprint-web", "barcoding", "shop-diagrams", "shop-build", "pwa", "img", "splat"):
     if (DEPLOY / sub).exists():
         mount = "/fingerprint" if sub == "fingerprint-web" else f"/{sub}"
         routes.append(Mount(mount, app=StaticFiles(directory=DEPLOY / sub)))

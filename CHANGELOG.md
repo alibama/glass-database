@@ -262,6 +262,17 @@ proof-of-concept features from production-ready ones in its docs.
   server today, a private network of lent machines being built), an honest what-runs-where table,
   why we build our own AI for members instead of renting one, and how to lend a machine. About
   gained the same note; Ways in gained *Lend a machine*.
+- **Build the equipment: a parts list for the furnace, the annealer and the glory hole.**
+  `/shop-build.html` and `deploy/SHOP-BUILD.md` are generated from one JSON
+  (`deploy/shop-build/bom.json`) by `scripts/build_shop_build.py`: every part with a quantity,
+  a specification and a price range, for single-phase 240 V or three-phase 208 or 240 V
+  service, natural gas or propane, and the furnace electric or gas-fired. The page recomputes
+  the branch circuits (amps, breaker, copper), the SiC element strings new and aged, the
+  annealer coils (gauge, length, surface load), the burner orifices (number drill) and the gas
+  pipe size as the reader toggles the options, and offers the chosen list as a CSV. Three
+  section drawings (`deploy/shop-diagrams/*-section.svg`) come from the same script;
+  `tests/test_shop_build.py` checks the arithmetic against hand-worked cases and fails on a
+  stale generated file.
 ### Fixed
 - **Discord "Approve & publish" on a season entry did nothing visible.** The one-click link wrote
   to the generic approvals table while the season page reads the entry's own status column; it

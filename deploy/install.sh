@@ -156,6 +156,10 @@ if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     [ -f "$SRC/deploy/shop-costs.html" ] && cp "$SRC/deploy/shop-costs.html" "$APP_DIR/public/shop-costs.html"
     [ -f "$SRC/deploy/shop-prompts.md" ] && cp "$SRC/deploy/shop-prompts.md" "$APP_DIR/public/shop-prompts.md"
     [ -f "$SRC/deploy/SHOP-PARTS.md" ] && cp "$SRC/deploy/SHOP-PARTS.md" "$APP_DIR/public/SHOP-PARTS.md"
+    # the equipment builds: the page, the one-file document and the parts JSON it reads
+    [ -f "$SRC/deploy/shop-build.html" ] && cp "$SRC/deploy/shop-build.html" "$APP_DIR/public/shop-build.html"
+    [ -f "$SRC/deploy/SHOP-BUILD.md" ] && cp "$SRC/deploy/SHOP-BUILD.md" "$APP_DIR/public/SHOP-BUILD.md"
+    if [ -d "$SRC/deploy/shop-build" ]; then mkdir -p "$APP_DIR/public/shop-build"; cp "$SRC/deploy/shop-build/"* "$APP_DIR/public/shop-build/" 2>/dev/null || true; fi
     if [ -d "$SRC/deploy/shop-diagrams" ]; then mkdir -p "$APP_DIR/public/shop-diagrams"; cp "$SRC/deploy/shop-diagrams/"* "$APP_DIR/public/shop-diagrams/" 2>/dev/null || true; fi
     [ -f "$SRC/deploy/fingerprint-web/capture-mat.pdf" ] && \
         cp "$SRC/deploy/fingerprint-web/capture-mat.pdf" "$APP_DIR/public/fingerprint/capture-mat.pdf"

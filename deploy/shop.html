@@ -44,6 +44,7 @@
   <a href="/fingerprint/capture-mat.pdf">Photo Mat</a>
   <a href="/shop.html" class="on" aria-current="page">Studio docs</a>
   <a href="/shop-costs.html">Studio Cost Calculator</a>
+  <a href="/shop-build.html">Build the equipment</a>
  </nav>
 </div>
 <main id="main">
@@ -96,7 +97,8 @@
 
   <div class="prompt"><span class="lbl">4 · Bill of materials (real part numbers)</span><button class="copy" onclick="cp(this)">Copy</button>Build a bill of materials table with columns: System · Component · Manufacturer · Part number · Spec · Where to buy · Notes. Include controls (PID, SCR, thermocouples, relays/contactors), heating elements, blowers/motors, gas regulators and valves, and safety interlocks. Use the REAL manufacturer part numbers I give you (read off the nameplates); where I don't have one, leave it blank and note what to check. Do not invent part numbers.</div>
 
-  <p class="refs" style="margin-top:1.6rem">Reference: <a href="/SHOP-PARTS.md">common hot-shop parts &amp; where to find real numbers</a> ·
+  <p class="refs" style="margin-top:1.6rem">Reference: <a href="/SHOP-BUILD.md">the equipment builds, part by part</a> ·
+     <a href="/SHOP-PARTS.md">common hot-shop parts &amp; where to find real numbers</a> ·
      <a href="/shop-prompts.md">these prompts as plain text</a> ·
      <a href="/shop-diagrams/diagram_generator.py">the SVG generator</a>.</p>
  </div>
@@ -117,6 +119,26 @@
     <li><span>ii.</span>An electrical one-line with amperages, unknowns marked TBD</li>
     <li><span>iii.</span>A P&amp;ID for gas, air and exhaust, with the valves and instruments</li>
     <li><span>iv.</span>A bill of materials with real manufacturer part numbers</li>
+   </ul></div>
+ </div>
+</section>
+
+<section class="s alt" aria-labelledby="h-build">
+ <div class="wrap two">
+  <div><p class="label"><span class="n">04</span> Build it</p>
+   <h2 id="h-build" style="margin:1rem 0 1.2rem">A furnace, an annealer and a glory hole, <em>part by part.</em></h2>
+   <p class="lede">For a shop with a welder and a grinder: complete parts lists for a 100 lb invested-crucible furnace
+     (silicon-carbide elements or a forced-air burner), a 30 × 24 × 24 in annealer and a 16 in glory hole, with
+     the electrical service (240 V single-phase, or three-phase at 208 V or 240 V) and the fuel (natural gas or
+     propane) as options, the sizing arithmetic shown, dimensioned section drawings and the build notes.</p>
+   <div class="btns"><a class="btn btn--red" href="/shop-build.html">Build the equipment →</a><a class="link" href="/SHOP-BUILD.md">The whole document as one file</a></div>
+   <p class="note" style="margin-top:.8rem">Build the equipment opens the parts lists with option toggles; the one-file version prints.</p></div>
+  <div><p class="label">What each list carries</p>
+   <ul class="list">
+    <li><span>i.</span>Steel, refractory and insulation by the piece, with sizes and quantities</li>
+    <li><span>ii.</span>Elements or burner, controls, safety interlocks and the gas train</li>
+    <li><span>iii.</span>Breaker, wire, orifice and pipe sizes recomputed for your options</li>
+    <li><span>iv.</span>Build sequence, dry-out and first-fire schedules, and planning prices</li>
    </ul></div>
  </div>
 </section>
