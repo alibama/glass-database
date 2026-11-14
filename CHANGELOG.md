@@ -7,6 +7,14 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **A QR code on the back of the Photo Mat, with scan counts.** `scripts/make_mat_back.py`
+  draws the back (what the mat is, Check a Piece and Register Your Piece in steps, a 50 mm
+  print-scale bar) and a two-sided PDF with the mat on page 1
+  (`deploy/fingerprint-web/capture-mat-back.{pdf,png}`, `capture-mat-2sided.pdf`; installed
+  beside the mat). The code goes to `/api/go/mat`, which logs the scan (no IP, per-day hash,
+  none under Do-Not-Track) and redirects to Check a Piece; only codes listed in
+  `central.analytics.QR_CODES` redirect. Scans, people, all-time and by day are on the
+  admin Usage page (`/analytics.html`, "Printed QR codes").
 - **Capture data out, for iterating.** `GET /api/admin/captures/export.jsonl` (every
   session as one JSON line: index row, whole manifest, mat report, file URLs; `?kind=`,
   `?since=`, `?descriptors=false`), `POST /api/admin/captures/{id}/rerun` and

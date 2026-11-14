@@ -161,8 +161,10 @@ if [ -f "$SRC/deploy/fingerprint-web/enroll.html" ]; then
     [ -f "$SRC/deploy/SHOP-BUILD.md" ] && cp "$SRC/deploy/SHOP-BUILD.md" "$APP_DIR/public/SHOP-BUILD.md"
     if [ -d "$SRC/deploy/shop-build" ]; then mkdir -p "$APP_DIR/public/shop-build"; cp "$SRC/deploy/shop-build/"* "$APP_DIR/public/shop-build/" 2>/dev/null || true; fi
     if [ -d "$SRC/deploy/shop-diagrams" ]; then mkdir -p "$APP_DIR/public/shop-diagrams"; cp "$SRC/deploy/shop-diagrams/"* "$APP_DIR/public/shop-diagrams/" 2>/dev/null || true; fi
-    [ -f "$SRC/deploy/fingerprint-web/capture-mat.pdf" ] && \
-        cp "$SRC/deploy/fingerprint-web/capture-mat.pdf" "$APP_DIR/public/fingerprint/capture-mat.pdf"
+    # the Photo Mat: the front, the back (QR + instructions) and both as one two-sided PDF
+    for f in capture-mat.pdf capture-mat-back.pdf capture-mat-back.png capture-mat-2sided.pdf; do
+        [ -f "$SRC/deploy/fingerprint-web/$f" ] && cp "$SRC/deploy/fingerprint-web/$f" "$APP_DIR/public/fingerprint/$f"
+    done
     echo "  installed vendored fingerprint capture apps"
 elif "$APP_DIR/.venv/bin/python" -c "import object_fingerprint" 2>/dev/null; then
     "$APP_DIR/.venv/bin/python" - "$APP_DIR/public/fingerprint" <<'PYFP'

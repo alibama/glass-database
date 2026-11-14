@@ -487,6 +487,29 @@ def subscribe(payload: dict):
     return {"ok": True, "new": fresh}
 
 
+@app.get("/go/{code}", summary="A printed QR code: count the scan, then go to its page", include_in_schema=True)
+def qr_go(code: str, request: Request):
+    """Printed QR codes point here (see central.analytics.QR_CODES). One scan is logged
+    with the same privacy rules as the rest of the analytics (no IP stored, a per-day
+    hash for approximate people, none at all under Do-Not-Track), then a 302 to the page."""
+    from starlette.responses import RedirectResponse
+
+    from central import analytics
+    meta = analytics.QR_CODES.get((code or "").lower())
+    if not meta:
+        raise HTTPException(404, "Unknown code")
+    try:
+        conn = connect()
+        dnt = request.headers.get("dnt") == "1" or request.headers.get("sec-gpc") == "1"
+        ip = (request.headers.get("x-forwarded-for") or (request.client.host if request.client else "") or "")
+        ip = ip.split(",")[0].strip()
+        analytics.log(conn, "qr", code.lower(), "qr:scan", ip="" if dnt else ip,
+                      country="" if dnt else analytics.country_for(ip))
+    except Exception:  # noqa: BLE001  - a scan must always get through
+        pass
+    return RedirectResponse(meta["target"], status_code=302, headers={"Cache-Control": "no-store"})
+
+
 @app.get("/subscribers.csv", summary="Export newsletter subscribers (admin key, or a signed-in administrator)")
 def subscribers_csv(request: Request):
     from api.admin_data import subscribers_csv_text

@@ -103,3 +103,35 @@ def prune(conn, keep_days: int = 400) -> None:
         conn.commit()
     except Exception:
         pass
+
+
+# --- printed QR codes ------------------------------------------------------------------
+# Each printed code points at /api/go/<code>, which logs one scan (surface "qr", view
+# <code>, event "qr:scan") and redirects to the target. Only codes listed here
+# redirect, so the route can't be used to bounce people to other sites. Add a row,
+# print a new sheet (scripts/make_mat_back.py), and its scans show on /analytics.html.
+QR_CODES = {
+    "mat": {"label": "Back of the Photo Mat", "target": "/fingerprint/verify.html?src=mat-qr"},
+}
+
+
+def qr_stats(conn, days: int = 30) -> list[dict]:
+    """Scans per printed code over the window: total, approximate people (per-day hash),
+    first and last scan, and scans by day."""
+    ensure_analytics(conn)
+    since = f"date('now','-{int(days)} day')"
+    out = []
+    for code, meta in QR_CODES.items():
+        tot = _rows(conn, f"SELECT COUNT(*), COUNT(DISTINCT NULLIF(session,'')), MIN(ts), MAX(ts) FROM analytics_events "
+                          f"WHERE surface='qr' AND view=? AND event='qr:scan' AND day >= {since}", (code,))
+        alltime = _rows(conn, "SELECT COUNT(*) FROM analytics_events WHERE surface='qr' AND view=? AND event='qr:scan'",
+                        (code,))
+        by_day = _rows(conn, f"SELECT day, COUNT(*), COUNT(DISTINCT NULLIF(session,'')) FROM analytics_events "
+                             f"WHERE surface='qr' AND view=? AND event='qr:scan' AND day >= {since} "
+                             "GROUP BY day ORDER BY day", (code,))
+        t = tot[0] if tot else (0, 0, None, None)
+        out.append({"code": code, "label": meta["label"], "target": meta["target"], "url": f"/api/go/{code}",
+                    "scans": int(t[0] or 0), "visitors": int(t[1] or 0), "first": t[2], "last": t[3],
+                    "all_time": int(alltime[0][0]) if alltime else 0,
+                    "by_day": [{"day": d, "scans": int(n), "visitors": int(v)} for d, n, v in by_day]})
+    return out

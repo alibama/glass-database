@@ -238,7 +238,13 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
         "Events are the things people did, not pages they saw: a submission, a newsletter signup, a verify. Country needs a GeoLite2 database on the server (set GEOIP_DB); without it the column stays empty and the Apache logs with GoAccess are the richer picture.",
         '<div class="two"><div class="block"><h3>Events</h3>' + table([["Event", "event"], ["Count", "count", 1]], s.by_event, "No events in this window.") + "</div>" +
         '<div class="block"><h3>Countries</h3>' + table([["Country", "country"], ["Visitors", "visitors", 1]], s.by_country, "No country data: GEOIP_DB is not set, or nobody has visited since it was.") + "</div></div>" + news +
-        '<p class="fine">Retention is up to you: central.analytics.prune keeps the last 400 days when wired to a cron. The newsletter list is the same file the admin key gets at /api/subscribers.csv.</p>');
+        '<p class="fine">Retention is up to you: central.analytics.prune keeps the last 400 days when wired to a cron. The newsletter list is the same file the admin key gets at /api/subscribers.csv.</p>') +
+      section(5, "qr", "Printed QR codes", "Who scanned <em>the paper.</em>",
+        "Each printed code goes through /api/go/&lt;code&gt;, which counts the scan and forwards to its page. People are approximate (the per-day hash); Do-Not-Track scans count without one.",
+        '<div class="block">' + table([["Code", "label"], ["Scans", "scans", 1], ["People", "visitors", 1], ["All time", "all_time", 1], ["Last scan", "lastday"]],
+          (s.qr || []).map(function (q) { return Object.assign({}, q, { lastday: q.last ? String(q.last).slice(0, 16).replace("T", " ") : "—" }); }), "No printed codes configured.") +
+        (s.qr || []).map(function (q) { return q.by_day.length ? '<details class="days"><summary>' + esc(q.label) + ' by day</summary>' + table([["Day", "day"], ["Scans", "scans", 1], ["People", "visitors", 1]], q.by_day, "") + "</details>" : ""; }).join("") +
+        '<p class="fine">Codes and their pages are listed in central/analytics.py (QR_CODES); the sheets come from scripts/make_mat_back.py.</p></div>');
     wireChart(s.by_day);
     $("#heroMeta").innerHTML = "<span>last <b>" + D.days + " days</b></span><span>" + num(s.views) + " views</span><span>" + num(s.visitors) + " visitors</span><span>" + num(s.newsletter.count) + " subscribers</span>";
     document.title = "Usage, " + D.days + " days — Glass Database";

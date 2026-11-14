@@ -582,6 +582,7 @@ def get_analytics(days: int = Query(30), u: dict = Depends(require_admin)):
         "by_event": [{"event": a, "count": int(n)} for a, n in s["by_event"]],
         "by_country": [{"country": a, "visitors": int(v)} for a, v in s["by_country"]],
         "newsletter": {"count": len(subs), "latest": subs[0]["created_at"] if subs else None},
+        "qr": analytics.qr_stats(conn, days),
     }
 
 
