@@ -507,3 +507,80 @@ def stats(conn) -> dict:
     r = conn.execute("SELECT created_at FROM capture_manifests ORDER BY created_at DESC LIMIT 1").fetchone()
     out["last"] = r[0] if r else None
     return out
+
+
+# --- reprocessing: run today's server code over stored sessions ------------------------
+def stored_files(manifest_id: str) -> dict[str, bytes]:
+    """The pictures of one stored session, by their stored name (``images/…``)."""
+    root = captures_dir() / manifest_id
+    if not root.is_dir():
+        return {}
+    return {p.relative_to(root).as_posix(): p.read_bytes() for p in sorted(root.rglob("*"))
+            if p.is_file() and p.suffix.lower() in IMAGE_EXT}
+
+
+def rerun_mat(conn, manifest_id: str, *, save: bool = False) -> dict | None:
+    """Re-run the Photo Mat detection and measurement on a stored session with the code
+    deployed now, beside what was recorded when it arrived. With ``save`` the new report
+    is written into the manifest as ``server.mat_reruns[]`` (the original stays)."""
+    ensure(conn)
+    r = conn.execute("SELECT manifest_json FROM capture_manifests WHERE manifest_id=?", (manifest_id,)).fetchone()
+    if not r:
+        return None
+    try:
+        man = json.loads(r["manifest_json"] or "{}")
+    except Exception:  # noqa: BLE001
+        man = {}
+    files = stored_files(manifest_id)
+    now = _mat_report(files) if files else {"checked": 0, "note": "the session's pictures are gone from disk"}
+    now["at"] = now_iso()
+    try:
+        from central import version as _v
+        now["code_version"] = getattr(_v, "VERSION", None) or getattr(_v, "__version__", None)
+    except Exception:  # noqa: BLE001
+        pass
+    srv = man.get("server") if isinstance(man.get("server"), dict) else {}
+    before = srv.get("mat")
+    if save:
+        srv.setdefault("mat_reruns", []).append(now)
+        man["server"] = srv
+        text = json.dumps(man, ensure_ascii=False, indent=1)
+        conn.execute("UPDATE capture_manifests SET manifest_json=? WHERE manifest_id=?", (text, manifest_id))
+        conn.commit()
+        p = captures_dir() / manifest_id / "manifest.json"
+        if p.parent.is_dir():
+            p.write_text(text, encoding="utf-8")
+    return {"manifest_id": manifest_id, "stored": before, "now": now, "saved": bool(save),
+            "dimensions_before": (before or {}).get("dimensions") if isinstance(before, dict) else None,
+            "dimensions_now": now.get("dimensions")}
+
+
+def export_records(conn, *, kind: str | None = None, since: str | None = None,
+                   descriptors: bool = True, limit: int = 10000):
+    """One flat record per session, for reprocessing elsewhere: the index row, the
+    whole manifest (descriptors included unless ``descriptors`` is false), the mat
+    report, and an admin URL for every stored file. Yields dicts, newest first."""
+    ensure(conn)
+    where, args = [], []
+    if kind:
+        where.append("kind=?"); args.append(kind)
+    if since:
+        where.append("created_at>=?"); args.append(since)
+    sql = " WHERE " + " AND ".join(where) if where else ""
+    rows = conn.execute(f"SELECT * FROM capture_manifests{sql} ORDER BY created_at DESC, id DESC LIMIT ?",
+                        [*args, int(limit)]).fetchall()
+    for r in rows:
+        d = _row(r)
+        try:
+            man = json.loads(r["manifest_json"] or "{}")
+        except Exception:  # noqa: BLE001
+            man = {}
+        if not descriptors and isinstance(man.get("fingerprint"), dict):
+            fp = dict(man["fingerprint"])
+            fp["frames"] = [{k: v for k, v in f.items() if k not in ("chist", "emb", "dhash")}
+                            for f in fp.get("frames") or [] if isinstance(f, dict)]
+            man["fingerprint"] = fp
+        d["manifest"] = man
+        d["files"] = files_of(d["manifest_id"])
+        d["download"] = f"/api/admin/captures/{d['manifest_id']}/download"
+        yield d

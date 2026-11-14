@@ -72,6 +72,13 @@ Streamlit `cookie_secret`, then the admin token). No passwords, no new accounts.
    stamps `fingerprint_at`, and copies the measured W×D×H onto the piece if the
    mat was in frame. *Export .zip* is still there as a fallback (and the zip can
    be imported in Glowtbook as before).
+   **Shared by default.** Beside the button, *Share this capture to improve Glass ID*
+   starts ticked (the choice is remembered on the device). When it is ticked, Save also
+   sends the session for analysis (`POST /api/me/captures`, the same package as *Send for
+   analysis*): the small shots, the descriptors, the candidates and the server's mat
+   report. That is what lets a bad measurement or a wrong match be re-run later; see
+   [CAPTURE-DATA.md](CAPTURE-DATA.md). Untick it and the shots stay on the device, as
+   before. The registry record itself still holds descriptors only.
 5. **Receipt.** Strength, views, measured dimensions, publication state, and the
    next moves: *Verify it now* (verify.html against your own record), *Open in
    Glowtbook* (deep link to the piece), *Fingerprint another piece*. If a season
@@ -203,4 +210,6 @@ re-identification these are features: the relationship graph draws
 `similar_to` edges between objects from the embedding centroids, and the
 [vision plan](GLASS-VISION.md) uses the same corpus to train probes for
 construction (cane / murrine), colour family and colour source. Descriptors
-only ever reach the registry — the frames stay with you.
+only ever reach the public registry. The small capture frames reach the team's
+analysis store only when the session is shared (ticked by default at Save, or *Send for
+analysis*); they are never public. See [CAPTURE-DATA.md](CAPTURE-DATA.md).

@@ -150,6 +150,21 @@
   #gate h1 em{font-style:italic; color:var(--hot)}
   #gate .lede{font-size:15px; color:var(--ink-dim); margin:0 0 20px; line-height:1.55; max-width:54ch}
   .src{border-top:1px solid var(--rule); padding:14px 0}
+  .quick{border:1px solid var(--ink); background:var(--bg-lift); padding:16px 18px 14px; margin:0 0 18px}
+  .quick h2{font-family:var(--serif); font-weight:400; font-size:22px; margin:0 0 6px; letter-spacing:-.01em}
+  .quick ol{margin:8px 0 12px; padding-left:1.2rem; font-size:14px; line-height:1.5; color:var(--ink-dim)}
+  .quick ol li{margin:0 0 4px}
+  .quick ol b{color:var(--ink)}
+  .quick a{color:var(--hot)}
+  .quick .btn.primary.big{width:100%; padding:15px 18px; font-size:15px}
+  .quick details{margin-top:10px; font-size:13px; color:var(--ink-dim)}
+  .quick details summary{cursor:pointer; font-weight:600; color:var(--ink)}
+  .quick details ul{margin:6px 0 0; padding-left:1.1rem; line-height:1.5}
+  .prov{display:grid; gap:8px; margin:6px 0 10px}
+  .prov label{display:grid; gap:3px; font-size:12px; color:var(--ink-dim)}
+  .prov select,.prov input,.prov textarea{font:inherit; font-size:14px; color:var(--ink); background:#ffffff10; border:1px solid var(--line); border-radius:8px; padding:9px 10px; width:100%; box-sizing:border-box}
+  .prov textarea{min-height:64px; resize:vertical}
+  .prov .two{display:grid; grid-template-columns:1fr 1fr; gap:8px}
   .src-h{display:flex; gap:12px; align-items:baseline; margin-bottom:8px}
   .src-h .n{color:var(--hot); font-weight:500; font-size:12px; font-family:var(--mono); width:18px; flex:none}
   .src-h b{font-size:15px; font-weight:600; color:var(--ink)}
@@ -285,8 +300,32 @@
     </svg>
     <p class="eyebrow">Glass ID · <span style="color:var(--violet)">alpha, for testers</span></p>
     <h1>Check <em>a piece</em></h1>
-    <p class="lede">Point your phone at it to see who made it. Load the piece's registered Glass ID, then take shots of the piece in front of you; the confidence rises as your angles line up with the ones on file. Nothing you shoot leaves this device. A likely match means this is the registered piece. It is strong evidence, not proof. <span style="color:var(--violet)">Alpha:</span> the thresholds are still being tuned with testers' help.</p>
-    <p class="fine" style="font-size:12.5px;color:var(--ink-faint);margin:-10px 0 18px">A Glass ID is a fingerprint of the glass itself, stored as numbers, not photos.</p>
+    <p class="lede">Point your phone at a piece to see whether it is registered and who made it. A likely match is strong evidence, not proof. <span style="color:var(--violet)">Alpha:</span> the thresholds are still being tuned with testers' help.</p>
+
+    <section class="quick" id="quick" aria-labelledby="quickH">
+      <h2 id="quickH">Picked up a piece? Check it here.</h2>
+      <p class="fine" style="margin:0;font-size:13px;color:var(--ink-dim)">See whether it is registered, who made it, and add it to your collection with its story.</p>
+      <ol>
+        <li><b>Put it somewhere plain and bright.</b> A table by a window, or the <a href="/fingerprint/capture-mat.pdf">Photo Mat</a> if you have one. No busy background.</li>
+        <li><b>Tap the button below</b> and allow the camera.</li>
+        <li><b>Take 3–8 shots as you walk round it</b>, filling the frame with the piece. Then tap <b>Find it</b>.</li>
+        <li><b>Pick the piece that comes up</b> and tap <b>Check against this</b>. Keep circling until it says <b>Match likely</b>.</li>
+        <li><b>Add it to your collection</b>, and say how you got it (bought, gift…), when and where, with a note if you like.</li>
+      </ol>
+      <button type="button" class="btn primary big" id="quickPhoto">Open the camera and find my piece</button>
+      <p class="fine" style="margin:.6rem 0 0;font-size:12.5px">Checking runs on your phone: the shots stay on it unless you choose <b>Send for analysis</b>. A Glass ID is a fingerprint of the glass, stored as numbers, not photos.</p>
+      <p class="fine" style="margin:.4rem 0 0;font-size:12.5px">Know its Glass ID number, title or maker? Type it under <b>Find the piece</b> below instead. Sign in (top right) to add it to your collection; checking works without signing in.</p>
+      <details>
+        <summary>Tips if it doesn't find it</summary>
+        <ul>
+          <li>More light, less glare: turn off overhead spots and stand with the window behind you.</li>
+          <li>Fill the frame with the piece; hold still for each shot so it's sharp.</li>
+          <li>Shoot from the angles the maker probably used: from the side and a little above.</li>
+          <li>Clear and very pale glass is hard for it. Put it on something dark or on the Photo Mat's grey area.</li>
+          <li>Nothing comes up? It may not be registered yet. Ask the maker; you can still keep it in your collection once they register it.</li>
+        </ul>
+      </details>
+    </section>
 
     <section class="src" id="srcFind">
       <div class="src-h"><span class="n">1</span><b>Find the piece</b></div>
@@ -643,7 +682,18 @@
       pairs:S.frames.map(f=>({shot:f.seq,sharp:+f.sharp.toFixed(1),
         refFile:f.match&&f.match.ref?f.match.ref.file:null,dist:f.match?f.match.dist:null,similarity:f.match?+f.match.sim.toFixed(3):null})) };
   }
+  function readProv(){ const h=$("#provHow"); if(!h) return null;
+    return {acquired_how:h.value, acquired_on:$("#provWhen").value, location:$("#provWhere").value, acquired_note:$("#provNote").value}; }
+  function provForm(c){ c=Object.assign({},c||{},S.provDraft||{});
+    const how=[["","Choose…"],["bought","Bought it"],["gift","Given as a gift"],["inherited","Inherited it"],["traded","Traded for it"],["commissioned","Commissioned it"],["found","Found it"],["other","Something else"]];
+    return `<div class="prov">
+      <label>How did you get it?<select id="provHow">${how.map(([k,l])=>`<option value="${k}"${(c.acquired_how||"")===k?" selected":""}>${l}</option>`).join("")}</select></label>
+      <div class="two"><label>When<input id="provWhen" type="date" value="${esc(c.acquired_on||new Date().toISOString().slice(0,10))}"></label>
+      <label>Where<input id="provWhere" type="text" maxlength="200" placeholder="Show, shop, online…" value="${esc(c.location||"")}"></label></div>
+      <label>Note (optional)<textarea id="provNote" maxlength="2000" placeholder="Who you got it from, what it cost, why you love it…">${esc(c.acquired_note||"")}</textarea></label>
+    </div>`; }
   function renderActions(){
+    const d=readProv(); if(d) S.provDraft=d;
     const box=$("#actions"); if(!S.frames.length||!S.ref){ box.hidden=true; return; }
     const r=recompute(); const [cls,label]=verdictFor(r); box.hidden=false; box.classList.toggle("nomatch",cls==="nomatch");
     const who=S.refTitle?`<b>${esc(S.refTitle)}</b>${S.refMaker?" by "+esc(S.refMaker):""}`:"the reference";
@@ -654,8 +704,8 @@
         : `<div class="filmbtns" style="margin-top:0"><button class="primary" id="recordBtn">Note this check on the piece</button></div><p class="fine">It adds today's date, the confidence and the views matched to the piece's history.</p>`;
     } else if(S.refKind==="public"){
       if(!S.user){ html+=`<p>Holding this piece? Sign in and it can join your collection — a checked scan is how a collection shows a piece is the real thing.</p><div class="filmbtns" style="margin-top:0"><a class="primary" href="${G?esc(G.loginUrl()):'#'}">Sign in to add it to your collection</a></div><p class="fine">You come back here signed in, with this check kept.</p>`; }
-      else if(S.claimed){ html+=`<p>✓ ${S.claimed.status==="verified"?"Added — it's in your collection.":"Added — pending review."} <a href="/games.html#collection" style="color:var(--hot)">Open my collection</a></p>`; }
-      else { html+=`<p>Holding this piece?</p><div class="filmbtns" style="margin-top:0"><button class="primary" id="claimBtn">Add to My Collection</button></div><p class="fine">It joins your collection with its story attached, and this check's confidence travels with it.</p>`; }
+      else if(S.claimed&&!S.editStory){ html+=`<p>✓ ${S.claimed.status==="verified"?"Added — it's in your collection.":"Added — pending review."}${S.claimed.acquired_label?" "+esc(S.claimed.acquired_label)+(S.claimed.acquired_on?", "+esc(S.claimed.acquired_on):"")+".":""} <a href="/games.html#collection" style="color:var(--hot)">Open my collection</a></p><div class="filmbtns" style="margin-top:0"><button class="ghost teal" id="storyBtn">${S.claimed.acquired_how?"Change the story":"Add how you got it"}</button></div>`; }
+      else { html+=`<p>${S.claimed?"How you came by it:":"Holding this piece? Add it to your collection, with its story:"}</p>${provForm(S.claimed)}<div class="filmbtns" style="margin-top:0"><button class="primary" id="claimBtn">${S.claimed?"Save the story":"Add to My Collection"}</button></div><p class="fine">The maker sees your story; it is not public. This check's confidence travels with it.</p>`; }
     } else {
       html+=`<p class="fine">Loaded from a file — to note a check or add the piece to your collection, open it from <a href="/explore/?view=objects">The Directory</a> or from your Glowtbook pieces.</p>`;
     }
@@ -667,10 +717,13 @@
         S.recorded=true; if(!S.decision) S.decision={decision:"match_confirmed",object:currentRefObject(),at:new Date().toISOString()};
         toast("Noted on the piece","ok"); renderActions(); renderSend();
       }catch(e){ toast("Couldn't note it: "+e.message,"warn"); rb.disabled=false; } };
+    const sb=$("#storyBtn"); if(sb) sb.onclick=()=>{ S.editStory=true; renderActions(); };
     const cb=$("#claimBtn"); if(cb) cb.onclick=async()=>{ cb.disabled=true;
+      const v=id=>{ const e=$(id); return e?e.value.trim():""; };
       try{ const rep=report(); const j=await G.json("/claims",{method:"POST",headers:{"Content-Type":"application/json"},
-          body:JSON.stringify({object_row_id:S.refId, confidence:rep.confidence, report:rep, location:""})});
-        S.claimed=j.claim||j; if(!S.decision) S.decision={decision:"match_confirmed",object:currentRefObject(),at:new Date().toISOString()};
+          body:JSON.stringify({object_row_id:S.refId, confidence:rep.confidence, report:rep,
+            how:v("#provHow"), acquired_on:v("#provWhen"), location:v("#provWhere"), note:v("#provNote")})});
+        S.claimed=j.claim||j; S.editStory=false; S.provDraft=null; if(!S.decision) S.decision={decision:"match_confirmed",object:currentRefObject(),at:new Date().toISOString()};
         toast(S.claimed.status==="verified"?"Added — it's in your collection":"Added — pending review","ok"); buzz([30,40,30]); renderActions(); renderSend();
       }catch(e){ toast(e.status===404?"Collections aren't enabled on this server yet":"Couldn't add it: "+e.message,"warn"); cb.disabled=false; } };
   }
@@ -944,6 +997,10 @@
       toast("Take a few shots of the piece from different sides, then tap Find it");
     };
   })();
+
+  (function(){ const q=$("#quickPhoto"), f=$("#findByPhoto"); if(!q) return;
+    if(!f||!KIT||!G){ q.onclick=()=>{ const st=$("#start"); st.style.display="block"; st.scrollIntoView({behavior:"smooth"}); }; return; }
+    q.onclick=()=>f.click(); })();
 
   async function initAccount(){
     const objId=G?G.param("object"):new URLSearchParams(location.search).get("object");

@@ -208,6 +208,27 @@ def test_claim_verified_pending_and_badges(demo_db):
         S.claim(c, object_row_id=rid, collector_uid="", collector_name="", confidence=99)
 
 
+def test_claim_carries_the_collectors_story(demo_db):
+    c = _conn()
+    sid = _season(c)
+    _, rid = _entry(c, sid, "mk-story")
+    out = S.claim(c, object_row_id=rid, collector_uid="col-s", collector_name="Story", confidence=90,
+                  location="Corning show", acquired_how="bought", acquired_on="2026-11-02",
+                  acquired_note="From the maker's table, $40")
+    assert out["acquired_how"] == "bought" and out["acquired_label"] == "Bought it"
+    assert out["acquired_on"] == "2026-11-02" and out["acquired_note"].startswith("From the maker")
+    # claiming again with a story updates it instead of failing
+    again = S.claim(c, object_row_id=rid, collector_uid="col-s", collector_name="Story", confidence=90,
+                    acquired_how="gift", acquired_note="Actually a birthday present")
+    assert again["updated"] is True and again["id"] == out["id"] and again["acquired_how"] == "gift"
+    assert again["location"] == "Corning show"                       # kept when not given again
+    assert S.collection(c, "col-s")[0]["acquired_label"] == "Given as a gift"
+    with pytest.raises(ValueError):
+        S.claim(c, object_row_id=rid, collector_uid="col-s2", collector_name="X", confidence=90, acquired_how="stole")
+    with pytest.raises(ValueError):                                  # no story, no update: still one claim
+        S.claim(c, object_row_id=rid, collector_uid="col-s", collector_name="Story", confidence=95)
+
+
 def test_low_scan_then_better_scan_upgrades(demo_db):
     c = _conn()
     sid = _season(c)

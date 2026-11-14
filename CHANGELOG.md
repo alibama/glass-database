@@ -6,6 +6,26 @@ All notable changes are documented here. This project distinguishes
 proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
+### Added
+- **Capture data out, for iterating.** `GET /api/admin/captures/export.jsonl` (every
+  session as one JSON line: index row, whole manifest, mat report, file URLs; `?kind=`,
+  `?since=`, `?descriptors=false`), `POST /api/admin/captures/{id}/rerun` and
+  `POST /api/admin/captures/rerun` (the mat measurement re-run with the deployed code,
+  before beside after, `save` to keep it in the manifest), and
+  `python -m scripts.reprocess_captures` (the same over pulled folders with the code in
+  your checkout). See docs/CAPTURE-DATA.md.
+- **Save shares the session by default.** The capture app's *Share this capture to improve
+  Glass ID* box (ticked, remembered per device) sends the session for analysis when the
+  Glass ID is saved, so real measurements and matches can be re-run. Untick to keep the
+  shots on the device.
+- **Check a Piece for collectors.** A "Picked up a piece?" quick start at the top of
+  verify.html with the steps and one button that opens the camera and finds the piece.
+  Adding a piece to your collection now carries its story: how you got it (bought, gift,
+  inherited, traded, commissioned, found, other), when, where and a note
+  (`POST /api/claims` takes `how`, `acquired_on`, `location`, `note`; claiming again with a
+  story updates it; `GET /api/claims/how` lists the choices). The maker sees the story; it
+  is not public.
+
 ### Fixed
 - **Over https, `/record/<gid>` and every pretty URL were 404s on production.** certbot's
   :443 vhost was copied from the :80 one before the shared Apache snippet existed, so it

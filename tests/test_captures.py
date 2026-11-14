@@ -324,3 +324,55 @@ def test_pull_locally_and_bench_the_sessions(client, tmp_path, capsys):
     text = capsys.readouterr().out
     assert "4 session(s) across 2 piece(s)" in text and "false-accept rate 0.0" in text
     assert glassid_bench.main(["--manifests", str(tmp_path / "empty-nowhere"), "--out", ""]) == 1
+
+
+# --- export + re-run: the data out, for iterating ---------------------------------------
+def test_export_jsonl_and_rerun_the_mat(client):
+    h = _auth()
+    mid = client.post("/me/captures", content=_zip(_manifest()), headers={**h, "Content-Type": "application/zip"}).json()["manifest_id"]
+    client.post("/me/captures", content=_zip(_manifest("verify", "undecided")), headers={**h, "Content-Type": "application/zip"})
+    # admin only
+    assert client.get("/admin/captures/export.jsonl", headers=h).status_code == 403
+    assert client.post(f"/admin/captures/{mid}/rerun", headers=h).status_code == 403
+    r = client.get("/admin/captures/export.jsonl", headers=_boss())
+    assert r.status_code == 200 and r.headers["content-type"].startswith("application/x-ndjson")
+    recs = [json.loads(line) for line in r.text.splitlines() if line.strip()]
+    assert len(recs) == 2 and {x["kind"] for x in recs} == {"enroll", "verify"}
+    one = next(x for x in recs if x["manifest_id"] == mid)
+    assert one["manifest"]["fingerprint"]["frames"][0].get("chist")            # descriptors included by default
+    assert any(f["url"].endswith("/images/001.jpg") for f in one["files"])
+    assert one["download"] == f"/api/admin/captures/{mid}/download"
+    lean = [json.loads(line) for line in client.get("/admin/captures/export.jsonl?descriptors=false&kind=enroll",
+                                                   headers=_key()).text.splitlines()]
+    assert len(lean) == 1 and "chist" not in lean[0]["manifest"]["fingerprint"]["frames"][0]
+    # re-run with today's code: before/after, saved only when asked
+    rr = client.post(f"/admin/captures/{mid}/rerun", headers=_boss()).json()
+    assert rr["manifest_id"] == mid and rr["saved"] is False and "checked" in rr["now"] and rr["now"]["at"]
+    assert "mat_reruns" not in client.get(f"/admin/captures/{mid}", headers=_boss()).json()["manifest"]["server"]
+    rr = client.post(f"/admin/captures/{mid}/rerun?save=true", headers=_boss()).json()
+    assert rr["saved"] is True
+    srv = client.get(f"/admin/captures/{mid}", headers=_boss()).json()["manifest"]["server"]
+    assert len(srv["mat_reruns"]) == 1 and srv["mat"] is not None
+    many = client.post("/admin/captures/rerun", json={"kind": "enroll"}, headers=_boss()).json()
+    assert [x["manifest_id"] for x in many["items"]] == [mid]
+    assert client.post("/admin/captures/cap-00000000-000000-000000/rerun", headers=_boss()).status_code == 404
+
+
+def test_reprocess_script_reads_pulled_folders(client, tmp_path, capsys):
+    h = _auth()
+    mid = client.post("/me/captures", content=_zip(_manifest()), headers={**h, "Content-Type": "application/zip"}).json()["manifest_id"]
+    from scripts import reprocess_captures
+    try:
+        from glowtbook import matdetect
+        have_cv = matdetect.available()
+    except Exception:  # noqa: BLE001
+        have_cv = False
+    rc = reprocess_captures.main([str(captures.captures_dir()), "--frames", "--json", str(tmp_path / "out.json")])
+    if not have_cv:
+        assert rc == 2
+        return
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert mid in out and "recorded" in out
+    res = json.loads((tmp_path / "out.json").read_text())
+    assert res[0]["session"] == mid and res[0]["pictures"] == 3

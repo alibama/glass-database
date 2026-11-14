@@ -34,6 +34,9 @@ Capture-session manifests (the person who sent one, and administrators)
   GET  /admin/captures/{mid}/manifest.json
   GET  /admin/captures/{mid}/files/{name}
   GET  /admin/captures/{mid}/download   the whole session as a zip
+  GET  /admin/captures/export.jsonl?kind=&since=&descriptors=   every session, one JSON line each
+  POST /admin/captures/{mid}/rerun?save= re-run the mat measurement with today's code (before/after)
+  POST /admin/captures/rerun            {ids:[…]} or {since, kind} - the same, for many
   POST /admin/captures/{mid}/decision   an administrator's annotation
 """
 from __future__ import annotations
@@ -42,8 +45,8 @@ import json
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import FileResponse, Response
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
+from fastapi.responses import FileResponse, Response, StreamingResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from api.auth import current_user, is_admin_request, require_admin, require_user  # noqa: E402
@@ -304,6 +307,53 @@ def admin_list(kind: str = Query("", max_length=20), decision: str = Query("", m
     out["decisions"] = [{"id": d, "label": captures.DECISION_LABELS[d]} for d in captures.DECISIONS]
     out["kinds"] = list(captures.KINDS)
     out["dir"] = str(captures.captures_dir())
+    return out
+
+
+@router.get("/admin/captures/export.jsonl", summary="Every session as JSON Lines, for reprocessing")
+def admin_export(kind: str = Query("", max_length=20), since: str = Query("", max_length=40),
+                 descriptors: bool = Query(True, description="include per-frame colour/dHash/AI vectors"),
+                 limit: int = Query(10000, ge=1, le=100000), u: dict = Depends(require_admin)):
+    """One line per session, newest first: the index row, the whole manifest (what the
+    page computed, the candidates and scores, the decision, the device, the server's mat
+    report and any re-runs) and an admin URL for every stored picture. Pipe it into
+    pandas/jq, or fetch the pictures by URL to re-run anything. See docs/CAPTURE-DATA.md."""
+    conn = _central()
+    if conn is None:
+        raise HTTPException(503, "The registry is not available")
+    def lines():
+        for rec in captures.export_records(conn, kind=kind or None, since=since or None,
+                                           descriptors=descriptors, limit=limit):
+            yield json.dumps(rec, ensure_ascii=False) + "\n"
+    return StreamingResponse(lines(), media_type="application/x-ndjson",
+                             headers={"Content-Disposition": 'attachment; filename="glass-id-captures.jsonl"'})
+
+
+@router.post("/admin/captures/rerun", summary="Re-run the mat measurement on many sessions with today's code")
+def admin_rerun_many(payload: dict | None = Body(None), u: dict = Depends(require_admin)):
+    """Body: {"ids": [...]} or {"since": "YYYY-MM-DD", "kind": "enroll"}; "save": true to
+    keep the new reports in the manifests. Returns before/after per session."""
+    conn = _central()
+    if conn is None:
+        raise HTTPException(503, "The registry is not available")
+    payload = payload or {}
+    ids = [str(i) for i in (payload.get("ids") or [])][:200]
+    if not ids:
+        lst = captures.list_manifests(conn, kind=(payload.get("kind") or None), since=(payload.get("since") or None),
+                                      limit=min(int(payload.get("limit") or 50), 200))
+        ids = [r["manifest_id"] for r in lst["items"]]
+    out = [captures.rerun_mat(conn, i, save=bool(payload.get("save"))) for i in ids]
+    return {"items": [o for o in out if o]}
+
+
+@router.post("/admin/captures/{mid}/rerun", summary="Re-run the mat measurement on one session with today's code")
+def admin_rerun(mid: str, save: bool = Query(False), u: dict = Depends(require_admin)):
+    conn = _central()
+    if conn is None:
+        raise HTTPException(503, "The registry is not available")
+    out = captures.rerun_mat(conn, mid, save=save)
+    if not out:
+        raise HTTPException(404, "No such capture session")
     return out
 
 

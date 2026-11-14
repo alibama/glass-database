@@ -67,6 +67,10 @@ def entry_review() -> bool:
     return os.environ.get("GLASSDB_SEASON_ENTRY_REVIEW", "0").lower() in ("1", "true", "yes")
 CLAIM_STATUSES = ("verified", "pending", "approved", "rejected")
 CLAIM_OK = ("verified", "approved")          # the claims that count on the boards
+# How a collector came by a piece: the provenance line a claim carries (verify.html's form)
+ACQUIRED_HOW = {"bought": "Bought it", "gift": "Given as a gift", "inherited": "Inherited it",
+                "traded": "Traded for it", "commissioned": "Commissioned it", "found": "Found it",
+                "other": "Something else"}
 VERIFIED_CONFIDENCE = 70.0                   # verify.html: >= 70 with >= 3 views = "Match likely"
 IMAGE_URL = "/api/objects/{row_id}/image"
 GLOBAL = 0                                   # season_id for badges that aren't per-season
@@ -248,6 +252,11 @@ def ensure(conn) -> None:
                       ("legend", "TEXT DEFAULT ''")):
         if col not in have:
             conn.execute(f"ALTER TABLE season_entries ADD COLUMN {col} {decl}")
+    # the collector's provenance on a claim: how, when and a note (added after the first deploy)
+    have = {r[1] for r in conn.execute("PRAGMA table_info(season_claims)").fetchall()}
+    for col in ("acquired_how", "acquired_on", "acquired_note"):
+        if col not in have:
+            conn.execute(f"ALTER TABLE season_claims ADD COLUMN {col} TEXT DEFAULT ''")
     # who won a prize, as data (the maker's career record reads it), beside the words
     have = {r[1] for r in conn.execute("PRAGMA table_info(season_prizes)").fetchall()}
     if "winner_json" not in have:
@@ -1161,7 +1170,17 @@ def _claim_shape(c: dict) -> dict:
     c["image_url"] = object_image_url(c["object_row_id"])
     c["title"] = c.get("entry_title") or c.get("object_title") or "Untitled"
     c["verified"] = c.get("status") in CLAIM_OK
+    how = c.get("acquired_how") or ""
+    c["acquired_label"] = ACQUIRED_HOW.get(how, "") if how else ""
     return c
+
+
+def _provenance(how, on, note) -> tuple[str, str, str]:
+    how = str(how or "").strip().lower()
+    if how and how not in ACQUIRED_HOW:
+        raise ValueError(f"how must be one of {', '.join(ACQUIRED_HOW)}")
+    on = str(on or "").strip()[:40]
+    return how, on, str(note or "").strip()[:2000]
 
 
 def get_claim(conn, claim_id: int) -> dict | None:
@@ -1172,10 +1191,15 @@ def get_claim(conn, claim_id: int) -> dict | None:
 
 
 def claim(conn, *, object_row_id: str, collector_uid: str, collector_name: str,
-          confidence, report: dict | None = None, location: str = "") -> dict:
+          confidence, report: dict | None = None, location: str = "",
+          acquired_how: str = "", acquired_on: str = "", acquired_note: str = "") -> dict:
     """Record that `collector_uid` holds this piece. A fingerprint confidence of
     70+ verifies it immediately; lower waits for an admin / the artist. Returns
-    the claim row plus `badges` — any badges this claim just earned."""
+    the claim row plus `badges` — any badges this claim just earned.
+
+    The provenance fields (how they came by it, when, and a note; `location` is where)
+    travel with the claim. Claiming again with provenance on a piece already claimed
+    updates the story instead of failing; the maker sees it, the public does not."""
     if not collector_uid:
         raise ValueError("Sign in to claim a piece")
     obj = _public_object(conn, object_row_id)
@@ -1195,24 +1219,38 @@ def claim(conn, *, object_row_id: str, collector_uid: str, collector_name: str,
     existing = _one(conn.execute(
         "SELECT id, status, confidence FROM season_claims WHERE object_row_id=? AND collector_uid=?",
         (object_row_id, collector_uid)))
+    how, on, note = _provenance(acquired_how, acquired_on, acquired_note)
+    if existing and (how or on or note) and (existing["status"] in CLAIM_OK or status != "verified"):
+        conn.execute("""UPDATE season_claims SET acquired_how=?, acquired_on=?, acquired_note=?,
+                        location=COALESCE(NULLIF(?, ''), location) WHERE id=?""",
+                     (how, on, note, (location or "")[:200], existing["id"]))
+        conn.commit()
+        row = get_claim(conn, existing["id"]) or {"id": existing["id"], "status": existing["status"]}
+        row["updated"] = True
+        row["badges"], row["badge_details"] = [], []
+        return row
     if existing:
         if existing["status"] in CLAIM_OK or status != "verified":
             raise ValueError("You've already claimed this piece")
         # a better scan upgrades a pending claim
         conn.execute("""UPDATE season_claims SET confidence=?, report_json=COALESCE(?, report_json),
                         location=COALESCE(NULLIF(?, ''), location), status='verified',
-                        season_id=COALESCE(season_id, ?), entry_id=COALESCE(entry_id, ?)
+                        season_id=COALESCE(season_id, ?), entry_id=COALESCE(entry_id, ?),
+                        acquired_how=COALESCE(NULLIF(?, ''), acquired_how),
+                        acquired_on=COALESCE(NULLIF(?, ''), acquired_on),
+                        acquired_note=COALESCE(NULLIF(?, ''), acquired_note)
                         WHERE id=?""",
                      (conf, rep, (location or "")[:200], ent["season_id"] if ent else None,
-                      ent["id"] if ent else None, existing["id"]))
+                      ent["id"] if ent else None, how, on, note, existing["id"]))
         cid = existing["id"]
     else:
         cur = conn.execute(
             """INSERT INTO season_claims (season_id,entry_id,object_row_id,collector_uid,collector_name,
-               confidence,report_json,location,status,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)""",
+               confidence,report_json,location,status,created_at,acquired_how,acquired_on,acquired_note)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (ent["season_id"] if ent else None, ent["id"] if ent else None, object_row_id,
              collector_uid, (collector_name or "")[:200], conf, rep, (location or "")[:200],
-             status, _now()))
+             status, _now(), how, on, note))
         cid = int(cur.lastrowid)
     conn.commit()
     badges = award_badges(conn, collector_uid) if status == "verified" else []
@@ -1227,6 +1265,7 @@ def claim(conn, *, object_row_id: str, collector_uid: str, collector_name: str,
            {"Maker": row.get("maker") or row.get("artist_name") or obj.get("maker"),
             "Studio": row.get("studio"), "Collector": who, "Confidence": f"{conf:.0f}/100",
             "Where": location, "Season": row.get("season_title"),
+            "How": ACQUIRED_HOW.get(how) if how else None,
             "Confirm": ("The maker in Glowtbook → Objects → Seasons, or a reviewer at /review.html"
                         if status == "pending" else None),
             "Object": object_row_id},

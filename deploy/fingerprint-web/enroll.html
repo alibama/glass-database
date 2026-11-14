@@ -308,6 +308,10 @@
       </div>
       <p class="btnhint">The red button saves the Glass ID onto your piece; Export .zip downloads the shots to import later; Keep going returns to the camera; Start over throws the shots away.</p>
       <p id="saveHint" style="margin:10px 0 0;font-size:12px;color:var(--ink-faint)"></p>
+      <label id="shareWrap" style="display:flex;gap:8px;align-items:flex-start;margin:10px 0 0;font-size:12.5px;color:var(--ink-dim);cursor:pointer">
+        <input type="checkbox" id="shareCapture" checked style="margin-top:2px">
+        <span>Share this capture to improve Glass ID. Saving also sends the small shots, the numbers and the size measurement to the Glass Database team, who use them to fix the matching and the measuring. They are not public. Untick to keep the shots on this device.</span>
+      </label>
       <details id="shots" style="margin-top:14px">
         <summary style="cursor:pointer;font-size:13px;font-weight:600;color:var(--ink)">See the shots <span id="shotCount" style="color:var(--ink-dim);font-weight:400"></span></summary>
         <p style="margin:8px 0 10px;font-size:12px;color:var(--ink-faint)">Tap × on a shot to drop it. You don't need to look through them: the number up top already says how much of the piece is captured.</p>
@@ -1013,6 +1017,9 @@
     finally{ S.sending=false; renderSend(); }
   }
 
+  (function(){ const c=$("#shareCapture"); if(!c) return;
+    try{ const v=localStorage.getItem("gid-share-capture"); if(v!==null) c.checked=v==="1"; }catch(_){}
+    c.onchange=()=>{ try{ localStorage.setItem("gid-share-capture",c.checked?"1":"0"); }catch(_){} }; })();
   $("#saveBtn").onclick=async()=>{
     if(!S.frames.length){ toast("Nothing to save","warn"); return; }
     if(!S.target||!G){ toast("Choose a piece first","warn"); return; }
@@ -1035,6 +1042,9 @@
         catch(e){ img={error:e.message}; } }
       await draftClear();
       toast("Saved — "+j.rating+"/100 "+j.tier,"ok"); buzz([30,40,30]); showReceipt(j,img); renderSend();
+      // shared by default (opt-out box beside Save): the session goes to the team for analysis
+      const share=$("#shareCapture"); if(share&&share.checked&&!S.sent&&KIT&&S.user){
+        sendSession(defaultDecision(),S.sendNote||"sent with Save").catch(()=>{}); }
     }catch(e){
       if(e.status===401){ toast("Your sign-in expired — sign in again, your shots are kept on this phone","warn"); S.user=null; renderWho(); }
       else toast("Save failed: "+e.message,"warn");

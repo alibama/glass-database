@@ -314,7 +314,12 @@ def cast_vote(slug: str, payload: dict, u: dict = Depends(require_user)):
 
 
 # --- claims + collection -------------------------------------------------------------
-@router.post("/claims", summary="Claim a scanned piece for your collection")
+@router.get("/claims/how", summary="The ways a collector can say they came by a piece")
+def claim_how():
+    return {"how": [{"id": k, "label": v} for k, v in seasons.ACQUIRED_HOW.items()]}
+
+
+@router.post("/claims", summary="Claim a scanned piece for your collection (with how/when/where/note)")
 def make_claim(payload: dict, request: Request, u: dict = Depends(require_user)):
     conn = _conn()
     rid = (payload.get("object_row_id") or "").strip()
@@ -327,7 +332,9 @@ def make_claim(payload: dict, request: Request, u: dict = Depends(require_user))
         out = seasons.claim(conn, object_row_id=rid, collector_uid=u["uid"],
                             collector_name=u.get("name") or u.get("email") or "",
                             confidence=payload.get("confidence"), report=report,
-                            location=(payload.get("location") or "").strip())
+                            location=(payload.get("location") or "").strip(),
+                            acquired_how=payload.get("how") or "", acquired_on=payload.get("acquired_on") or "",
+                            acquired_note=payload.get("note") or "")
     except ValueError as ex:
         raise _bad(ex)
     try:
@@ -336,7 +343,9 @@ def make_claim(payload: dict, request: Request, u: dict = Depends(require_user))
     except Exception:  # noqa: BLE001
         pass
     out.pop("collector_uid", None)
-    if out.get("status") == "pending":
+    if out.get("updated"):
+        out["note"] = "Your story for this piece is updated."
+    elif out.get("status") == "pending":
         out["note"] = ("Under 70 — the maker (or an admin) can confirm it; it joins your "
                        "collection once they do.")
     return out
