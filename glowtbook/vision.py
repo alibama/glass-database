@@ -486,8 +486,10 @@ def suggest_from_fingerprint(fp: dict) -> dict:
                                   f"{len(frames)} view(s)"}
         evidence.append(f"dominant colour {name or hexv}" + (f" ({hexv})" if name and hexv else ""))
     if dims:
-        w, d, h = dims.get("width"), dims.get("depth"), dims.get("height")
-        evidence.append(f"measured {w} x {d} x {h} mm on the capture mat")
+        sides = [str(dims[k]) for k in ("width", "depth", "height") if dims.get(k) is not None]
+        if sides:
+            evidence.append(f"measured {' x '.join(sides)} mm on the capture mat"
+                            + ("" if dims.get("height") is not None else " (footprint only, no height)"))
     if has_emb:
         evidence.append(f"{n_emb or 'some'} DINOv2 view(s) available for similarity search")
     out["evidence"] = evidence

@@ -93,11 +93,55 @@ thumbnail). Contact/value data is never part of the fingerprint.
 
 ## 5. Calibration & measurement (the mat)
 
-- **Scale.** Each detected 30 mm marker's edge gives a local mm-per-pixel scale —
-  no inter-marker geometry needed. The object is segmented against the mat's two
-  known surfaces (white margin + mid-grey area) and measured; orbit frames give
-  **W × D × H** in millimetres (±~1–2% in tests). Runs server-side on import
-  (OpenCV). Clear glass under-measures — see §9.
+- **Size (`glowtbook/matdetect.py`, server-side on import, OpenCV).** Rewritten
+  November 2026. The old version measured the box around anything that wasn't
+  exactly paper-white (245) or grey (128) in each picture. Under ordinary room
+  light a phone records paper at about 190–220, so it measured the mat itself:
+  about 187 × 158 mm, and up to 250 mm for tilted or turned shots, whatever the
+  piece was. The new pipeline works in mat coordinates:
+  1. **Pose.** The marker corners (2 or more of the 4) give the homography from
+     the mat plane to the picture. From the session's tilted views it gets the
+     focal length, then each camera's foot point G and height Hc above the mat.
+  2. **Flatten** each picture onto a top-down grid of the plane, 1 px/mm,
+     reaching 250 mm past the page: the table is part of the same plane.
+  3. **Segment.** On the page, against the printed mat (`mat_template.png`),
+     after fitting the frame's exposure and colour cast as a per-channel gain
+     with a gentle gradient. That gain is anchored on the paper next to the
+     markers that were read, so a big piece can't throw the fit. Off the page,
+     against the table itself: the median of each plane pixel across the
+     session, with that pixel's own normal variation. For big pieces this is
+     repeated, leaving out the frames where the piece stands in front of that
+     patch. Soft shadows count as background.
+  4. **Carve a visual hull.** A point at height z above plane point X lands on
+     the plane at G + (X − G)·Hc/(Hc − z). It is kept only if every frame that
+     sees where it lands, including at least one side view, shows piece there.
+     Each column is one solid run, which allows for the bulge of an ornament.
+     **W × D** = the minimum-area rectangle of the columns that hold piece;
+     **H** = the top of what survives.
+
+  On rendered test sessions (`tests/test_matdetect.py`: 384 px thumbnails, room
+  light, a shadow, orbits at 80°/50°/30°), most cases come out within ~4 mm.
+  Width runs a few mm over and height runs high on straight-sided pieces:
+
+  | Rendered piece | Measured |
+  |---|---|
+  | 80 mm ball | 82 × 81 × 79 mm |
+  | 40 × 90 mm cylinder | 44 × 43 × 92 mm |
+  | 40 × 25 × 90 mm box | 47 × 29 × 91 mm |
+  | 120 mm ball, shot close | 116 × 116 mm, height not measured (no side view saw past its top) |
+  | 60 × 140 mm vase | 68 × 64 × 165 mm |
+
+  The cause is in the geometry: a hull can only be bigger than the piece. A flat
+  top seen only from steep angles leaves a cone-shaped cap, because low views
+  see the top against the room, not the mat or table. Results therefore carry
+  `height_range_mm` (how much lower a flat top could be). **Height is `None`**
+  when every picture looked straight down, or when no side view could see past
+  the top. For a good height, circle the piece once low (about 30°) with the
+  whole mat and some table in frame.
+
+  These numbers are from rendered pictures. They have **not been calibrated on
+  real captures yet**: compare against a ruler on a few pieces before relying on
+  them for the biggest-pumpkin ranking. Clear glass under-measures (§9).
 - **Colour.** Client-side white balance (§2.1) anchors to the mat's neutral. The
   printed colour strip is the seam for a future full colour transform (true
   Lab/hex); not yet wired.
@@ -137,7 +181,7 @@ what pushes a similar-but-different piece down.
 | `EMB_CAP` | enroll/verify app source | how many DINOv2 vectors to sample |
 | **Match thresholds** (`SIM_LO/HI`, `MATCH_READY`) | verify app source | where confidence lands as match / inconclusive / no-match |
 | **White balance** | enroll/verify app | on by default; anchors colour to the mat |
-| **Marker size / mat geometry** | `central/matdetect.py` (`MARKER_MM`) | real-world scale |
+| **Marker size / mat geometry** | `glowtbook/matdetect.py` (`MARKER_MM`, `MARKER_CORNERS_MM`, `mat_template.png`) | real-world scale, page layout |
 | **C2PA certificate** | `data/c2pa/{cert,key}.pem` | self-signed (untrusted) vs. Trust-List (trusted) |
 
 **Calibrate before trusting a verdict.** Enrol a real piece, then verify (i) the

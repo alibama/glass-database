@@ -44,8 +44,9 @@ def load_enrollment(zip_bytes: bytes) -> dict:
             m = matdetect.measure_zip(zip_bytes)
             if m.get("ok"):
                 dims = m
+                # height is None when no picture was taken from the side: leave it out
                 fp.setdefault("metadata", {})["dimensions_mm"] = {
-                    "width": m["width_mm"], "depth": m["depth_mm"], "height": m["height_mm"]}
+                    k: m[f"{k}_mm"] for k in ("width", "depth", "height") if m.get(f"{k}_mm") is not None}
         except Exception:
             dims = None
         return {"ok": True, "rating": fp.get("rating"), "tier": fp.get("tier"),
