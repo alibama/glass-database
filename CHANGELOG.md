@@ -7,6 +7,15 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Lineage from Charlottesville Glass residents.** `central/lineage_feeds.py` pulls the
+  read-only feed at `https://cvilleglass.org/api/residents.php` (plus any in
+  `GLASSDB_LINEAGE_FEEDS`) into `lineage_submissions`: keyed by feed + student + mentor +
+  relation so re-runs don't duplicate, with the feed, resident page and studio recorded on
+  each row. New and changed rows are pending review; rows that leave the feed are rejected
+  as `feed:withdrawn`, never deleted. Run `python -m scripts.import_lineage_feeds`
+  (`--dry-run`, `--file`) or **Pull lineage feeds** on the Review queue
+  (`POST /api/admin/lineage-feeds/import`). The graph now prefers a row's Glass Database
+  ids (`student_gid` / `mentor_gid`) over the typed names (`meta.gid`, `meta.matched`).
 - **A QR code on the back of the Photo Mat, with scan counts.** `scripts/make_mat_back.py`
   draws the back (what the mat is, Check a Piece and Register Your Piece in steps, a 50 mm
   print-scale bar) and a two-sided PDF with the mat on page 1

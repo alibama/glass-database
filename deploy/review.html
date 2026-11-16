@@ -217,7 +217,9 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       ds.map(function (d) { return "<tr><td>" + esc(d.tbl) + "</td><td>" + esc(d.domain || "") + "</td><td>" + d.counts.total + "</td><td>" + d.counts.approved + "</td><td>" + (d.counts.pending ? '<b class="warn">' + d.counts.pending + "</b>" : "0") + "</td><td>" + d.counts.rejected + "</td></tr>"; }).join("") + "</tbody></table></div>";
     return section("directory", "Directory rows", "Rows from the forms <em>and the sheets.</em>",
       "Every table goes through one publication gate: a row is public only once it is approved. The forms on the site write pending rows here.",
-      (blocks.length ? blocks.join("") : none("Nothing waiting in the directory tables.")) + '<div class="block"><div class="head"><h3>All tables</h3></div>' + overview + "</div>");
+      (blocks.length ? blocks.join("") : none("Nothing waiting in the directory tables.")) +
+      '<div class="block"><div class="head"><h3>Partner lineage feeds</h3><div class="act"><button class="btn sm btn--line" data-lineage-import="1">Pull lineage feeds</button><small>Reads who-taught-whom from partner studios (Charlottesville Glass). New and changed rows land pending, in lineage_submissions above.</small></div></div></div>' +
+      '<div class="block"><div class="head"><h3>All tables</h3></div>' + overview + "</div>");
   }
   function shows(q) {
     var lrows = (q.listings || []).map(function (ev) {
@@ -350,6 +352,14 @@ mb.addEventListener('click',()=>{const o=nav.classList.toggle('open');mb.setAttr
       busy(true); say("Working…");
       GDB.json("/admin/approve-all", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ tbl: b.dataset.all }) })
         .then(function (j) { say("Approved " + plural(j.approved || 0, "row") + " in " + b.dataset.all + "."); return load(); })
+        .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
+    } else if (b.dataset.lineageImport) {
+      busy(true); say("Pulling lineage feeds…");
+      GDB.json("/admin/lineage-feeds/import", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" })
+        .then(function (j) {
+          say((j.results || []).map(function (r) { return r.error ? r.feed + ": " + r.error : plural(r.new || 0, "new row") + ", " + (r.changed || 0) + " changed, " + (r.withdrawn || 0) + " withdrawn from " + r.feed; }).join(" · ") || "No feeds configured.", !j.ok);
+          return load();
+        })
         .catch(function (e) { say("That did not go through: " + (e.message || e), true); busy(false); });
     } else if (b.dataset.user) {
       busy(true);

@@ -10,6 +10,7 @@ console calls, nothing is decided here.
   GET  /admin/queue                      every queue's pending rows + counts
   POST /admin/decide                     {queue, id, action: approve|reject, note?}
   POST /admin/approve-all                {tbl} — a whole dataset's pending rows
+  POST /admin/lineage-feeds/import       {url?} — pull partner lineage feeds (rows land pending)
   GET  /admin/submissions/{id}/image     a pending piece's picture   (?i=0)
   GET  /admin/registrations/{id}/image   a show registration's picture
   GET  /admin/harvest/{id}/image         a harvested picture
@@ -367,6 +368,21 @@ def post_approve_all(payload: dict, u: dict = Depends(require_admin)):
         raise HTTPException(400, f"{tbl!r} is not a dataset table")
     n = approvals.approve_all(conn, tbl, reviewer=_who(u))
     return {"ok": True, "approved": n, "counts": approvals.counts(conn, tbl)}
+
+
+@router.post("/lineage-feeds/import", summary="Pull lineage from partner studios' feeds (rows land pending)")
+def post_lineage_import(payload: dict | None = None, u: dict = Depends(require_admin)):
+    from central import lineage_feeds
+    url = str((payload or {}).get("url") or "").strip()
+    known = lineage_feeds.feeds()
+    if url and url not in known:
+        raise HTTPException(400, "not a configured lineage feed; add it to GLASSDB_LINEAGE_FEEDS")
+    conn = _conn()
+    results = lineage_feeds.import_all(conn, [url] if url else known)
+    for r in results:
+        r.pop("new_ids", None)
+    return {"ok": not any(r.get("error") for r in results), "results": results,
+            "counts": approvals.counts(conn, lineage_feeds.TABLE)}
 
 
 @router.get("/submissions/{sid}/image", summary="A pending piece's picture")

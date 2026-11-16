@@ -25,7 +25,7 @@ import math
 from collections import deque
 from urllib.parse import quote
 
-from central import approvals, techniques
+from central import approvals, records, techniques
 from central import links as site_links
 
 SIMILAR_THRESHOLD = 0.85     # cosine similarity for a similar_to edge
@@ -73,6 +73,30 @@ def _gated(conn, table: str, limit: int = 5000) -> list[dict]:
         return _rows(conn, f'SELECT * FROM "{table}" WHERE {approvals.approved_subquery()} '
                            f'LIMIT {int(limit)}', (table,))
     return _rows(conn, f'SELECT * FROM "{table}" LIMIT {int(limit)}')
+
+
+def _gid_name(conn, gid: str, cache: dict) -> str:
+    """The display name of a Glass Database id (``gdb:<table>:<row id>``): the approved
+    row's name, else the wiki item's label. "" when the id is unknown or not public."""
+    if not gid:
+        return ""
+    if gid not in cache:
+        name = ""
+        parsed = records.parse_gid(gid)
+        if parsed:
+            table, ident = parsed
+            try:
+                row = records._approved_row(conn, table, ident)  # noqa: SLF001
+            except Exception:  # noqa: BLE001
+                row = None
+            name = records._name_of(row) if row else ""  # noqa: SLF001
+            if not name:
+                try:
+                    name = (records.wiki_item(conn, gid) or {}).get("label") or ""
+                except Exception:  # noqa: BLE001
+                    name = ""
+        cache[gid] = _norm(name)
+    return cache[gid]
 
 
 def split_techniques(s: str) -> list[str]:
@@ -259,14 +283,29 @@ def build(conn) -> dict:
                          meta={"confidence": "text-match", "via": "provenance-event"})
 
     # --- structured lineage (reviewed submissions) — highest confidence ---
+    # A row may carry Glass Database ids (student_gid / mentor_gid, from a partner
+    # studio's lineage feed): the id wins over the typed name, so the edge lands on
+    # the maker's own node even when the spelling differs.
+    gid_names: dict[str, str] = {}
     for r in _gated(conn, "lineage_submissions"):
-        student, mentor = _first(r, "student_name"), _first(r, "mentor_name")
+        ends = []
+        for role in ("student", "mentor"):
+            typed, gid = _first(r, f"{role}_name"), _first(r, f"{role}_gid")
+            known = _gid_name(conn, gid, gid_names)       # "" unless the id is public here
+            ends.append((known or typed, gid if known else ""))
+        (student, sgid), (mentor, mgid) = ends
         if not student or not mentor or _key(student) == _key(mentor):
             continue
-        edge(artist(student, "lineage"), artist(mentor, "lineage"), "studied_under",
+        sid, mid = artist(student, "lineage"), artist(mentor, "lineage")
+        for nid, gid in ((sid, sgid), (mid, mgid)):
+            if gid:
+                nodes[nid]["meta"].setdefault("gid", gid)
+        edge(sid, mid, "studied_under",
              relation=_first(r, "relation") or "Studied under",
              meta={"confidence": "structured", "where": _first(r, "where"),
-                   "years": _first(r, "years")})
+                   "years": _first(r, "years"),
+                   "matched": "gid" if (sgid or mgid) else None,
+                   "source": _first(r, "source_url") or None})
 
     # --- mentor links from free text: match studied_under text to known artists ---
     artist_names = [(n["label"].lower(), n["id"]) for n in nodes.values()
