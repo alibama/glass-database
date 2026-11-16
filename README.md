@@ -121,7 +121,7 @@ Looking a piece up and comparing it is part of both apps: find it by Glass ID, t
 ## Seasons, the graph, and a glass-aware model
 
 - **Seasons** — friendly, time-boxed calls for pieces (pumpkins in October, ornaments in December…): makers enter a published, fingerprinted piece; collectors scan what they bought to claim it; everyone votes. Leaderboards, collector cards and badges at `/games.html`. Design: [`docs/SEASONS.md`](docs/SEASONS.md).
-- **Relationship graph** — artists, techniques, studios, *objects*, structured lineage (who taught whom), and `similar_to` edges derived from the fingerprint embeddings, with a path finder and a JSON-LD export: [`docs/GRAPH.md`](docs/GRAPH.md).
+- **Relationship graph** — artists, techniques, studios, *objects*, structured lineage (who taught whom), and `similar_to` edges derived from the fingerprint embeddings, with a path finder and a JSON-LD export: [`docs/GRAPH.md`](docs/GRAPH.md). Lineage also comes in from partner studios' feeds (Charlottesville Glass residents, via `python -m scripts.import_lineage_feeds` or the Review queue), pending review like the form.
 - **Seeing glass** — a staged plan for a local, glass-aware vision model (Ollama), a zero-shot trait-suggestion adapter in Glowtbook, and a training-corpus exporter: [`docs/GLASS-VISION.md`](docs/GLASS-VISION.md).
 - **Share it** — every piece, entry, 3D Photo and public collection has a Share kit (copy link, save a
   share card, phone share sheet, Facebook, Bluesky, Instagram tip) and an Open Graph landing page.

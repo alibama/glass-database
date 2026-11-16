@@ -75,6 +75,29 @@ consumer can say "amber pieces that look like this one". A `similar_to` edge is 
 Mentions in an artist's own *"Who did you study under?"* text keep working as
 the fallback, marked `text-match`.
 
+### From partner studios' feeds
+
+A partner studio can publish its residents' lineage as a read-only JSON feed in
+the lineage form's own field names; `central/lineage_feeds.py` pulls it into
+`lineage_submissions`. The first is Charlottesville Glass
+(`https://cvilleglass.org/api/residents.php`). Run it with
+`python -m scripts.import_lineage_feeds` (`--dry-run`, `--url`, `--file`) or the
+**Pull lineage feeds** button under Directory rows on `/review.html`
+(`POST /api/admin/lineage-feeds/import`). More feeds: `GLASSDB_LINEAGE_FEEDS`
+(comma-separated, https, public hosts only).
+
+- Rows are keyed by feed URL + student + mentor + relation, so re-runs update
+  in place. Each records its feed (`_source_file`, `_source_sheet = feed`), the
+  resident's page (`source_url`) and the studio (`feed_studio`).
+- New and changed rows are **pending**, like the form; unchanged rows keep their
+  decision. A row that leaves the feed is rejected (reviewer `feed:withdrawn`),
+  never deleted, and goes back to pending if it returns.
+- A feed row may carry Glass Database ids (`student_gid`, `mentor_gid`, e.g.
+  `gdb:profiles:821c590e17cf275d`). When the id names an approved row (or a wiki
+  item), the graph uses that maker's name for the node instead of the typed one,
+  stores the id in the node's `meta.gid` and marks the edge `meta.matched = gid`.
+  An unknown id falls back to the typed name.
+
 ## The path finder
 
 `/graph.html` — *How are they connected?* Two inputs (a shared datalist of every
