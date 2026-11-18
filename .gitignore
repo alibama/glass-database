@@ -30,7 +30,8 @@ data/aip_bags/
 data/splat_media/
 # dry-run plans and push logs of the Wikibase migration
 data/wikibase/
-data/c2pa/            # self-signed test cert + PRIVATE signing key
+# self-signed test cert + PRIVATE signing key (git has no inline comments: keep this on its own line)
+data/c2pa/
 
 # OS / editor
 .DS_Store
@@ -41,3 +42,7 @@ data/c2pa/            # self-signed test cert + PRIVATE signing key
 # Local editor/agent launch configs
 .claude/
 data/capture_manifests/
+# public Glass IDs pulled by scripts/pull_registry.py (a snapshot of the live site)
+data/live_fps/
+data/bench_*.json
+data/glassid_bench*.json

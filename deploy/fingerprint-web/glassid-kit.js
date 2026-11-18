@@ -20,9 +20,10 @@
 (function () {
   "use strict";
   var G = window.GDB || null;
-  var VERSION = "2026.11.05";
-  var T = { SIM_LO: 6, SIM_HI: 22, STRONG_T: 0.5, SPREAD_TARGET: 6, MATCH_READY: 70, NO_MATCH: 40, MIN_EFFORT: 8, MIN_CELLS_MATCH: 3, SHARP_MIN: 12, TOP_SIMS: 8 };
-  var WORDS = { dino: "AI texture", color: "Colour", dhash: "Shape" };
+  var VERSION = "2026.11.17";
+  var T = { SIM_LO: 6, SIM_HI: 22, STRONG_T: 0.5, SPREAD_TARGET: 6, MATCH_READY: 70, NO_MATCH: 40, MIN_EFFORT: 8, MIN_CELLS_MATCH: 3, SHARP_MIN: 12, TOP_SIMS: 8,
+    POSE_EL_TOL: 25, POSE_AZ_TOL: 45, POSE_STEP: 30, POSE_MIN: 3, MIN_DESC_SHOTS: 3, COLOUR_SEEN_MIN: 0.5, RULES: "v2" };
+  var WORDS = { dino_p: "AI texture on the piece", dino: "AI texture", color_p: "Colour of the piece", color: "Colour", dhash: "Shape" };
   var DECISIONS = [["new_piece", "New piece", "Nothing on file is this piece; it gets its own Glass ID."],
     ["re_registered", "Registered again", "The piece already had a Glass ID; this capture replaces or strengthens it."],
     ["match_confirmed", "Same piece", "The piece in front of me is the registered one I compared it with."],
@@ -31,7 +32,7 @@
   function esc(s) { return G ? G.esc(s) : String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function decisionLabel(d) { for (var i = 0; i < DECISIONS.length; i++) if (DECISIONS[i][0] === d) return DECISIONS[i][1]; return d || "Not decided"; }
   function pct(x) { return Math.round((x || 0) * 100); }
-  function colourOf(cls) { return cls === "match" ? "var(--ok)" : cls === "nomatch" ? "var(--danger)" : "var(--hot)"; }
+  function colourOf(cls) { return cls === "match" ? "var(--ok)" : cls === "nomatch" ? "var(--danger)" : cls === "insufficient" ? "var(--ink-dim)" : "var(--hot)"; }
   function thumb(url, w) { return G && G.thumb ? G.thumb(url, w) : url; }
 
   /* ---- css, injected once ------------------------------------------------------ */
@@ -88,6 +89,10 @@
       if (f.dhash) o.dhash = [f.dhash[0] >>> 0, f.dhash[1] >>> 0];
       if (f.chist) o.chist = f.chist;
       if (f.emb) o.emb = f.emb;
+      if (f.chist_p) o.chist_p = f.chist_p;
+      if (f.emb_p) o.emb_p = f.emb_p;
+      if (f.mat) o.mat = f.mat;
+      if (f.crop) o.crop = f.crop;
       if (f.noveltyAtCapture != null) o.noveltyAtCapture = f.noveltyAtCapture;
       if (f.match) o.match = { ref: f.match.ref ? f.match.ref.file : null, sim: f.match.sim, dist: f.match.dist };
       return o;
@@ -100,22 +105,77 @@
   function recent() { return need() || G.json("/glassid/recent"); }
   function piece(ref) { return need() || G.json("/glassid/pieces/" + encodeURIComponent(ref)); }
 
-  /* ---- the page's matching, per descriptor, in the server's shape ----------------- */
+  /* ---- the page's matching, per descriptor, in the server's shape -----------------
+     Mirrors central/glassid.py number for number (tests/test_glassid.py runs both on the
+     same fingerprints). Rules "v2" (default since 2026.11.17): shots and registered views
+     are paired one-to-one, by Photo Mat angle when both sides have it, and the confidence
+     is the share of the shots the registration explains. Rules "v1" is the old best-view
+     arithmetic, kept so earlier numbers can be reproduced. */
+  var DESC_KEY = { dino_p: "emb_p", dino: "emb", color_p: "chist_p", color: "chist", dhash: "dhash" };
+  var DESCS = ["dino_p", "dino", "color_p", "color", "dhash"];
   function popcount(x) { x = x >>> 0; x = x - ((x >>> 1) & 0x55555555); x = (x & 0x33333333) + ((x >>> 2) & 0x33333333); x = (x + (x >>> 4)) & 0x0f0f0f0f; return (x * 0x01010101) >>> 24; }
   function ham(a, b) { if (!a || !b) return 64; return popcount((a[0] >>> 0) ^ (b[0] >>> 0)) + popcount((a[1] >>> 0) ^ (b[1] >>> 0)); }
   function histCorr(a, b) { if (!a || !b || a.length !== b.length) return 0; var n = a.length, ma = 0, mb = 0, i; for (i = 0; i < n; i++) { ma += a[i]; mb += b[i]; } ma /= n; mb /= n; var num = 0, da = 0, db = 0; for (i = 0; i < n; i++) { var u = a[i] - ma, v = b[i] - mb; num += u * v; da += u * u; db += v * v; } var d = Math.sqrt(da * db); return d ? Math.max(0, num / d) : 0; }
-  function cosine(a, b) { if (!a || !b || a.length !== b.length) return 0; var d = 0, na = 0, nb = 0; for (var i = 0; i < a.length; i++) { d += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; } var den = Math.sqrt(na * nb); return den ? Math.max(0, d / den) : 0; }
+  function cosine(a, b) { if (!a || !b || a.length !== b.length) return 0; var d = 0, na = 0, nb = 0; for (var i = 0; i < a.length; i++) { d += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; } var den = Math.sqrt(na * nb); return den ? Math.max(0, Math.min(1, d / den)) : 0; }
   function simOf(dist) { return Math.max(0, Math.min(1, (T.SIM_HI - dist) / (T.SIM_HI - T.SIM_LO))); }
-  function frameSim(a, r, desc) { if (desc === "dino") return (a.emb && r.emb) ? cosine(a.emb, r.emb) : 0; if (desc === "dhash") return simOf(ham(a.dhash, r.dhash)); return histCorr(a.chist, r.chist); }
-  function has(f, desc) { return !!(desc === "dino" ? f.emb : desc === "dhash" ? f.dhash : f.chist); }
-  function aggregate(pairs) {
-    var strong = pairs.filter(function (p) { return p.sim >= T.STRONG_T; });
+  function frameSim(a, r, desc) { var k = DESC_KEY[desc] || "chist"; if (desc === "dino" || desc === "dino_p") return (a[k] && r[k]) ? cosine(a[k], r[k]) : 0; if (desc === "dhash") return simOf(ham(a.dhash, r.dhash)); return histCorr(a[k], r[k]); }
+  function has(f, desc) { var v = f && f[DESC_KEY[desc] || "chist"]; return !!(v && v.length); }
+  function poseOf(f) { var m = f && f.mat; if (!m || m.az == null || m.el == null) return null; var az = +m.az, el = +m.el; if (!isFinite(az) || !isFinite(el)) return null; return [((az % 360) + 360) % 360, el]; }
+  function circ(d) { return Math.abs((((d + 180) % 360) + 360) % 360 - 180); }
+  function r6(x) { return Math.round(x * 1e6) / 1e6; }
+  function cellOf(r) { return r ? (r.cell != null ? r.cell : "c" + r.file) : null; }
+  function bestPairs(qf, rf, desc) {
+    return qf.map(function (q, i) {
+      var best = -1, bj = -1; for (var j = 0; j < rf.length; j++) { var s = frameSim(q, rf[j], desc); if (s > best) { best = s; bj = j; } }
+      var r = bj >= 0 ? rf[bj] : null, sim = Math.max(0, best);
+      return { shot: q.seq || (i + 1), sim: +sim.toFixed(4), dist: Math.round((1 - sim) * 100), ref: r ? r.file : null, ref_cell: cellOf(r), ref_index: bj >= 0 ? bj : null, has_descriptor: has(q, desc) };
+    });
+  }
+  function assign(qf, rf, desc) {
+    var S = qf.map(function (q) { return rf.map(function (r) { return r6(frameSim(q, r, desc)); }); });
+    var qp = qf.map(poseOf), rp = rf.map(poseOf);
+    var usePose = qp.filter(Boolean).length >= T.POSE_MIN && rp.filter(Boolean).length >= T.POSE_MIN;
+    var cand = [], i, j;
+    for (i = 0; i < qf.length; i++) for (j = 0; j < rf.length; j++) if (S[i][j] >= T.STRONG_T) cand.push([S[i][j], i, j]);
+    cand.sort(function (a, b) { return b[0] - a[0] || a[1] - b[1] || a[2] - b[2]; });
+    var offsets = []; if (usePose) for (var o = 0; o < 360; o += T.POSE_STEP) offsets.push(o); else offsets.push(null);
+    var best = null;
+    offsets.forEach(function (off) {
+      var uq = {}, ur = {}, nq = 0, nr = 0, chosen = {}, sum = 0, resid = 0;
+      for (var k = 0; k < cand.length; k++) {
+        var c = cand[k], ci = c[1], cj = c[2];
+        if (uq[ci] || ur[cj]) continue;
+        if (off !== null && qp[ci] && rp[cj]) {
+          var dz = circ(qp[ci][0] - rp[cj][0] - off);
+          if (Math.abs(qp[ci][1] - rp[cj][1]) > T.POSE_EL_TOL || dz > T.POSE_AZ_TOL) continue;
+          resid += dz;
+        }
+        uq[ci] = 1; ur[cj] = 1; nq++; nr++; chosen[ci] = [c[0], cj]; sum += c[0];
+        if (nq === qf.length || nr === rf.length) break;
+      }
+      // more explained first, then more pairs, then the turn the pairs agree with best
+      var key = [r6(sum), nq, -r6(resid)];
+      if (!best || key[0] > best.key[0] || (key[0] === best.key[0] && (key[1] > best.key[1] || (key[1] === best.key[1] && key[2] > best.key[2])))) best = { key: key, off: off, chosen: chosen };
+    });
+    var pairs = qf.map(function (q, i) {
+      var s, jj, assigned;
+      if (best.chosen[i]) { s = best.chosen[i][0]; jj = best.chosen[i][1]; assigned = true; }
+      else { jj = -1; s = -1; for (var j2 = 0; j2 < rf.length; j2++) if (S[i][j2] > s) { s = S[i][j2]; jj = j2; } s = jj >= 0 ? s : 0; assigned = false; }
+      var r = jj >= 0 ? rf[jj] : null, sim = Math.max(0, s);
+      return { shot: q.seq || (i + 1), sim: +sim.toFixed(4), dist: Math.round((1 - sim) * 100), ref: r ? r.file : null, ref_cell: cellOf(r), ref_index: jj >= 0 ? jj : null, has_descriptor: has(q, desc), assigned: assigned };
+    });
+    return { pairs: pairs, pose_used: usePose, turn: best.off };
+  }
+  function aggregate(pairs, rules) {
+    var strong = pairs.filter(function (p) { return p.sim >= T.STRONG_T && p.assigned !== false; });
     var sorted = strong.slice().sort(function (a, b) { return b.sim - a.sim; });
     var top = sorted.slice(0, T.TOP_SIMS);
     var quality = top.length ? top.reduce(function (a, p) { return a + p.sim; }, 0) / top.length : 0;
     var cells = {}; strong.forEach(function (p) { if (p.ref_cell != null) cells[String(p.ref_cell)] = 1; });
-    var n = Object.keys(cells).length, spread = Math.min(1, n / T.SPREAD_TARGET);
-    return { confidence: Math.round(100 * quality * (0.4 + 0.6 * spread)), quality: +quality.toFixed(4), spread: +spread.toFixed(4), views_matched: n, strong: strong.length,
+    var n = Object.keys(cells).length, spread = Math.min(1, n / T.SPREAD_TARGET), conf;
+    if (rules === "v2") { var haveN = pairs.filter(function (p) { return p.has_descriptor !== false; }).length; conf = haveN ? Math.round(100 * strong.reduce(function (a, p) { return a + p.sim; }, 0) / haveN) : 0; }
+    else conf = Math.round(100 * quality * (0.4 + 0.6 * spread));
+    return { confidence: conf, quality: +quality.toFixed(4), spread: +spread.toFixed(4), views_matched: n, strong: strong.length,
       carried_by: { shots: top.map(function (p) { return p.shot; }), reference_views: top.map(function (p) { return p.ref; }) } };
   }
   function verdictFor(agg, effort) {
@@ -123,37 +183,50 @@
     if (effort >= T.MIN_EFFORT && agg.confidence < T.NO_MATCH && agg.views_matched < 2) return ["nomatch", "No match here"];
     return ["inconc", "Inconclusive"];
   }
+  function insufficient(desc, qh, rh, shots) {
+    var w = WORDS[desc].toLowerCase();
+    if (qh < T.MIN_DESC_SHOTS) return "only " + qh + " of " + shots + " shot(s) carry the " + w + "; " + T.MIN_DESC_SHOTS + " are needed before anything can be said";
+    if (rh < T.MIN_DESC_SHOTS) return "the registered piece has only " + rh + " view(s) with the " + w;
+    if ((desc === "color" || desc === "color_p") && shots && qh < T.COLOUR_SEEN_MIN * shots) return "colour could be read on only " + qh + " of " + shots + " shots — a pale, clear or very dark piece is described mostly by what is around it";
+    return null;
+  }
+  function pickDescriptor(qf, rf) {
+    for (var i = 0; i < DESCS.length; i++) { var d = DESCS[i]; if (d === "dhash") continue;
+      if (qf.filter(function (f) { return has(f, d); }).length >= T.MIN_DESC_SHOTS && rf.filter(function (f) { return has(f, d); }).length >= T.MIN_DESC_SHOTS) return d; }
+    if (qf.some(function (f) { return has(f, "dino"); }) && rf.some(function (f) { return has(f, "dino"); })) return "dino";
+    return "color";
+  }
+  /* o: {descriptor, rules ("v2"|"v1"), queryDims} */
   function localCompare(shots, ref, o) {
     o = o || {};
+    var rules = o.rules === "v1" ? "v1" : "v2";
     var rf = (ref && ref.frames) || [], qf = shots || [];
     var effort = qf.filter(function (f) { return f.sharp == null || f.sharp >= T.SHARP_MIN; }).length;
-    var breakdown = {}, pairsBy = {}, d, i, j;
-    ["dino", "color", "dhash"].forEach(function (desc) {
+    var breakdown = {}, pairsBy = {}, i;
+    DESCS.forEach(function (desc) {
       var qh = qf.filter(function (f) { return has(f, desc); }).length, rh = rf.filter(function (f) { return has(f, desc); }).length;
       if (!qh || !rh) { breakdown[desc] = { available: false, confidence: 0, views_matched: 0, shots_with_descriptor: qh, reference_views_with_descriptor: rh, why: !qh ? "the new capture has no " + WORDS[desc].toLowerCase() + " on any shot" : "the registered piece has no " + WORDS[desc].toLowerCase() + " on file" }; pairsBy[desc] = []; return; }
-      var pairs = [];
-      for (i = 0; i < qf.length; i++) {
-        var best = -1, bj = -1;
-        for (j = 0; j < rf.length; j++) { var s = frameSim(qf[i], rf[j], desc); if (s > best) { best = s; bj = j; } }
-        var r = bj >= 0 ? rf[bj] : null, sim = Math.max(0, best);
-        pairs.push({ shot: qf[i].seq || (i + 1), sim: +sim.toFixed(4), dist: Math.round((1 - sim) * 100), ref: r ? r.file : null, ref_cell: r ? (r.cell != null ? r.cell : "c" + r.file) : null, ref_index: bj });
-      }
-      var agg = aggregate(pairs), v = verdictFor(agg, effort);
-      agg.available = true; agg.verdict = v[0]; agg.label = v[1]; agg.shots_with_descriptor = qh; agg.reference_views_with_descriptor = rh;
-      breakdown[desc] = agg; pairsBy[desc] = pairs;
+      var res = rules === "v2" ? assign(qf, rf, desc) : { pairs: bestPairs(qf, rf, desc), pose_used: false, turn: null };
+      var agg = aggregate(res.pairs, rules), v = verdictFor(agg, effort);
+      var whyNot = rules === "v2" ? insufficient(desc, qh, rh, qf.length) : null;
+      if (whyNot && v[0] !== "match") v = ["insufficient", "Not enough to tell"];
+      agg.available = true; agg.verdict = v[0]; agg.label = v[1]; agg.insufficient = whyNot; agg.shots_with_descriptor = qh; agg.reference_views_with_descriptor = rh;
+      agg.pose_used = res.pose_used; agg.turn = res.turn;
+      breakdown[desc] = agg; pairsBy[desc] = res.pairs;
     });
-    var desc = o.descriptor || (breakdown.dino.available ? "dino" : "color");
-    if (!breakdown[desc].available) { var fb = ["color", "dhash", "dino"]; for (i = 0; i < fb.length; i++) if (breakdown[fb[i]].available) { desc = fb[i]; break; } }
+    var desc = DESCS.indexOf(o.descriptor) >= 0 ? o.descriptor : pickDescriptor(qf, rf);
+    if (!breakdown[desc].available) { var fb = ["color_p", "color", "dhash", "dino_p", "dino"]; for (i = 0; i < fb.length; i++) if (breakdown[fb[i]].available) { desc = fb[i]; break; } }
     var head = breakdown[desc], cls = head.available ? head.verdict : "inconc", label = head.available ? head.label : "Inconclusive";
-    var res = { descriptor: desc, confidence: head.confidence || 0, verdict: cls, label: label, quality: head.quality || 0, spread: head.spread || 0, views_matched: head.views_matched || 0, shots: qf.length, effort: effort, reference_views: rf.length, breakdown: breakdown,
-      pairs: (pairsBy[desc] || []).slice().sort(function (a, b) { return b.sim - a.sim; }).slice(0, 12), carried_by: head.carried_by || { shots: [], reference_views: [] },
+    var res = { descriptor: desc, rules: rules, confidence: head.confidence || 0, verdict: cls, label: label, quality: head.quality || 0, spread: head.spread || 0, views_matched: head.views_matched || 0, shots: qf.length, effort: effort, reference_views: rf.length, breakdown: breakdown,
+      pose_used: !!head.pose_used, turn: head.turn == null ? null : head.turn, allPairs: pairsBy[desc] || [],
+      pairs: (pairsBy[desc] || []).slice().sort(function (a, b) { return ((a.assigned === false) - (b.assigned === false)) || (b.sim - a.sim); }).slice(0, 12), carried_by: head.carried_by || { shots: [], reference_views: [] },
       size: sizeCheck(o.queryDims || null, ref && ref.metadata && ref.metadata.dimensions_mm || null), caveats: [] };
     res.size_conflict = res.size.ok === false;
     if (res.size_conflict && cls === "match") { res.verdict = "inconc"; res.label = "Inconclusive"; res.caveats.push("The pictures matched but the mat sizes do not; held at inconclusive."); }
     res.reasons = reasonsFor(res, ref);
     if (ref && ref.rating != null && ref.rating < 75) res.caveats.push("The registered Glass ID is only " + ref.rating + "/100; a thin reference matches less and mismatches more.");
     if (effort < T.MIN_EFFORT) res.caveats.push(effort + " sharp shot(s) so far; no-match is not declared before " + T.MIN_EFFORT + ".");
-    if (desc === "color") res.caveats.push("Colour cannot tell two similarly coloured pieces apart; a colour-only match is weaker evidence than it looks.");
+    if (desc === "color" || desc === "color_p") res.caveats.push("Colour cannot tell two similarly coloured pieces apart; a colour-only match is weaker evidence than it looks.");
     return res;
   }
   function sizeCheck(q, r) {
@@ -171,14 +244,17 @@
   function reasonsFor(res, ref) {
     var out = [], head = res.breakdown[res.descriptor];
     if (head && head.available) {
-      out.push(WORDS[res.descriptor] + ": " + res.confidence + "/100 — the " + Math.min(T.TOP_SIMS, head.strong) + " strongest of " + res.shots + " shots average " + (head.quality || 0).toFixed(2) + " against the registered views, " + head.views_matched + " distinct reference view(s) matched at " + T.STRONG_T.toFixed(2) + " or better (spread " + (head.spread || 0).toFixed(2) + " of " + T.SPREAD_TARGET + " views).");
-      if (head.shots_with_descriptor < res.shots) out.push("Only " + head.shots_with_descriptor + " of " + res.shots + " shots carry the " + WORDS[res.descriptor].toLowerCase() + " descriptor; the rest score 0 under it.");
+      if (res.rules === "v2") out.push(WORDS[res.descriptor] + ": " + res.confidence + "/100 — " + head.strong + " of " + head.shots_with_descriptor + " shots found a registered view of their own at " + T.STRONG_T.toFixed(2) + " or better (each registered view paired with at most one shot); the score is their mean similarity, a shot with no view counting 0. " + head.views_matched + " distinct reference view(s) matched.");
+      else out.push(WORDS[res.descriptor] + ": " + res.confidence + "/100 — the " + Math.min(T.TOP_SIMS, head.strong) + " strongest of " + res.shots + " shots average " + (head.quality || 0).toFixed(2) + " against the registered views, " + head.views_matched + " distinct reference view(s) matched at " + T.STRONG_T.toFixed(2) + " or better (spread " + (head.spread || 0).toFixed(2) + " of " + T.SPREAD_TARGET + " views).");
+      if (head.pose_used) out.push("Angles from the Photo Mat on both sides: shots were only paired with views taken from a similar angle, with the piece turned " + (head.turn || 0) + " degrees between the two.");
+      if (head.insufficient) out.push("Not enough to tell: " + head.insufficient + ".");
+      else if (head.shots_with_descriptor < res.shots) out.push("Only " + head.shots_with_descriptor + " of " + res.shots + " shots carry the " + WORDS[res.descriptor].toLowerCase() + "; the rest score 0 under it.");
     } else out.push("Neither side has a descriptor the other also has, so nothing could be compared.");
-    ["dino", "color", "dhash"].forEach(function (d) {
+    DESCS.forEach(function (d) {
       if (d === res.descriptor) return;
       var b = res.breakdown[d];
       if (b.available) out.push(WORDS[d] + ", for comparison: " + b.confidence + "/100, " + b.views_matched + " view(s) matched.");
-      else if (d === "dino") out.push("No AI texture comparison: " + b.why + ". Colour alone cannot separate two pieces of the same palette.");
+      else if (d === "dino" && !res.breakdown.dino_p.available) out.push("No AI texture comparison: " + b.why + ". Colour alone cannot separate two pieces of the same palette.");
     });
     out.push("Size: " + res.size.text + ".");
     return out;
@@ -256,7 +332,7 @@
     el.innerHTML = '<div class="gk-head"><h3>' + esc(it.title || p.title || "Reference") + ' <span style="color:' + col + '">' + (r.confidence != null ? r.confidence + "/100 · " + esc(r.label || "") : "") + "</span></h3>" + (o.onClose ? '<button type="button" class="link" data-act="close">Close</button>' : "") + "</div>" +
       (words ? '<p class="fine">' + esc(words) + "</p>" : "") +
       '<div class="gk-side"><div><h4>On file</h4>' + strip(refImgs, "no photo on file") + "</div><div><h4>Your shots" + (mine.length && r.carried_by && r.carried_by.shots && r.carried_by.shots.length ? " that carried the score" : "") + "</h4>" + strip(mine, "no shots yet") + "</div></div>" +
-      "<h4>What the score is made of</h4>" + bar("AI texture", r.breakdown && r.breakdown.dino) + bar("Colour", r.breakdown && r.breakdown.color) + bar("Shape", r.breakdown && r.breakdown.dhash) +
+      "<h4>What the score is made of</h4>" + DESCS.filter(function (d) { return d === "dino" || d === "color" || d === "dhash" || (r.breakdown && r.breakdown[d] && r.breakdown[d].available); }).map(function (d) { return bar(WORDS[d], r.breakdown && r.breakdown[d]); }).join("") +
       '<div class="gk-bar"><span>Views matched</span><i><b style="width:' + Math.min(100, Math.round(((r.views_matched || 0) / T.SPREAD_TARGET) * 100)) + "%;background:" + col + '"></b></i><em>' + (r.views_matched || 0) + "/" + T.SPREAD_TARGET + "</em></div>" +
       '<ul class="gk-reasons">' + (r.reasons || []).map(function (s) { return "<li>" + esc(s) + "</li>"; }).join("") + "</ul>" +
       (r.caveats && r.caveats.length ? '<p class="fine">' + r.caveats.map(esc).join(" ") + "</p>" : "") +
@@ -330,6 +406,6 @@
   }
 
   window.GlassID = { VERSION: VERSION, T: T, DECISIONS: DECISIONS, deviceInfo: deviceInfo, stripFp: stripFp, candidates: candidates, compare: compare, lookup: lookup, recent: recent, piece: piece,
-    localCompare: localCompare, reasonsFor: reasonsFor, sizeCheck: sizeCheck, candidateRows: candidateRows, comparePanel: comparePanel, sendBlock: sendBlock, buildManifest: buildManifest, send: send,
+    localCompare: localCompare, assign: assign, aggregate: aggregate, pickDescriptor: pickDescriptor, insufficient: insufficient, frameSim: frameSim, poseOf: poseOf, DESCS: DESCS, WORDS: WORDS, reasonsFor: reasonsFor, sizeCheck: sizeCheck, candidateRows: candidateRows, comparePanel: comparePanel, sendBlock: sendBlock, buildManifest: buildManifest, send: send,
     decisionLabel: decisionLabel, esc: esc, colourOf: colourOf, ensureCss: ensureCss };
 })();

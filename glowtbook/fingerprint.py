@@ -49,6 +49,22 @@ def load_enrollment(zip_bytes: bytes) -> dict:
                     k: m[f"{k}_mm"] for k in ("width", "depth", "height") if m.get(f"{k}_mm") is not None}
         except Exception:
             dims = None
+        # frames from a page that predates the mat-aware capture: work the Photo Mat fields
+        # out from the thumbnails while they are here (they are not kept)
+        try:
+            import io
+            import zipfile
+
+            from central import glassid
+            if zip_bytes[:2] == b"PK" and any(isinstance(f, dict) and not f.get("mat") for f in frames):
+                with zipfile.ZipFile(io.BytesIO(zip_bytes)) as z:
+                    names = set(z.namelist())
+                    imgs = {f["file"]: z.read(f["file"]) for f in frames
+                            if isinstance(f, dict) and not f.get("mat") and f.get("file") in names}
+                h = ((fp.get("metadata") or {}).get("dimensions_mm") or {}).get("height")
+                glassid.upgrade_frames(fp, imgs, height_mm=(h * 1.2 + 10) if h else None)
+        except Exception:  # noqa: BLE001 - an upgrade must never sink a registration
+            pass
         return {"ok": True, "rating": fp.get("rating"), "tier": fp.get("tier"),
                 "n_frames": len(frames), "fingerprint": _strip_images(fp), "sheet": preview,
                 "dimensions": dims}

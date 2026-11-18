@@ -2,7 +2,7 @@ People see this as **Glass ID** (see docs/NAMING.md); the code and URLs keep the
 
 # Glass ID matching — an assessment
 
-*Written 5 November 2026, for the question "is one ornament different from another, and
+*Written 5 November 2026 (section 9 added 17 November), for the question "is one ornament different from another, and
 can the app tell?" Companion to [FINGERPRINT-PROTOCOL.md](FINGERPRINT-PROTOCOL.md) (what
 is captured and how it is scored) and [FINGERPRINT-WORKFLOW.md](FINGERPRINT-WORKFLOW.md)
 (the process). The grants plan assumes a Glass ID calibration on a museum shelf; this
@@ -251,6 +251,68 @@ to the page once the bench shows what they buy. Until the sessions of §7 exist,
 "Inconclusive" honest in the app's words, and do not promise the museum calibration a
 sibling test the data cannot yet support. The pipe for that data is live; the four cubes
 are the first thing to send through it.
+
+
+## 9. Update, 17 November 2026: the live registry, and rules v2
+
+Prompted by a comparison with another researcher's phone prototype ("glass atlas"), which
+pairs views one-to-one by mat angle, crops to the object and corrects colour from the printed
+strip. Those three ideas answer §2.2, §3 and §5 of this page, so they were built here, and the
+matching was measured on the **live registry** for the first time: 17 public Glass IDs, 15
+distinct pieces (two records were duplicates), pulled with `python -m scripts.pull_registry`.
+
+**How it was scored.** Each registration's frames dealt into two interleaved halves
+(`glassid_bench --fingerprints data/live_fps --rules both`): 30 sessions, 30 same-piece pairs,
+840 different-piece pairs from **105 independent piece pairs**. The different-piece side is
+real and is what this section rests on. The same-piece side is optimistic (both halves are one
+session: same light, same phone, same day); it says nothing about another day's check.
+
+**Rules v1 on the live registry is far weaker than the cubes suggested.** Colour (the
+descriptor almost every check uses) put **24 of the 105 piece pairs at "Match likely"**
+(14 % of session pairs; precision 0.18). The cubes' 0-of-48 came from four pieces of four
+different colours; the registry has look-alikes - pumpkins of one orange, the "218" series
+from one maker and day, a clear piece described by a blue table.
+
+**What did not help on its own:** pairing views one-to-one but keeping v1's score (8 best
+pairs x spread). Forcing distinct views *raised* the spread term, and false accepts went from
+24 to 33 piece pairs. The bias in §2.2 is real, but the spread bonus hides the fix.
+
+**What did:** score how much of the capture the registration explains - one-to-one pairs at
+0.50 or better, mean similarity over every shot that carries the descriptor, a shot without a
+view of its own counting 0. Same thresholds (70 / 40 / 3 views / 8 shots).
+
+| colour, live registry | rules v1 | **rules v2** |
+|---|---|---|
+| different-piece pairs at "Match likely" | 24 of 105 | **5 of 105** |
+| session pairs falsely accepted | 14.3 % | **2.9 %** |
+| precision of "Match likely" | 0.18 | **0.54** |
+| own piece ranked first (of 15) | 25 of 30 | **28 of 30** |
+| median lead of own piece over the best impostor | +4 | **+29** |
+| same-piece recall (optimistic) | 0.90 | 0.93 |
+
+The whole-frame AI vector (pooled DINOv2), measured on real glass for the first time, ranks
+the right piece first only 15 times in 30 under either rule set: §4's prediction holds. Under
+v2 it false-accepts 1 of 105 piece pairs but mostly says *Not enough to tell*, because a half
+carries only 2-4 AI samples. It is not yet the identity signal §8 hoped for.
+
+**The five pairs v2 still accepts** are the hard cases by name: *Clear glass mountain* vs
+*deepest lagoon 218* (98; a clear piece read by its background), *Dark swirled spooky pumpkin*
+vs *pumpkin mug* (97), *pumpkin mug* vs *red pumpkin* (90), *Dark swirled spooky pumpkin* vs
+*red pumpkin* (88), *amethyst 218* vs *purple pumpkin* (81). Same palette, frame-wide colour.
+
+**What the Photo Mat now gives on the phone** (`glassid-mat.js`; §5's "Could" column):
+angle round the piece per shot, the piece's crop, colour corrected from the strip, and AI on
+the crop. Tested on rendered views only (`tests/test_glassid_mat.py`: angle within 2.5
+degrees, page and server agree, one piece under four colour casts reads the same after
+correction and differently before). **None of the 17 live registrations has mat angles or
+piece crops yet**, so their effect on the five pairs above is unmeasured. That is the next
+data: register the pumpkins and the 218 series again on the mat with AI on, check each
+against the others, and send the sessions; the bench scores them the day they arrive.
+
+**What v2 does not change:** thresholds; the descriptors stored on old registrations (they
+are compared on what they carry, and `compare(..., rules="v1")` reproduces every number above);
+the human decision. A different piece of the same palette is still not reliably told apart by
+colour - v2 makes the false accept rarer, it does not make it impossible.
 
 ---
 

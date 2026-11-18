@@ -98,7 +98,7 @@ def test_four_clearly_different_pieces_never_match_and_each_matches_itself():
             else:
                 assert c["verdict"] == "nomatch" and c["confidence"] < glassid.NO_MATCH, (a, b, c["confidence"])
             # every descriptor is reported, with the pairs and the views that carried the score
-            assert set(c["breakdown"]) == {"dino", "color", "dhash"}
+            assert set(c["breakdown"]) == set(glassid.DESCRIPTORS)
             assert c["descriptor"] == "dino" and c["breakdown"]["color"]["available"]
             assert c["reasons"] and c["reasons"][0].startswith("AI texture (DINOv2):")
             assert "carried_by" in c and len(c["pairs"]) <= 12
@@ -357,3 +357,88 @@ process.stdout.write(JSON.stringify({{dhash:dh, chist:ch}}));""")
     js_res = json.loads(out.stdout)
     assert js_res["dhash"] == py["dhash"]
     assert js_res["chist"] == py["chist"]
+
+
+# --- rules v2: one-to-one, mat angles, "not enough to tell" ------------------------------
+def _posed(hue, *, n=12, turn=0.0, emb=None, seed=0):
+    """A capture with a Photo Mat pose on every frame: two rings of views round a piece that
+    looks different from each side (its piece-colour peaks in a bin set by the true angle).
+    ``turn`` is how far the piece was rotated on the mat relative to another capture."""
+    f = fp(hue, n=n, emb=emb)
+    for i, fr in enumerate(f["frames"]):
+        true_az = i * 360.0 / n
+        fr["mat"] = {"az": round((true_az + turn) % 360, 2), "el": 30.0 if i % 2 else 60.0}
+        ch = [_rng.randint(0, 10) for _ in range(64)]
+        ch[(HUES[hue] * 4 + int(true_az // 30) * 5) % 64] += 900
+        fr["chist_p"] = ch
+    return f
+
+
+def test_v1_is_still_reproducible_and_v2_is_the_default():
+    a, b = fp("orange"), fp("orange")
+    assert glassid.compare(a, b)["rules"] == "v2"
+    v1 = glassid.compare(a, b, rules="v1")
+    assert v1["rules"] == "v1" and v1["verdict"] == "match"
+    assert "best registered view" in v1["reasons"][0]
+
+
+def test_one_registered_view_carries_one_shot():
+    """A reference with one view that resembles everything cannot lend it to every shot."""
+    ref = fp("orange", n=1)
+    q = fp("orange", n=10)
+    c = glassid.compare(q, ref, effort=10)
+    assigned = [p for p in c["pairs"] if p["assigned"]]
+    assert len(assigned) == 1 and c["confidence"] <= 10, c["confidence"]
+    assert glassid.compare(q, ref, rules="v1", effort=10)["confidence"] > c["confidence"]
+
+
+def test_mat_angles_pair_only_compatible_views_and_find_the_turn():
+    ref = _posed("blue", n=12)
+    q = _posed("blue", n=12, turn=90.0)
+    c = glassid.compare(q, ref, descriptor="color_p")
+    assert c["pose_used"] and c["turn"] == 90 and c["verdict"] == "match"
+    for p in c["pairs"]:
+        if p["assigned"]:
+            qa = glassid.pose_of(next(f for f in q["frames"] if f["seq"] == p["shot"]))
+            ra = glassid.pose_of(ref["frames"][p["ref_index"]])
+            assert abs(qa[1] - ra[1]) <= glassid.POSE_EL_TOL
+            assert glassid._circ(qa[0] - ra[0] - 90) <= glassid.POSE_AZ_TOL
+    # the piece-cropped colour is preferred when both sides carry it
+    assert glassid.compare(q, ref)["descriptor"] == "color_p"
+
+
+def test_a_piece_colour_cannot_see_is_not_enough_to_tell_not_no_match():
+    ref = fp("orange")
+    q = fp("blue", n=12)
+    for fr in q["frames"][:9]:
+        fr["chist"] = None                        # a pale piece: no coloured pixels on most shots
+    c = glassid.compare(q, ref, effort=12)
+    assert c["verdict"] == "insufficient" and c["label"] == "Not enough to tell"
+    assert any("pale, clear" in r for r in c["reasons"])
+    assert glassid.compare(q, ref, effort=12, rules="v1")["verdict"] == "nomatch"   # what it used to say
+
+
+@pytest.mark.skipif(not shutil.which("node"), reason="node is needed to run the kit's JavaScript")
+def test_kit_scores_equal_the_server_scores(tmp_path):
+    """glassid-kit.js localCompare and central.glassid.compare agree on confidence, verdict,
+    descriptor and turn, under both rule sets, with and without mat poses."""
+    cases = [(fp("orange"), fp("orange")), (fp("orange"), fp("amber")), (fp("blue", emb=1), fp("blue", emb=1)),
+             (fp("green", n=3), fp("violet", n=40)), (_posed("red", turn=60), _posed("red")),
+             (_posed("violet", n=9, turn=200), _posed("blue", n=14)), (fp("orange", n=1), fp("orange", n=10))]
+    live = sorted((ROOT / "data" / "live_fps").glob("*.json"))[:4] if (ROOT / "data" / "live_fps").is_dir() else []
+    for a, b in zip(live, live[1:]):
+        cases.append((json.loads(a.read_text()), json.loads(b.read_text())))
+    (tmp_path / "cases.json").write_text(json.dumps([[q, r] for q, r in cases]))
+    kit = ROOT / "deploy" / "fingerprint-web" / "glassid-kit.js"
+    script = (f"global.window={{}};global.document={{}};require({json.dumps(str(kit))});"
+              f"const C=JSON.parse(require('fs').readFileSync({json.dumps(str(tmp_path / 'cases.json'))}));"
+              "const out=[];for(const [q,r] of C){for(const ru of ['v1','v2']){const x=window.GlassID.localCompare(q.frames,r,{rules:ru});"
+              "out.push([x.confidence,x.verdict,x.descriptor,x.turn,x.views_matched]);}}process.stdout.write(JSON.stringify(out));")
+    (tmp_path / "k.js").write_text(script)
+    js = json.loads(subprocess.run(["node", str(tmp_path / "k.js")], capture_output=True, text=True, check=True).stdout)
+    py = []
+    for q, r in cases:
+        for ru in ("v1", "v2"):
+            c = glassid.compare(q, r, rules=ru)
+            py.append([c["confidence"], c["verdict"], c["descriptor"], c["turn"], c["views_matched"]])
+    assert js == py

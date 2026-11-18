@@ -163,15 +163,40 @@ transformers.js (`Xenova/dinov2-small`); the model downloads once and caches.
    `GET /api/objects/<id>/fingerprint`.
 2. The verifier captures live; descriptors are computed the same way (white
    balance, cap on DINOv2).
-3. Matching runs client-side. It **prefers DINOv2** when the reference carries
-   embeddings (texture separates similar pieces); otherwise colour.
-4. Output: a **confidence** (0–100) and a **verdict** —
-   `match-likely` / `inconclusive` / `no-match`.
+3. Matching runs client-side with the kit (`glassid-kit.js`), the same arithmetic the server
+   runs for lookups (`central/glassid.py`). The descriptor is the first that both sides carry
+   on at least three shots, in this order: AI texture of the piece (`emb_p`), AI texture of the
+   frame (`emb`), colour of the piece (`chist_p`), colour of the frame (`chist`).
+4. **Rules v2** (since 17 November 2026): each registered view pairs with at most one shot,
+   strongest pairs first, at 0.50 or better; with the Photo Mat in view on both sides a pair
+   must also be within 25 degrees of elevation and 45 of azimuth after the best of twelve
+   30-degree turns of the piece. The **confidence** is the mean similarity of the shots' own
+   views, a shot with none counting 0: how much of the capture the registration explains.
+5. Output: a confidence (0-100) and a verdict - `match-likely` (70 or more, 3 views),
+   `no-match` (under 40, fewer than 2 views, 8 sharp shots), `not enough to tell` (fewer than
+   3 shots carry the descriptor, or colour reads on under half the shots), otherwise
+   `inconclusive`.
 
-Expected behaviour, calibrated: same piece → high (≈90–100); a *different*
-piece on the same mat → a non-zero floor (≈40–50, "inconclusive") because they
-share the mat and, for colour, the palette. That floor is by design; DINOv2 is
-what pushes a similar-but-different piece down.
+What the numbers mean is measured, not assumed: docs/GLASS-ID-MATCHING-ASSESSMENT.md section 9
+has the live registry under both rule sets. Rules v1 (the 8 best per-shot matches x spread
+over distinct views) is kept as `rules="v1"` so earlier numbers can be reproduced.
+
+### 7a. The Photo Mat on the phone
+
+`glassid-mat.js` reads the mat in the live picture (js-aruco2, ARUCO_4X4_1000 = OpenCV's
+DICT_4X4_50 ids 0-3; geometry from `glowtbook/matdetect.py`): a least-squares homography of
+the marker corners, the focal length from the session's tilted views (Zhang's constraints,
+median), the camera's position, and from it the azimuth round the grey placement area and the
+elevation above the mat. Gates: two markers, reprojection under 3.5 px, marker sides of 14 px,
+elevation of 12 degrees or more; overhead views (80 degrees and up) are one cell. Each shot
+records `mat {az, el, n, rms, h, d, cc}`; its view cell is `m<sector of 30 degrees>:<band>`.
+The **crop** is the picture region above the grey area up to 150 mm (on Check a Piece, the
+registered height x 1.2 + 10 mm). The **colour reference** is the strip's five greys: per
+channel, a gain and offset in linear light fitted to their nominal values, clipped patches
+left out; refused when the greys don't read in order or have too little range. A frame
+without its own strip in view uses the session's last good one (`cc: "session"`). Printed
+patches are not measured reflectances, so this corrects white balance and exposure, not
+colour fidelity across printers.
 
 ## 8. Settings & where to test
 

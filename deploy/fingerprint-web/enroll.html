@@ -10,6 +10,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="/site.js"></script>
 <script src="/fingerprint/glassid-kit.js"></script>
+<script src="/fingerprint/vendor/js-aruco2/cv.js"></script>
+<script src="/fingerprint/vendor/js-aruco2/aruco.js"></script>
+<script src="/fingerprint/vendor/js-aruco2/dictionaries/aruco_4x4_1000.js"></script>
+<script src="/fingerprint/glassid-mat.js"></script>
 <style>
   :root{
     /* Camera HUD stays dark (it sits over the video feed); the accent is the paper red.
@@ -83,6 +87,7 @@
   /* right rail */
   #rail{position:absolute; top:max(14px,env(safe-area-inset-top)); right:14px;
     display:flex; flex-direction:column; align-items:flex-end; gap:8px; max-width:46vw}
+  #matChip.on{border-color:var(--ok);color:var(--ok)}
   .chip{background:#0A0D11cc; border:1px solid var(--line); border-radius:11px;
     padding:8px 11px; font-size:12.5px; font-weight:600; backdrop-filter:blur(8px)}
   .chip b{color:var(--hot)}
@@ -272,6 +277,7 @@
   <div id="rail">
     <div class="chip target none" id="targetChip">Saving to <b>— export only</b></div>
     <div class="chip">Frames <b id="total">0</b></div>
+    <div class="chip" id="matChip" title="The Photo Mat: angle round the piece and colour reference">Mat —</div>
     <button class="icon-btn" id="review" disabled>Review</button>
     <span class="chip" style="font-weight:400;font-size:11px;color:var(--ink-dim)">Review shows the shots you have taken so far.</span>
   </div>
@@ -380,6 +386,7 @@
   const video=$("#cam"), cap=$("#cap"), capx=cap.getContext("2d");
   const G = window.GDB || null;                       // site helper (sign-in, API); null → export-only mode
   const KIT = window.GlassID || null;                 // lookup by photo, compare, send for analysis
+  const MATL = window.GlassMat ? window.GlassMat.live() : null;   // the Photo Mat: angle, piece crop, colour reference
 
   /* ---- tunables (may need field adjustment per device/lighting) ---- */
   const AW=160, AR=0.75;                 // analysis width, height ratio
@@ -591,22 +598,37 @@
     if(a.sharp<SHARP_MIN){ toast("Too blurry — hold steady","warn"); return; }
     const nov=a.novelty;
     if(!manual && nov<NOVELTY_MIN) return;                 // auto skips duplicates silently
-    if(manual && nov<NOVELTY_MIN) toast("Already have this angle","warn");
+    // the Photo Mat, when it is in view: the true angle round the piece, the piece's crop
+    const mr=MATL? MATL.tick(video,true) : null, onMat=!!(mr&&mr.ok);
+    const nearMat=onMat && window.GlassMat.nearPose(mr.pose,S.frames);
+    if(!manual && nearMat) return;                         // auto: an angle we already have
+    if(manual && (nov<NOVELTY_MIN||nearMat)) toast("Already have this angle","warn");
     let blob; try{blob=await grab();}catch(_){toast("Couldn't take that shot","warn"); return;}
     if(!blob) return;
-    const band=S.orient? (S.orient.beta<35?0:S.orient.beta<65?1:2) : 0;
+    const piece=onMat? MATL.piece(mr) : null;
+    const band=onMat? (mr.pose.el<45?0:1) : S.orient? (S.orient.beta<35?0:S.orient.beta<65?1:2) : 0;
+    const sector=onMat? Math.floor(mr.pose.az/(360/AZ))%AZ : S.here;
     const seq=++S.seq;
     const f={blob,url:URL.createObjectURL(blob),seq,sharp:a.sharp,detail:a.detail,chist:a.chist,emb:null,
-      dhash:a.dhash,noveltyAtCapture:nov,sector:S.here,band,cell:cellOf(S.here,band,a.dhash),
+      dhash:a.dhash,noveltyAtCapture:nov,sector,band,cell:onMat? window.GlassMat.cellOf(mr.pose) : cellOf(S.here,band,a.dhash),
+      mat:onMat? window.GlassMat.frameMat(mr,piece) : null, chist_p:piece&&piece.chist_p||null, crop:piece?piece.crop:null, emb_p:null,
       t:new Date().toISOString(),orientation:S.orient};
     S.frames.push(f);
     const heroScore=a.sharp*(1+4*a.detail);
     if(!S.hero||heroScore>S.hero.score){ heroGrab().then(b=>{ if(b){ S.hero={blob:b,score:heroScore,seq}; markDirty(); } }).catch(()=>{}); }
     // DINOv2 is expensive: sample a capped handful of representative views, then
     // stop — colour + dHash keep running on every frame.
+    // With the mat in view the AI sample is also taken on the piece's crop (emb_p), which is
+    // what new checks compare first; the whole-frame sample (emb) keeps this registration
+    // comparable with checks made without the mat.
     if(S.aiEmbed && (S.embCount||0) < EMB_CAP){
-      embedFromBlob(f.blob).then(e=>{ if(e){ f.emb=e; S.embCount=(S.embCount||0)+1; markDirty();
-        if(S.embCount>=EMB_CAP){ toast("AI samples taken ("+EMB_CAP+" views) — shots speed up now"); } } }).catch(()=>{}); }
+      S.embCount=(S.embCount||0)+1;
+      const cc=f.crop&&MATL? MATL.cropCanvas(video,f.crop,384) : null;
+      (async()=>{ try{
+        const e=await embedFromBlob(f.blob); if(e){ f.emb=e; markDirty(); }
+        if(cc){ const ep=await embedCanvas(cc); if(ep){ f.emb_p=ep; markDirty(); } }
+        if(S.embCount>=EMB_CAP && f.emb){ toast("AI samples taken ("+EMB_CAP+" views) — shots speed up now"); }
+      }catch(_){} })(); }
     markDirty(); paintRing(); updateRating(); refresh(); flash();
     if(!manual||nov>=NOVELTY_MIN) buzz(12);
   }
@@ -617,6 +639,9 @@
     if($("#hud").hidden){return;}
     if(ts-lastA>150){ lastA=ts;
       const a=analyze();
+      if(MATL){ const mr=MATL.tick(video); const chip=$("#matChip");
+        if(chip){ chip.textContent=window.GlassMat.chipText(mr); chip.classList.toggle("on",!!(mr&&mr.ok)); }
+        if(mr&&mr.ok){ const idx=Math.floor(mr.pose.az/(360/AZ))%AZ; S.matHereT=Date.now(); if(idx!==S.here){S.here=idx; paintRing();} } }
       if(a){ a.novelty=noveltyOf(a.dhash);
         a.worthy=a.sharp>=SHARP_MIN && a.novelty>=NOVELTY_MIN && S.rating<100;
         S.live=a; renderOverlay(a);
@@ -632,6 +657,7 @@
 
   /* ---------- orientation ---------- */
   function onOrient(e){ if(e.alpha==null) return; S.orient={alpha:e.alpha,beta:e.beta,gamma:e.gamma};
+    if(S.matHereT && Date.now()-S.matHereT<1500) return;   // the mat's angle wins while it is in view
     const idx=Math.floor((((e.alpha%360)+360)%360)/(360/AZ))%AZ; if(idx!==S.here){S.here=idx; paintRing();} }
   async function enableMotion(){try{
     if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function"){
@@ -747,7 +773,9 @@
       params:{SHARP_MIN,NOVELTY_MIN,COV_TARGET,PSEUDO_MIN,NO_COMPASS_COV,dhash:"9x8 dHash, [hi,lo] 32-bit ints",
         scoring:"v2: cov*40 + (det*35 + rob*25)*sqrt(cov); without a compass cov is capped at NO_COMPASS_COV"},
       note:"Enrollment fingerprint. dhash + detail + coverage per frame let a later capture be matched to this reference.",
-      metadata:{ dominantColor:dominantColor(aggChist(S.frames)), hasEmbeddings:S.frames.some(f=>f.emb) },
+      metadata:{ dominantColor:dominantColor(aggChist(S.frames)), hasEmbeddings:S.frames.some(f=>f.emb||f.emb_p),
+        mat:{ views:S.frames.filter(f=>f.mat).length, colour_corrected:S.frames.filter(f=>f.mat&&f.mat.cc!=="none").length,
+          detector:"js-aruco2 ARUCO_4X4_1000 ids 0-3", geometry:"glowtbook/matdetect.py MARKER_CORNERS_MM, PLACE_MM" } },
       object: S.target ? {id:S.target.id, title:S.target.title} : undefined,
       frames:[] };
   }
@@ -756,7 +784,8 @@
     for(const f of S.frames){ const name=`frames/${String(f.seq).padStart(3,"0")}.jpg`; zip.file(name,f.blob);
       fp.frames.push({file:name,t:f.t,sector:f.sector,band:f.band,cell:f.cell,
         sharp:+f.sharp.toFixed(1),detail:+f.detail.toFixed(4),
-        dhash:[f.dhash[0],f.dhash[1]],noveltyAtCapture:f.noveltyAtCapture,chist:f.chist,emb:f.emb||undefined,orientation:f.orientation});}
+        dhash:[f.dhash[0],f.dhash[1]],noveltyAtCapture:f.noveltyAtCapture,chist:f.chist,emb:f.emb||undefined,orientation:f.orientation,
+        mat:f.mat||undefined,chist_p:f.chist_p||undefined,emb_p:f.emb_p||undefined,crop:f.crop||undefined});}
     zip.file("fingerprint.json",JSON.stringify(fp,null,2));
     return { blob: await zip.generateAsync({type:"blob"}), fp };
   }
@@ -781,7 +810,8 @@
   async function saveDraft(){
     if(!S.frames.length){ await draftClear(); return; }
     const frames=S.frames.map(f=>({blob:f.blob,seq:f.seq,sharp:f.sharp,detail:f.detail,chist:f.chist,emb:f.emb,dhash:f.dhash,
-      noveltyAtCapture:f.noveltyAtCapture,sector:f.sector,band:f.band,cell:f.cell,t:f.t,orientation:f.orientation}));
+      noveltyAtCapture:f.noveltyAtCapture,sector:f.sector,band:f.band,cell:f.cell,t:f.t,orientation:f.orientation,
+      mat:f.mat,chist_p:f.chist_p,emb_p:f.emb_p,crop:f.crop}));
     await draftPut({ savedAt:Date.now(), objectId:S.target?S.target.id:null, objectTitle:S.target?S.target.title:null,
       frames, seq:S.seq, pseudo:S.pseudo, embCount:S.embCount||0, rating:S.rating, hero:S.hero||null });
   }
@@ -940,6 +970,7 @@
       `<b>${esc(cur.title)}</b> is taking entries: publish the piece, then enter it, both from <a href="${panel}">the Go-live panel</a>. `); } }).catch(()=>{}); }
   }
   function resetSession(){
+    if(window.GlassMat) window.GlassMat.reset();
     S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.pseudo=0; S.here=-1; S.ready=false; S.prevTierIdx=4; S.embCount=0; S.dirty=false; S.saved=null; S.hero=null;
     S.candidates=null; S.decision=null; S.sent=null; S.sendStatus=""; S.sendDecision=null; S.sendNote=""; S.started=new Date().toISOString();
     const dp=$("#dupe"); if(dp){ dp.hidden=true; dp.innerHTML=""; }

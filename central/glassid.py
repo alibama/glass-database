@@ -52,8 +52,25 @@ TOP_SIMS = 8                    # the strongest matched pairs averaged into "qua
 # this fraction are not one piece, whatever the pictures say
 SIZE_TOLERANCE = 0.25
 AMBIGUOUS_MARGIN = 10           # top two candidates closer than this (both above NO_MATCH)
-DESCRIPTORS = ("dino", "color", "dhash")
-DESCRIPTOR_WORDS = {"dino": "AI texture (DINOv2)", "color": "colour histogram", "dhash": "shape hash (dHash)"}
+# --- rules v2 (glassid-2), mirrored in glassid-kit.js -----------------------------------
+# One-to-one: every registered view can carry at most one shot, so a reference with many
+# views stops lending its best view to every shot (the best-of-N bias of the assessment).
+# With the Photo Mat in view on both sides, a shot may only pair with a registered view
+# taken from a compatible angle, after the best of twelve 30-degree turns of the piece.
+POSE_EL_TOL = 25.0              # degrees of elevation apart a compatible pair may be
+POSE_AZ_TOL = 45.0              # degrees of azimuth apart, after the turn
+POSE_STEP = 30                  # the turns tried: 0, 30, ... 330
+POSE_MIN = 3                    # shots with a mat pose on each side before angles are used
+MIN_DESC_SHOTS = 3              # shots that must carry the descriptor before anything is said
+COLOUR_SEEN_MIN = 0.5           # colour sees less than this share of the shots -> not enough
+RULES = ("v1", "v2")
+RULES_DEFAULT = "v2"
+# descriptor keys on a frame; "_p" are computed on the piece (cropped by the mat), the
+# others on the whole frame. Preference order for the headline, best first.
+DESC_KEY = {"dino_p": "emb_p", "dino": "emb", "color_p": "chist_p", "color": "chist", "dhash": "dhash"}
+DESCRIPTORS = ("dino_p", "dino", "color_p", "color", "dhash")
+DESCRIPTOR_WORDS = {"dino_p": "AI texture on the piece (DINOv2)", "dino": "AI texture (DINOv2)",
+                    "color_p": "colour of the piece", "color": "colour histogram", "dhash": "shape hash (dHash)"}
 CACHE_TTL = 300.0
 OBJECT_URL = "/explore/?view=objects&piece={id}"
 CHECK_URL = "/fingerprint/verify.html?object={id}"
@@ -122,11 +139,36 @@ def dhash_sim(dist: int) -> float:
 
 
 def frame_sim(q: dict, r: dict, desc: str) -> float:
-    if desc == "dino":
-        return cosine(q.get("emb"), r.get("emb")) if q.get("emb") and r.get("emb") else 0.0
+    k = DESC_KEY.get(desc, "chist")
+    if desc in ("dino", "dino_p"):
+        return cosine(q.get(k), r.get(k)) if q.get(k) and r.get(k) else 0.0
     if desc == "dhash":
         return dhash_sim(hamming(q.get("dhash"), r.get("dhash")))
-    return hist_corr(q.get("chist"), r.get("chist"))
+    return hist_corr(q.get(k), r.get(k))
+
+
+def has_desc(fr: dict, desc: str) -> bool:
+    v = fr.get(DESC_KEY.get(desc, "chist"))
+    return isinstance(v, (list, tuple)) and len(v) > 0
+
+
+def pose_of(fr: dict):
+    """(azimuth, elevation) in degrees from the Photo Mat, or None. Azimuth is measured
+    round the placement area in the mat's own frame, so it means the same on any phone."""
+    m = fr.get("mat") if isinstance(fr, dict) else None
+    if not isinstance(m, dict):
+        return None
+    try:
+        az, el = float(m.get("az")), float(m.get("el"))
+    except (TypeError, ValueError):
+        return None
+    if not (math.isfinite(az) and math.isfinite(el)):
+        return None
+    return az % 360.0, el
+
+
+def _circ(d: float) -> float:
+    return abs((d + 180.0) % 360.0 - 180.0)
 
 
 def js_round(x: float) -> int:
@@ -163,7 +205,11 @@ def frames_of(fp) -> list[dict]:
 
 
 def has_embeddings(fp) -> bool:
-    return any(isinstance(fr.get("emb"), (list, tuple)) and fr["emb"] for fr in frames_of(fp))
+    return any(has_desc(fr, "dino") or has_desc(fr, "dino_p") for fr in frames_of(fp))
+
+
+def has_pose(fp) -> bool:
+    return any(pose_of(fr) for fr in frames_of(fp))
 
 
 def has_colour(fp) -> bool:
@@ -190,15 +236,27 @@ def summary(fp) -> dict:
     dc = md.get("dominantColor") if isinstance(md.get("dominantColor"), dict) else None
     return {"rating": f.get("rating"), "tier": f.get("tier"), "created": f.get("created"),
             "views": len(frames),
-            "views_with_embeddings": sum(1 for fr in frames if fr.get("emb")),
-            "has_embeddings": bool(md.get("hasEmbeddings")) or any(fr.get("emb") for fr in frames),
+            "views_with_embeddings": sum(1 for fr in frames if has_desc(fr, "dino") or has_desc(fr, "dino_p")),
+            "has_embeddings": bool(md.get("hasEmbeddings")) or has_embeddings(f),
+            "views_with_mat": sum(1 for fr in frames if pose_of(fr)),
             "dominant_colour": dc, "dimensions_mm": dimensions_of(f)}
 
 
 def pick_descriptor(query_fp, ref_fp) -> str:
-    """The page prefers the AI descriptor when the reference carries embeddings - here
-    both sides must, or the comparison would be all zeros."""
-    return "dino" if has_embeddings(query_fp) and has_embeddings(ref_fp) else "color"
+    """The headline descriptor: the first in DESCRIPTORS (AI on the piece, AI on the frame,
+    colour of the piece, colour of the frame) that at least MIN_DESC_SHOTS frames carry on
+    both sides; colour of the frame when nothing does. Old registrations carry only the
+    frame-wide descriptors and are compared on those, so they keep working unchanged."""
+    qf, rf = frames_of(query_fp), frames_of(ref_fp)
+    for d in DESCRIPTORS:
+        if d == "dhash":
+            continue
+        if sum(1 for f in qf if has_desc(f, d)) >= MIN_DESC_SHOTS and sum(1 for f in rf if has_desc(f, d)) >= MIN_DESC_SHOTS:
+            return d
+    for d in ("dino", "color"):
+        if any(has_desc(f, d) for f in qf) and any(has_desc(f, d) for f in rf):
+            return d
+    return "color"
 
 
 # =============================================================================== matching
@@ -208,7 +266,7 @@ def _sim_matrix(qf: list[dict], rf: list[dict], desc: str) -> list[list[float]]:
         return []
     if desc == "dhash" or _np is None:
         return [[frame_sim(q, r, desc) for r in rf] for q in qf]
-    key, dim = ("emb", None) if desc == "dino" else ("chist", None)
+    key = DESC_KEY.get(desc, "chist")
 
     def rows(frames):
         vecs, ok = [], []
@@ -230,7 +288,7 @@ def _sim_matrix(qf: list[dict], rf: list[dict], desc: str) -> list[list[float]]:
     R, rok = rows(rf)
     if Q is None or R is None or Q.shape[1] != R.shape[1]:
         return [[frame_sim(q, r, desc) for r in rf] for q in qf]
-    if desc == "color":
+    if desc in ("color", "color_p"):
         Q = Q - Q.mean(axis=1, keepdims=True)
         R = R - R.mean(axis=1, keepdims=True)
     qn = _np.linalg.norm(Q, axis=1, keepdims=True)
@@ -264,20 +322,94 @@ def match_frames(qf: list[dict], rf: list[dict], desc: str) -> list[dict]:
         out.append({"shot": q.get("seq", i + 1), "sim": round(sim, 4), "dist": js_round((1 - sim) * 100),
                     "ref": r.get("file") if r else None, "ref_cell": r.get("cell") if r else None,
                     "ref_index": best_j if best_j >= 0 else None,
-                    "has_descriptor": bool(q.get("emb") if desc == "dino" else
-                                           q.get("dhash") if desc == "dhash" else q.get("chist"))})
+                    "has_descriptor": has_desc(q, desc)})
     return out
 
 
-def aggregate(pairs: list[dict]) -> dict:
-    """The page's ``recompute``: quality of the strongest pairs x spread over distinct
-    reference views -> a confidence from 0 to 100."""
-    strong = [p for p in pairs if p["sim"] >= STRONG_T]
+def assign_frames(qf: list[dict], rf: list[dict], desc: str) -> tuple[list[dict], dict]:
+    """Rules v2: pair shots with registered views one-to-one. Candidate pairs at or above
+    STRONG_T are taken strongest first; a view already taken cannot be taken again. When
+    both sides have at least POSE_MIN shots with a mat pose, a pair of posed frames must
+    also be within POSE_EL_TOL of elevation and POSE_AZ_TOL of azimuth once the piece is
+    turned by one of the POSE_STEP offsets; every offset is tried and the best kept.
+
+    Returns (pairs, info): one pair per shot in the shape of ``match_frames`` plus
+    ``assigned`` (False for a shot whose best view was already taken or was at an
+    incompatible angle: it is shown, not counted), and info {pose_used, turn}."""
+    S = _sim_matrix(qf, rf, desc)
+    qp = [pose_of(f) for f in qf]
+    rp = [pose_of(f) for f in rf]
+    use_pose = sum(1 for p in qp if p) >= POSE_MIN and sum(1 for p in rp if p) >= POSE_MIN
+    cand = []
+    for i in range(len(qf)):
+        row = S[i] if S else []
+        for j, s in enumerate(row):
+            s = round(float(s), 6)
+            if s >= STRONG_T:
+                cand.append((s, i, j))
+    cand.sort(key=lambda t: (-t[0], t[1], t[2]))
+    offsets = list(range(0, 360, POSE_STEP)) if use_pose else [None]
+    best = None
+    for off in offsets:
+        used_q, used_r, chosen, resid = set(), set(), {}, 0.0
+        for s, i, j in cand:
+            if i in used_q or j in used_r:
+                continue
+            if off is not None and qp[i] and rp[j]:
+                d = _circ(qp[i][0] - rp[j][0] - off)
+                if abs(qp[i][1] - rp[j][1]) > POSE_EL_TOL or d > POSE_AZ_TOL:
+                    continue
+                resid += d
+            used_q.add(i)
+            used_r.add(j)
+            chosen[i] = (s, j)
+            if len(used_q) == len(qf) or len(used_r) == len(rf):
+                break
+        # more explained first, then more pairs, then the turn the pairs agree with best
+        key = (round(sum(v[0] for v in chosen.values()), 6), len(chosen), -round(resid, 6))
+        if best is None or key > best[0]:
+            best = (key, off, chosen)
+    _, off, chosen = best
+    pairs = []
+    for i, q in enumerate(qf):
+        if i in chosen:
+            s, j = chosen[i]
+            assigned = True
+        else:
+            row = S[i] if S else []
+            j = max(range(len(row)), key=lambda k: row[k]) if row else -1
+            s = round(float(row[j]), 6) if j >= 0 else 0.0
+            assigned = False
+        r = rf[j] if j >= 0 else None
+        sim = max(0.0, s)
+        pairs.append({"shot": q.get("seq", i + 1), "sim": round(sim, 4), "dist": js_round((1 - sim) * 100),
+                      "ref": r.get("file") if r else None, "ref_cell": r.get("cell") if r else None,
+                      "ref_index": j if j >= 0 else None, "has_descriptor": has_desc(q, desc),
+                      "assigned": assigned})
+    return pairs, {"pose_used": use_pose, "turn": off}
+
+
+def aggregate(pairs: list[dict], rules: str = "v1") -> dict:
+    """The page's ``recompute`` -> a confidence from 0 to 100.
+
+    v1: quality of the 8 strongest pairs x spread over distinct reference views.
+    v2: the share of the capture the registration explains - each shot that carries
+    the descriptor scores the similarity of the registered view it was paired with
+    (one-to-one, at STRONG_T or better), or 0 when it was paired with none; the
+    confidence is the mean. On the live registry (15 pieces, 17 November 2026) this cut
+    colour's false accepts at 70 from 14% to 3% of different-piece pairs (see
+    docs/GLASS-ID-MATCHING-ASSESSMENT.md, section 9). Quality and spread are still
+    reported for the reasons."""
+    strong = [p for p in pairs if p["sim"] >= STRONG_T and p.get("assigned", True)]
     top = sorted((p["sim"] for p in strong), reverse=True)[:TOP_SIMS]
     quality = sum(top) / len(top) if top else 0.0
     cells = sorted({str(p["ref_cell"]) for p in strong if p["ref_cell"] is not None})
     spread = min(1.0, len(cells) / SPREAD_TARGET)
-    conf = js_round(100 * quality * (0.4 + 0.6 * spread))
+    if rules == "v2":
+        have = sum(1 for p in pairs if p.get("has_descriptor", True))
+        conf = js_round(100 * sum(p["sim"] for p in strong) / have) if have else 0
+    else:
+        conf = js_round(100 * quality * (0.4 + 0.6 * spread))
     return {"confidence": conf, "quality": round(quality, 4), "spread": round(spread, 4),
             "views_matched": len(cells), "cells": cells, "strong": len(strong),
             "carried_by": {"shots": [p["shot"] for p in sorted(strong, key=lambda p: -p["sim"])[:TOP_SIMS]],
@@ -338,19 +470,42 @@ def size_check(q_dims: dict | None, r_dims: dict | None) -> dict:
     return out
 
 
-def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | None = None) -> dict:
+def insufficient(desc: str, q_has: int, r_has: int, shots: int) -> str | None:
+    """Rules v2: why these shots cannot support any verdict under ``desc``, or None. A
+    pale, clear or dark piece gives the colour histogram almost no pixels, and before v2
+    the empty comparison read as "No match here"."""
+    if q_has < MIN_DESC_SHOTS:
+        return (f"only {q_has} of {shots} shot(s) carry the {DESCRIPTOR_WORDS[desc]}; "
+                f"{MIN_DESC_SHOTS} are needed before anything can be said")
+    if r_has < MIN_DESC_SHOTS:
+        return f"the registered piece has only {r_has} view(s) with the {DESCRIPTOR_WORDS[desc]}"
+    if desc in ("color", "color_p") and shots and q_has < COLOUR_SEEN_MIN * shots:
+        return (f"colour could be read on only {q_has} of {shots} shots - a pale, clear or very dark piece "
+                "is described mostly by what is around it")
+    return None
+
+
+def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | None = None,
+            rules: str = RULES_DEFAULT) -> dict:
     """Score one capture against one registered fingerprint: the page's confidence and
     verdict under the chosen descriptor, every descriptor's own aggregate, the pairs
-    and views that carried the score, the mat size check, and the reasons in words."""
+    and views that carried the score, the mat size check, and the reasons in words.
+
+    ``rules`` "v2" (default) pairs shots with registered views one-to-one, by mat angle
+    when both sides have it, and says "Not enough to tell" when the descriptor cannot
+    see the piece; "v1" is the arithmetic shipped before 17 November 2026 (best view per
+    shot), kept so old numbers can be reproduced and compared."""
+    rules = rules if rules in RULES else RULES_DEFAULT
     q, r = as_fp(query_fp), as_fp(ref_fp)
     qf, rf = frames_of(q), frames_of(r)
     desc = descriptor if descriptor in DESCRIPTORS else pick_descriptor(q, r)
     eff = effort_of(qf) if effort is None else int(effort)
     breakdown: dict[str, dict] = {}
     pairs_by: dict[str, list[dict]] = {}
+    info_by: dict[str, dict] = {}
     for d in DESCRIPTORS:
-        q_has = sum(1 for fr in qf if (fr.get("emb") if d == "dino" else fr.get("dhash") if d == "dhash" else fr.get("chist")))
-        r_has = sum(1 for fr in rf if (fr.get("emb") if d == "dino" else fr.get("dhash") if d == "dhash" else fr.get("chist")))
+        q_has = sum(1 for fr in qf if has_desc(fr, d))
+        r_has = sum(1 for fr in rf if has_desc(fr, d))
         if not q_has or not r_has:
             breakdown[d] = {"available": False, "confidence": 0, "views_matched": 0,
                             "shots_with_descriptor": q_has, "reference_views_with_descriptor": r_has,
@@ -358,17 +513,25 @@ def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | No
                                     else f"the registered piece has no {DESCRIPTOR_WORDS[d]} on file")}
             pairs_by[d] = []
             continue
-        pairs = match_frames(qf, rf, d)
-        agg = aggregate(pairs)
+        if rules == "v2":
+            pairs, info = assign_frames(qf, rf, d)
+        else:
+            pairs, info = match_frames(qf, rf, d), {"pose_used": False, "turn": None}
+        agg = aggregate(pairs, rules)
         cls, label = verdict(agg, eff)
-        agg.update({"available": True, "verdict": cls, "label": label,
-                    "shots_with_descriptor": q_has, "reference_views_with_descriptor": r_has})
+        why_not = insufficient(d, q_has, r_has, len(qf)) if rules == "v2" else None
+        if why_not and cls != "match":
+            cls, label = "insufficient", "Not enough to tell"
+        agg.update({"available": True, "verdict": cls, "label": label, "insufficient": why_not,
+                    "shots_with_descriptor": q_has, "reference_views_with_descriptor": r_has,
+                    "pose_used": info["pose_used"], "turn": info["turn"]})
         breakdown[d] = agg
         pairs_by[d] = pairs
+        info_by[d] = info
     head = breakdown[desc]
     if not head.get("available"):
         # fall back the way the page would: colour, then shape
-        for d in ("color", "dhash", "dino"):
+        for d in ("color_p", "color", "dhash", "dino_p", "dino"):
             if breakdown[d].get("available"):
                 desc, head = d, breakdown[d]
                 break
@@ -383,11 +546,24 @@ def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | No
         cls, label = "inconc", "Inconclusive"
         caveats.append("The pictures matched but the mat sizes do not; held at inconclusive.")
     if head.get("available"):
-        reasons.append(f"{_cap(DESCRIPTOR_WORDS[desc])}: {conf}/100 - the {min(TOP_SIMS, head['strong'])} strongest "
-                       f"of {len(qf)} shots average {head['quality']:.2f} against the registered views, "
-                       f"{head['views_matched']} distinct reference view(s) matched at {STRONG_T:.2f} or better "
-                       f"(spread {head['spread']:.2f} of {SPREAD_TARGET} views).")
-        if head["shots_with_descriptor"] < len(qf):
+        how = ("each registered view paired with at most one shot" if rules == "v2" else
+               "each shot against its best registered view")
+        if rules == "v2":
+            reasons.append(f"{_cap(DESCRIPTOR_WORDS[desc])}: {conf}/100 - {head['strong']} of "
+                           f"{head['shots_with_descriptor']} shots found a registered view of their own at "
+                           f"{STRONG_T:.2f} or better ({how}); the score is their mean similarity, a shot "
+                           f"with no view counting 0. {head['views_matched']} distinct reference view(s) matched.")
+        else:
+            reasons.append(f"{_cap(DESCRIPTOR_WORDS[desc])}: {conf}/100 - the {min(TOP_SIMS, head['strong'])} strongest "
+                           f"of {len(qf)} shots average {head['quality']:.2f} ({how}), "
+                           f"{head['views_matched']} distinct reference view(s) matched at {STRONG_T:.2f} or better "
+                           f"(spread {head['spread']:.2f} of {SPREAD_TARGET} views).")
+        if head.get("pose_used"):
+            reasons.append(f"Angles from the Photo Mat on both sides: shots were only paired with views taken from "
+                           f"a similar angle, with the piece turned {head.get('turn') or 0} degrees between the two.")
+        if head.get("insufficient"):
+            reasons.append("Not enough to tell: " + head["insufficient"] + ".")
+        elif head["shots_with_descriptor"] < len(qf):
             reasons.append(f"Only {head['shots_with_descriptor']} of {len(qf)} shots carry the {DESCRIPTOR_WORDS[desc]}; "
                            "the rest score 0 under it.")
     else:
@@ -399,7 +575,7 @@ def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | No
         if b.get("available"):
             reasons.append(f"{_cap(DESCRIPTOR_WORDS[d])}, for comparison: {b['confidence']}/100, "
                            f"{b['views_matched']} view(s) matched.")
-        elif d == "dino":
+        elif d == "dino" and not breakdown["dino_p"].get("available"):
             reasons.append("No AI texture comparison: " + b["why"] + ". Colour alone cannot separate two "
                            "pieces of the same palette.")
     reasons.append("Size: " + size["text"] + ".")
@@ -409,14 +585,15 @@ def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | No
                        "a thin reference matches less and mismatches more.")
     if eff < MIN_EFFORT:
         caveats.append(f"{eff} sharp shot(s) so far; the page does not declare a no-match before {MIN_EFFORT}.")
-    if desc == "color":
+    if desc in ("color", "color_p"):
         caveats.append("Colour is view-stable but cannot tell two similarly coloured pieces apart; "
                        "a colour-only match is weaker evidence than it looks.")
-    pairs = sorted(pairs_by.get(desc) or [], key=lambda p: -p["sim"])
-    return {"descriptor": desc, "confidence": conf, "verdict": cls, "label": label,
+    pairs = sorted(pairs_by.get(desc) or [], key=lambda p: (not p.get("assigned", True), -p["sim"]))
+    return {"descriptor": desc, "rules": rules, "confidence": conf, "verdict": cls, "label": label,
             "quality": head.get("quality", 0.0), "spread": head.get("spread", 0.0),
             "views_matched": head.get("views_matched", 0), "shots": len(qf), "effort": eff,
             "reference_views": len(rf), "breakdown": breakdown, "pairs": pairs[:12],
+            "pose_used": bool(head.get("pose_used")), "turn": head.get("turn"),
             "carried_by": head.get("carried_by", {"shots": [], "reference_views": []}),
             "size": size, "size_conflict": size_conflict, "reasons": reasons, "caveats": caveats,
             "thresholds": thresholds()}
@@ -430,11 +607,13 @@ def thresholds() -> dict:
     return {"SIM_LO": SIM_LO, "SIM_HI": SIM_HI, "STRONG_T": STRONG_T, "SPREAD_TARGET": SPREAD_TARGET,
             "MATCH_READY": MATCH_READY, "NO_MATCH": NO_MATCH, "MIN_EFFORT": MIN_EFFORT,
             "MIN_CELLS_MATCH": MIN_CELLS_MATCH, "SIZE_TOLERANCE": SIZE_TOLERANCE,
-            "AMBIGUOUS_MARGIN": AMBIGUOUS_MARGIN}
+            "AMBIGUOUS_MARGIN": AMBIGUOUS_MARGIN, "POSE_EL_TOL": POSE_EL_TOL, "POSE_AZ_TOL": POSE_AZ_TOL,
+            "POSE_STEP": POSE_STEP, "POSE_MIN": POSE_MIN, "MIN_DESC_SHOTS": MIN_DESC_SHOTS,
+            "COLOUR_SEEN_MIN": COLOUR_SEEN_MIN, "RULES": RULES_DEFAULT}
 
 
 def candidates(query_fp, refs: list[dict], *, k: int = 5, descriptor: str | None = None,
-               effort: int | None = None) -> dict:
+               effort: int | None = None, rules: str = RULES_DEFAULT) -> dict:
     """Rank registered pieces against one capture. ``refs`` are the dicts ``public_refs``
     and ``my_refs`` build (each with a ``fingerprint``). Returns the top ``k`` with the
     full comparison each, the margin between the first two, and whether that margin
@@ -446,7 +625,7 @@ def candidates(query_fp, refs: list[dict], *, k: int = 5, descriptor: str | None
         if not fp:
             continue
         try:
-            c = compare(q, fp, descriptor=descriptor, effort=effort)
+            c = compare(q, fp, descriptor=descriptor, effort=effort, rules=rules)
         except Exception as ex:  # noqa: BLE001 - one bad fingerprint must not sink the search
             c = {"descriptor": "color", "confidence": 0, "verdict": "inconc", "label": "Inconclusive",
                  "reasons": [f"could not be compared: {ex}"], "caveats": [], "breakdown": {},
@@ -875,6 +1054,171 @@ def descriptors(image_bytes: bytes) -> dict:
     return {"sharp": round(sharp, 1), "detail": round(detail, 4), "dhash": dh, "chist": ch}
 
 
+# --- the Photo Mat, server side: the same pose, crop and strip correction as glassid-mat.js
+PLACE_MM = (50.0, 83.0, 200.5, 174.0)          # the grey placement area (matdetect.PLACE_MM)
+PLACE_CENTRE = ((PLACE_MM[0] + PLACE_MM[2]) / 2, (PLACE_MM[1] + PLACE_MM[3]) / 2)
+STRIP_MM = {"x0": 15.0, "w": 15.5, "y0": 217.0, "y1": 229.5, "neutrals": 5}
+MAT_CROP_H = 150.0
+MAT_MIN_EL, MAT_TOP_EL = 12.0, 80.0
+
+
+def _lin(v):
+    v = _np.asarray(v, dtype=float) / 255.0
+    return _np.where(v <= 0.04045, v / 12.92, ((v + 0.055) / 1.055) ** 2.4)
+
+
+def _srgb(x):
+    x = _np.clip(x, 0.0, 1.0)
+    return 255.0 * _np.where(x <= 0.0031308, 12.92 * x, 1.055 * x ** (1 / 2.4) - 0.055)
+
+
+def _neutral(rgb, H) -> dict:
+    """The strip's five neutral patches through the homography (glassid-mat.js ``neutral``)."""
+    h, w = rgb.shape[:2]
+    patches = []
+    for i in range(STRIP_MM["neutrals"]):
+        cx = STRIP_MM["x0"] + STRIP_MM["w"] * i + STRIP_MM["w"] / 2
+        cy = (STRIP_MM["y0"] + STRIP_MM["y1"]) / 2
+        px = []
+        for gx in range(-2, 3):
+            for gy in range(-2, 3):
+                v = H @ _np.array([cx + gx * 2.0, cy + gy * 1.5, 1.0])
+                x, y = int(round(v[0] / v[2])), int(round(v[1] / v[2]))
+                if not (0 <= x < w and 0 <= y < h):
+                    return {"ok": False, "why": "colour strip not fully in view"}
+                px.append(rgb[y, x])
+        patches.append([float(_np.median([p[c] for p in px])) for c in range(3)])
+    lum = [0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2] for c in patches]
+    if any(lum[i] > lum[i - 1] - 4 for i in range(1, len(lum))):
+        return {"ok": False, "why": "the grey patches don't read in order"}
+    if lum[0] - lum[4] < 60:
+        return {"ok": False, "why": "too little range between the white and black patches"}
+    nominal = [float(x) for x in _lin([255, 192, 128, 64, 0])]
+    gain, offset = [], []
+    for c in range(3):
+        X = [nominal[i] for i in range(5) if patches[i][c] < 250]
+        Y = [float(_lin(patches[i][c])) for i in range(5) if patches[i][c] < 250]
+        if len(X) < 3 or max(X) < 0.2:
+            return {"ok": False, "why": "the grey patches are clipped"}
+        mx, my = sum(X) / len(X), sum(Y) / len(Y)
+        sxx = sum((x - mx) ** 2 for x in X)
+        g = sum((x - mx) * (y - my) for x, y in zip(X, Y)) / sxx
+        if not g >= 0.25:
+            return {"ok": False, "why": "the strip is too dark to correct from"}
+        gain.append(round(g, 5))
+        offset.append(round(my - g * mx, 5))
+    return {"ok": True, "white": patches[0], "black": patches[4], "gain": gain, "offset": offset}
+
+
+def piece_colour(rgb, neutral: dict | None = None):
+    """glassid-mat.js ``pieceColour``: the 16x4 hue-saturation histogram over the whole
+    (cropped) buffer, per mille, after the strip's neutral correction when there is one."""
+    d = rgb.astype(float)
+    if neutral and neutral.get("ok"):
+        g, o = _np.array(neutral["gain"]), _np.array(neutral["offset"])
+        d = _np.rint(_srgb((_lin(d) - o) / g))
+    reg = d.reshape(-1, 3)
+    mx, mn = reg.max(axis=1), reg.min(axis=1)
+    df = mx - mn
+    s = _np.where(mx > 0, df / _np.where(mx > 0, mx, 1), 0.0)
+    v = mx / 255.0
+    r, g, b = reg[:, 0], reg[:, 1], reg[:, 2]
+    dfs = _np.where(df > 0, df, 1.0)
+    hue = _np.where(mx == r, ((g - b) / dfs) % 6, _np.where(mx == g, (b - r) / dfs + 2, (r - g) / dfs + 4)) * 60
+    hue = _np.where(df > 0, hue, 0.0)
+    hue = _np.where(hue < 0, hue + 360, hue)
+    keep = (s > 0.24) & (v > 0.16) & (v < 0.96)
+    cnt = int(keep.sum())
+    if cnt < 40:
+        return None
+    hb = _np.minimum(CH_HB - 1, _np.floor(hue[keep] / 360 * CH_HB)).astype(int)
+    sb = _np.minimum(CH_SB - 1, _np.floor(s[keep] * CH_SB)).astype(int)
+    hist = _np.bincount(hb * CH_SB + sb, minlength=CH_HB * CH_SB).astype(float)
+    return [js_round(x / cnt * 1000) for x in hist]
+
+
+def mat_descriptors(image_bytes: bytes, *, height_mm: float | None = None) -> dict | None:
+    """What the capture pages record about the Photo Mat for one picture, computed from
+    stored pixels with OpenCV: ``{"mat": {az, el, n, h, d, cc}, "chist_p", "crop"}``, or
+    None when the mat is not usable (no OpenCV, fewer than two markers, too low). Close
+    to the page's numbers, not bit for bit (another marker detector, another resampler)."""
+    if _np is None:
+        return None
+    try:
+        from glowtbook import matdetect
+        if not matdetect.available():
+            return None
+        import cv2
+        fr = matdetect._frame(image_bytes)
+    except Exception:  # noqa: BLE001
+        return None
+    if not isinstance(fr, dict) or fr.get("error") or fr.get("H") is None:
+        return None
+    w, h = fr["image_px"]
+    f = fr.get("f_est") or (w / 2) / math.tan(math.radians(65 / 2))
+    K = _np.array([[f, 0, w / 2], [0, f, h / 2], [0, 0, 1]], float)
+    obj = _np.hstack([fr["src"], _np.zeros((len(fr["src"]), 1))]).astype(_np.float64)
+    ok, rvec, tvec = cv2.solvePnP(obj, fr["dst"].astype(_np.float64), K, None, flags=cv2.SOLVEPNP_IPPE)
+    if not ok:
+        return None
+    R, _ = cv2.Rodrigues(rvec)
+    C = (-R.T @ tvec).ravel()
+    if C[2] >= -20:
+        return None
+    dx, dy, height = C[0] - PLACE_CENTRE[0], C[1] - PLACE_CENTRE[1], -C[2]
+    az = (round(math.degrees(math.atan2(dy, dx)), 1) + 360) % 360
+    el = math.degrees(math.atan2(height, math.hypot(dx, dy)))
+    if el < MAT_MIN_EL:
+        return None
+    rgb = fr["img"][..., ::-1]
+    neutral = _neutral(rgb, fr["H"])
+    hz = -(height_mm or MAT_CROP_H)
+    pts = _np.array([[x, y, z] for x, y in ((PLACE_MM[0], PLACE_MM[1]), (PLACE_MM[2], PLACE_MM[1]),
+                                            (PLACE_MM[2], PLACE_MM[3]), (PLACE_MM[0], PLACE_MM[3])) for z in (0.0, hz)])
+    proj, _ = cv2.projectPoints(pts, rvec, tvec, K, None)
+    proj = proj.reshape(-1, 2)
+    x0, x1 = max(0.0, proj[:, 0].min()), min(float(w), proj[:, 0].max())
+    y0, y1 = max(0.0, proj[:, 1].min()), min(float(h), proj[:, 1].max())
+    out = {"mat": {"az": round(az, 1), "el": round(el, 1), "n": len(fr["ids"]), "h": round(height), "d": round(math.hypot(dx, dy, height)),
+                   "cc": "strip" if neutral.get("ok") else "none", "source": "server"}}
+    if x1 - x0 >= 0.12 * w and y1 - y0 >= 0.12 * h:
+        box = [int(round(x0)), int(round(y0)), int(round(x1)), int(round(y1))]
+        small = cv2.resize(_np.ascontiguousarray(rgb[box[1]:box[3], box[0]:box[2]]), (128, 128), interpolation=cv2.INTER_LINEAR)
+        out["chist_p"] = piece_colour(small, neutral)
+        out["crop"] = [round(box[0] / w, 4), round(box[1] / h, 4), round(box[2] / w, 4), round(box[3] / h, 4)]
+    if el >= MAT_TOP_EL:
+        out["cell"] = "mtop"
+    else:
+        out["cell"] = f"m{int(az // 30) % 12}:{0 if el < 45 else 1}"
+    return out
+
+
+def upgrade_frames(fp: dict, images: dict[str, bytes], *, height_mm: float | None = None) -> int:
+    """Fill in the Photo Mat fields (mat, chist_p, crop) on frames that lack them, from
+    their stored pictures (``images`` by the frame's ``file``). Frames that already carry
+    them (the page computed them) are left alone. Returns how many frames were upgraded.
+    This is how a registration made before the mat-aware pages gains the new descriptors
+    when its pictures are still at hand."""
+    n = 0
+    for fr in (fp.get("frames") or []):
+        if not isinstance(fr, dict) or fr.get("mat"):
+            continue
+        data = images.get(fr.get("file") or "")
+        if not data:
+            continue
+        m = mat_descriptors(data, height_mm=height_mm)
+        if not m:
+            continue
+        fr["mat"] = m["mat"]
+        if m.get("chist_p"):
+            fr["chist_p"] = m["chist_p"]
+            fr["crop"] = m["crop"]
+        n += 1
+    if n:
+        fp.setdefault("metadata", {}).setdefault("mat", {})["server_upgraded"] = n
+    return n
+
+
 def fingerprint_from_images(images: list[tuple[str, bytes]], *, created: str | None = None) -> dict:
     """A fingerprint document (descriptors only) from pictures, for a bench or a manifest
     that carries images without descriptors. Not a substitute for the page: the page
@@ -885,7 +1229,13 @@ def fingerprint_from_images(images: list[tuple[str, bytes]], *, created: str | N
             desc = descriptors(data)
         except Exception:  # noqa: BLE001
             continue
-        frames.append({"file": name, "seq": i + 1, "cell": "c" + name, "sector": -1, **desc})
+        fr = {"file": name, "seq": i + 1, "cell": "c" + name, "sector": -1, **desc}
+        m = mat_descriptors(data)
+        if m:
+            fr["mat"], fr["cell"] = m["mat"], m["cell"]
+            if m.get("chist_p"):
+                fr["chist_p"], fr["crop"] = m["chist_p"], m["crop"]
+        frames.append(fr)
     chists = [f["chist"] for f in frames if f.get("chist")]
     agg = None
     if chists:

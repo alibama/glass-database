@@ -7,6 +7,42 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Glass ID rules v2: one-to-one matching, scored by how much of the capture is explained.**
+  `central/glassid.py` and `deploy/fingerprint-web/glassid-kit.js` (one arithmetic, checked
+  equal in `tests/test_glassid.py` by running the kit in Node). Each registered view can carry
+  at most one shot; the confidence is the mean similarity of the shots' own views, a shot with
+  none counting 0. With the Photo Mat on both sides, shots only pair with views from a
+  compatible angle (25 degrees of elevation, 45 of azimuth) after the best of twelve turns of
+  the piece. On the 15 public registrations (17 November 2026) colour's false accepts at 70
+  fell from 24 to 5 of 105 different-piece pairs; see docs/GLASS-ID-MATCHING-ASSESSMENT.md
+  section 9. A new verdict, **Not enough to tell**, replaces "No match here" when the
+  descriptor cannot see the piece (fewer than 3 shots carry it, or colour reads under half the
+  shots: pale, clear, dark glass). `compare(..., rules="v1")` and the bench's `--rules v1`
+  reproduce the old numbers. Thresholds are unchanged.
+- **The Photo Mat on the phone** (`deploy/fingerprint-web/glassid-mat.js`, with js-aruco2
+  2.0.0 vendored under `vendor/`, MIT). Each shot with two or more markers in view records the
+  camera's angle round the piece (`mat: {az, el, ...}`; the coverage ring and view cells follow
+  it instead of the compass, and auto skips angles already taken), the piece's crop above the
+  grey area (`crop`), its colour there (`chist_p`) corrected from the strip's five grey patches
+  (per-channel gain and offset in linear light, clipped patches left out), and, with AI on, a
+  DINOv2 sample of the crop (`emb_p`) beside the whole-frame one. Matching prefers AI on the
+  piece, then AI on the frame, then colour of the piece, then colour of the frame, so older
+  registrations keep matching on what they carry. A "Mat" chip in both camera views says
+  what the mat gives. `central.glassid.mat_descriptors` is the server's mirror (OpenCV);
+  `glowtbook.fingerprint.load_enrollment` fills these fields in from the export's thumbnails
+  when a page that predates them saves, and `glassid.fingerprint_from_images` adds them for
+  the bench. Tested on rendered views of the mat (`tests/test_glassid_mat.py`): angle within
+  2.5 degrees, page and server agree, and a piece under four colour casts reads the same.
+- **The bench reads the live registry.** `python -m scripts.pull_registry` saves every public
+  Glass ID to `data/live_fps/`; `python -m scripts.glassid_bench --fingerprints data/live_fps
+  --rules both` scores old and new rules side by side, and reports independent piece pairs
+  and the rule-of-three bound (3/n) on the false-accept rate when there are none.
+
+### Fixed
+- `.gitignore` had a comment on the `data/c2pa/` line, which git reads as part of the pattern,
+  so the folder was never ignored. The comment is on its own line now. (The test signing key
+  already committed there is still tracked; see the note in the commit.)
+
 - **A QR code on the back of the Photo Mat, with scan counts.** `scripts/make_mat_back.py`
   draws the back (what the mat is, Check a Piece and Register Your Piece in steps, a 50 mm
   print-scale bar) and a two-sided PDF with the mat on page 1

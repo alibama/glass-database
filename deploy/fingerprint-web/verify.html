@@ -10,6 +10,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="/site.js"></script>
 <script src="/fingerprint/glassid-kit.js"></script>
+<script src="/fingerprint/vendor/js-aruco2/cv.js"></script>
+<script src="/fingerprint/vendor/js-aruco2/aruco.js"></script>
+<script src="/fingerprint/vendor/js-aruco2/dictionaries/aruco_4x4_1000.js"></script>
+<script src="/fingerprint/glassid-mat.js"></script>
 <style>
   :root{
     /* Camera HUD stays dark (it sits over the video feed); the accent is the paper red,
@@ -54,6 +58,7 @@
   #gauge.match #arc{stroke:var(--ok)} #gauge.match #verdict{fill:var(--ok)}
   #gauge.nomatch #arc{stroke:var(--danger)} #gauge.nomatch #verdict{fill:var(--danger)}
   #gauge.inconc #arc{stroke:var(--hot)} #gauge.inconc #verdict{fill:var(--hot)}
+  #gauge.insufficient #arc{stroke:var(--ink-dim)} #gauge.insufficient #verdict{fill:var(--ink-dim)}
   #gauge.bump{animation:bump .45s ease}
   @keyframes bump{0%{transform:translateX(-50%) scale(1)}35%{transform:translateX(-50%) scale(1.06)}100%{transform:translateX(-50%) scale(1)}}
   #plus{position:absolute; top:52px; left:50%; transform:translateX(-50%); font-size:22px; font-weight:700; color:var(--ok); opacity:0; pointer-events:none}
@@ -67,6 +72,7 @@
   .fill{height:100%; width:0; background:var(--ok); border-radius:3px; transition:width .5s cubic-bezier(.2,.8,.2,1)}
 
   #rail{position:absolute; top:max(14px,env(safe-area-inset-top)); right:14px; display:flex; flex-direction:column; align-items:flex-end; gap:8px; max-width:46vw}
+  #matChip.on{border-color:var(--ok);color:var(--ok)}
   .chip{background:#0A0D11cc; border:1px solid var(--line); border-radius:11px; padding:8px 11px; font-size:12px; font-weight:600; backdrop-filter:blur(8px); text-align:right; line-height:1.3}
   .chip b{color:var(--ok)}
   .chip.target{font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-dim); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; text-align:left}
@@ -248,6 +254,7 @@
   <div id="rail">
     <div class="chip target" id="targetChip">Against <b>reference</b></div>
     <div class="chip">Shots <b id="total">0</b><br><span id="matched">0 matched</span></div>
+    <div class="chip" id="matChip" title="The Photo Mat: angle round the piece and colour reference">Mat —</div>
     <button class="icon-btn" id="review" disabled>Pairs</button>
     <span class="chip" style="font-weight:400;font-size:11px;color:var(--ink-dim)">Pairs shows each shot beside the one on file.</span>
   </div>
@@ -265,7 +272,7 @@
       <button class="tool" id="autoBtn">Auto</button>
       <button class="tool" id="flipBtn">Flip</button>
       <button class="tool on" id="lensBtn">Lens</button>
-      <button class="tool" id="descBtn">Match: Colour</button>
+      <button class="tool" id="descBtn">Match: Best</button>
       <select id="camSel" class="tool" style="display:none;max-width:150px" aria-label="Choose a camera"></select>
     </div>
   </div>
@@ -381,6 +388,7 @@
   const video=$("#cam"), cap=$("#cap"), capx=cap.getContext("2d");
   const G = window.GDB || null;
   const KIT = window.GlassID || null;   // lookup, compare panel, send for analysis
+  const MATL = window.GlassMat ? window.GlassMat.live() : null;   // the Photo Mat: angle, piece crop, colour reference
 
   /* ---- tunables ---- */
   const AW=160, AH=Math.round(AW*0.75);
@@ -450,7 +458,7 @@
     for(let i=0;i<n;i++){const u=a[i]-ma,v=b[i]-mb; num+=u*v; da+=u*u; db+=v*v;} const d=Math.sqrt(da*db);
     return d? Math.max(0,num/d):0; }
   /* --- descriptor comparison + metadata + optional DINOv2 embedding --- */
-  S.descriptor = S.descriptor || "color";        // "color" | "dhash" | "dino"
+  S.descriptor = S.descriptor || "auto";         // "auto" | "color" | "dhash" | "dino" (auto: the kit's preference, piece-cropped first)
   function cosine(a,b){ if(!a||!b||a.length!==b.length) return 0; let d=0,na=0,nb=0;
     for(let i=0;i<a.length;i++){ d+=a[i]*b[i]; na+=a[i]*a[i]; nb+=b[i]*b[i]; } const den=Math.sqrt(na*nb); return den?Math.max(0,d/den):0; }
   const HUE_NAMES=[[15,"red"],[42,"orange"],[70,"yellow"],[160,"green"],[200,"cyan"],[255,"blue"],[290,"violet"],[335,"magenta"],[360,"red"]];
@@ -494,28 +502,31 @@
     if(desc==="dino") return (a.emb&&r.emb)?cosine(a.emb,r.emb):0;
     if(desc==="dhash") return simOf(ham(a.dhash,r.dhash));
     return histCorr(a.chist,r.chist); }
-  function matchFrame(a,desc){ desc=desc||S.descriptor; if(!a||!S.ref) return {ref:null,dist:100,sim:0};
+  // matchFrame: one shot's best registered view - only the live "on target" hint uses it.
+  // The score itself comes from the kit (glassid-kit.js, rules v2), the same arithmetic the
+  // server runs: shots and views paired one-to-one, by mat angle when both have it.
+  function matchFrame(a,desc){ desc=desc||(S.descriptor==="auto"?"color":S.descriptor); if(!a||!S.ref) return {ref:null,dist:100,sim:0};
     let best=null,bs=-1;
     for(const r of S.ref.frames){ const s=frameSim(a,r,desc); if(s>bs){bs=s; best=r;} }
     return {ref:best, dist:Math.round((1-Math.max(0,bs))*100), sim:Math.max(0,bs)}; }
-  function rematchAll(){ for(const f of S.frames){ f.match=matchFrame(f); } }
-
+  function rematchAll(){ S._scoreKey=null; }
+  // the kit's comparison, cached per state; f.match follows the one-to-one pairing
   function recompute(){
-    const strong=S.frames.map(f=>f.match).filter(m=>m&&m.sim>=STRONG_T);
-    const topSims=strong.map(p=>p.sim).sort((a,b)=>b-a).slice(0,8);
-    const quality=topSims.length? topSims.reduce((a,b)=>a+b,0)/topSims.length : 0;
-    const cells=new Set(strong.map(p=>p.ref.cell));
-    const spread=Math.min(1,cells.size/SPREAD_TARGET);
-    const conf=Math.round(100*quality*(0.4+0.6*spread));
-    return {conf, quality, spread, cells, strongCount:strong.length};
+    const key=S.frames.length+"|"+S.descriptor+"|"+(S.ref?S.ref.frames.length:0)+"|"+S.frames.filter(f=>f.emb||f.emb_p).length+"|"+(S.ref?S.refTitle:"");
+    if(S._scoreKey===key&&S._score) return S._score;
+    let r={conf:0,quality:0,spread:0,cells:{size:0},strongCount:0,cls:"inconc",label:S.ref?"Inconclusive":"Finding",res:null};
+    if(S.ref&&KIT&&S.frames.length){
+      const res=KIT.localCompare(S.frames,S.ref,{descriptor:S.descriptor==="auto"?null:S.descriptor});
+      const bySeq={}; (res.allPairs||[]).forEach(p=>{ bySeq[p.shot]=p; });
+      for(const f of S.frames){ const p=bySeq[f.seq];
+        f.match=p?{ref:p.ref_index!=null?S.ref.frames[p.ref_index]:null,sim:p.sim,dist:p.dist,assigned:p.assigned!==false}:{ref:null,dist:100,sim:0,assigned:false}; }
+      r={conf:res.confidence,quality:res.quality,spread:res.spread,cells:{size:res.views_matched},strongCount:(res.breakdown[res.descriptor]||{}).strong||0,
+        cls:res.verdict,label:res.label,res};
+      S.lastCompare=res;
+    }
+    S._scoreKey=key; S._score=r; return r;
   }
-  function verdictFor(r){
-    if(!S.ref) return ["inconc","Finding"];
-    const effort=S.frames.filter(f=>f.sharp>=SHARP_MIN).length;
-    if(r.conf>=MATCH_READY && r.cells.size>=3) return ["match","Match likely"];
-    if(effort>=MIN_EFFORT && r.conf<NO_MATCH && r.cells.size<2) return ["nomatch","No match here"];
-    return ["inconc","Inconclusive"];
-  }
+  function verdictFor(r){ if(!S.ref) return ["inconc","Finding"]; return [r.cls,r.label]; }
   function update(){
     const r=recompute(); S.prevConf=S.conf; S.conf=r.conf;
     $("#fQual").style.width=(r.quality*100)+"%";
@@ -523,10 +534,10 @@
     $("#arc").style.strokeDashoffset=C*(1-r.conf/100);
     $("#score").textContent=S.ref?r.conf:S.frames.length;
     const [cls,label]=verdictFor(r);
-    const g=$("#gauge"); g.classList.remove("match","nomatch","inconc"); g.classList.add(cls);
+    const g=$("#gauge"); g.classList.remove("match","nomatch","inconc","insufficient"); g.classList.add(cls);
     $("#verdict").textContent=label;
     // matched-sector ring (only meaningful if reference had a compass at enrollment)
-    const matchedSectors=new Set(S.frames.map(f=>f.match).filter(m=>m&&m.sim>=STRONG_T&&m.ref.sector>=0).map(m=>m.ref.sector));
+    const matchedSectors=new Set(S.frames.map(f=>f.match).filter(m=>m&&m.assigned&&m.sim>=STRONG_T&&m.ref&&m.ref.sector>=0).map(m=>m.ref.sector));
     [...sectorsG.children].forEach((el,i)=>el.classList.toggle("done",matchedSectors.has(i)));
     $("#matched").textContent=r.cells.size+" matched";
     const delta=S.conf-S.prevConf;
@@ -550,14 +561,37 @@
     let blob; try{blob=await grab();}catch(_){toast("Couldn't take that shot","warn"); return;}
     if(!blob) return;
     const m=matchFrame(a);
-    const f={blob,url:URL.createObjectURL(blob),seq:++S.seq,sharp:a.sharp,dhash:a.dhash,chist:a.chist,emb:a.emb,match:m,t:new Date().toISOString()};
-    S.frames.push(f); update(); flash();
+    // the Photo Mat, when it is in view: the angle (so shots pair with registered views from
+    // the same side) and the piece's own colour; the crop height follows the registered size
+    const mr=MATL? MATL.tick(video,true) : null, onMat=!!(mr&&mr.ok);
+    const refH=S.ref&&S.ref.metadata&&S.ref.metadata.dimensions_mm&&S.ref.metadata.dimensions_mm.height;
+    const piece=onMat? MATL.piece(mr, refH? Math.min(400,refH*1.2+10) : undefined) : null;
+    const f={blob,url:URL.createObjectURL(blob),seq:++S.seq,sharp:a.sharp,dhash:a.dhash,chist:a.chist,emb:a.emb,match:m,t:new Date().toISOString(),
+      mat:onMat? window.GlassMat.frameMat(mr,piece) : null, chist_p:piece&&piece.chist_p||null, crop:piece?piece.crop:null};
+    S.frames.push(f); update(); flash(); maybeEmbed(f);
+  }
+  // AI samples, automatically, when the registration has them (up to 8 shots): on the
+  // piece's crop when the registration has piece samples, on the whole frame otherwise
+  const EMB_CAP=8;
+  function maybeEmbed(f){
+    if(!S.ref) return;
+    const refP=S.ref.frames.some(x=>x.emb_p&&x.emb_p.length), refF=S.hasEmb;
+    if(!refP&&!refF) return;
+    if(S.frames.filter(x=>x._embTried).length>=EMB_CAP) return;
+    f._embTried=true;
+    (async()=>{ try{
+      if(refF&&!f.emb){ f.emb=await embedCanvas_fromBlob(f.blob); }
+      if(refP&&f.crop&&MATL){ const cc=MATL.cropCanvas(video,f.crop,384); if(cc) f.emb_p=await embedCanvas(cc); }
+      rematchAll(); update();
+    }catch(_){} })();
   }
 
   /* live loop */
   let lastA=0;
   function loop(ts){ if($("#hud").hidden) return;
     if(ts-lastA>150){ lastA=ts; const a=analyze();
+      if(MATL){ const mr=MATL.tick(video); const chip=$("#matChip");
+        if(chip){ chip.textContent=window.GlassMat.chipText(mr); chip.classList.toggle("on",!!(mr&&mr.ok)); } }
       if(a){ a.cnov=cnovOf(a.dhash); const lm=matchFrame(a,"color");
         a.worthy=a.sharp>=SHARP_MIN && a.cnov>=NOVELTY_MIN; a.hit=a.sharp>=SHARP_MIN && lm.sim>=STRONG_T; S.live=a; renderOverlay(a);
         const q=Math.max(0,Math.min(1,(a.sharp-SHARP_MIN)/(SHARP_GOOD-SHARP_MIN)));
@@ -698,7 +732,10 @@
     const r=recompute(); const [cls,label]=verdictFor(r); box.hidden=false; box.classList.toggle("nomatch",cls==="nomatch");
     const who=S.refTitle?`<b>${esc(S.refTitle)}</b>${S.refMaker?" by "+esc(S.refMaker):""}`:"the reference";
     let html=`<h3>${esc(label)} — ${r.conf}/100 against ${who}</h3>`;
-    if(cls!=="match"){ html+=`<p class="fine">${cls==="inconc"?"Keep circling — line up with more of the reference angles (teal shutter) to decide it.":"These shots don't line up with the reference. Check lighting and that you're on the same piece."}</p>`; box.innerHTML=html; return; }
+    if(cls!=="match"){ const why=r.res&&r.res.breakdown[r.res.descriptor]&&r.res.breakdown[r.res.descriptor].insufficient;
+      html+=`<p class="fine">${cls==="inconc"?"Keep circling — line up with more of the reference angles (teal shutter) to decide it."
+        :cls==="insufficient"?"Not enough to tell: "+esc(why||"these shots don't carry enough of the descriptor")+". Try the Photo Mat, softer light, or AI on."
+        :"These shots don't line up with the reference. Check lighting and that you're on the same piece."}</p>`; box.innerHTML=html; return; }
     if(S.refKind==="mine"){
       html+= S.recorded ? `<p>✓ This check is noted on the piece.</p>`
         : `<div class="filmbtns" style="margin-top:0"><button class="primary" id="recordBtn">Note this check on the piece</button></div><p class="fine">It adds today's date, the confidence and the views matched to the piece's history.</p>`;
@@ -736,9 +773,10 @@
      the registered photos beside these shots, what carried the score and the reasons,
      and Same piece / Different piece record the person's call. */
   function fpOfShots(){
-    return {tool:"glass-verify-shots",version:1,created:new Date().toISOString(),metadata:{hasEmbeddings:S.frames.some(f=>!!f.emb)},
+    return {tool:"glass-verify-shots",version:1,created:new Date().toISOString(),metadata:{hasEmbeddings:S.frames.some(f=>!!(f.emb||f.emb_p))},
       frames:S.frames.map(f=>({file:`frames/${String(f.seq).padStart(3,"0")}.jpg`,seq:f.seq,t:f.t,cell:"s"+f.seq,sector:-1,
-        sharp:+f.sharp.toFixed(1),dhash:[f.dhash[0],f.dhash[1]],chist:f.chist,emb:f.emb||undefined}))};
+        sharp:+f.sharp.toFixed(1),dhash:[f.dhash[0],f.dhash[1]],chist:f.chist,emb:f.emb||undefined,
+        mat:f.mat||undefined,chist_p:f.chist_p||undefined,emb_p:f.emb_p||undefined,crop:f.crop||undefined}))};
   }
   function renderCands(){
     const el=$("#cands"); if(!el||!KIT||!G) return;
@@ -773,8 +811,7 @@
     const el=$("#compare"); if(!el||!KIT) return;
     if(!S.ref||!S.frames.length){ el.hidden=true; S.lastCompare=null; return; }
     el.hidden=false;
-    const res=KIT.localCompare(S.frames,S.ref,{descriptor:S.descriptor});
-    S.lastCompare=res;
+    recompute(); const res=S.lastCompare;
     const item=Object.assign(currentRefObject(),{kind:S.refKind,maker:S.refMaker,
       fingerprint:{rating:S.ref.rating,views:S.ref.frames.length,has_embeddings:!!S.hasEmb,dimensions_mm:S.ref.metadata&&S.ref.metadata.dimensions_mm||null}});
     KIT.comparePanel(el,{item,result:res,piece:S.piece,shots:S.frames.map(f=>({seq:f.seq,url:f.url})),refImages:S.refByFile,decision:S.decision,
@@ -822,14 +859,14 @@
     if(!S.ref) return;
     S.frames.slice().map(f=>f).sort((a,b)=>(b.match?b.match.sim:0)-(a.match?a.match.sim:0)).forEach(f=>{
       const m=f.match; const sim=m?Math.round(m.sim*100):0;
-      const col=m&&m.sim>=STRONG_T?"var(--ok)":m&&m.sim>=0.35?"var(--hot)":"var(--danger)";
+      const col=m&&m.assigned&&m.sim>=STRONG_T?"var(--ok)":m&&m.sim>=0.35?"var(--hot)":"var(--danger)";
       const refImg=m&&m.ref&&S.refByFile[m.ref.file]? `<img src="${S.refByFile[m.ref.file]}" alt="">`:`<div style="display:grid;place-items:center;height:100%;font-size:9px;color:var(--ink-dim)">no image</div>`;
       const row=document.createElement("div"); row.className="pair";
       row.innerHTML=`<div class="imgs">
           <div><span class="tag">yours</span><img src="${f.url}" alt=""></div>
           <div><span class="tag">on file</span>${refImg}</div></div>
         <div class="meta"><span class="pct" style="color:${col}">${sim}%</span>
-          <small> · dist ${m?m.dist:"—"}${m&&m.ref?" · "+m.ref.file.replace("frames/",""):""}</small>
+          <small> · dist ${m?m.dist:"—"}${m&&m.ref?" · "+m.ref.file.replace("frames/",""):""}${m&&m.ref&&!m.assigned?" · view already paired, not counted":""}</small>
           <div class="barrow"><i style="width:${sim}%;background:${col}"></i></div></div>`;
       box.appendChild(row); }); }
   function toast(m,k){const t=$("#toast"); t.textContent=m; t.className="toast show"+(k?" "+k:""); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),k==="warn"?2600:1900);}
@@ -839,7 +876,7 @@
   $("#shutWrap").onclick=()=>capture(true);
   $("#autoBtn").onclick=e=>{S.auto=!S.auto; S.lastAuto=0; e.target.classList.toggle("on",S.auto); $("#shutWrap").classList.toggle("auto",S.auto); toast(S.auto?"Auto on — it takes shots for you as you circle":"Auto off");};
   $("#flipBtn").onclick=async()=>{ await cycleCamera(); };
-  const DESCS=[["color","Colour"],["dhash","Shape"],["dino","AI"]];
+  const DESCS=[["auto","Best"],["color","Colour"],["dhash","Shape"],["dino","AI"]];
   $("#descBtn").onclick=async()=>{
     let i=DESCS.findIndex(d=>d[0]===S.descriptor); i=(i+1)%DESCS.length; S.descriptor=DESCS[i][0];
     $("#descBtn").textContent="Match: "+DESCS[i][1];
@@ -858,6 +895,7 @@
   $("#review").onclick=()=>$("#film").classList.add("open");
   $("#closeFilm").onclick=()=>$("#film").classList.remove("open");
   $("#clearBtn").onclick=()=>{if(!S.frames.length)return; if(!confirm("Discard your shots?"))return;
+    if(window.GlassMat) window.GlassMat.reset();
     S.frames.forEach(f=>URL.revokeObjectURL(f.url)); S.frames=[]; S.seq=0; S.recorded=false;
     S.candidates=null; S.decision=null; S.sent=null; S.lastCompare=null; S.sendStatus=""; S.sendDecision=null; S.sendNote=""; S.started=new Date().toISOString();
     const c=$("#cands"); if(c) c.innerHTML=""; update(); };
@@ -903,8 +941,7 @@
     S.hasEmb = ref.frames.some(f=>f.emb&&f.emb.length);
     // Prefer the AI (DINOv2) descriptor when the reference carries embeddings —
     // colour alone can't separate similar-coloured pieces; texture can.
-    if(S.hasEmb){ S.descriptor="dino"; const el=$("#descBtn"); if(el) el.textContent="Match: AI"; }
-    else { S.descriptor="color"; const el=$("#descBtn"); if(el) el.textContent="Match: Colour"; }
+    S.descriptor="auto"; { const el=$("#descBtn"); if(el) el.textContent="Match: Best"; }
     $("#refCard").classList.add("show"); $("#start").classList.add("show"); const sh=$("#startHint"); if(sh) sh.style.display="";
     [...document.querySelectorAll(".piece")].forEach(el=>el.classList.toggle("sel", S.refKind==="mine" && String(el.dataset.id)===String(S.refId)));
     // the compare panel's side of the drawer: the piece's photos, and for one of mine the

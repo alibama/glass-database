@@ -15,6 +15,14 @@ Sessions come from one of three places:
                        pictures are split into two sessions, so same-piece pairs exist
     --registry         every public piece with a Glass ID (one session each; only
                        different-piece pairs exist, so only the false-accept side is measured)
+    --fingerprints DIR registration fingerprints saved as JSON (e.g. pulled from the public
+                       API's /api/objects/{id}/fingerprint); identical files count once, and
+                       each piece's frames are dealt into --split interleaved sessions so
+                       same-piece pairs exist (one registration split: optimistic, as above)
+
+``--rules v1|v2|both`` scores with the arithmetic shipped before 17 November 2026 (v1,
+each shot against its best registered view), the current one (v2, one-to-one and by mat
+angle, with "Not enough to tell"), or both side by side.
 
 Every ordered pair (query session, reference session) is scored with
 ``central.glassid.compare`` under the page's thresholds. Pairs with the same label are
@@ -104,6 +112,32 @@ def sessions_from_images(root: Path, split: int = 2) -> list[dict]:
     return out
 
 
+def sessions_from_fingerprints(root: Path, split: int = 2) -> list[dict]:
+    import hashlib
+    out, seen = [], set()
+    for f in sorted(root.glob("*.json")):
+        try:
+            fp = json.loads(f.read_text(encoding="utf-8"))
+        except Exception:  # noqa: BLE001
+            continue
+        frames = glassid.frames_of(fp)
+        if not frames:
+            continue
+        digest = hashlib.sha256(json.dumps(fp.get("frames"), sort_keys=True).encode()).hexdigest()
+        if digest in seen:
+            continue
+        seen.add(digest)
+        title = ((fp.get("object") or {}).get("title") if isinstance(fp.get("object"), dict) else None) or f.stem
+        parts = [frames[i::split] for i in range(split)] if len(frames) >= 2 * split else [frames]
+        for i, part in enumerate(parts):
+            sub = {k: v for k, v in fp.items() if k != "frames"}
+            sub["frames"] = part
+            out.append({"name": f"{f.stem[:8]}#{i + 1}", "label": f.stem, "title": title, "kind": "fingerprint",
+                        "decision": "", "fingerprint": sub, "frames": len(part),
+                        "has_embeddings": glassid.has_embeddings(sub)})
+    return out
+
+
 def sessions_from_registry() -> list[dict]:
     from central.dbconn import connect
     refs = glassid.public_refs(connect())
@@ -127,7 +161,7 @@ def _best_threshold(pos: list[int], neg: list[int]) -> dict | None:
     return best
 
 
-def score(sessions: list[dict], *, descriptor: str | None = None) -> dict:
+def score(sessions: list[dict], *, descriptor: str | None = None, rules: str = glassid.RULES_DEFAULT) -> dict:
     n = len(sessions)
     matrix = [[None] * n for _ in range(n)]
     verdicts = [[None] * n for _ in range(n)]
@@ -136,10 +170,11 @@ def score(sessions: list[dict], *, descriptor: str | None = None) -> dict:
         for j, r in enumerate(sessions):
             if i == j:
                 continue
-            c = glassid.compare(q["fingerprint"], r["fingerprint"], descriptor=descriptor)
+            c = glassid.compare(q["fingerprint"], r["fingerprint"], descriptor=descriptor, rules=rules)
             matrix[i][j] = c["confidence"]
             verdicts[i][j] = c["verdict"]
-            pair = {"query": q["name"], "reference": r["name"], "confidence": c["confidence"], "verdict": c["verdict"],
+            pair = {"query": q["name"], "reference": r["name"], "qlabel": q["label"], "rlabel": r["label"],
+                    "confidence": c["confidence"], "verdict": c["verdict"],
                     "descriptor": c["descriptor"], "views_matched": c["views_matched"]}
             if q["label"] == r["label"]:
                 pos.append(c["confidence"]); pos_pairs.append(pair)
@@ -152,6 +187,14 @@ def score(sessions: list[dict], *, descriptor: str | None = None) -> dict:
     tn = sum(1 for p in neg_pairs if p["verdict"] == "nomatch")
     inconc_neg = sum(1 for p in neg_pairs if p["verdict"] == "inconc")
     inconc_pos = sum(1 for p in pos_pairs if p["verdict"] == "inconc")
+    insuff_neg = sum(1 for p in neg_pairs if p["verdict"] == "insufficient")
+    insuff_pos = sum(1 for p in pos_pairs if p["verdict"] == "insufficient")
+    # independent evidence is per pair of *pieces*, not per pair of sessions: sessions of
+    # one piece are correlated. With zero false accepts in n independent trials, the 95%
+    # upper bound on the false-accept rate is about 3/n (the rule of three).
+    piece_pairs = {tuple(sorted((sessions[i]["label"], sessions[j]["label"])))
+                   for i in range(n) for j in range(n) if sessions[i]["label"] != sessions[j]["label"]}
+    fa_piece_pairs = {tuple(sorted((a["qlabel"], a["rlabel"]))) for a in neg_pairs if a["verdict"] == "match"}
 
     def dist(xs):
         if not xs:
@@ -159,11 +202,15 @@ def score(sessions: list[dict], *, descriptor: str | None = None) -> dict:
         return {"n": len(xs), "min": min(xs), "max": max(xs), "median": statistics.median(xs),
                 "mean": round(statistics.mean(xs), 1)}
     return {
-        "descriptor": descriptor or "auto", "sessions": n,
+        "descriptor": descriptor or "auto", "rules": rules, "sessions": n,
+        "independent_piece_pairs": len(piece_pairs),
+        "false_accept_piece_pairs": len(fa_piece_pairs),
+        "false_accept_rate_upper_95": (round(3 / len(piece_pairs), 3) if piece_pairs and not fa_piece_pairs else None),
         "positives": len(pos_pairs), "negatives": len(neg_pairs),
         "at_shipped_thresholds": {
             "true_accepts": tp, "false_rejects": fn, "false_accepts": fp, "true_rejects": tn,
             "negatives_inconclusive": inconc_neg, "positives_inconclusive": inconc_pos,
+            "negatives_not_enough": insuff_neg, "positives_not_enough": insuff_pos,
             "precision_match_likely": round(tp / (tp + fp), 3) if (tp + fp) else None,
             "recall_match_likely": round(tp / len(pos_pairs), 3) if pos_pairs else None,
             "false_accept_rate": round(fp / len(neg_pairs), 3) if neg_pairs else None,
@@ -180,7 +227,7 @@ def score(sessions: list[dict], *, descriptor: str | None = None) -> dict:
 def print_report(sessions: list[dict], rep: dict) -> None:
     names = [s["name"] for s in sessions]
     w = max(8, min(22, max(len(x) for x in names))) if names else 8
-    print(f"\n== descriptor: {rep['descriptor']} · {rep['sessions']} sessions · "
+    print(f"\n== rules {rep['rules']} · descriptor: {rep['descriptor']} · {rep['sessions']} sessions · "
           f"{rep['positives']} same-piece pairs · {rep['negatives']} different-piece pairs ==")
     print("query \\ reference".ljust(w + 2) + " ".join(n[:w].rjust(w) for n in names))
     for i, row in enumerate(rep["matrix"]):
@@ -196,9 +243,16 @@ def print_report(sessions: list[dict], rep: dict) -> None:
     print(f"\nat the shipped thresholds (match >= {a['thresholds']['MATCH_READY']} with >= {a['thresholds']['MIN_CELLS_MATCH']} views; "
           f"no-match < {a['thresholds']['NO_MATCH']} after {a['thresholds']['MIN_EFFORT']} shots):")
     print(f"  same piece:      {a['true_accepts']} match likely, {a['positives_inconclusive']} inconclusive, "
-          f"{a['false_rejects'] - a['positives_inconclusive']} no match  -> recall {a['recall_match_likely']}")
+          f"{a['positives_not_enough']} not enough to tell, "
+          f"{a['false_rejects'] - a['positives_inconclusive'] - a['positives_not_enough']} no match  -> recall {a['recall_match_likely']}")
     print(f"  different piece: {a['false_accepts']} match likely (false accepts), {a['negatives_inconclusive']} inconclusive, "
+          f"{a['negatives_not_enough']} not enough to tell, "
           f"{a['true_rejects']} no match  -> false-accept rate {a['false_accept_rate']}, precision {a['precision_match_likely']}")
+    if rep["independent_piece_pairs"]:
+        ub = rep["false_accept_rate_upper_95"]
+        print(f"  independent different-piece pairs: {rep['independent_piece_pairs']}; false accepts on "
+              f"{rep['false_accept_piece_pairs']} of them"
+              + (f"; with none, the 95% upper bound on the false-accept rate is ~{ub} (3/n)" if ub is not None else ""))
     if rep["positive_scores"]:
         p = rep["positive_scores"]; print(f"  same-piece scores:      min {p['min']} · median {p['median']} · max {p['max']} (n={p['n']})")
     if rep["negative_scores"]:
@@ -218,15 +272,19 @@ def main(argv=None) -> int:
     src.add_argument("--manifests", help="folder of capture-session folders")
     src.add_argument("--images", help="folder of per-piece picture folders")
     src.add_argument("--registry", action="store_true", help="every public piece with a Glass ID")
+    src.add_argument("--fingerprints", help="folder of registration fingerprint .json files")
     ap.add_argument("--descriptor", choices=("auto", "color", "dino", "dhash", "all"), default="all",
                     help="which descriptor to score (default: auto plus each one that is available)")
-    ap.add_argument("--split", type=int, default=2, help="--images: sessions per piece")
+    ap.add_argument("--split", type=int, default=2, help="--images/--fingerprints: sessions per piece")
+    ap.add_argument("--rules", choices=("v1", "v2", "both"), default="v2", help="matching rules (default v2)")
     ap.add_argument("--out", default=str(ROOT / "data" / "glassid_bench.json"), help="'' to skip the JSON")
     a = ap.parse_args(argv)
     if a.manifests:
         sessions = sessions_from_manifests(Path(a.manifests))
     elif a.images:
         sessions = sessions_from_images(Path(a.images), split=max(1, a.split))
+    elif a.fingerprints:
+        sessions = sessions_from_fingerprints(Path(a.fingerprints), split=max(1, a.split))
     else:
         sessions = sessions_from_registry()
     sessions = [s for s in sessions if s["frames"]]
@@ -244,15 +302,17 @@ def main(argv=None) -> int:
     which = ["auto"] if a.descriptor == "auto" else [a.descriptor] if a.descriptor != "all" else ["auto", "color", "dhash"] \
         + (["dino"] if sum(1 for s in sessions if s["has_embeddings"]) >= 2 else [])
     reports = {}
+    rule_sets = ["v1", "v2"] if a.rules == "both" else [a.rules]
     for d in which:
-        rep = score(sessions, descriptor=None if d == "auto" else d)
-        reports[d] = rep
-        print_report(sessions, rep)
+        for ru in rule_sets:
+            rep = score(sessions, descriptor=None if d == "auto" else d, rules=ru)
+            reports[d if len(rule_sets) == 1 else f"{d}:{ru}"] = rep
+            print_report(sessions, rep)
     if a.out:
         out = Path(a.out)
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps({"written": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-                                   "source": a.manifests or a.images or "registry",
+                                   "source": a.manifests or a.images or a.fingerprints or "registry",
                                    "sessions": [{k: v for k, v in s.items() if k != "fingerprint"} for s in sessions],
                                    "reports": reports}, indent=1), encoding="utf-8")
         print(f"\nwritten: {out}")
