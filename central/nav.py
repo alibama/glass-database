@@ -21,6 +21,7 @@ import html
 # (key, label, href) — keys are stable handles for "which item is active"
 NAV: list[tuple[str, str, str]] = [
     ("explore", "Find Artists & Studios", "/explore/"),
+    ("map", "Map", "/studios.html"),
     ("games", "Collecting Events", "/games.html"),
     ("glassid", "Glass ID", "/fingerprint/enroll.html"),
     ("glowtbook", "Glowtbook", "/glowtbook/"),

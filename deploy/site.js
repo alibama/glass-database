@@ -131,7 +131,7 @@
 
   /* The primary menu — the SAME list as central/nav.py (tests/test_nav.py keeps them equal).
      Pages carry <ul id="menu" data-nav data-active="key"></ul> and this fills it. */
-  var NAV = [["explore","Find Artists & Studios","/explore/"],["games","Collecting Events","/games.html"],["glassid","Glass ID","/fingerprint/enroll.html"],["glowtbook","Glowtbook","/glowtbook/"],["notes","Field notes","/blog/"],["about","About","/#about"],["account","My account","/account.html"]];
+  var NAV = [["explore","Find Artists & Studios","/explore/"],["map","Map","/studios.html"],["games","Collecting Events","/games.html"],["glassid","Glass ID","/fingerprint/enroll.html"],["glowtbook","Glowtbook","/glowtbook/"],["notes","Field notes","/blog/"],["about","About","/#about"],["account","My account","/account.html"]];
   function menu(el, active) {
     if (typeof el === "string") el = document.querySelector(el);
     if (!el) return;

@@ -7,6 +7,8 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Map in the top menu.** The studios map (`/studios.html`) was only linked from page footers
+  and the Connections page; it is now a primary menu item (`central/nav.py`, `site.js`).
 - **Glass ID rules v2: one-to-one matching, scored by how much of the capture is explained.**
   `central/glassid.py` and `deploy/fingerprint-web/glassid-kit.js` (one arithmetic, checked
   equal in `tests/test_glassid.py` by running the kit in Node). Each registered view can carry

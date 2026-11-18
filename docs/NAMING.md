@@ -67,7 +67,7 @@ The homepage opens with three doors, each a short path:
 
 ## Navigation
 
-Primary nav (every page, in this order): **Find Artists & Studios** · **Collecting Events** ·
+Primary nav (every page, in this order): **Find Artists & Studios** · **Map** (`/studios.html`) · **Collecting Events** ·
 **Glass ID** · **Glowtbook** · **Field notes** · **About** · **My account**. The brand links home.
 **My account** (`/account.html`) is the one place a signed-in person finds everything they added:
 their pieces with a next step each, their collection, their entries, what is waiting on them. It
