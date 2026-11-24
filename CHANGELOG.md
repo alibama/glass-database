@@ -7,6 +7,13 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Fixed
+- **Scheduled blog posts.** A post whose `date` is later than today stays off the blog, feed,
+  listing and homepage until that day; `glassdb-blog.timer` rebuilds the blog at 00:05 Eastern
+  each morning, so it goes live without a deploy (`deploy/glassdb-blog.service`). The deploy now
+  builds the blog straight into `public/blog` (never into the source checkout, which stays clean
+  for `git pull`), and `build_blog --prune` deletes the page of a post that was taken down;
+  before, the deploy only copied files, so an unpublished page stayed reachable by its URL.
+  `build_blog --drafts` previews drafts and scheduled posts; `--today` builds as of a given date.
 - **Deploys no longer stop at "Installing base packages" when an apt source breaks.** A renamed
   PPA (ondrej/php and ondrej/apache2 became "deprecated") made `apt-get update` fail, and
   `install.sh` runs under `set -e`, so every deploy since 14 November pulled the new code and then
@@ -14,7 +21,7 @@ proof-of-concept features from production-ready ones in its docs.
   and carries on with the existing package lists (`deploy/install.sh`).
 ### Added
 - **Field notes: "How Do You Get the Attention of Museums? Lessons from Glass's Pioneers"** is the
-  new lead post (and the homepage feature), ahead of the Lima study. The blog now keeps every post
+  next lead post (and the homepage feature), ahead of the Lima study; scheduled for 8 December 2026. The blog now keeps every post
   reachable as it grows: a breadcrumb on each post, a side menu with "On this page" and the newest
   eight posts plus "All N posts", and an index archive of every post by year, filterable by series
   (`scripts/build_blog.py`). Fixed the blog pages' side padding and wide tables pushing the page
