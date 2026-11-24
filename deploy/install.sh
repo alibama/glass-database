@@ -104,14 +104,18 @@ rsync -a --delete \
     --exclude '.streamlit/secrets.toml' \
     --exclude 'public' \
     "$SRC/" "$APP_DIR/"
-# Blog: render blog/posts/*.md -> deploy/blog/ and refresh the homepage's "From the blog"
-# block (stdlib only, so any python3 works; the committed output is the fallback).
-( cd "$SRC" && python3 -m scripts.build_blog >/dev/null 2>&1 ) || warn "blog build skipped (python3 missing?) — using committed deploy/blog/"
-if [ -d "$SRC/deploy/blog" ]; then
-    mkdir -p "$APP_DIR/public/blog"
-    cp "$SRC/deploy/blog/"* "$APP_DIR/public/blog/" 2>/dev/null || true
-fi
 cp "$SRC/deploy/landing-index.html" "$APP_DIR/public/index.html"
+# Blog: render blog/posts/*.md straight into public/blog and refresh the homepage's "From the
+# blog" block (stdlib only, so any python3 works). Built into the runtime, never into $SRC, so
+# the source checkout stays clean for the next `git pull`. --prune removes the page of a post
+# that is now a draft or scheduled for later; glassdb-blog.timer repeats this every morning so
+# a scheduled post goes live on its date without a deploy. The committed output is the fallback.
+mkdir -p "$APP_DIR/public/blog"
+if ! ( cd "$APP_DIR" && TZ=America/New_York python3 -m scripts.build_blog --out "$APP_DIR/public/blog" \
+        --landing "$APP_DIR/public/index.html" --prune >/dev/null 2>&1 ); then
+    warn "blog build failed — using the committed deploy/blog/"
+    rsync -a --delete "$SRC/deploy/blog/" "$APP_DIR/public/blog/"
+fi
 cp "$SRC/deploy/landing-logo.svg" "$APP_DIR/public/logo.svg"
 [ -f "$SRC/deploy/paper.css" ] && cp "$SRC/deploy/paper.css" "$APP_DIR/public/paper.css"
 # shared client helper for the static pages (sign-in chip, authenticated fetch, pairing tokens)
@@ -269,6 +273,11 @@ systemctl enable glassdb-api.service glassdb-admin.service \
 # so a restart is required for changes to central/, glowtbook/, etc. to take effect.
 systemctl restart glassdb-api.service glassdb-admin.service \
                   glassdb-explore.service glassdb-glowtbook.service
+# Scheduled blog posts: rebuild public/blog every morning (Eastern), so a post dated in the
+# future appears on that date. Persistent=true catches up after the server was off.
+cp "$APP_DIR/deploy/glassdb-blog.service" "$APP_DIR/deploy/glassdb-blog.timer" /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable --now glassdb-blog.timer >/dev/null 2>&1 || warn "could not enable glassdb-blog.timer"
 
 # --- reverse proxy ---------------------------------------------------------
 CERTBOT_CMD=""

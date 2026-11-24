@@ -620,17 +620,22 @@ def update_landing(posts: list[dict], landing: Path = LANDING) -> bool:
     return True
 
 
-def load_posts(src: Path, include_drafts: bool = False) -> list[dict]:
+def load_posts(src: Path, include_drafts: bool = False, today: str | None = None) -> list[dict]:
+    """Published posts, newest first. A post dated after `today` is scheduled: it stays off every
+    page, the feed and the homepage until its date (a daily timer on the server rebuilds the blog,
+    so it appears that morning without a deploy). --drafts shows drafts and scheduled posts."""
+    today = today or date.today().isoformat()
     posts = [parse_post(p) for p in sorted(src.glob("*.md"))]
-    posts = [p for p in posts if include_drafts or not p["draft"]]
+    posts = [p for p in posts if include_drafts or (not p["draft"] and p["date"] <= today)]
     posts.sort(key=lambda p: (p["date"], p["slug"]), reverse=True)
     return posts
 
 
 def build(src: Path = POSTS, out: Path = OUT, base: str = "https://glassdatabase.org",
-          landing: Path | None = LANDING, include_drafts: bool = False) -> dict:
+          landing: Path | None = LANDING, include_drafts: bool = False, prune: bool = False,
+          today: str | None = None) -> dict:
     base = base.rstrip("/")
-    posts = load_posts(src, include_drafts)
+    posts = load_posts(src, include_drafts, today)
     out.mkdir(parents=True, exist_ok=True)
     for i, p in enumerate(posts):
         nxt = posts[i - 1] if i > 0 else None          # newer
@@ -642,8 +647,15 @@ def build(src: Path = POSTS, out: Path = OUT, base: str = "https://glassdatabase
                | {"url": post_url(p)} for p in posts]
     (out / "posts.json").write_text(json.dumps(listing, indent=2, ensure_ascii=False), encoding="utf-8")
     landed = update_landing(posts, landing) if landing else False
+    removed = []
+    if prune:  # a post taken down (draft, rescheduled, deleted) must not stay reachable by its URL
+        keep = {f"{p['slug']}.html" for p in posts} | {"index.html"}
+        for f in sorted(out.glob("*.html")):
+            if f.name not in keep:
+                f.unlink()
+                removed.append(f.stem)
     return {"posts": len(posts), "out": str(out), "landing_updated": landed,
-            "slugs": [p["slug"] for p in posts]}
+            "slugs": [p["slug"] for p in posts], "removed": removed}
 
 
 def main(argv=None) -> int:
@@ -652,12 +664,20 @@ def main(argv=None) -> int:
     ap.add_argument("--out", default=str(OUT))
     ap.add_argument("--base", default="https://glassdatabase.org", help="public origin for canonical URLs + feed")
     ap.add_argument("--landing", default=str(LANDING), help="homepage to refresh (or 'none')")
-    ap.add_argument("--drafts", action="store_true", help="include posts marked draft: true")
+    ap.add_argument("--drafts", action="store_true", help="include drafts and posts scheduled for a later date")
+    ap.add_argument("--prune", action="store_true", help="delete pages in --out for posts no longer published")
+    ap.add_argument("--today", help="publish as if it were this date (YYYY-MM-DD); default today")
     a = ap.parse_args(argv)
-    r = build(Path(a.src), Path(a.out), a.base, None if a.landing == "none" else Path(a.landing), a.drafts)
+    r = build(Path(a.src), Path(a.out), a.base, None if a.landing == "none" else Path(a.landing), a.drafts,
+              a.prune, a.today)
     print(f"blog: {r['posts']} post(s) -> {r['out']}  (homepage block {'updated' if r['landing_updated'] else 'not touched'})")
     for s in r["slugs"]:
         print("  -", s)
+    for s in r["removed"]:
+        print("  x", s, "(no longer published; page removed)")
+    held = [p for p in load_posts(Path(a.src), True) if not p["draft"] and p["date"] > (a.today or date.today().isoformat())]
+    for p in held:
+        print(f"  … {p['slug']} scheduled for {p['date']}")
     return 0
 
 

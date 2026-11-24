@@ -138,3 +138,31 @@ def test_nothing_gets_lost_as_posts_are_added(tmp_path):
     side = page.split('class="side more"', 1)[1].split("</details>", 1)[0]
     assert side.count("<li") == B.SIDE_POSTS and 'aria-current="page"' in side   # this post is always listed
     assert "All 12 posts" in side and 'href="/blog/#archive"' in side
+
+
+def test_a_post_dated_later_waits_for_its_day_and_unpublished_pages_are_removed(tmp_path):
+    src = tmp_path / "posts"; src.mkdir()
+    (src / "2026-10-01-old.md").write_text(POST, encoding="utf-8")
+    (src / "2026-12-08-later.md").write_text(POST.replace("A Test Study", "Later").replace("2026-10-01", "2026-12-08"),
+                                             encoding="utf-8")
+    landing = tmp_path / "index.html"
+    landing.write_text("<!-- blog:latest -->\n<!-- /blog:latest -->", encoding="utf-8")
+    out = tmp_path / "out"
+    r = B.build(src, out, "https://example.org", landing, today="2026-12-08")      # its day: published
+    assert r["slugs"] == ["later", "old"] and (out / "later.html").exists()
+    r = B.build(src, out, "https://example.org", landing, prune=True, today="2026-12-07")  # rescheduled
+    assert r["slugs"] == ["old"] and r["removed"] == ["later"] and not (out / "later.html").exists()
+    for f in ("index.html", "feed.xml", "posts.json", "old.html"):
+        assert "Later" not in (out / f).read_text(encoding="utf-8"), f
+    assert "Later" not in landing.read_text(encoding="utf-8")
+    assert [p["slug"] for p in B.load_posts(src, include_drafts=True, today="2026-12-07")] == ["later", "old"]
+
+
+def test_the_server_publishes_scheduled_posts_every_morning():
+    install = (ROOT / "deploy" / "install.sh").read_text()
+    assert "--prune" in install and "glassdb-blog.timer" in install
+    assert 'cp "$SRC/deploy/blog/"*' not in install                  # copying never removed a taken-down page
+    svc = (ROOT / "deploy" / "glassdb-blog.service").read_text()
+    timer = (ROOT / "deploy" / "glassdb-blog.timer").read_text()
+    assert "User=glassdb" in svc and "--prune" in svc and "TZ=America/New_York" in svc
+    assert "OnCalendar=" in timer and "Persistent=true" in timer

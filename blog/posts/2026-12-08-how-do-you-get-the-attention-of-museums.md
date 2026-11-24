@@ -1,6 +1,6 @@
 ---
 title: How Do You Get the Attention of Museums? Lessons from Glass's Pioneers
-date: 2026-11-23
+date: 2026-12-08
 author: Papi J
 series: Essays
 summary: Being a pioneer is about half the answer. Across two thousand years, the glassmakers who held museums' attention changed what glass can do, who can make it, what it can mean or where it can go — and almost all of them had an institution in the room early and left a record museums could find.

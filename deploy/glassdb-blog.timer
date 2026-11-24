@@ -1,0 +1,9 @@
+[Unit]
+Description=Glass Database — publish scheduled blog posts each morning
+
+[Timer]
+OnCalendar=*-*-* 00:05:00 America/New_York
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=Glass Database — rebuild the blog (publishes posts whose date has come)
+After=network.target
+
+[Service]
+Type=oneshot
+User=glassdb
+Group=glassdb
+WorkingDirectory=/opt/glassdatabase
+# The blog's "today" is Eastern time, the same day the editors see.
+Environment=TZ=America/New_York
+ExecStart=/usr/bin/python3 -m scripts.build_blog --out /opt/glassdatabase/public/blog --landing /opt/glassdatabase/public/index.html --prune
