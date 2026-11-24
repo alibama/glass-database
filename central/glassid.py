@@ -63,8 +63,16 @@ POSE_STEP = 30                  # the turns tried: 0, 30, ... 330
 POSE_MIN = 3                    # shots with a mat pose on each side before angles are used
 MIN_DESC_SHOTS = 3              # shots that must carry the descriptor before anything is said
 COLOUR_SEEN_MIN = 0.5           # colour sees less than this share of the shots -> not enough
-RULES = ("v1", "v2")
-RULES_DEFAULT = "v2"
+RULES = ("v1", "v2", "v3")
+RULES_DEFAULT = "v3"
+# v3 (24 November 2026): the AI vectors are centred on a fixed, versioned registry mean
+# (central/glassid_v3.json, mirrored in glassid-kit.js) and renormalised before the cosine,
+# whose useful range [V3_DINO_LO, V3_DINO_HI] is stretched onto 0..1 so STRONG_T and the
+# verdict thresholds keep their meaning; and when colour and AI can both be read, the
+# score is the lower of the two - both have to agree. Colour is compared as in v2 (square-
+# root counts ranked pieces slightly better but let more different pieces past 70 on the
+# 29-piece bench, so it was left out). See docs/GLASS-ID-MATCHING-ASSESSMENT.md section 10.
+V3_DINO_LO, V3_DINO_HI = 0.0, 0.5
 # descriptor keys on a frame; "_p" are computed on the piece (cropped by the mat), the
 # others on the whole frame. Preference order for the headline, best first.
 DESC_KEY = {"dino_p": "emb_p", "dino": "emb", "color_p": "chist_p", "color": "chist", "dhash": "dhash"}
@@ -138,13 +146,54 @@ def dhash_sim(dist: int) -> float:
     return max(0.0, min(1.0, (SIM_HI - dist) / (SIM_HI - SIM_LO)))
 
 
-def frame_sim(q: dict, r: dict, desc: str) -> float:
-    k = DESC_KEY.get(desc, "chist")
+def _v3_file() -> dict:
+    global _V3
+    if _V3 is None:
+        try:
+            with open(__file__.rsplit("/", 1)[0] + "/glassid_v3.json") as fh:
+                _V3 = json.load(fh)
+        except Exception:  # noqa: BLE001 - without the mean, v3 compares the AI vectors uncentred
+            _V3 = {}
+    return _V3
+
+
+_V3 = None
+
+
+def dino_mean(dim: int):
+    m = _nums(_v3_file().get("dino_mean"))
+    return m if m and len(m) == dim else None
+
+
+def _v3_vec(v, desc: str):
+    """A frame's vector as v3 compares it: AI centred on the registry mean; colour as is."""
+    v = _nums(v)
+    if v is None:
+        return None
     if desc in ("dino", "dino_p"):
-        return cosine(q.get(k), r.get(k)) if q.get(k) and r.get(k) else 0.0
+        m = dino_mean(len(v))
+        return [x - y for x, y in zip(v, m)] if m else v
+    return v
+
+
+def v3_stretch(c: float) -> float:
+    return max(0.0, min(1.0, (c - V3_DINO_LO) / (V3_DINO_HI - V3_DINO_LO)))
+
+
+def frame_sim(q: dict, r: dict, desc: str, rules: str = "v2") -> float:
+    k = DESC_KEY.get(desc, "chist")
     if desc == "dhash":
         return dhash_sim(hamming(q.get("dhash"), r.get("dhash")))
-    return hist_corr(q.get(k), r.get(k))
+    a, b = q.get(k), r.get(k)
+    if not a or not b:
+        return 0.0
+    if rules == "v3":
+        a, b = _v3_vec(a, desc), _v3_vec(b, desc)
+        if desc in ("dino", "dino_p"):
+            return v3_stretch(cosine(a, b))
+    if desc in ("dino", "dino_p"):
+        return cosine(a, b)
+    return hist_corr(a, b)
 
 
 def has_desc(fr: dict, desc: str) -> bool:
@@ -260,18 +309,18 @@ def pick_descriptor(query_fp, ref_fp) -> str:
 
 
 # =============================================================================== matching
-def _sim_matrix(qf: list[dict], rf: list[dict], desc: str) -> list[list[float]]:
+def _sim_matrix(qf: list[dict], rf: list[dict], desc: str, rules: str = "v2") -> list[list[float]]:
     """similarity[i][j] of query frame i against reference frame j for one descriptor."""
     if not qf or not rf:
         return []
     if desc == "dhash" or _np is None:
-        return [[frame_sim(q, r, desc) for r in rf] for q in qf]
+        return [[frame_sim(q, r, desc, rules) for r in rf] for q in qf]
     key = DESC_KEY.get(desc, "chist")
 
     def rows(frames):
         vecs, ok = [], []
         for fr in frames:
-            v = _nums(fr.get(key))
+            v = _v3_vec(fr.get(key), desc) if rules == "v3" else _nums(fr.get(key))
             vecs.append(v)
             ok.append(v is not None)
         dims = {len(v) for v in vecs if v}
@@ -287,7 +336,7 @@ def _sim_matrix(qf: list[dict], rf: list[dict], desc: str) -> list[list[float]]:
     Q, qok = rows(qf)
     R, rok = rows(rf)
     if Q is None or R is None or Q.shape[1] != R.shape[1]:
-        return [[frame_sim(q, r, desc) for r in rf] for q in qf]
+        return [[frame_sim(q, r, desc, rules) for r in rf] for q in qf]
     if desc in ("color", "color_p"):
         Q = Q - Q.mean(axis=1, keepdims=True)
         R = R - R.mean(axis=1, keepdims=True)
@@ -296,6 +345,8 @@ def _sim_matrix(qf: list[dict], rf: list[dict], desc: str) -> list[list[float]]:
     qn[qn == 0] = 1.0
     rn[rn == 0] = 1.0
     S = (Q / qn) @ (R / rn).T
+    if rules == "v3" and desc in ("dino", "dino_p"):
+        S = (S - V3_DINO_LO) / (V3_DINO_HI - V3_DINO_LO)
     S = _np.clip(S, 0.0, 1.0)
     for i, ok in enumerate(qok):
         if not ok:
@@ -326,7 +377,7 @@ def match_frames(qf: list[dict], rf: list[dict], desc: str) -> list[dict]:
     return out
 
 
-def assign_frames(qf: list[dict], rf: list[dict], desc: str) -> tuple[list[dict], dict]:
+def assign_frames(qf: list[dict], rf: list[dict], desc: str, rules: str = "v2") -> tuple[list[dict], dict]:
     """Rules v2: pair shots with registered views one-to-one. Candidate pairs at or above
     STRONG_T are taken strongest first; a view already taken cannot be taken again. When
     both sides have at least POSE_MIN shots with a mat pose, a pair of posed frames must
@@ -335,8 +386,9 @@ def assign_frames(qf: list[dict], rf: list[dict], desc: str) -> tuple[list[dict]
 
     Returns (pairs, info): one pair per shot in the shape of ``match_frames`` plus
     ``assigned`` (False for a shot whose best view was already taken or was at an
-    incompatible angle: it is shown, not counted), and info {pose_used, turn}."""
-    S = _sim_matrix(qf, rf, desc)
+    incompatible angle: it is shown, not counted), and info {pose_used, turn}. Under
+    rules v3 the similarities are v3's (see ``frame_sim``); the pairing is the same."""
+    S = _sim_matrix(qf, rf, desc, rules)
     qp = [pose_of(f) for f in qf]
     rp = [pose_of(f) for f in rf]
     use_pose = sum(1 for p in qp if p) >= POSE_MIN and sum(1 for p in rp if p) >= POSE_MIN
@@ -405,7 +457,7 @@ def aggregate(pairs: list[dict], rules: str = "v1") -> dict:
     quality = sum(top) / len(top) if top else 0.0
     cells = sorted({str(p["ref_cell"]) for p in strong if p["ref_cell"] is not None})
     spread = min(1.0, len(cells) / SPREAD_TARGET)
-    if rules == "v2":
+    if rules in ("v2", "v3"):
         have = sum(1 for p in pairs if p.get("has_descriptor", True))
         conf = js_round(100 * sum(p["sim"] for p in strong) / have) if have else 0
     else:
@@ -485,15 +537,29 @@ def insufficient(desc: str, q_has: int, r_has: int, shots: int) -> str | None:
     return None
 
 
+def fuse_with(desc: str, breakdown: dict) -> str | None:
+    """Rules v3: the colour descriptor an AI headline must agree with - the piece's colour
+    when both sides carry it, else the frame's - or None when the headline is not AI or no
+    colour can be read well enough to say anything."""
+    if desc not in ("dino", "dino_p"):
+        return None
+    for c in (("color_p", "color") if desc == "dino_p" else ("color", "color_p")):
+        b = breakdown.get(c) or {}
+        if b.get("available") and not b.get("insufficient"):
+            return c
+    return None
+
+
 def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | None = None,
             rules: str = RULES_DEFAULT) -> dict:
     """Score one capture against one registered fingerprint: the page's confidence and
     verdict under the chosen descriptor, every descriptor's own aggregate, the pairs
     and views that carried the score, the mat size check, and the reasons in words.
 
-    ``rules`` "v2" (default) pairs shots with registered views one-to-one, by mat angle
-    when both sides have it, and says "Not enough to tell" when the descriptor cannot
-    see the piece; "v1" is the arithmetic shipped before 17 November 2026 (best view per
+    ``rules`` "v3" (default, 24 November 2026) is v2 with the AI vectors centred on the
+    registry mean and an AI headline that must agree with colour (see V3_DINO_LO). "v2"
+    pairs shots with registered views one-to-one, by mat angle when both sides have it,
+    and says "Not enough to tell" when the descriptor cannot see the piece; "v1" is the arithmetic shipped before 17 November 2026 (best view per
     shot), kept so old numbers can be reproduced and compared."""
     rules = rules if rules in RULES else RULES_DEFAULT
     q, r = as_fp(query_fp), as_fp(ref_fp)
@@ -513,13 +579,13 @@ def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | No
                                     else f"the registered piece has no {DESCRIPTOR_WORDS[d]} on file")}
             pairs_by[d] = []
             continue
-        if rules == "v2":
-            pairs, info = assign_frames(qf, rf, d)
+        if rules != "v1":
+            pairs, info = assign_frames(qf, rf, d, rules)
         else:
             pairs, info = match_frames(qf, rf, d), {"pose_used": False, "turn": None}
         agg = aggregate(pairs, rules)
         cls, label = verdict(agg, eff)
-        why_not = insufficient(d, q_has, r_has, len(qf)) if rules == "v2" else None
+        why_not = insufficient(d, q_has, r_has, len(qf)) if rules != "v1" else None
         if why_not and cls != "match":
             cls, label = "insufficient", "Not enough to tell"
         agg.update({"available": True, "verdict": cls, "label": label, "insufficient": why_not,
@@ -538,6 +604,10 @@ def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | No
     conf = int(head.get("confidence", 0))
     cls, label = (head.get("verdict", "inconc"), head.get("label", "Inconclusive")) if head.get("available") \
         else ("inconc", "Inconclusive")
+    agreed = fuse_with(desc, breakdown) if rules == "v3" and descriptor not in DESCRIPTORS else None
+    if agreed and breakdown[agreed]["confidence"] < conf:
+        conf = int(breakdown[agreed]["confidence"])
+        cls, label = breakdown[agreed]["verdict"], breakdown[agreed]["label"]
     size = size_check(dimensions_of(q), dimensions_of(r))
     reasons: list[str] = []
     caveats: list[str] = []
@@ -546,10 +616,10 @@ def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | No
         cls, label = "inconc", "Inconclusive"
         caveats.append("The pictures matched but the mat sizes do not; held at inconclusive.")
     if head.get("available"):
-        how = ("each registered view paired with at most one shot" if rules == "v2" else
+        how = ("each registered view paired with at most one shot" if rules != "v1" else
                "each shot against its best registered view")
-        if rules == "v2":
-            reasons.append(f"{_cap(DESCRIPTOR_WORDS[desc])}: {conf}/100 - {head['strong']} of "
+        if rules != "v1":
+            reasons.append(f"{_cap(DESCRIPTOR_WORDS[desc])}: {head['confidence']}/100 - {head['strong']} of "
                            f"{head['shots_with_descriptor']} shots found a registered view of their own at "
                            f"{STRONG_T:.2f} or better ({how}); the score is their mean similarity, a shot "
                            f"with no view counting 0. {head['views_matched']} distinct reference view(s) matched.")
@@ -558,6 +628,10 @@ def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | No
                            f"of {len(qf)} shots average {head['quality']:.2f} ({how}), "
                            f"{head['views_matched']} distinct reference view(s) matched at {STRONG_T:.2f} or better "
                            f"(spread {head['spread']:.2f} of {SPREAD_TARGET} views).")
+        if agreed:
+            reasons.append(f"Colour and AI texture must agree: {_cap(DESCRIPTOR_WORDS[agreed])} scored "
+                           f"{breakdown[agreed]['confidence']}/100 and the AI {head['confidence']}/100; "
+                           "the lower of the two is the score.")
         if head.get("pose_used"):
             reasons.append(f"Angles from the Photo Mat on both sides: shots were only paired with views taken from "
                            f"a similar angle, with the piece turned {head.get('turn') or 0} degrees between the two.")
@@ -589,7 +663,7 @@ def compare(query_fp, ref_fp, *, descriptor: str | None = None, effort: int | No
         caveats.append("Colour is view-stable but cannot tell two similarly coloured pieces apart; "
                        "a colour-only match is weaker evidence than it looks.")
     pairs = sorted(pairs_by.get(desc) or [], key=lambda p: (not p.get("assigned", True), -p["sim"]))
-    return {"descriptor": desc, "rules": rules, "confidence": conf, "verdict": cls, "label": label,
+    return {"descriptor": desc, "rules": rules, "agreed_with": agreed, "confidence": conf, "verdict": cls, "label": label,
             "quality": head.get("quality", 0.0), "spread": head.get("spread", 0.0),
             "views_matched": head.get("views_matched", 0), "shots": len(qf), "effort": eff,
             "reference_views": len(rf), "breakdown": breakdown, "pairs": pairs[:12],

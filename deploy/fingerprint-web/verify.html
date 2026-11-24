@@ -503,7 +503,7 @@
     if(desc==="dhash") return simOf(ham(a.dhash,r.dhash));
     return histCorr(a.chist,r.chist); }
   // matchFrame: one shot's best registered view - only the live "on target" hint uses it.
-  // The score itself comes from the kit (glassid-kit.js, rules v2), the same arithmetic the
+  // The score itself comes from the kit (glassid-kit.js, rules v3), the same arithmetic the
   // server runs: shots and views paired one-to-one, by mat angle when both have it.
   function matchFrame(a,desc){ desc=desc||(S.descriptor==="auto"?"color":S.descriptor); if(!a||!S.ref) return {ref:null,dist:100,sim:0};
     let best=null,bs=-1;

@@ -276,7 +276,7 @@ def main(argv=None) -> int:
     ap.add_argument("--descriptor", choices=("auto", "color", "dino", "dhash", "all"), default="all",
                     help="which descriptor to score (default: auto plus each one that is available)")
     ap.add_argument("--split", type=int, default=2, help="--images/--fingerprints: sessions per piece")
-    ap.add_argument("--rules", choices=("v1", "v2", "both"), default="v2", help="matching rules (default v2)")
+    ap.add_argument("--rules", choices=("v1", "v2", "v3", "both", "all"), default="v3", help="matching rules (default v3; both = v2 and v3)")
     ap.add_argument("--out", default=str(ROOT / "data" / "glassid_bench.json"), help="'' to skip the JSON")
     a = ap.parse_args(argv)
     if a.manifests:
@@ -302,7 +302,7 @@ def main(argv=None) -> int:
     which = ["auto"] if a.descriptor == "auto" else [a.descriptor] if a.descriptor != "all" else ["auto", "color", "dhash"] \
         + (["dino"] if sum(1 for s in sessions if s["has_embeddings"]) >= 2 else [])
     reports = {}
-    rule_sets = ["v1", "v2"] if a.rules == "both" else [a.rules]
+    rule_sets = ["v2", "v3"] if a.rules == "both" else ["v1", "v2", "v3"] if a.rules == "all" else [a.rules]
     for d in which:
         for ru in rule_sets:
             rep = score(sessions, descriptor=None if d == "auto" else d, rules=ru)

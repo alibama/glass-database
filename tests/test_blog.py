@@ -115,3 +115,26 @@ def test_build_is_deterministic(tmp_path):
     B.build(src, b, "https://x.org", None)
     for name in ("feed.xml", "index.html", "a-test-study.html", "posts.json"):
         assert (a / name).read_bytes() == (b / name).read_bytes(), name
+
+
+def test_nothing_gets_lost_as_posts_are_added(tmp_path):
+    """Every post is on the index archive (grouped by year, filterable by series); every
+    post page has a breadcrumb, an 'On this page' menu for long posts, and a side list of
+    the newest posts with a link to all of them."""
+    posts = {}
+    for i in range(12):
+        body = POST.replace("A Test Study", f"Study {i:02d}").replace("2026-10-01", f"20{24 + i % 3}-0{1 + i % 9}-1{i % 9}")
+        body = body.replace("series: Theoretical studies", f"series: {'Essays' if i % 2 else 'Theoretical studies'}")
+        body += "\n## Second part\n\nText.\n\n## Third part\n\nMore.\n"
+        posts[f"p{i:02d}.md"] = body
+    _, out, _ = _site(tmp_path, posts)
+    index = (out / "index.html").read_text()
+    assert index.count("<li data-series=") == 12                        # the archive lists all of them
+    assert 'id="archive"' in index and 'id="y2026"' in index and 'id="y2024"' in index
+    assert 'data-series="Essays"' in index and "All field notes · 12" in index
+    page = (out / "p03.html").read_text()
+    assert 'aria-label="Breadcrumb"' in page and '<span class="here" aria-current="page">Study 03</span>' in page
+    assert 'On this page' in page and '<a href="#second-part">Second part</a>' in page
+    side = page.split('class="side more"', 1)[1].split("</details>", 1)[0]
+    assert side.count("<li") == B.SIDE_POSTS and 'aria-current="page"' in side   # this post is always listed
+    assert "All 12 posts" in side and 'href="/blog/#archive"' in side

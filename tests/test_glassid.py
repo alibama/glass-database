@@ -374,9 +374,9 @@ def _posed(hue, *, n=12, turn=0.0, emb=None, seed=0):
     return f
 
 
-def test_v1_is_still_reproducible_and_v2_is_the_default():
+def test_v1_is_still_reproducible_and_v3_is_the_default():
     a, b = fp("orange"), fp("orange")
-    assert glassid.compare(a, b)["rules"] == "v2"
+    assert glassid.compare(a, b)["rules"] == "v3"
     v1 = glassid.compare(a, b, rules="v1")
     assert v1["rules"] == "v1" and v1["verdict"] == "match"
     assert "best registered view" in v1["reasons"][0]
@@ -432,13 +432,47 @@ def test_kit_scores_equal_the_server_scores(tmp_path):
     kit = ROOT / "deploy" / "fingerprint-web" / "glassid-kit.js"
     script = (f"global.window={{}};global.document={{}};require({json.dumps(str(kit))});"
               f"const C=JSON.parse(require('fs').readFileSync({json.dumps(str(tmp_path / 'cases.json'))}));"
-              "const out=[];for(const [q,r] of C){for(const ru of ['v1','v2']){const x=window.GlassID.localCompare(q.frames,r,{rules:ru});"
+              "const out=[];for(const [q,r] of C){for(const ru of ['v1','v2','v3']){const x=window.GlassID.localCompare(q.frames,r,{rules:ru});"
               "out.push([x.confidence,x.verdict,x.descriptor,x.turn,x.views_matched]);}}process.stdout.write(JSON.stringify(out));")
     (tmp_path / "k.js").write_text(script)
     js = json.loads(subprocess.run(["node", str(tmp_path / "k.js")], capture_output=True, text=True, check=True).stdout)
     py = []
     for q, r in cases:
-        for ru in ("v1", "v2"):
+        for ru in ("v1", "v2", "v3"):
             c = glassid.compare(q, r, rules=ru)
             py.append([c["confidence"], c["verdict"], c["descriptor"], c["turn"], c["views_matched"]])
     assert js == py
+
+
+# --- rules v3: centred AI vectors, colour and AI must agree -------------------------------
+def test_v3_mean_is_versioned_and_the_kit_carries_the_same_numbers():
+    doc = json.loads((ROOT / "central" / "glassid_v3.json").read_text())
+    assert doc["dim"] == 384 == len(doc["dino_mean"]) and doc["pieces"] >= 10
+    kit = (ROOT / "deploy" / "fingerprint-web" / "glassid-kit.js").read_text()
+    block = json.loads(kit.split("/*V3_DINO_MEAN*/", 1)[1].split("/*END*/", 1)[0])
+    assert block["version"] == doc["version"] and block["mean"] == doc["dino_mean"]
+
+
+def test_v3_centring_removes_the_shared_direction():
+    """Two different pieces that share the registry's common direction look alike raw and
+    unlike once it is taken away."""
+    m = glassid.dino_mean(384)
+    rnd = random.Random(7)
+    a = [x + rnd.gauss(0, 0.3) for x in m]
+    b = [x + rnd.gauss(0, 0.3) for x in m]
+    assert glassid.cosine(a, b) > 0.9
+    fa, fb = {"emb": a}, {"emb": b}
+    assert glassid.frame_sim(fa, fb, "dino", "v3") < 0.35          # cosine near 0, stretched
+    assert glassid.frame_sim(fa, fa, "dino", "v3") == 1.0
+
+
+def test_v3_an_ai_match_must_agree_with_colour():
+    q, r = fp("orange", emb=1), fp("blue", emb=1)            # same texture, different colour
+    v2 = glassid.compare(q, r, rules="v2", effort=12)
+    v3 = glassid.compare(q, r, rules="v3", effort=12)
+    assert v2["descriptor"] == v3["descriptor"] == "dino"
+    assert v3["agreed_with"] == "color" and v3["confidence"] == v3["breakdown"]["color"]["confidence"]
+    assert v3["confidence"] < glassid.MATCH_READY and v3["verdict"] != "match"
+    assert any("must agree" in s for s in v3["reasons"])
+    # asking for the AI descriptor by name shows the AI alone
+    assert glassid.compare(q, r, rules="v3", descriptor="dino")["agreed_with"] is None

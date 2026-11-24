@@ -172,6 +172,10 @@ transformers.js (`Xenova/dinov2-small`); the model downloads once and caches.
    must also be within 25 degrees of elevation and 45 of azimuth after the best of twelve
    30-degree turns of the piece. The **confidence** is the mean similarity of the shots' own
    views, a shot with none counting 0: how much of the capture the registration explains.
+   **Rules v3** (default since 24 November 2026) keeps that pairing, but centres every AI
+   vector on a fixed registry mean before the cosine (`central/glassid_v3.json`), and when the
+   headline is AI and colour can be read the score is the lower of the two (section 10 of the
+   assessment).
 5. Output: a confidence (0-100) and a verdict - `match-likely` (70 or more, 3 views),
    `no-match` (under 40, fewer than 2 views, 8 sharp shots), `not enough to tell` (fewer than
    3 shots carry the descriptor, or colour reads on under half the shots), otherwise

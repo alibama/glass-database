@@ -28,7 +28,7 @@
   .opener .label { line-height: 1.8; }
   .opener .sign { margin-top: 1.2rem; }
   /* post body: prose in the 9/12 column under the title */
-  .body-grid { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; padding: clamp(2.5rem, 5vw, 4rem) 0; }
+  .body-grid { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; padding-block: clamp(2.5rem, 5vw, 4rem); }
   .body-grid aside { display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; align-self: start; position: sticky; top: 90px; }
   article.post { max-width: 68ch; font-size: 17px; line-height: 1.65; color: var(--ink-2); }
   article.post p { max-width: none; margin: 0 0 1.2em; }
@@ -55,13 +55,41 @@
   .post-foot .sign { margin-top: 1rem; }
   .post-nav { display: flex; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
   /* index */
-  .posts-wrap { padding: clamp(3rem, 6vw, 5rem) 0; }
+  .posts-wrap { padding-block: clamp(3rem, 6vw, 5rem); }
+  .subnav.wrap { padding-inline: var(--gut); }
   .posts.list { margin-top: 3rem; }
   .posts.list li { grid-template-columns: 9rem 1fr; gap: 1rem; padding: 1.4rem 0; }
   .posts.list li a.t { display: block; font: 350 1.5rem/1.15 var(--serif); letter-spacing: -.01em; text-decoration: none; margin-bottom: .4rem; }
   .posts.list li a.t:hover { color: var(--red); }
   .posts.list li p { color: var(--ink-2); font-size: 16px; margin: 0 0 .8rem; }
-  @media (max-width: 980px) { .body-grid { grid-template-columns: 1fr; } .body-grid aside { position: static; flex-direction: row; flex-wrap: wrap; } }
+  /* breadcrumb on a post */
+  .subnav .here { color: var(--ink); min-width: 0; max-width: 46ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .subnav .end { margin-left: auto; }
+  /* a post's side menu: on this page, other field notes, all posts */
+  .body-grid aside { max-height: calc(100vh - 110px); overflow: auto; width: 100%; }
+  .body-grid > *, .archive > * { min-width: 0; }      /* wide tables scroll inside their box, not the page */
+  details.side { width: 100%; border-top: 1px solid var(--rule); padding-top: .8rem; }
+  details.side summary { cursor: pointer; list-style: none; }
+  details.side summary::-webkit-details-marker { display: none; }
+  details.side summary::after { content: " +"; color: var(--muted); }
+  details.side[open] summary::after { content: " –"; }
+  details.side ol, details.side ul { list-style: none; padding: 0; margin: .7rem 0 .9rem; display: grid; gap: .5rem; }
+  details.side li { font: 400 14px/1.35 var(--sans); }
+  details.side li a { color: var(--ink-2); text-decoration: none; }
+  details.side li a:hover { color: var(--red); }
+  details.side li[aria-current] span { color: var(--ink); font-weight: 600; }
+  details.side li[aria-current] span::before { content: "→ "; color: var(--red); }
+  /* index archive: every post, by year, filterable by series */
+  .archive { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; margin-top: clamp(3rem, 6vw, 5rem); padding-top: 2rem; border-top: 1px solid var(--ink); }
+  .archive aside { position: sticky; top: 90px; align-self: start; display: grid; gap: .8rem; }
+  .archive .filters, .archive .years { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .archive .filters button { font: 500 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; background: none; color: var(--ink-2); border: 1px solid var(--rule); padding: .45rem .6rem; cursor: pointer; }
+  .archive .filters button.on, .archive .filters button:hover { border-color: var(--ink); color: var(--ink); }
+  .archive .filters b { color: var(--muted); font-weight: 500; }
+  .archive .years a { font: 500 13px/1 var(--mono); color: var(--ink-2); }
+  .archive .yr h3 { margin: 0; }
+  .archive .yr .posts.list { margin-top: .6rem; }
+  @media (max-width: 980px) { .body-grid, .archive { grid-template-columns: 1fr; } .body-grid aside, .archive aside { position: static; max-height: none; } }
   @media (max-width: 680px) { .posts.list li { grid-template-columns: 1fr; gap: .3rem; } }
 </style>
 </head>
@@ -82,7 +110,17 @@
       </div>
     </div>
   </section>
-  <section class="wrap posts-wrap"><article class="feature"><div><p class="label">Latest · Theoretical studies · Oct 17, 2026 · 21 min read</p><h3><a href="/blog/blowing-glass-in-lima.html" style="text-decoration:none">Blowing Glass in Lima</a></h3><p class="lede">Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.</p><div class="btns"><a class="link" href="/blog/blowing-glass-in-lima.html">Read the study</a><a class="link" href="/blog/feed.xml">RSS</a></div></div><a class="ph" href="/blog/blowing-glass-in-lima.html" aria-label="Blowing Glass in Lima"><img src="/img/blog/costa-verde-barranco.jpg" alt="Lima&#x27;s Costa Verde seen from Barranco, looking north along the cliffs to the towers of Miraflores" loading="lazy"></a></article></section>
+  <section class="wrap posts-wrap"><article class="feature"><div><p class="label">Latest · Essays · Nov 23, 2026 · 38 min read</p><h3><a href="/blog/how-do-you-get-the-attention-of-museums.html" style="text-decoration:none">How Do You Get the Attention of Museums? Lessons from Glass&#x27;s Pioneers</a></h3><p class="lede">Being a pioneer is about half the answer. Across two thousand years, the glassmakers who held museums&#x27; attention changed what glass can do, who can make it, what it can mean or where it can go — and almost all of them had an institution in the room early and left a record museums could find.</p><div class="btns"><a class="link" href="/blog/how-do-you-get-the-attention-of-museums.html">Read the study</a><a class="link" href="/blog/feed.xml">RSS</a></div></div><a class="ph" href="/blog/how-do-you-get-the-attention-of-museums.html" aria-label="How Do You Get the Attention of Museums? Lessons from Glass&#x27;s Pioneers"></a></article><div class="archive" id="archive"><aside aria-label="Browse field notes"><p class="label">All field notes · 2</p><div class="filters" role="group" aria-label="By series"><button type="button" class="on" data-series="">All</button><button type="button" data-series="Essays">Essays <b>1</b></button><button type="button" data-series="Theoretical studies">Theoretical studies <b>1</b></button></div></aside><div><section class="yr" id="y2026"><h3 class="label">2026</h3><ul class="posts list"><li data-series="Essays"><span>Nov 23, 2026</span><div><a class="t" href="/blog/how-do-you-get-the-attention-of-museums.html">How Do You Get the Attention of Museums? Lessons from Glass&#x27;s Pioneers</a><p>Being a pioneer is about half the answer. Across two thousand years, the glassmakers who held museums&#x27; attention changed what glass can do, who can make it, what it can mean or where it can go — and almost all of them had an institution in the room early and left a record museums could find.</p><p class="label">Essays · 38 min read</p><a class="link" href="/blog/how-do-you-get-the-attention-of-museums.html">Read</a></div></li><li data-series="Theoretical studies"><span>Oct 17, 2026</span><div><a class="t" href="/blog/blowing-glass-in-lima.html">Blowing Glass in Lima</a><p>Lima is an easy place to melt glass and a hard place to sell it — cheap piped gas, a mining economy that digs up every oxide in a glass batch, and a city of eleven million buying its glass from somewhere else. A hot shop here costs about $380,000 to build and $350,000 a year to run, and the constraint is not energy but demand.</p><p class="label">Theoretical studies · 21 min read</p><a class="link" href="/blog/blowing-glass-in-lima.html">Read</a></div></li></ul></section></div></div></section>
+  <script>
+    document.querySelectorAll('.archive .filters button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var s = b.dataset.series;
+        document.querySelectorAll('.archive .filters button').forEach(function (x) { x.classList.toggle('on', x === b); });
+        document.querySelectorAll('.archive li[data-series]').forEach(function (li) { li.hidden = !!s && li.dataset.series !== s; });
+        document.querySelectorAll('.archive .yr').forEach(function (y) { y.hidden = !y.querySelector('li:not([hidden])'); });
+      });
+    });
+  </script>
 </main>
 <footer><div class="wrap"><div class="fgrid"><div><p class="label">Glass Database</p><p>A record kept by the field, for the field. Writing and data under CC BY 4.0, with attribution kept and removal on request; code under Apache 2.0.</p></div><div><p class="label">Find</p><ul><li><a href="/explore/">The Directory</a></li><li><a href="/graph.html">Who Worked With Whom</a></li><li><a href="/studios.html">Studios on a map</a></li><li><a href="/explore/?view=opportunities">Jobs, Calls &amp; Classes</a></li><li><a href="/api/docs">For Researchers</a></li></ul></div><div><p class="label">Collect</p><ul><li><a href="/games.html">Collecting Events</a></li><li><a href="/events.html">Shows &amp; Sales</a></li><li><a href="/register.html">Add to My Collection</a></li><li><a href="/fingerprint/verify.html">Check a Piece</a></li></ul></div><div><p class="label">Make</p><ul><li><a href="/glowtbook/">Glowtbook</a></li><li><a href="/fingerprint/enroll.html">Register Your Piece</a></li><li><a href="/splat.html">3D Photo</a></li><li><a href="/shop.html">Studio docs</a></li><li><a href="/shop-costs.html">Studio Cost Calculator</a></li></ul></div><div><p class="label">Elsewhere</p><ul><li><a href="https://discord.gg/9ek2UxvPT">Discord</a></li><li><a href="https://www.instagram.com/glassdatabase/">Instagram</a></li><li><a href="/blog/">Field notes</a> · <a href="/blog/feed.xml">RSS</a></li><li><a href="https://github.com/alibama/glass-database">GitHub</a></li><li><a href="/#about">About</a></li></ul></div></div><div class="legal"><span>Data CC BY 4.0 · Software Apache 2.0</span><span>glassdatabase.org</span></div></div></footer>
 <script>
@@ -101,6 +139,8 @@
     return false;
   }
   if (window.GDB) { GDB.chip('#chip', { compact: true, next: location.pathname }); }
+  // on a phone the side menus start folded, so the post comes first
+  if (matchMedia('(max-width: 980px)').matches) document.querySelectorAll('details.side').forEach(function (d) { d.open = false; });
 </script>
 </body>
 </html>

@@ -320,3 +320,50 @@ colour - v2 makes the false accept rarer, it does not make it impossible.
 [`api/captures.py`](../api/captures.py), [`deploy/fingerprint-web/glassid-kit.js`](../deploy/fingerprint-web/glassid-kit.js),
 [`scripts/glassid_bench.py`](../scripts/glassid_bench.py), [`scripts/pull_capture.py`](../scripts/pull_capture.py);
 tests in `tests/test_glassid.py` and `tests/test_captures.py`.*
+
+## 10. Update, 24 November 2026: how the AI vectors are compared, and rules v3
+
+The registry grew to 29 public pieces (24 with AI samples). Re-run with
+`python -m scripts.glassid_bench --fingerprints data/live_fps --rules both`, each registration
+split into two interleaved halves, 58 sessions, 406 independent different-piece pairs:
+
+| rules · descriptor | same-piece "Match likely" | different-piece false accepts at 70 | piece pairs with a false accept |
+|---|---|---|---|
+| v2 · auto (AI when both sides have it) | 96.6% | **13.8%** | 66 of 406 |
+| v2 · colour only | 93.1% | 1.8% | 14 |
+| v2 · AI only | 72.4% | 13.1% | 60 |
+| **v3 · auto** | 86.2% | **1.3%** | 11 |
+| v3 · AI only | 62.1% | 1.3% | 11 |
+
+**Why the AI did worse with more pieces.** The page asks transformers.js for a pooled,
+normalised DINOv2 vector, but the model returns its raw token grid; the fallback averages it
+and nothing normalises it. More importantly, every vector shares a large common direction (a
+photo of glass on a table under a phone camera): different pieces averaged a cosine of 0.50,
+exactly the bar for a strong pair, and 42% of different-piece view pairs cleared it. With 15
+pieces this hid behind colour; with 29 it carried the auto descriptor to a 14% false-accept rate.
+
+**Rules v3** (now the default; v1 and v2 remain selectable for comparison):
+
+1. **Centre, then compare.** Every AI vector has a fixed registry mean subtracted before the
+   cosine (`central/glassid_v3.json`, the mean of per-piece means, copied into
+   `glassid-kit.js`). The mean is versioned and is only rebuilt on purpose
+   (`python -m scripts.glassid_v3_mean`), so scores do not drift as pieces are added. A
+   leave-one-piece-out mean gave almost the same distributions, so the bench is not flattered
+   by having built the mean from the same pieces.
+2. **Stretch** the centred cosine from 0–0.5 onto 0–1, so the strong-pair bar (0.5) and the
+   verdict thresholds (70 / 40) keep their meaning. 0.5 was chosen on this bench (0.4–0.6 tried).
+3. **Colour and AI must agree.** When the headline is AI and colour can be read, the score is
+   the lower of the two. Most remaining false accepts are pieces that agree on both: same
+   palette and similar texture (the pumpkins; clear mountain vs deepest lagoon).
+4. Colour is compared as before. Square-root counts (Hellinger) ranked pieces slightly better
+   but let more different pieces past 70, so they were left out.
+
+**AI samples stay at 8 per registration.** Each sample takes several seconds on a phone, so 16
+would roughly double the time spent waiting. With the Photo Mat, a sample is taken on the piece
+crop as well as the frame (`emb_p`), which helps more than more whole-frame samples would; 16 of
+the 58 sessions have fewer than 3 AI samples and fall back to colour.
+
+**Caveats.** Same-piece pairs are two halves of one session, so recall is optimistic; a second
+capture on another day is the test that matters. Averaging over the whole frame still discards
+*where* features are, which is what separates frit siblings; matching individual patches is the
+next step if v3 is not enough.

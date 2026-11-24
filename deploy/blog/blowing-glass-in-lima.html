@@ -28,7 +28,7 @@
   .opener .label { line-height: 1.8; }
   .opener .sign { margin-top: 1.2rem; }
   /* post body: prose in the 9/12 column under the title */
-  .body-grid { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; padding: clamp(2.5rem, 5vw, 4rem) 0; }
+  .body-grid { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; padding-block: clamp(2.5rem, 5vw, 4rem); }
   .body-grid aside { display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; align-self: start; position: sticky; top: 90px; }
   article.post { max-width: 68ch; font-size: 17px; line-height: 1.65; color: var(--ink-2); }
   article.post p { max-width: none; margin: 0 0 1.2em; }
@@ -55,13 +55,41 @@
   .post-foot .sign { margin-top: 1rem; }
   .post-nav { display: flex; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
   /* index */
-  .posts-wrap { padding: clamp(3rem, 6vw, 5rem) 0; }
+  .posts-wrap { padding-block: clamp(3rem, 6vw, 5rem); }
+  .subnav.wrap { padding-inline: var(--gut); }
   .posts.list { margin-top: 3rem; }
   .posts.list li { grid-template-columns: 9rem 1fr; gap: 1rem; padding: 1.4rem 0; }
   .posts.list li a.t { display: block; font: 350 1.5rem/1.15 var(--serif); letter-spacing: -.01em; text-decoration: none; margin-bottom: .4rem; }
   .posts.list li a.t:hover { color: var(--red); }
   .posts.list li p { color: var(--ink-2); font-size: 16px; margin: 0 0 .8rem; }
-  @media (max-width: 980px) { .body-grid { grid-template-columns: 1fr; } .body-grid aside { position: static; flex-direction: row; flex-wrap: wrap; } }
+  /* breadcrumb on a post */
+  .subnav .here { color: var(--ink); min-width: 0; max-width: 46ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .subnav .end { margin-left: auto; }
+  /* a post's side menu: on this page, other field notes, all posts */
+  .body-grid aside { max-height: calc(100vh - 110px); overflow: auto; width: 100%; }
+  .body-grid > *, .archive > * { min-width: 0; }      /* wide tables scroll inside their box, not the page */
+  details.side { width: 100%; border-top: 1px solid var(--rule); padding-top: .8rem; }
+  details.side summary { cursor: pointer; list-style: none; }
+  details.side summary::-webkit-details-marker { display: none; }
+  details.side summary::after { content: " +"; color: var(--muted); }
+  details.side[open] summary::after { content: " –"; }
+  details.side ol, details.side ul { list-style: none; padding: 0; margin: .7rem 0 .9rem; display: grid; gap: .5rem; }
+  details.side li { font: 400 14px/1.35 var(--sans); }
+  details.side li a { color: var(--ink-2); text-decoration: none; }
+  details.side li a:hover { color: var(--red); }
+  details.side li[aria-current] span { color: var(--ink); font-weight: 600; }
+  details.side li[aria-current] span::before { content: "→ "; color: var(--red); }
+  /* index archive: every post, by year, filterable by series */
+  .archive { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; margin-top: clamp(3rem, 6vw, 5rem); padding-top: 2rem; border-top: 1px solid var(--ink); }
+  .archive aside { position: sticky; top: 90px; align-self: start; display: grid; gap: .8rem; }
+  .archive .filters, .archive .years { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .archive .filters button { font: 500 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; background: none; color: var(--ink-2); border: 1px solid var(--rule); padding: .45rem .6rem; cursor: pointer; }
+  .archive .filters button.on, .archive .filters button:hover { border-color: var(--ink); color: var(--ink); }
+  .archive .filters b { color: var(--muted); font-weight: 500; }
+  .archive .years a { font: 500 13px/1 var(--mono); color: var(--ink-2); }
+  .archive .yr h3 { margin: 0; }
+  .archive .yr .posts.list { margin-top: .6rem; }
+  @media (max-width: 980px) { .body-grid, .archive { grid-template-columns: 1fr; } .body-grid aside, .archive aside { position: static; max-height: none; } }
   @media (max-width: 680px) { .posts.list li { grid-template-columns: 1fr; gap: .3rem; } }
 </style>
 <meta property="og:type" content="article">
@@ -76,7 +104,7 @@
 <body>
 <a class="skip" href="#main">Skip to content</a>
 <header class="site"><nav class="nav wrap" aria-label="Primary"><a class="brand" href="/">Glass <i>Database</i></a><ul id="menu" data-nav data-active="notes"></ul><div class="right"><span id="chip" class="signin gdb-chip"></span><button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div></nav></header>
-<div class="subnav wrap"><span class="crumb">Field notes</span><a href="/blog/">All posts</a><a href="/blog/feed.xml">RSS</a><a href="/#notes">On the homepage</a></div>
+<div class="subnav wrap" role="navigation" aria-label="Breadcrumb"><a class="crumb" href="/blog/">Field notes</a><span class="here" aria-current="page">Blowing Glass in Lima</span><a class="end" href="/blog/#archive">All posts</a></div>
 <main id="main">
 
   <section class="opener">
@@ -86,8 +114,7 @@
     </div>
   </section>
   <div class="wrap body-grid">
-    <aside aria-label="Post links"><a class="link" href="/blog/">All field notes</a><a class="link" href="/blog/feed.xml">RSS</a>
-      <a class="link" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></aside>
+    <aside aria-label="Field notes menu"><details class="side toc" open><summary class="label">On this page</summary><ol><li><a href="#premise">Premise</a></li><li><a href="#the-ground">The ground</a></li><li><a href="#local-versus-imported">Local versus imported</a></li><li><a href="#the-build">The build</a></li><li><a href="#cost-analysis">Cost analysis</a></li><li><a href="#business-models">Business models</a></li><li><a href="#high-end-design-and-the-showroom">High-end design and the showroom</a></li><li><a href="#verdict">Verdict</a></li><li><a href="#sources">Sources</a></li></ol></details><details class="side more" open><summary class="label">Field notes</summary><ul><li><a href="/blog/how-do-you-get-the-attention-of-museums.html">How Do You Get the Attention of Museums? Lessons from Glass&#x27;s Pioneers</a></li><li aria-current="page"><span>Blowing Glass in Lima</span></li></ul><a class="link" href="/blog/#archive">All 2 posts</a></details><p class="fine"><a href="/blog/feed.xml">RSS</a> · <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p></aside>
     <div>
       <article class="post">
 <figure class="fig">
@@ -153,7 +180,7 @@
       </article>
       <div class="post-foot">
         <p class="label">Get new studies by email</p><form class="sign light" data-source="blog" onsubmit="return gdbSubscribe(event)"><label for="em" class="skip">Email address</label><input id="em" type="email" name="email" placeholder="you@studio.com" required><button type="submit">Subscribe</button></form><p class="label" role="status" aria-live="polite" style="margin-top:.6rem"></p>
-        <nav class="post-nav" aria-label="Older and newer posts"><a class="link" href="/blog/">All posts</a></nav>
+        <nav class="post-nav" aria-label="Older and newer posts"><a class="link" href="/blog/how-do-you-get-the-attention-of-museums.html">&larr; Newer: How Do You Get the Attention of Museums? Lessons from Glass&#x27;s Pioneers</a><a class="link" href="/blog/">All posts</a></nav>
       </div>
     </div>
   </div>
@@ -175,6 +202,8 @@
     return false;
   }
   if (window.GDB) { GDB.chip('#chip', { compact: true, next: location.pathname }); }
+  // on a phone the side menus start folded, so the post comes first
+  if (matchMedia('(max-width: 980px)').matches) document.querySelectorAll('details.side').forEach(function (d) { d.open = false; });
 </script>
 </body>
 </html>

@@ -7,6 +7,20 @@ proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
 ### Added
+- **Field notes: "How Do You Get the Attention of Museums? Lessons from Glass's Pioneers"** is the
+  new lead post (and the homepage feature), ahead of the Lima study. The blog now keeps every post
+  reachable as it grows: a breadcrumb on each post, a side menu with "On this page" and the newest
+  eight posts plus "All N posts", and an index archive of every post by year, filterable by series
+  (`scripts/build_blog.py`). Fixed the blog pages' side padding and wide tables pushing the page
+  sideways on phones.
+- **Glass ID rules v3 (default): AI vectors centred before comparing; AI must agree with colour.**
+  The DINOv2 vectors share a large common direction, so two different pieces averaged a cosine
+  of 0.5. v3 subtracts a fixed, versioned registry mean (`central/glassid_v3.json`, rebuilt only
+  by `scripts/glassid_v3_mean.py`, mirrored in `glassid-kit.js`), stretches the centred cosine
+  from 0–0.5 to 0–1, and scores an AI headline as the lower of AI and colour. On 29 public pieces
+  the auto descriptor's false accepts fell from 13.8% to 1.3% of different-piece pairs (recall
+  96.6% to 86.2%); docs/GLASS-ID-MATCHING-ASSESSMENT.md section 10. The bench takes
+  `--rules v3|both|all`.
 - **Map in the top menu.** The studios map (`/studios.html`) was only linked from page footers
   and the Connections page; it is now a primary menu item (`central/nav.py`, `site.js`).
 - **Glass ID rules v2: one-to-one matching, scored by how much of the capture is explained.**

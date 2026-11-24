@@ -20,9 +20,10 @@
 (function () {
   "use strict";
   var G = window.GDB || null;
-  var VERSION = "2026.11.17";
+  var VERSION = "2026.11.24";
+  var V3 = /*V3_DINO_MEAN*/{"version":"2026-11-24","mean":[-0.5897,0.1339,0.0733,-1.5575,0.5183,-0.3331,-1.2557,-0.153,0.3691,-0.2038,1.3518,0.5523,0.5751,1.189,0.5184,-0.019,-1.8959,1.1908,0.5205,-0.2489,-1.2846,-0.9064,-0.6009,1.4992,-0.2472,-0.8924,-1.7534,0.1892,-0.1153,0.392,0.6316,-1.054,-0.2011,1.5626,1.173,0.8115,0.975,1.087,-0.2806,-0.9891,1.6426,-0.1333,-1.2571,2.5318,2.0587,-0.8147,-1.5772,0.0435,2.1316,0.3698,0.6804,0.8023,-0.5256,0.2628,1.203,-1.7553,-1.4577,2.2263,0.6369,-0.9223,0.8919,-0.8996,0.8718,0.0231,0.0051,1.9951,0.6922,-0.7787,4.023,-1.5828,-1.108,-0.1917,0.5286,0.4038,0.9157,1.0541,-0.7542,-1.5159,-0.732,-3.6309,0.6092,0.7956,0.4965,-0.1033,0.2198,0.3269,0.5906,0.6289,-0.2284,0.9123,0.6926,-0.7619,-0.1844,-0.8652,0.2204,0.0039,-0.176,-0.0146,1.3256,0.1419,0.4009,0.2752,-1.7488,0.6517,-1.8327,0.8993,-1.8822,-1.557,0.9701,-1.1033,2.1975,0.2304,0.0569,0.001,0.2068,1.3999,-0.0979,0.3592,-1.7949,-1.3199,1.4035,1.4493,1.3599,-0.0034,-1.2493,-0.2055,-0.0016,-0.8561,2.3948,-1.917,1.0267,-0.2221,0.2206,-0.2334,0.5524,-1.6571,-0.4563,0.9653,1.8283,-1.1433,0.0108,-0.7291,0.1282,0.3322,-1.8317,-0.0345,-1.1697,0.7053,-0.7133,0.4837,0.0663,0.5624,-1.4415,-0.5149,0.792,-0.4076,0.0879,-1.0812,-1.3322,1.3624,1.762,0.2424,-0.5745,-0.2183,0.5211,-0.9402,0.2719,-2.2558,0.2601,-0.6686,-0.3709,1.582,-0.2698,-2.6185,1.8547,-0.5112,-0.1695,-0.0689,-1.3091,0.1711,0.793,0.2125,-0.994,-1.5059,0.4364,0.4742,0.3012,1.2247,0.1187,-0.1036,0.4533,-0.2013,1.3333,0.4712,1.3175,-0.1593,0.0166,2.6029,-0.5506,-0.9199,1.0602,0.5878,1.7712,1.8442,0.4598,0.2331,1.7901,1.031,-3.0666,0.571,0.5487,0.2186,-0.1499,1.3624,0.9439,-0.8676,0.1044,0.5986,1.259,4.0547,-0.0081,2.0618,-1.0413,0.1754,-0.0386,-0.0752,0.7599,-0.0091,0.1306,1.2744,-1.0654,0.9205,-0.4399,1.0508,0.1026,0.9813,-0.8885,0.5551,0.8296,0.6744,-0.1794,0.7891,-0.1966,-1.0938,0.1581,0.5,-0.4683,-0.5062,-0.4029,-0.7914,-0.794,0.1913,-0.3255,-0.6726,0.3729,1.1087,0.067,1.6871,1.0462,1.2597,0.4735,-0.1302,-0.242,-1.1271,0.9103,1.6668,-0.515,-0.5589,0.5575,-0.7547,0.0895,-0.3929,1.0874,1.5043,0.6515,-0.6014,-0.7337,-0.3224,-3.4494,-0.3497,0.5333,-3.0059,-0.7461,0.0709,0.7521,-1.1718,1.475,0.2745,0.3588,0.9043,-0.0777,0.1842,1.7636,0.3152,-1.8237,-1.4935,-0.1654,-0.2633,-1.9127,0.1243,0.8207,-0.5951,-1.5181,0.1517,0.901,-0.8763,1.0496,0.341,-0.3055,-1.0828,-0.6128,1.0731,1.3808,-2.352,0.5019,-0.1648,-0.6359,-0.0502,-0.9823,0.0518,-1.4555,-0.2567,-0.3108,-0.3499,-1.0959,0.081,3.874,-0.0482,-1.0833,-1.6598,1.0486,-0.3191,-0.917,0.8107,-0.7193,0.3426,0.8606,-0.1681,0.332,0.0149,-0.6314,-0.4056,1.5021,0.1757,1.5053,-0.7249,-0.2909,1.0726,-1.1326,1.1377,0.4042,1.4616,-0.5889,0.6567,1.2368,0.1148,-0.7184,-0.1781,-1.367,-1.267,-0.0837,1.4247,0.1686,-1.4388,0.405,-1.5232,-1.5303,0.1227,0.3331,-1.5493,-1.0047,0.6312,0.3096,-0.1077,-1.4233,0.4742,1.7927,-1.8209,0.066,-0.6854,0.8745,0.8144,-0.1214,-0.8752]}/*END*/;
   var T = { SIM_LO: 6, SIM_HI: 22, STRONG_T: 0.5, SPREAD_TARGET: 6, MATCH_READY: 70, NO_MATCH: 40, MIN_EFFORT: 8, MIN_CELLS_MATCH: 3, SHARP_MIN: 12, TOP_SIMS: 8,
-    POSE_EL_TOL: 25, POSE_AZ_TOL: 45, POSE_STEP: 30, POSE_MIN: 3, MIN_DESC_SHOTS: 3, COLOUR_SEEN_MIN: 0.5, RULES: "v2" };
+    POSE_EL_TOL: 25, POSE_AZ_TOL: 45, POSE_STEP: 30, POSE_MIN: 3, MIN_DESC_SHOTS: 3, COLOUR_SEEN_MIN: 0.5, RULES: "v3", V3_DINO_LO: 0, V3_DINO_HI: 0.5 };
   var WORDS = { dino_p: "AI texture on the piece", dino: "AI texture", color_p: "Colour of the piece", color: "Colour", dhash: "Shape" };
   var DECISIONS = [["new_piece", "New piece", "Nothing on file is this piece; it gets its own Glass ID."],
     ["re_registered", "Registered again", "The piece already had a Glass ID; this capture replaces or strengthens it."],
@@ -116,9 +117,14 @@
   function popcount(x) { x = x >>> 0; x = x - ((x >>> 1) & 0x55555555); x = (x & 0x33333333) + ((x >>> 2) & 0x33333333); x = (x + (x >>> 4)) & 0x0f0f0f0f; return (x * 0x01010101) >>> 24; }
   function ham(a, b) { if (!a || !b) return 64; return popcount((a[0] >>> 0) ^ (b[0] >>> 0)) + popcount((a[1] >>> 0) ^ (b[1] >>> 0)); }
   function histCorr(a, b) { if (!a || !b || a.length !== b.length) return 0; var n = a.length, ma = 0, mb = 0, i; for (i = 0; i < n; i++) { ma += a[i]; mb += b[i]; } ma /= n; mb /= n; var num = 0, da = 0, db = 0; for (i = 0; i < n; i++) { var u = a[i] - ma, v = b[i] - mb; num += u * v; da += u * u; db += v * v; } var d = Math.sqrt(da * db); return d ? Math.max(0, num / d) : 0; }
+  function cosineRaw(a, b) { if (!a || !b || a.length !== b.length) return 0; var d = 0, na = 0, nb = 0; for (var i = 0; i < a.length; i++) { d += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; } var den = Math.sqrt(na * nb); return den ? d / den : 0; }
   function cosine(a, b) { if (!a || !b || a.length !== b.length) return 0; var d = 0, na = 0, nb = 0; for (var i = 0; i < a.length; i++) { d += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; } var den = Math.sqrt(na * nb); return den ? Math.max(0, Math.min(1, d / den)) : 0; }
   function simOf(dist) { return Math.max(0, Math.min(1, (T.SIM_HI - dist) / (T.SIM_HI - T.SIM_LO))); }
-  function frameSim(a, r, desc) { var k = DESC_KEY[desc] || "chist"; if (desc === "dino" || desc === "dino_p") return (a[k] && r[k]) ? cosine(a[k], r[k]) : 0; if (desc === "dhash") return simOf(ham(a.dhash, r.dhash)); return histCorr(a[k], r[k]); }
+  /* rules v3: AI vectors centred on the fixed registry mean (central/glassid_v3.json, rebuilt
+     only on purpose by scripts/glassid_v3_mean.py), the cosine stretched from [LO, HI] to 0..1 */
+  var centred = typeof WeakMap === "function" ? new WeakMap() : null;
+  function v3vec(v) { var m = V3 && V3.mean; if (!m || m.length !== v.length) return v; var c = centred && centred.get(v); if (c) return c; c = new Array(v.length); for (var i = 0; i < v.length; i++) c[i] = v[i] - m[i]; if (centred) centred.set(v, c); return c; }
+  function frameSim(a, r, desc, rules) { var k = DESC_KEY[desc] || "chist"; if (desc === "dino" || desc === "dino_p") { if (!(a[k] && r[k])) return 0; if (rules === "v3") { var cv = cosineRaw(v3vec(a[k]), v3vec(r[k])); return Math.max(0, Math.min(1, (cv - T.V3_DINO_LO) / (T.V3_DINO_HI - T.V3_DINO_LO))); } return cosine(a[k], r[k]); } if (desc === "dhash") return simOf(ham(a.dhash, r.dhash)); return histCorr(a[k], r[k]); }
   function has(f, desc) { var v = f && f[DESC_KEY[desc] || "chist"]; return !!(v && v.length); }
   function poseOf(f) { var m = f && f.mat; if (!m || m.az == null || m.el == null) return null; var az = +m.az, el = +m.el; if (!isFinite(az) || !isFinite(el)) return null; return [((az % 360) + 360) % 360, el]; }
   function circ(d) { return Math.abs((((d + 180) % 360) + 360) % 360 - 180); }
@@ -126,13 +132,13 @@
   function cellOf(r) { return r ? (r.cell != null ? r.cell : "c" + r.file) : null; }
   function bestPairs(qf, rf, desc) {
     return qf.map(function (q, i) {
-      var best = -1, bj = -1; for (var j = 0; j < rf.length; j++) { var s = frameSim(q, rf[j], desc); if (s > best) { best = s; bj = j; } }
+      var best = -1, bj = -1; for (var j = 0; j < rf.length; j++) { var s = frameSim(q, rf[j], desc, "v1"); if (s > best) { best = s; bj = j; } }
       var r = bj >= 0 ? rf[bj] : null, sim = Math.max(0, best);
       return { shot: q.seq || (i + 1), sim: +sim.toFixed(4), dist: Math.round((1 - sim) * 100), ref: r ? r.file : null, ref_cell: cellOf(r), ref_index: bj >= 0 ? bj : null, has_descriptor: has(q, desc) };
     });
   }
-  function assign(qf, rf, desc) {
-    var S = qf.map(function (q) { return rf.map(function (r) { return r6(frameSim(q, r, desc)); }); });
+  function assign(qf, rf, desc, rules) {
+    var S = qf.map(function (q) { return rf.map(function (r) { return r6(frameSim(q, r, desc, rules)); }); });
     var qp = qf.map(poseOf), rp = rf.map(poseOf);
     var usePose = qp.filter(Boolean).length >= T.POSE_MIN && rp.filter(Boolean).length >= T.POSE_MIN;
     var cand = [], i, j;
@@ -173,7 +179,7 @@
     var quality = top.length ? top.reduce(function (a, p) { return a + p.sim; }, 0) / top.length : 0;
     var cells = {}; strong.forEach(function (p) { if (p.ref_cell != null) cells[String(p.ref_cell)] = 1; });
     var n = Object.keys(cells).length, spread = Math.min(1, n / T.SPREAD_TARGET), conf;
-    if (rules === "v2") { var haveN = pairs.filter(function (p) { return p.has_descriptor !== false; }).length; conf = haveN ? Math.round(100 * strong.reduce(function (a, p) { return a + p.sim; }, 0) / haveN) : 0; }
+    if (rules === "v2" || rules === "v3") { var haveN = pairs.filter(function (p) { return p.has_descriptor !== false; }).length; conf = haveN ? Math.round(100 * strong.reduce(function (a, p) { return a + p.sim; }, 0) / haveN) : 0; }
     else conf = Math.round(100 * quality * (0.4 + 0.6 * spread));
     return { confidence: conf, quality: +quality.toFixed(4), spread: +spread.toFixed(4), views_matched: n, strong: strong.length,
       carried_by: { shots: top.map(function (p) { return p.shot; }), reference_views: top.map(function (p) { return p.ref; }) } };
@@ -196,19 +202,26 @@
     if (qf.some(function (f) { return has(f, "dino"); }) && rf.some(function (f) { return has(f, "dino"); })) return "dino";
     return "color";
   }
-  /* o: {descriptor, rules ("v2"|"v1"), queryDims} */
+  /* rules v3: an AI headline must agree with colour (the lower score counts) */
+  function fuseWith(desc, breakdown) {
+    if (desc !== "dino" && desc !== "dino_p") return null;
+    var order = desc === "dino_p" ? ["color_p", "color"] : ["color", "color_p"];
+    for (var i = 0; i < order.length; i++) { var b = breakdown[order[i]]; if (b && b.available && !b.insufficient) return order[i]; }
+    return null;
+  }
+  /* o: {descriptor, rules ("v3"|"v2"|"v1"), queryDims} */
   function localCompare(shots, ref, o) {
     o = o || {};
-    var rules = o.rules === "v1" ? "v1" : "v2";
+    var rules = o.rules === "v1" || o.rules === "v2" ? o.rules : "v3";
     var rf = (ref && ref.frames) || [], qf = shots || [];
     var effort = qf.filter(function (f) { return f.sharp == null || f.sharp >= T.SHARP_MIN; }).length;
     var breakdown = {}, pairsBy = {}, i;
     DESCS.forEach(function (desc) {
       var qh = qf.filter(function (f) { return has(f, desc); }).length, rh = rf.filter(function (f) { return has(f, desc); }).length;
       if (!qh || !rh) { breakdown[desc] = { available: false, confidence: 0, views_matched: 0, shots_with_descriptor: qh, reference_views_with_descriptor: rh, why: !qh ? "the new capture has no " + WORDS[desc].toLowerCase() + " on any shot" : "the registered piece has no " + WORDS[desc].toLowerCase() + " on file" }; pairsBy[desc] = []; return; }
-      var res = rules === "v2" ? assign(qf, rf, desc) : { pairs: bestPairs(qf, rf, desc), pose_used: false, turn: null };
+      var res = rules !== "v1" ? assign(qf, rf, desc, rules) : { pairs: bestPairs(qf, rf, desc), pose_used: false, turn: null };
       var agg = aggregate(res.pairs, rules), v = verdictFor(agg, effort);
-      var whyNot = rules === "v2" ? insufficient(desc, qh, rh, qf.length) : null;
+      var whyNot = rules !== "v1" ? insufficient(desc, qh, rh, qf.length) : null;
       if (whyNot && v[0] !== "match") v = ["insufficient", "Not enough to tell"];
       agg.available = true; agg.verdict = v[0]; agg.label = v[1]; agg.insufficient = whyNot; agg.shots_with_descriptor = qh; agg.reference_views_with_descriptor = rh;
       agg.pose_used = res.pose_used; agg.turn = res.turn;
@@ -216,8 +229,10 @@
     });
     var desc = DESCS.indexOf(o.descriptor) >= 0 ? o.descriptor : pickDescriptor(qf, rf);
     if (!breakdown[desc].available) { var fb = ["color_p", "color", "dhash", "dino_p", "dino"]; for (i = 0; i < fb.length; i++) if (breakdown[fb[i]].available) { desc = fb[i]; break; } }
-    var head = breakdown[desc], cls = head.available ? head.verdict : "inconc", label = head.available ? head.label : "Inconclusive";
-    var res = { descriptor: desc, rules: rules, confidence: head.confidence || 0, verdict: cls, label: label, quality: head.quality || 0, spread: head.spread || 0, views_matched: head.views_matched || 0, shots: qf.length, effort: effort, reference_views: rf.length, breakdown: breakdown,
+    var head = breakdown[desc], cls = head.available ? head.verdict : "inconc", label = head.available ? head.label : "Inconclusive", conf = head.confidence || 0;
+    var agreed = rules === "v3" && DESCS.indexOf(o.descriptor) < 0 ? fuseWith(desc, breakdown) : null;
+    if (agreed && breakdown[agreed].confidence < conf) { conf = breakdown[agreed].confidence; cls = breakdown[agreed].verdict; label = breakdown[agreed].label; }
+    var res = { descriptor: desc, rules: rules, agreed_with: agreed, confidence: conf, verdict: cls, label: label, quality: head.quality || 0, spread: head.spread || 0, views_matched: head.views_matched || 0, shots: qf.length, effort: effort, reference_views: rf.length, breakdown: breakdown,
       pose_used: !!head.pose_used, turn: head.turn == null ? null : head.turn, allPairs: pairsBy[desc] || [],
       pairs: (pairsBy[desc] || []).slice().sort(function (a, b) { return ((a.assigned === false) - (b.assigned === false)) || (b.sim - a.sim); }).slice(0, 12), carried_by: head.carried_by || { shots: [], reference_views: [] },
       size: sizeCheck(o.queryDims || null, ref && ref.metadata && ref.metadata.dimensions_mm || null), caveats: [] };
@@ -244,8 +259,9 @@
   function reasonsFor(res, ref) {
     var out = [], head = res.breakdown[res.descriptor];
     if (head && head.available) {
-      if (res.rules === "v2") out.push(WORDS[res.descriptor] + ": " + res.confidence + "/100 — " + head.strong + " of " + head.shots_with_descriptor + " shots found a registered view of their own at " + T.STRONG_T.toFixed(2) + " or better (each registered view paired with at most one shot); the score is their mean similarity, a shot with no view counting 0. " + head.views_matched + " distinct reference view(s) matched.");
+      if (res.rules !== "v1") out.push(WORDS[res.descriptor] + ": " + head.confidence + "/100 — " + head.strong + " of " + head.shots_with_descriptor + " shots found a registered view of their own at " + T.STRONG_T.toFixed(2) + " or better (each registered view paired with at most one shot); the score is their mean similarity, a shot with no view counting 0. " + head.views_matched + " distinct reference view(s) matched.");
       else out.push(WORDS[res.descriptor] + ": " + res.confidence + "/100 — the " + Math.min(T.TOP_SIMS, head.strong) + " strongest of " + res.shots + " shots average " + (head.quality || 0).toFixed(2) + " against the registered views, " + head.views_matched + " distinct reference view(s) matched at " + T.STRONG_T.toFixed(2) + " or better (spread " + (head.spread || 0).toFixed(2) + " of " + T.SPREAD_TARGET + " views).");
+      if (res.agreed_with) out.push("Colour and AI texture must agree: " + WORDS[res.agreed_with] + " scored " + res.breakdown[res.agreed_with].confidence + "/100 and the AI " + head.confidence + "/100; the lower of the two is the score.");
       if (head.pose_used) out.push("Angles from the Photo Mat on both sides: shots were only paired with views taken from a similar angle, with the piece turned " + (head.turn || 0) + " degrees between the two.");
       if (head.insufficient) out.push("Not enough to tell: " + head.insufficient + ".");
       else if (head.shots_with_descriptor < res.shots) out.push("Only " + head.shots_with_descriptor + " of " + res.shots + " shots carry the " + WORDS[res.descriptor].toLowerCase() + "; the rest score 0 under it.");

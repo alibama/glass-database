@@ -207,7 +207,7 @@ CSS = """
   .opener .label { line-height: 1.8; }
   .opener .sign { margin-top: 1.2rem; }
   /* post body: prose in the 9/12 column under the title */
-  .body-grid { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; padding: clamp(2.5rem, 5vw, 4rem) 0; }
+  .body-grid { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; padding-block: clamp(2.5rem, 5vw, 4rem); }
   .body-grid aside { display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; align-self: start; position: sticky; top: 90px; }
   article.post { max-width: 68ch; font-size: 17px; line-height: 1.65; color: var(--ink-2); }
   article.post p { max-width: none; margin: 0 0 1.2em; }
@@ -234,13 +234,41 @@ CSS = """
   .post-foot .sign { margin-top: 1rem; }
   .post-nav { display: flex; justify-content: space-between; gap: 1rem 2rem; flex-wrap: wrap; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); }
   /* index */
-  .posts-wrap { padding: clamp(3rem, 6vw, 5rem) 0; }
+  .posts-wrap { padding-block: clamp(3rem, 6vw, 5rem); }
+  .subnav.wrap { padding-inline: var(--gut); }
   .posts.list { margin-top: 3rem; }
   .posts.list li { grid-template-columns: 9rem 1fr; gap: 1rem; padding: 1.4rem 0; }
   .posts.list li a.t { display: block; font: 350 1.5rem/1.15 var(--serif); letter-spacing: -.01em; text-decoration: none; margin-bottom: .4rem; }
   .posts.list li a.t:hover { color: var(--red); }
   .posts.list li p { color: var(--ink-2); font-size: 16px; margin: 0 0 .8rem; }
-  @media (max-width: 980px) { .body-grid { grid-template-columns: 1fr; } .body-grid aside { position: static; flex-direction: row; flex-wrap: wrap; } }
+  /* breadcrumb on a post */
+  .subnav .here { color: var(--ink); min-width: 0; max-width: 46ch; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .subnav .end { margin-left: auto; }
+  /* a post's side menu: on this page, other field notes, all posts */
+  .body-grid aside { max-height: calc(100vh - 110px); overflow: auto; width: 100%; }
+  .body-grid > *, .archive > * { min-width: 0; }      /* wide tables scroll inside their box, not the page */
+  details.side { width: 100%; border-top: 1px solid var(--rule); padding-top: .8rem; }
+  details.side summary { cursor: pointer; list-style: none; }
+  details.side summary::-webkit-details-marker { display: none; }
+  details.side summary::after { content: " +"; color: var(--muted); }
+  details.side[open] summary::after { content: " –"; }
+  details.side ol, details.side ul { list-style: none; padding: 0; margin: .7rem 0 .9rem; display: grid; gap: .5rem; }
+  details.side li { font: 400 14px/1.35 var(--sans); }
+  details.side li a { color: var(--ink-2); text-decoration: none; }
+  details.side li a:hover { color: var(--red); }
+  details.side li[aria-current] span { color: var(--ink); font-weight: 600; }
+  details.side li[aria-current] span::before { content: "→ "; color: var(--red); }
+  /* index archive: every post, by year, filterable by series */
+  .archive { display: grid; grid-template-columns: 3fr 9fr; gap: 2rem; margin-top: clamp(3rem, 6vw, 5rem); padding-top: 2rem; border-top: 1px solid var(--ink); }
+  .archive aside { position: sticky; top: 90px; align-self: start; display: grid; gap: .8rem; }
+  .archive .filters, .archive .years { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .archive .filters button { font: 500 12px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; background: none; color: var(--ink-2); border: 1px solid var(--rule); padding: .45rem .6rem; cursor: pointer; }
+  .archive .filters button.on, .archive .filters button:hover { border-color: var(--ink); color: var(--ink); }
+  .archive .filters b { color: var(--muted); font-weight: 500; }
+  .archive .years a { font: 500 13px/1 var(--mono); color: var(--ink-2); }
+  .archive .yr h3 { margin: 0; }
+  .archive .yr .posts.list { margin-top: .6rem; }
+  @media (max-width: 980px) { .body-grid, .archive { grid-template-columns: 1fr; } .body-grid aside, .archive aside { position: static; max-height: none; } }
   @media (max-width: 680px) { .posts.list li { grid-template-columns: 1fr; gap: .3rem; } }
 """
 
@@ -260,11 +288,25 @@ SUBSCRIBE_JS = """<script>
     return false;
   }
   if (window.GDB) { GDB.chip('#chip', { compact: true, next: location.pathname }); }
+  // on a phone the side menus start folded, so the post comes first
+  if (matchMedia('(max-width: 980px)').matches) document.querySelectorAll('details.side').forEach(function (d) { d.open = false; });
 </script>"""
 
 
-def _nav(active: str = "Field notes", index_on: bool = False) -> str:
-    """The site header (as on the homepage) plus the Field-notes sub-nav row."""
+def _nav(active: str = "Field notes", index_on: bool = False, crumb: str | None = None) -> str:
+    """The site header (as on the homepage) plus the Field-notes sub-nav row: a breadcrumb
+    (Field notes > this post) on a post, the section links on the index."""
+    if crumb:
+        return ('<a class="skip" href="#main">Skip to content</a>\n'
+                '<header class="site"><nav class="nav wrap" aria-label="Primary">'
+                '<a class="brand" href="/">Glass <i>Database</i></a>'
+                f'{_nav_src.menu_placeholder("notes")}'
+                '<div class="right"><span id="chip" class="signin gdb-chip"></span>'
+                '<button class="menu-btn" aria-expanded="false" aria-controls="menu">Menu</button></div>'
+                '</nav></header>\n'
+                f'<div class="subnav wrap" role="navigation" aria-label="Breadcrumb"><a class="crumb" href="/blog/">{html.escape(BLOG_TITLE)}</a>'
+                f'<span class="here" aria-current="page">{html.escape(crumb)}</span>'
+                '<a class="end" href="/blog/#archive">All posts</a></div>')
     return ('<a class="skip" href="#main">Skip to content</a>\n'
             '<header class="site"><nav class="nav wrap" aria-label="Primary">'
             '<a class="brand" href="/">Glass <i>Database</i></a>'
@@ -306,7 +348,8 @@ def _subscribe(label: str = "Get new studies by email", uid: str = "em") -> str:
             '<p class="label" role="status" aria-live="polite" style="margin-top:.6rem"></p>')
 
 
-def _page(title: str, description: str, body: str, canonical: str, extra_head: str = "", index_on: bool = False) -> str:
+def _page(title: str, description: str, body: str, canonical: str, extra_head: str = "", index_on: bool = False,
+          crumb: str | None = None) -> str:
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -320,7 +363,7 @@ def _page(title: str, description: str, body: str, canonical: str, extra_head: s
 <style>{CSS}</style>{extra_head}
 </head>
 <body>
-{_nav(index_on=index_on)}
+{_nav(index_on=index_on, crumb=crumb)}
 <main id="main">
 {body}
 </main>
@@ -351,7 +394,46 @@ def feature_img(p: dict) -> str:
             f'alt="{html.escape(p.get("image_alt") or p["title"], quote=True)}" loading="lazy">')
 
 
-def render_post(p: dict, prev: dict | None, nxt: dict | None, base: str) -> str:
+def heading_id(txt: str) -> str:
+    """The id render_markdown gives a heading."""
+    return re.sub(r"[^a-z0-9]+", "-", re.sub(r"<[^>]+>", "", txt).lower()).strip("-")
+
+
+def toc(md: str) -> list[tuple[str, str]]:
+    """(id, text) of a post's level-2 headings, for the 'On this page' menu."""
+    out = []
+    for m in re.finditer(r"^##\s+(.+?)\s*$", md, re.M):
+        txt = m.group(1).strip()
+        plain = re.sub(r"\[([^\]]*)\]\([^)]*\)", r"\1", re.sub(r"[*_`]", "", txt))
+        out.append((heading_id(txt), plain))
+    return out
+
+
+SIDE_POSTS = 8      # posts listed in a post's side menu; the rest are one click away on the index
+
+
+def side_menu(p: dict, posts: list[dict]) -> str:
+    """A post's side menu: what is on this page, then the other field notes (the newest
+    SIDE_POSTS, this one marked), then every post on the index - so nothing is more than
+    one click away however many posts there are."""
+    parts = []
+    t = toc(p["body_md"])
+    if len(t) >= 3:
+        items = "".join(f'<li><a href="#{i}">{html.escape(x)}</a></li>' for i, x in t)
+        parts.append(f'<details class="side toc" open><summary class="label">On this page</summary><ol>{items}</ol></details>')
+    shown = posts[:SIDE_POSTS]
+    if p not in shown:
+        shown = shown[:-1] + [p]
+    items = "".join((f'<li aria-current="page"><span>{html.escape(q["title"])}</span></li>' if q is p else
+                     f'<li><a href="{post_url(q)}">{html.escape(q["title"])}</a></li>') for q in shown)
+    parts.append(f'<details class="side more" open><summary class="label">Field notes</summary><ul>{items}</ul>'
+                 f'<a class="link" href="/blog/#archive">All {len(posts)} post{"s" if len(posts) != 1 else ""}</a></details>')
+    parts.append('<p class="fine"><a href="/blog/feed.xml">RSS</a> · '
+                 '<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></p>')
+    return "".join(parts)
+
+
+def render_post(p: dict, prev: dict | None, nxt: dict | None, base: str, posts: list[dict] | None = None) -> str:
     meta = [f"<b>{html.escape(p['series'])}</b>" if p["series"] else "", html.escape(nice_date(p["date"])),
             html.escape(p["author"]) if p["author"] else "", f"{p['minutes']} min read"]
     meta_html = " · ".join(x for x in meta if x)
@@ -370,8 +452,7 @@ def render_post(p: dict, prev: dict | None, nxt: dict | None, base: str) -> str:
     </div>
   </section>
   <div class="wrap body-grid">
-    <aside aria-label="Post links"><a class="link" href="/blog/">All field notes</a><a class="link" href="/blog/feed.xml">RSS</a>
-      <a class="link" href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a></aside>
+    <aside aria-label="Field notes menu">{side_menu(p, posts or [p])}</aside>
     <div>
       <article class="post">
 {render_markdown(p['body_md'])}
@@ -397,7 +478,8 @@ def render_post(p: dict, prev: dict | None, nxt: dict | None, base: str) -> str:
                '<meta name="twitter:card" content="summary_large_image">']
         ld["image"] = img
     extra = "\n" + "\n".join(og) + f'\n<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>'
-    return _page(f"{p['title']} — {SITE_TITLE}", p["summary"] or p["title"], body, base + post_url(p), extra)
+    return _page(f"{p['title']} — {SITE_TITLE}", p["summary"] or p["title"], body, base + post_url(p), extra,
+                 crumb=p["title"])
 
 
 def render_index(posts: list[dict], base: str) -> str:
@@ -413,13 +495,28 @@ def render_index(posts: list[dict], base: str) -> str:
                    f'<div class="btns"><a class="link" href="{post_url(p)}">Read the study</a>'
                    f'<a class="link" href="/blog/feed.xml">RSS</a></div></div>'
                    f'<a class="ph" href="{post_url(p)}" aria-label="{html.escape(p["title"], quote=True)}">{feature_img(p)}</a></article>')
-    for p in posts[1:]:
+    years: dict[str, list[str]] = {}
+    for p in posts:                       # the archive holds every post, the latest included
         meta = " · ".join(x for x in [html.escape(p["series"]), f"{p['minutes']} min read"] if x)
-        rows.append(f'<li><span>{html.escape(nice_date(p["date"]))}</span><div>'
-                    f'<a class="t" href="{post_url(p)}">{html.escape(p["title"])}</a>'
-                    f'{("<p>" + html.escape(p["summary"]) + "</p>") if p["summary"] else ""}'
-                    f'<p class="label">{meta}</p><a class="link" href="{post_url(p)}">Read</a></div></li>')
-    listing = f'<ul class="posts list">{"".join(rows)}</ul>' if rows else ""
+        years.setdefault(p["date"][:4], []).append(
+            f'<li data-series="{html.escape(p["series"], quote=True)}"><span>{html.escape(nice_date(p["date"]))}</span><div>'
+            f'<a class="t" href="{post_url(p)}">{html.escape(p["title"])}</a>'
+            f'{("<p>" + html.escape(p["summary"]) + "</p>") if p["summary"] else ""}'
+            f'<p class="label">{meta}</p><a class="link" href="{post_url(p)}">Read</a></div></li>')
+    for y, items in years.items():
+        rows.append(f'<section class="yr" id="y{y}"><h3 class="label">{y}</h3><ul class="posts list">{"".join(items)}</ul></section>')
+    series: dict[str, int] = {}
+    for p in posts:
+        if p["series"]:
+            series[p["series"]] = series.get(p["series"], 0) + 1
+    filt = "".join(f'<button type="button" data-series="{html.escape(k, quote=True)}">{html.escape(k)} <b>{v}</b></button>'
+                   for k, v in sorted(series.items()))
+    jump = "".join(f'<a href="#y{y}">{y}</a>' for y in years)
+    listing = (f'<div class="archive" id="archive"><aside aria-label="Browse field notes">'
+               f'<p class="label">All field notes · {len(posts)}</p>'
+               + (f'<div class="filters" role="group" aria-label="By series"><button type="button" class="on" data-series="">All</button>{filt}</div>' if len(series) > 1 else "")
+               + (f'<p class="label">By year</p><div class="years">{jump}</div>' if len(years) > 1 else "")
+               + f'</aside><div>{"".join(rows)}</div></div>') if posts else ""
     empty = '<p class="lede">Nothing published yet.</p>' if not posts else ""
     body = f"""
   <section class="opener">
@@ -433,7 +530,17 @@ def render_index(posts: list[dict], base: str) -> str:
       </div>
     </div>
   </section>
-  <section class="wrap posts-wrap">{feature}{listing}{empty}</section>"""
+  <section class="wrap posts-wrap">{feature}{listing}{empty}</section>
+  <script>
+    document.querySelectorAll('.archive .filters button').forEach(function (b) {{
+      b.addEventListener('click', function () {{
+        var s = b.dataset.series;
+        document.querySelectorAll('.archive .filters button').forEach(function (x) {{ x.classList.toggle('on', x === b); }});
+        document.querySelectorAll('.archive li[data-series]').forEach(function (li) {{ li.hidden = !!s && li.dataset.series !== s; }});
+        document.querySelectorAll('.archive .yr').forEach(function (y) {{ y.hidden = !y.querySelector('li:not([hidden])'); }});
+      }});
+    }});
+  </script>"""
     return _page(f"{BLOG_TITLE} — {SITE_TITLE}", BLOG_TAGLINE, body, base + "/blog/", index_on=True)
 
 
@@ -528,7 +635,7 @@ def build(src: Path = POSTS, out: Path = OUT, base: str = "https://glassdatabase
     for i, p in enumerate(posts):
         nxt = posts[i - 1] if i > 0 else None          # newer
         prev = posts[i + 1] if i + 1 < len(posts) else None  # older
-        (out / f"{p['slug']}.html").write_text(render_post(p, prev, nxt, base), encoding="utf-8")
+        (out / f"{p['slug']}.html").write_text(render_post(p, prev, nxt, base, posts), encoding="utf-8")
     (out / "index.html").write_text(render_index(posts, base), encoding="utf-8")
     (out / "feed.xml").write_text(render_feed(posts, base), encoding="utf-8")
     listing = [{k: p[k] for k in ("slug", "title", "date", "author", "series", "summary", "tags", "minutes")}
