@@ -73,7 +73,14 @@ say "Domain: $DOMAIN   |   Web server: $WEBSERVER"
 # --- base packages (web-server-agnostic) -----------------------------------
 say "Installing base packages"
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -qq
+# A broken third-party apt source (a renamed or deprecated PPA, a missing signing key) makes
+# `apt-get update` exit non-zero. Under `set -e` that used to stop the whole deploy before any
+# file was copied, so warn and carry on with the package lists already on disk; the install
+# below still fails loudly if a package we actually need is missing.
+if ! apt-get update -qq; then
+    warn "apt-get update reported errors (see the E: lines above) - continuing with the existing package lists."
+    warn "If a repository was renamed, accept it once with:  apt-get update --allow-releaseinfo-change"
+fi
 apt-get install -y -qq python3 python3-venv python3-pip rsync apache2-utils openssl certbot ffmpeg
 # PWA layer for Glowtbook (mobile install): head-injection + static asset serving
 a2enmod substitute filter headers alias >/dev/null 2>&1 || true

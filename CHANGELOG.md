@@ -6,6 +6,12 @@ All notable changes are documented here. This project distinguishes
 proof-of-concept features from production-ready ones in its docs.
 
 ## [Unreleased]
+### Fixed
+- **Deploys no longer stop at "Installing base packages" when an apt source breaks.** A renamed
+  PPA (ondrej/php and ondrej/apache2 became "deprecated") made `apt-get update` fail, and
+  `install.sh` runs under `set -e`, so every deploy since 14 November pulled the new code and then
+  exited before copying a single file. It now warns, shows the `--allow-releaseinfo-change` fix,
+  and carries on with the existing package lists (`deploy/install.sh`).
 ### Added
 - **Field notes: "How Do You Get the Attention of Museums? Lessons from Glass's Pioneers"** is the
   new lead post (and the homepage feature), ahead of the Lima study. The blog now keeps every post
